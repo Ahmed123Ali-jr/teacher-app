@@ -1,0 +1,537 @@
+/* ==========================================================================
+   print.css — Print styles for PDF exports and paper printouts.
+   Applied via <link media="print">.
+   ========================================================================== */
+
+@page {
+    size: A4;
+    margin: 18mm 15mm;
+}
+
+@media print {
+    body.is-printing > #app { display: none !important; }
+    body.is-printing > #print-root { display: block !important; }
+}
+
+@media print {
+    :root {
+        --bg: #FFFFFF;
+        --surface: #FFFFFF;
+        --surface-alt: #FFFFFF;
+        --text: #000000;
+        --text-muted: #333333;
+        --border: #CCCCCC;
+    }
+
+    html, body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+
+    /* Hide interactive chrome */
+    .app-header,
+    .app-footer,
+    .toast-container,
+    .bottom-nav,
+    .drawer-root,
+    .hamburger-btn,
+    .section-header .btn,
+    .btn,
+    .hero-actions,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Restore desktop grid layouts during print — mobile viewport rules
+       would otherwise collapse everything into a single column. */
+    .grid.grid-4 { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    .grid.grid-3 { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    .grid.grid-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+    /* Undo mobile-only dashboard simplification when printing */
+    #view-dashboard .dashboard-section { display: block !important; }
+
+    /* Cards shouldn't reshape into the mobile 2×2 layout when printing */
+    .stat-card {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-areas: none !important;
+        padding: 12pt !important;
+        border: 1px solid #CBD5E1 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+    }
+    .stat-card .stat-icon  { margin-bottom: 4pt !important; font-size: 18pt !important; }
+    .stat-card .stat-label { text-align: right !important; color: #555 !important; font-size: 9pt !important; }
+    .stat-card .stat-value { font-size: 20pt !important; justify-self: start !important; }
+
+    /* Shortcut tiles / profile card layout — keep them in a reasonable grid */
+    .shortcut-tile {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6pt !important;
+        padding: 8pt !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+
+    /* Bar-chart style used on reports page */
+    .stacked-bar {
+        display: flex !important;
+        height: 16pt !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+    .legend-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 4pt !important;
+        font-size: 9pt !important;
+    }
+
+    /* Students ranking mini lists — 2 columns instead of stacked */
+    .mini-list { display: flex !important; flex-direction: column !important; gap: 2pt !important; }
+    .mini-row  { padding: 3pt 6pt !important; font-size: 9pt !important; }
+
+    /* Keep each report card (and its heading) together on one page so the
+       heading never gets orphaned at the bottom of a page. */
+    .dashboard-section {
+        page-break-inside: avoid !important;
+        break-inside:      avoid !important;
+    }
+    .dashboard-section > h3,
+    .dashboard-section > .section-title,
+    .section-title,
+    .card-title {
+        page-break-after: avoid !important;
+        break-after:      avoid !important;
+    }
+    .card {
+        page-break-inside: avoid !important;
+        break-inside:      avoid !important;
+    }
+
+    .app-main { padding: 0 !important; }
+
+    .container {
+        max-width: 100%;
+        padding: 0 !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Shared print header/footer for documents */
+    .print-header {
+        display: block !important;
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 8mm;
+        margin-bottom: 8mm;
+    }
+
+    .print-header {
+        position: relative;
+    }
+    .print-header.has-logo {
+        padding-top: 14mm;           /* room for logo */
+    }
+    .print-header .print-logo {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 22mm;
+        height: 22mm;
+        object-fit: contain;
+    }
+    .print-header h1 {
+        font-size: 18pt;
+        margin: 0 0 4mm;
+    }
+
+    .portfolio-cover .cover-logo {
+        width: 40mm;
+        height: 40mm;
+        object-fit: contain;
+        margin: 0 auto 10mm;
+        display: block;
+    }
+
+    .print-header .meta {
+        font-size: 10pt;
+        color: #333;
+    }
+
+    .print-footer {
+        display: block !important;
+        position: running(footer);
+        text-align: center;
+        font-size: 9pt;
+        color: #333;
+        border-top: 1px solid #999;
+        padding-top: 4mm;
+        margin-top: 8mm;
+    }
+
+    /* Page break control */
+    .page-break        { page-break-after: always; }
+    .avoid-break       { page-break-inside: avoid; }
+    h1, h2, h3         { page-break-after: avoid; }
+    /* NOTE: tables are allowed to break so long rosters paginate correctly.
+       Images/figures still stay whole. */
+    figure, img        { page-break-inside: avoid; }
+
+    /* Tables */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #666;
+        padding: 6pt 8pt;
+        text-align: right;
+    }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+
+    /* Keep links readable on paper */
+    a, a:visited {
+        color: #000;
+        text-decoration: underline;
+    }
+
+    /* Ink-saving option (opt-in via body class) */
+    body.print-bw,
+    body.print-bw * {
+        color: #000 !important;
+        background: #FFF !important;
+        border-color: #000 !important;
+    }
+
+    /* Exam / worksheet document */
+    .print-doc {
+        font-family: 'Tajawal', sans-serif;
+        direction: rtl;
+        color: #000;
+    }
+
+    .print-info-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12mm;
+        border: 1px solid #000;
+        padding: 4mm 6mm;
+        margin-bottom: 6mm;
+        font-size: 12pt;
+    }
+    .grade-box {
+        display: inline-block;
+        padding: 2pt 8pt;
+        border: 1px solid #000;
+        border-radius: 4pt;
+        font-weight: bold;
+        margin-right: 4pt;
+    }
+
+    .print-instructions {
+        background: #F5F5F5;
+        border-right: 3px solid #333;
+        padding: 4mm 6mm;
+        margin-bottom: 6mm;
+        font-size: 11pt;
+    }
+
+    .print-questions {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        counter-reset: q;
+    }
+    .print-questions > li.q {
+        counter-increment: q;
+        padding: 4mm 0;
+        border-bottom: 1px dashed #CCC;
+    }
+    .print-questions > li.q:last-child { border-bottom: 0; }
+
+    .q-text {
+        font-weight: 600;
+        font-size: 12pt;
+        margin-bottom: 3mm;
+    }
+    .q-text::before {
+        content: counter(q) ") ";
+        font-weight: bold;
+        color: #000;
+    }
+    .q-points {
+        font-weight: normal;
+        font-size: 10pt;
+        color: #555;
+    }
+
+    .q-opts {
+        list-style: none;
+        padding: 0 8mm 0 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2mm 8mm;
+        font-size: 11pt;
+    }
+    .q-tf {
+        padding-right: 8mm;
+        font-size: 12pt;
+    }
+    .q-lines {
+        padding-right: 8mm;
+    }
+    .line {
+        border-bottom: 1px solid #AAA;
+        height: 7mm;
+        margin-bottom: 2mm;
+    }
+
+    .answer-key {
+        padding-right: 8mm;
+        font-size: 11pt;
+        line-height: 1.9;
+    }
+
+    /* ---------- Portfolio document ---------- */
+    .portfolio-doc h2, .portfolio-doc h3, .portfolio-doc h4 {
+        color: #000;
+    }
+
+    .portfolio-cover {
+        text-align: center;
+        padding-top: 50mm;
+        min-height: 250mm;
+    }
+    .cover-ornament {
+        font-size: 56pt;
+        margin-bottom: 10mm;
+    }
+    .cover-title {
+        font-size: 32pt;
+        margin: 0 0 8mm;
+        color: #1E40AF;
+    }
+    .cover-sub {
+        font-size: 20pt;
+        font-weight: bold;
+        margin-bottom: 20mm;
+    }
+    .cover-meta {
+        font-size: 13pt;
+        line-height: 2.2;
+        color: #333;
+    }
+
+    .toc {
+        font-size: 13pt;
+        line-height: 2.2;
+        padding-right: 10mm;
+    }
+
+    .portfolio-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 6mm;
+        border-bottom: 2px solid #1E40AF;
+        padding-bottom: 4mm;
+        margin-bottom: 8mm;
+    }
+    .portfolio-section-heading .section-number {
+        width: 14mm;
+        height: 14mm;
+        border-radius: 50%;
+        background: #1E40AF;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16pt;
+    }
+    .portfolio-section-heading h2 {
+        margin: 0;
+        font-size: 20pt;
+    }
+
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11pt;
+        margin-bottom: 8mm;
+    }
+    .info-table th {
+        background: #F1F5F9;
+        font-weight: 600;
+        text-align: right;
+        padding: 3mm 5mm;
+        border: 1px solid #CBD5E1;
+        width: 40mm;
+    }
+    .info-table td {
+        padding: 3mm 5mm;
+        border: 1px solid #CBD5E1;
+    }
+
+    .report-article {
+        margin-bottom: 10mm;
+    }
+    .report-article h3 {
+        font-size: 16pt;
+        color: #1E40AF;
+        margin-bottom: 2mm;
+    }
+    .report-article .meta-line {
+        font-size: 10pt;
+        color: #555;
+        margin-bottom: 5mm;
+    }
+    .report-article h4 {
+        font-size: 13pt;
+        margin: 5mm 0 2mm;
+        color: #1E40AF;
+    }
+    .report-article p, .report-article ol, .report-article ul {
+        font-size: 11pt;
+        line-height: 1.8;
+        margin: 0 0 4mm;
+        padding-right: 6mm;
+    }
+
+    .print-image-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4mm;
+        margin: 4mm 0;
+    }
+    .print-image-grid img {
+        width: 100%;
+        max-height: 70mm;
+        object-fit: cover;
+        border: 1px solid #CCC;
+    }
+
+    /* ---------- Students register ---------- */
+    .students-doc .print-header .meta {
+        font-size: 10pt;
+    }
+
+    .students-register {
+        width: 100%;
+        /* Safe to use collapse now — pagination is manual in JS
+           (chunks → separate <table> per page), no row ever crosses pages. */
+        border-collapse: collapse;
+        font-size: 10pt;
+        margin-bottom: 0;
+        /* Each chunked table is self-contained on its own page */
+        page-break-inside: avoid !important;
+        break-inside:      avoid !important;
+    }
+    .students-register th,
+    .students-register td {
+        border: 1px solid #000;
+        padding: 6pt 8pt;
+        text-align: right;
+        vertical-align: middle;
+        height: 8mm;
+        box-sizing: border-box;
+    }
+    .students-register thead th {
+        background: #F1F5F9;
+        font-weight: 700;
+    }
+    /* Leave a little empty space at the end of each page so the last row doesn't
+       get flush against the margin (which can look cut on some printers). */
+    .students-doc .print-legend {
+        page-break-inside: avoid !important;
+        break-inside:      avoid !important;
+    }
+    /* NOTE: border/padding rules moved above — using border-collapse:separate */
+    .students-register .col-num {
+        width: 10mm;
+        text-align: center;
+        font-weight: 700;
+    }
+    .students-register .col-name {
+        min-width: 45mm;
+        max-width: 70mm;
+    }
+    .students-register .col-notes {
+        min-width: 40mm;
+    }
+    .students-register .col-hint {
+        font-size: 8pt;
+        font-weight: normal;
+        color: #555;
+    }
+    .students-register .cell-att,
+    .students-register .cell-eval {
+        text-align: center;
+        font-size: 11pt;
+        font-weight: 700;
+    }
+
+    /* Range register: days as columns */
+    .range-register {
+        font-size: 8.5pt;
+    }
+    .range-register .col-date {
+        width: 12mm;
+        text-align: center;
+        padding: 2mm 1mm;
+    }
+    .range-register .col-date .date-day {
+        font-size: 7.5pt;
+        font-weight: 400;
+        color: #555;
+    }
+    .range-register .col-date .date-num {
+        font-weight: 700;
+    }
+    .range-register .col-summary {
+        width: 12mm;
+        background: #F8FAFC;
+    }
+
+    /* Summary register (period aggregate) */
+    .summary-register .col-num  { width: 10mm; }
+    .summary-register .col-name { min-width: 45mm; }
+    .summary-register .col-summary {
+        width: 15mm;
+        text-align: center;
+        background: #F8FAFC;
+        font-weight: 700;
+    }
+    .summary-register .cell-eval {
+        text-align: center;
+        font-size: 10pt;
+    }
+
+    @page {
+        size: A4 landscape;
+        margin: 14mm 10mm;
+    }
+    .students-doc { direction: rtl; }
+
+    .print-legend {
+        display: flex;
+        gap: 6mm;
+        justify-content: flex-start;
+        font-size: 9pt;
+        color: #333;
+        padding: 3mm 4mm;
+        background: #F8FAFC;
+        border: 1px solid #CBD5E1;
+        margin-top: 4mm;
+    }
+    .print-legend strong { font-weight: 700; }
+}

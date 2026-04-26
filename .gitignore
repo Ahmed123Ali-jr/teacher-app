@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/
+
+# Local env / secrets
+.env
+.env.local
+*.local
+.claude/settings.local.json
+
+# Backups & archives
+*.zip
+*.tar.gz
+*.bak
+
+# Logs
+*.log
+
+# Supabase CLI runtime
+supabase/.temp/
+supabase/.branches/

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="تطبيق المعلم الذكي — سجل الطلاب وتوليد المحتوى وملف الإنجاز">
+    <meta name="theme-color" content="#1E40AF">
+    <title>تطبيق المعلم الذكي</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/main.css?v=D11">
+    <link rel="stylesheet" href="css/components.css?v=5">
+    <link rel="stylesheet" href="css/views.css?v=D8">
+    <link rel="stylesheet" href="css/print.css?v=D5" media="print">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header is hidden on the auth view -->
+        <header class="app-header" id="app-header" hidden>
+            <div class="container header-inner">
+                <div class="brand">
+                    <span class="brand-logo" aria-hidden="true">🎓</span>
+                    <h1 class="brand-name">تطبيق المعلم الذكي</h1>
+                </div>
+
+                <!-- Desktop actions (≥ 768px) -->
+                <div class="header-actions">
+                    <span id="header-teacher-name" class="header-user"></span>
+                    <a href="#/help" class="btn btn-ghost btn-sm" title="المساعدة">❓</a>
+                    <a href="#/settings" class="btn btn-ghost btn-sm" title="الإعدادات">⚙️</a>
+                    <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">
+                        تسجيل الخروج
+                    </button>
+                </div>
+
+                <!-- Mobile hamburger (< 768px) -->
+                <button type="button" class="hamburger-btn" id="btn-open-drawer"
+                        aria-label="القائمة" aria-controls="drawer-root">
+                    <span class="hamburger-lines" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                    </span>
+                </button>
+            </div>
+        </header>
+
+        <main class="app-main" id="app-main">
+            <!-- View: Login / Register -->
+            <section class="view view-auth" id="view-login" hidden></section>
+
+            <!-- View: Dashboard -->
+            <section class="view" id="view-dashboard" hidden></section>
+
+            <!-- View: Reminders -->
+            <section class="view" id="view-reminders" hidden></section>
+
+            <!-- View: Class -->
+            <section class="view" id="view-class" hidden></section>
+
+            <!-- View: Student -->
+            <section class="view" id="view-student" hidden></section>
+
+            <!-- View: Settings -->
+            <section class="view" id="view-settings" hidden></section>
+
+            <!-- View: Portfolio -->
+            <section class="view" id="view-portfolio" hidden></section>
+
+            <!-- View: Schedule -->
+            <section class="view" id="view-schedule" hidden></section>
+
+            <!-- View: Help -->
+            <section class="view" id="view-help" hidden></section>
+
+            <!-- View: Reports -->
+            <section class="view" id="view-reports" hidden></section>
+
+            <!-- View: Classes (standalone) -->
+            <section class="view" id="view-classes" hidden></section>
+
+            <!-- View: Shortcuts (standalone) -->
+            <section class="view" id="view-shortcuts" hidden></section>
+
+            <!-- View: Profile -->
+            <section class="view" id="view-profile" hidden></section>
+        </main>
+
+        <footer class="app-footer" id="app-footer" hidden>
+            <div class="container">
+                <small class="text-muted">تطبيق المعلم الذكي — نموذج أولي</small>
+            </div>
+        </footer>
+
+        <!-- Bottom navigation (mobile only; populated by bottom-nav.js) -->
+        <nav id="bottom-nav" class="bottom-nav" hidden aria-label="التنقل السفلي"></nav>
+    </div>
+
+    <!-- Drawer (mobile hamburger menu) -->
+    <div id="drawer-root" class="drawer-root" hidden>
+        <div class="drawer-backdrop" data-drawer-close></div>
+        <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+            <header class="drawer-header">
+                <div class="drawer-avatar" id="drawer-avatar">👤</div>
+                <div class="drawer-user">
+                    <div class="drawer-name" id="drawer-name">معلم</div>
+                    <div class="drawer-school" id="drawer-school"></div>
+                </div>
+                <button type="button" class="drawer-close" data-drawer-close
+                        aria-label="إغلاق">×</button>
+            </header>
+
+            <nav class="drawer-nav" aria-label="قائمة الحساب">
+                <a href="#/settings" class="drawer-link" data-drawer-close>
+                    <span class="drawer-link-icon">⚙️</span>
+                    <span>الإعدادات</span>
+                </a>
+                <a href="#/help" class="drawer-link" data-drawer-close>
+                    <span class="drawer-link-icon">❓</span>
+                    <span>المساعدة</span>
+                </a>
+            </nav>
+
+            <div class="drawer-footer">
+                <button type="button" class="btn btn-ghost btn-block" id="btn-logout-drawer">
+                    <span class="drawer-link-icon">🚪</span>
+                    <span>تسجيل الخروج</span>
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal root (portal) -->
+    <div id="modal-root" class="modal-root" hidden>
+        <div class="modal-backdrop" data-modal-close></div>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <header class="modal-header">
+                <h2 class="modal-title" id="modal-title">عنوان</h2>
+                <button type="button" class="modal-close" aria-label="إغلاق" data-modal-close>×</button>
+            </header>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Scripts: order matters -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js?v=S3"></script>
+    <script src="js/database.js?v=S5"></script>
+    <script src="js/auth.js?v=S5"></script>
+    <script src="js/ai-service.js?v=D4"></script>
+    <script src="js/print-exam.js?v=D5"></script>
+    <script src="js/print-portfolio.js?v=D5"></script>
+    <script src="js/print-students.js?v=D5"></script>
+    <script src="js/components/modal.js?v=5"></script>
+    <script src="js/components/drawer.js?v=C2"></script>
+    <script src="js/components/bottom-nav.js?v=C1"></script>
+    <script src="js/views/login.js?v=5"></script>
+    <script src="js/views/dashboard.js?v=C2"></script>
+    <script src="js/views/classes.js?v=S2"></script>
+    <script src="js/views/shortcuts.js?v=C1"></script>
+    <script src="js/views/profile.js?v=D9"></script>
+    <script src="js/views/reminders.js?v=S2"></script>
+    <script src="js/views/settings.js?v=D9"></script>
+    <script src="js/views/class-books.js?v=S2"></script>
+    <script src="js/views/class-curriculum.js?v=D3"></script>
+    <script src="js/views/class-exams.js?v=S2"></script>
+    <script src="js/views/class-worksheets.js?v=5"></script>
+    <script src="js/views/class-homework.js?v=S2"></script>
+    <script src="js/views/class.js?v=S2"></script>
+    <script src="js/views/student.js?v=5"></script>
+    <script src="js/views/portfolio-strategies.js?v=S2"></script>
+    <script src="js/views/portfolio-initiatives.js?v=S2"></script>
+    <script src="js/views/portfolio.js?v=D3"></script>
+    <script src="js/views/schedule.js?v=S2"></script>
+    <script src="js/views/help.js?v=7"></script>
+    <script src="js/views/reports.js?v=C16"></script>
+    <script src="js/router.js?v=S3"></script>
+    <script src="js/app.js?v=S4"></script>
+</body>
+</html>
