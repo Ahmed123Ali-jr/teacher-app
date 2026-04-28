@@ -186,5 +186,58 @@
     <script src="js/views/reports.js?v=C16"></script>
     <script src="js/router.js?v=S3"></script>
     <script src="js/app.js?v=S4"></script>
+
+    <!-- Service Worker: enables offline + auto-update banner on every deploy. -->
+    <script>
+    (function () {
+        if (!('serviceWorker' in navigator)) return;
+
+        function showUpdateBanner(registration) {
+            if (document.getElementById('sw-update-banner')) return;
+            const bar = document.createElement('div');
+            bar.id = 'sw-update-banner';
+            bar.style.cssText = [
+                'position:fixed','bottom:16px','inset-inline-end:16px','z-index:9999',
+                'background:var(--brand,#1E40AF)','color:#fff','padding:10px 14px',
+                'border-radius:10px','font-family:Tajawal,system-ui,sans-serif',
+                'box-shadow:0 6px 20px rgba(0,0,0,.18)','font-size:14px',
+                'display:flex','gap:10px','align-items:center'
+            ].join(';');
+            bar.innerHTML = '<span>تحديث جديد متاح</span>'
+                + '<button id="sw-update-btn" style="background:#fff;color:#1E40AF;'
+                + 'border:none;border-radius:6px;padding:6px 10px;font-weight:700;'
+                + 'cursor:pointer">تحديث</button>';
+            document.body.appendChild(bar);
+            bar.querySelector('#sw-update-btn').addEventListener('click', () => {
+                if (registration.waiting) registration.waiting.postMessage('SKIP_WAITING');
+            });
+        }
+
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then((reg) => {
+                if (reg.waiting) showUpdateBanner(reg);
+                reg.addEventListener('updatefound', () => {
+                    const sw = reg.installing;
+                    if (!sw) return;
+                    sw.addEventListener('statechange', () => {
+                        if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateBanner(reg);
+                        }
+                    });
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) reg.update().catch(() => {});
+                });
+            }).catch((e) => console.warn('[sw] registration failed:', e));
+        });
+
+        let _reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (_reloaded) return;
+            _reloaded = true;
+            location.reload();
+        });
+    })();
+    </script>
 </body>
 </html>
