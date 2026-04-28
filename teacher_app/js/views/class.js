@@ -208,6 +208,9 @@
        ========================================================================== */
 
     async function renderStudents(panel, cls) {
+        // Wait for any in-flight saves to land in the cache before reading,
+        // otherwise the table can paint with stale data.
+        await flushWrites();
         const columns = ensureColumns(cls);
         const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
         students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
@@ -488,41 +491,61 @@
         global.Modal.open({ title: 'تأكيد حذف الطالب', body });
     }
 
-    /* ---------- Data ops ---------- */
-
-    async function setAttendance(cls, studentId, date, status) {
-        const all = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
-        const existing = all.find((r) => r.date === date);
-        if (existing) {
-            existing.status = status;
-            await global.TeacherDB.put('attendance', existing);
-        } else {
-            await global.TeacherDB.add('attendance', {
-                teacher_id: cls.teacher_id,
-                class_id:   cls.id,
-                student_id: studentId,
-                date, status
-            });
-        }
+    /* ---------- Data ops ----------
+       All writes go through a single promise chain. Two rapid taps (e.g.
+       blurring a number input while clicking a star) used to read the cache
+       in parallel before either had finished, then race to insert separate
+       rows for the same (student, date) — overwriting each other's values.
+       Serialising the writes guarantees each save reads the previous one's
+       result before computing its own. */
+    let _writeQueue = Promise.resolve();
+    function queueWrite(fn) {
+        const next = _writeQueue.then(fn);
+        _writeQueue = next.catch((e) => { console.warn('[class.js] write failed:', e); });
+        return next;
     }
 
-    async function setEvalValue(cls, studentId, date, colId, value) {
-        const all = await global.TeacherDB.getAllByIndex('participation', 'student_id', studentId);
-        let row = all.find((r) => r.date === date);
-        if (!row) {
-            row = {
-                teacher_id: cls.teacher_id,
-                class_id:   cls.id,
-                student_id: studentId,
-                date,
-                values: {}
-            };
-        }
-        if (!row.values) row.values = readValues(row);
-        if (value === null || value === 0) delete row.values[colId];
-        else row.values[colId] = value;
-        await global.TeacherDB.put('participation', row);
+    function setAttendance(cls, studentId, date, status) {
+        return queueWrite(async () => {
+            const all = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
+            const existing = all.find((r) => r.date === date);
+            if (existing) {
+                existing.status = status;
+                await global.TeacherDB.put('attendance', existing);
+            } else {
+                await global.TeacherDB.add('attendance', {
+                    teacher_id: cls.teacher_id,
+                    class_id:   cls.id,
+                    student_id: studentId,
+                    date, status
+                });
+            }
+        });
     }
+
+    function setEvalValue(cls, studentId, date, colId, value) {
+        return queueWrite(async () => {
+            const all = await global.TeacherDB.getAllByIndex('participation', 'student_id', studentId);
+            let row = all.find((r) => r.date === date);
+            if (!row) {
+                row = {
+                    teacher_id: cls.teacher_id,
+                    class_id:   cls.id,
+                    student_id: studentId,
+                    date,
+                    values: {}
+                };
+            }
+            if (!row.values) row.values = readValues(row);
+            if (value === null || value === 0) delete row.values[colId];
+            else row.values[colId] = value;
+            await global.TeacherDB.put('participation', row);
+        });
+    }
+
+    /** Drain any pending writes — callers use this before re-reading
+     *  the cache so they don't see stale data. */
+    function flushWrites() { return _writeQueue; }
 
     async function deleteStudent(studentId) {
         await global.TeacherDB.remove('students', studentId);
