@@ -296,16 +296,20 @@
             });
         });
 
-        // Number inputs
+        // Number inputs — save on every keystroke (debounced) so the value
+        // is committed even if the user taps a star/attendance button
+        // without first dismissing the keyboard or pressing Done.
         panel.querySelectorAll('input[data-eval-num]').forEach((inp) => {
             bindArabicNumberInput(inp);
-            inp.addEventListener('change', async () => {
-                const sid   = inp.dataset.sid;
-                const colId = inp.dataset.col;
-                const max   = Number(inp.dataset.max);
+            const sid   = inp.dataset.sid;
+            const colId = inp.dataset.col;
+            const max   = Number(inp.dataset.max);
+            let timer;
+            const commit = (showToast) => {
+                clearTimeout(timer);
                 const value = parseArabicNumber(inp.value);
                 if (value === null) {
-                    await setEvalValue(cls, sid, today, colId, null);
+                    setEvalValue(cls, sid, today, colId, null);
                     return;
                 }
                 if (value < 0 || value > max) {
@@ -313,9 +317,15 @@
                     inp.value = '';
                     return;
                 }
-                await setEvalValue(cls, sid, today, colId, value);
-                global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
+                setEvalValue(cls, sid, today, colId, value);
+                if (showToast) global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
+            };
+            inp.addEventListener('input',  () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => commit(false), 250);
             });
+            inp.addEventListener('change', () => commit(true));
+            inp.addEventListener('blur',   () => commit(false));
         });
 
         panel.querySelectorAll('[data-del-student]').forEach((btn) => {
