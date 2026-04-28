@@ -273,8 +273,8 @@
 
         panel.querySelectorAll('[data-att-btn]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const sid = Number(btn.dataset.sid);
-                await setAttendance(sid, today, btn.dataset.status);
+                const sid = btn.dataset.sid;
+                await setAttendance(cls, sid, today, btn.dataset.status);
                 await renderStudents(panel, cls);
             });
         });
@@ -282,13 +282,13 @@
         // Stars, check, tri buttons (unified)
         panel.querySelectorAll('[data-eval-btn]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const sid   = Number(btn.dataset.sid);
+                const sid   = btn.dataset.sid;
                 const colId = btn.dataset.col;
                 const value = Number(btn.dataset.value);
                 const current = Number(btn.dataset.current);
                 // Toggle off if clicking the same value (allow clearing)
                 const next = current === value ? 0 : value;
-                await setEvalValue(sid, today, colId, next);
+                await setEvalValue(cls, sid, today, colId, next);
                 await renderStudents(panel, cls);
             });
         });
@@ -297,12 +297,12 @@
         panel.querySelectorAll('input[data-eval-num]').forEach((inp) => {
             bindArabicNumberInput(inp);
             inp.addEventListener('change', async () => {
-                const sid   = Number(inp.dataset.sid);
+                const sid   = inp.dataset.sid;
                 const colId = inp.dataset.col;
                 const max   = Number(inp.dataset.max);
                 const value = parseArabicNumber(inp.value);
                 if (value === null) {
-                    await setEvalValue(sid, today, colId, null);
+                    await setEvalValue(cls, sid, today, colId, null);
                     return;
                 }
                 if (value < 0 || value > max) {
@@ -310,7 +310,7 @@
                     inp.value = '';
                     return;
                 }
-                await setEvalValue(sid, today, colId, value);
+                await setEvalValue(cls, sid, today, colId, value);
                 global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
             });
         });
@@ -319,7 +319,7 @@
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const sid = Number(btn.dataset.delStudent);
+                const sid = btn.dataset.delStudent;
                 const name = btn.dataset.name;
                 confirmDeleteStudent(name, async () => {
                     await deleteStudent(sid);
@@ -490,31 +490,37 @@
 
     /* ---------- Data ops ---------- */
 
-    async function setAttendance(studentId, date, status) {
+    async function setAttendance(cls, studentId, date, status) {
         const all = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
         const existing = all.find((r) => r.date === date);
         if (existing) {
             existing.status = status;
-            existing.updated_at = new Date().toISOString();
             await global.TeacherDB.put('attendance', existing);
         } else {
             await global.TeacherDB.add('attendance', {
-                student_id: studentId, date, status,
-                created_at: new Date().toISOString()
+                teacher_id: cls.teacher_id,
+                class_id:   cls.id,
+                student_id: studentId,
+                date, status
             });
         }
     }
 
-    async function setEvalValue(studentId, date, colId, value) {
+    async function setEvalValue(cls, studentId, date, colId, value) {
         const all = await global.TeacherDB.getAllByIndex('participation', 'student_id', studentId);
         let row = all.find((r) => r.date === date);
         if (!row) {
-            row = { student_id: studentId, date, values: {}, created_at: new Date().toISOString() };
+            row = {
+                teacher_id: cls.teacher_id,
+                class_id:   cls.id,
+                student_id: studentId,
+                date,
+                values: {}
+            };
         }
         if (!row.values) row.values = readValues(row);
         if (value === null || value === 0) delete row.values[colId];
         else row.values[colId] = value;
-        row.updated_at = new Date().toISOString();
         await global.TeacherDB.put('participation', row);
     }
 
