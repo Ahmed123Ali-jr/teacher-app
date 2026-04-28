@@ -722,8 +722,10 @@
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
                     for (const name of names) {
                         await global.TeacherDB.add('students', {
-                            class_id: cls.id, name, photo: null, notes: '',
-                            created_at: new Date().toISOString()
+                            teacher_id: cls.teacher_id,
+                            class_id:   cls.id,
+                            name,
+                            notes: ''
                         });
                     }
                     await updateClassStudentCount(cls.id);
