@@ -143,10 +143,25 @@
 
     /* ---------- shape translation (legacy ↔ Supabase) ---------- */
 
-    const TEACHERS_FIELD_MAP_OUT = {
-        name:        'full_name',
-        school_name: 'school',
-        photo:       null  // not supported in this path
+    // Legacy app-shape key → DB column name. Only keys listed here (plus
+    // the special `photo` Blob) are forwarded to Supabase. Unknown keys
+    // (e.g. `is_guest`, `email` echoed from auth) are dropped so writes
+    // don't fail with "column does not exist".
+    const TEACHERS_OUT_MAP = {
+        name:             'full_name',
+        school_name:      'school',
+        subject:          'subject',
+        subjects:         'subjects',
+        phone:            'phone',
+        email:            'email',
+        specialization:   'specialization',
+        qualification:    'qualification',
+        experience_years: 'experience_years',
+        civil_id:         'civil_id',
+        message:          'message',
+        vision:           'vision',
+        photo_url:        'photo_url',
+        updated_at:       'updated_at'
     };
 
     function teachersIn(row) {
@@ -165,7 +180,7 @@
                 else if (value.photo === null) out.photo_url = null;
                 continue;
             }
-            const mapped = (k in TEACHERS_FIELD_MAP_OUT) ? TEACHERS_FIELD_MAP_OUT[k] : k;
+            const mapped = TEACHERS_OUT_MAP[k];
             if (mapped) out[mapped] = value[k];
         }
         return out;
