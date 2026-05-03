@@ -396,11 +396,19 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ جارٍ الحفظ...';
+
             try {
+                const name = form.querySelector('#f-name').value.trim();
+                if (!name) throw new Error('الاسم مطلوب.');
+
                 const file = form.querySelector('#f-file').files[0];
                 const item = {
                     id: existing?.id || ('f_' + Date.now()),
-                    name:  form.querySelector('#f-name').value.trim(),
+                    name,
                     type:  form.querySelector('#f-type').value.trim(),
                     date:  form.querySelector('#f-date').value,
                     notes: form.querySelector('#f-notes').value.trim(),
@@ -408,20 +416,41 @@
                     filename: existing?.filename || ''
                 };
                 if (file) {
-                    if (file.size > 50 * 1024 * 1024) throw new Error('حجم الملف كبير (أقصى ~50 MB).');
+                    const isImg = (file.type || '').startsWith('image/');
+                    const cap = isImg ? 15 : 30;  // MB
+                    if (file.size > cap * 1024 * 1024) {
+                        throw new Error('حجم الملف كبير (أقصى ' + cap + ' MB لـ '
+                            + (isImg ? 'الصور' : 'المستندات') + ').');
+                    }
                     item.file = file;
                     item.filename = file.name;
                 }
 
+                // Snapshot the previous items so we can roll back on failure.
+                const prev = sec.items.slice();
                 if (existing) sec.items[editIndex] = item;
                 else          sec.items.push(item);
 
-                await savePortfolio(ctx.portfolio);
+                console.info('[Portfolio] saving', {
+                    file_size_kb: file ? Math.round(file.size / 1024) : 0,
+                    items_total:  sec.items.length
+                });
+
+                try {
+                    await savePortfolio(ctx.portfolio);
+                } catch (saveErr) {
+                    sec.items = prev;  // roll back local mutation on failure
+                    throw saveErr;
+                }
+
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
                 renderCustomSection(body, ctx, sec);
             } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
+                console.error('[Portfolio] save failed:', err);
+                global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
             }
         });
 
