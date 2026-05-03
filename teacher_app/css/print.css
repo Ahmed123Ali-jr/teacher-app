@@ -319,7 +319,7 @@
     .cover-title {
         font-size: 32pt;
         margin: 0 0 8mm;
-        color: #1E40AF;
+        color: #0F2C5C;
     }
     .cover-sub {
         font-size: 20pt;
@@ -342,7 +342,7 @@
         display: flex;
         align-items: center;
         gap: 6mm;
-        border-bottom: 2px solid #1E40AF;
+        border-bottom: 2px solid #C9A961;   /* gold underline for elegance */
         padding-bottom: 4mm;
         margin-bottom: 8mm;
     }
@@ -350,7 +350,7 @@
         width: 14mm;
         height: 14mm;
         border-radius: 50%;
-        background: #1E40AF;
+        background: #0F2C5C;
         color: #fff;
         display: flex;
         align-items: center;
@@ -370,16 +370,18 @@
         margin-bottom: 8mm;
     }
     .info-table th {
-        background: #F1F5F9;
+        background: #F8F6F0;          /* ivory */
+        color: #0F2C5C;
         font-weight: 600;
         text-align: right;
         padding: 3mm 5mm;
-        border: 1px solid #CBD5E1;
+        border: 1px solid #E8D9A8;    /* light gold */
         width: 40mm;
     }
     .info-table td {
         padding: 3mm 5mm;
-        border: 1px solid #CBD5E1;
+        color: #2C2C2A;               /* charcoal */
+        border: 1px solid #E8D9A8;
     }
 
     .report-article {
@@ -387,7 +389,7 @@
     }
     .report-article h3 {
         font-size: 16pt;
-        color: #1E40AF;
+        color: #0F2C5C;
         margin-bottom: 2mm;
     }
     .report-article .meta-line {
@@ -398,7 +400,7 @@
     .report-article h4 {
         font-size: 13pt;
         margin: 5mm 0 2mm;
-        color: #1E40AF;
+        color: #0F2C5C;
     }
     .report-article p, .report-article ol, .report-article ul {
         font-size: 11pt;
