@@ -110,14 +110,34 @@
         return urls;
     }
 
+    function hasUsableBlob(it) {
+        return it && it.file instanceof Blob && it.file.size > 0;
+    }
     function isImageItem(it) {
-        const f = it.file; if (!f) return false;
-        return (f.type || '').startsWith('image/') ||
+        if (!hasUsableBlob(it)) return false;
+        return (it.file.type || '').startsWith('image/') ||
                /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(it.filename || '');
     }
     function isPdfItem(it) {
-        const f = it.file; if (!f) return false;
-        return f.type === 'application/pdf' || /\.pdf$/i.test(it.filename || '');
+        if (!hasUsableBlob(it)) return false;
+        return it.file.type === 'application/pdf' || /\.pdf$/i.test(it.filename || '');
+    }
+
+    function brokenAttachmentBlock(it, wrap, reason) {
+        return `
+            <div class="portfolio-attachment" style="${wrap}">
+                <h4 style="margin:0 0 3mm;">${escapeHtml(it.name || it.filename || 'ملف')}</h4>
+                <p style="color:#B45309; font-size:11pt; margin-top:8mm;">
+                    ⚠️ تعذّر عرض محتوى الملف: ${escapeHtml(reason)}
+                </p>
+                <p style="font-size:10pt; color:#555;">
+                    ${escapeHtml(it.filename || 'بدون اسم')}
+                </p>
+                <p style="font-size:9pt; color:#888; margin-top:6mm;">
+                    إذا كان هذا الملف مرفوعاً قبل آخر تحديث، يُرجى إعادة رفعه.
+                </p>
+            </div>
+        `;
     }
 
     async function attachmentsBlock(items) {
@@ -137,7 +157,19 @@
                                 + 'width:auto; height:auto; object-fit:contain;';
 
         for (const it of items) {
-            if (!it.file) continue;
+            if (!it) continue;
+            // A `filename` is set only when a file was actually attached
+            // at some point. If the binary content is missing now (legacy
+            // uploads from before the base64 fix have file:{} or null),
+            // surface a placeholder so the teacher knows to re-upload —
+            // instead of a silent empty page or no output at all.
+            if (it.filename && !hasUsableBlob(it)) {
+                parts.push(brokenAttachmentBlock(it, wrap,
+                    'محتوى الملف فقد أو لم يُرفع.'));
+                continue;
+            }
+            if (!hasUsableBlob(it)) continue;
+
             try {
                 if (isImageItem(it)) {
                     const url = await blobToDataUrl(it.file);
@@ -149,6 +181,10 @@
                     `);
                 } else if (isPdfItem(it)) {
                     const urls = await pdfToImages(it.file);
+                    if (!urls.length) {
+                        parts.push(brokenAttachmentBlock(it, wrap, 'تعذّر قراءة صفحات الـ PDF.'));
+                        continue;
+                    }
                     urls.forEach((u, idx) => {
                         const showTitle = (idx === 0);
                         parts.push(`
@@ -162,7 +198,8 @@
                     });
                 }
             } catch (e) {
-                console.warn('[PrintPortfolio] embed failed:', it.name, e.message);
+                console.error('[PrintPortfolio] embed failed:', it.name, e);
+                parts.push(brokenAttachmentBlock(it, wrap, e.message || 'خطأ غير معروف'));
             }
         }
         return parts.join('\n');
