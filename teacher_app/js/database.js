@@ -195,17 +195,86 @@
         });
     }
 
+    /* Portfolio attachments are uploaded as Blobs but Supabase stores
+       the section as JSON. Walk the known file-bearing arrays, swap each
+       Blob → { file_data: dataURL, file_type } on the way out, and
+       reconstruct the Blob on the way in. */
+    const PORTFOLIO_FILE_FIELDS = ['certificates', 'schedules', 'extras'];
+
+    async function encodeItemFile(item) {
+        if (item && item.file instanceof Blob) {
+            const dataUrl = await blobToDataURL(item.file);
+            const out = Object.assign({}, item);
+            out.file = null;
+            out.file_data = dataUrl;
+            out.file_type = item.file.type || 'application/octet-stream';
+            return out;
+        }
+        return item;
+    }
+
+    function decodeItemFile(item) {
+        if (item && typeof item.file_data === 'string' && item.file_data.startsWith('data:')) {
+            try {
+                const [meta, b64] = item.file_data.split(',');
+                const mime = (meta.match(/data:([^;]+)/) || [])[1] || item.file_type || 'application/octet-stream';
+                const bin  = atob(b64);
+                const buf  = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                const out = Object.assign({}, item);
+                out.file = new Blob([buf], { type: mime });
+                return out;
+            } catch (e) {
+                return item;
+            }
+        }
+        return item;
+    }
+
+    async function encodePortfolioFiles(portfolio) {
+        const out = Object.assign({}, portfolio);
+        for (const f of PORTFOLIO_FILE_FIELDS) {
+            if (Array.isArray(out[f])) {
+                out[f] = await Promise.all(out[f].map(encodeItemFile));
+            }
+        }
+        if (Array.isArray(out.custom_sections)) {
+            out.custom_sections = await Promise.all(out.custom_sections.map(async (sec) => {
+                const items = Array.isArray(sec.items)
+                    ? await Promise.all(sec.items.map(encodeItemFile))
+                    : [];
+                return Object.assign({}, sec, { items });
+            }));
+        }
+        return out;
+    }
+
+    function decodePortfolioFiles(portfolio) {
+        const out = Object.assign({}, portfolio);
+        for (const f of PORTFOLIO_FILE_FIELDS) {
+            if (Array.isArray(out[f])) out[f] = out[f].map(decodeItemFile);
+        }
+        if (Array.isArray(out.custom_sections)) {
+            out.custom_sections = out.custom_sections.map((sec) => Object.assign({}, sec, {
+                items: Array.isArray(sec.items) ? sec.items.map(decodeItemFile) : []
+            }));
+        }
+        return out;
+    }
+
     function portfolioIn(row) {
         if (!row) return null;
-        return Object.assign(
+        const merged = Object.assign(
             { teacher_id: row.teacher_id, updated_at: row.updated_at },
             row.data || {}
         );
+        return decodePortfolioFiles(merged);
     }
 
     async function portfolioOut(value, uid) {
         const teacher_id = value.teacher_id || uid;
-        const data = Object.assign({}, value);
+        const encoded = await encodePortfolioFiles(value);
+        const data = Object.assign({}, encoded);
         delete data.teacher_id;
         const updated_at = data.updated_at || new Date().toISOString();
         delete data.updated_at;
