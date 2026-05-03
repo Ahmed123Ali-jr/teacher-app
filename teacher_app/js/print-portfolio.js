@@ -122,16 +122,19 @@
 
     async function attachmentsBlock(items) {
         const parts = [];
-        // Each attachment block fills its own A4 page. A flex container
-        // with explicit page-sized dimensions guarantees the image scales
-        // to fit instead of being broken across pages.
-        const pageWrap = 'display:flex; flex-direction:column; align-items:center; '
-                       + 'justify-content:center; width:100%; height:265mm; '
-                       + 'page-break-before:always; page-break-after:always; '
-                       + 'page-break-inside:avoid; break-inside:avoid; '
-                       + 'overflow:hidden; text-align:center;';
-        const imgStyle = 'display:block; margin:0 auto; max-width:100%; '
-                       + 'max-height:100%; width:auto; height:auto; object-fit:contain;';
+        // Each attachment starts on its own page. The wrapper has NO
+        // fixed height so it can never exceed the page; the image gets
+        // a hard mm cap that fits inside A4 (content area ≈ 261mm tall
+        // with 18mm vertical @page margins) with margin to spare.
+        const wrap = 'page-break-before:always; page-break-after:always; '
+                   + 'page-break-inside:avoid; break-inside:avoid; '
+                   + 'text-align:center;';
+        const imgStyleNoTitle = 'display:block; margin:0 auto; '
+                              + 'max-width:175mm; max-height:230mm; '
+                              + 'width:auto; height:auto; object-fit:contain;';
+        const imgStyleWithTitle = 'display:block; margin:0 auto; '
+                                + 'max-width:175mm; max-height:220mm; '
+                                + 'width:auto; height:auto; object-fit:contain;';
 
         for (const it of items) {
             if (!it.file) continue;
@@ -139,11 +142,9 @@
                 if (isImageItem(it)) {
                     const url = await blobToDataUrl(it.file);
                     parts.push(`
-                        <div class="portfolio-attachment" style="${pageWrap}">
-                            <h4 style="flex:0 0 auto; margin:0 0 3mm;">${escapeHtml(it.name)}</h4>
-                            <div style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; max-height:100%; width:100%;">
-                                <img src="${url}" alt="" style="${imgStyle}">
-                            </div>
+                        <div class="portfolio-attachment" style="${wrap}">
+                            <h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>
+                            <img src="${url}" alt="" style="${imgStyleWithTitle}">
                         </div>
                     `);
                 } else if (isPdfItem(it)) {
@@ -151,13 +152,11 @@
                     urls.forEach((u, idx) => {
                         const showTitle = (idx === 0);
                         parts.push(`
-                            <div class="portfolio-attachment" style="${pageWrap}">
+                            <div class="portfolio-attachment" style="${wrap}">
                                 ${showTitle
-                                    ? `<h4 style="flex:0 0 auto; margin:0 0 3mm;">${escapeHtml(it.name)}</h4>`
+                                    ? `<h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>`
                                     : ''}
-                                <div style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; max-height:100%; width:100%;">
-                                    <img src="${u}" alt="" style="${imgStyle}">
-                                </div>
+                                <img src="${u}" alt="" style="${showTitle ? imgStyleWithTitle : imgStyleNoTitle}">
                             </div>
                         `);
                     });
