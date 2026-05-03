@@ -122,11 +122,16 @@
 
     async function attachmentsBlock(items) {
         const parts = [];
-        // A4 content area is ~261×180mm with the existing @page margins;
-        // cap the image height so a single PDF page lands on a single
-        // printed page instead of bleeding onto the next one.
-        const imgStyle = 'max-width:100%; max-height:255mm; width:auto; height:auto; '
-                       + 'object-fit:contain; display:block; margin:0 auto;';
+        // Each attachment block fills its own A4 page. A flex container
+        // with explicit page-sized dimensions guarantees the image scales
+        // to fit instead of being broken across pages.
+        const pageWrap = 'display:flex; flex-direction:column; align-items:center; '
+                       + 'justify-content:center; width:100%; height:265mm; '
+                       + 'page-break-before:always; page-break-after:always; '
+                       + 'page-break-inside:avoid; break-inside:avoid; '
+                       + 'overflow:hidden; text-align:center;';
+        const imgStyle = 'display:block; margin:0 auto; max-width:100%; '
+                       + 'max-height:100%; width:auto; height:auto; object-fit:contain;';
 
         for (const it of items) {
             if (!it.file) continue;
@@ -134,31 +139,28 @@
                 if (isImageItem(it)) {
                     const url = await blobToDataUrl(it.file);
                     parts.push(`
-                        <div class="portfolio-attachment avoid-break"
-                             style="page-break-inside:avoid; break-inside:avoid;">
-                            <h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>
-                            <img src="${url}" alt="" style="${imgStyle} max-height:245mm;">
+                        <div class="portfolio-attachment" style="${pageWrap}">
+                            <h4 style="flex:0 0 auto; margin:0 0 3mm;">${escapeHtml(it.name)}</h4>
+                            <div style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; max-height:100%; width:100%;">
+                                <img src="${url}" alt="" style="${imgStyle}">
+                            </div>
                         </div>
-                        <div class="page-break"></div>
                     `);
                 } else if (isPdfItem(it)) {
                     const urls = await pdfToImages(it.file);
-                    if (urls.length) {
-                        urls.forEach((u, idx) => {
-                            const showTitle = (idx === 0);
-                            parts.push(`
-                                <div class="portfolio-attachment avoid-break"
-                                     style="page-break-inside:avoid; break-inside:avoid; text-align:center;">
-                                    ${showTitle
-                                        ? `<h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>`
-                                        : ''}
-                                    <img src="${u}" alt="" style="${imgStyle}${showTitle ? ' max-height:245mm;' : ''}">
+                    urls.forEach((u, idx) => {
+                        const showTitle = (idx === 0);
+                        parts.push(`
+                            <div class="portfolio-attachment" style="${pageWrap}">
+                                ${showTitle
+                                    ? `<h4 style="flex:0 0 auto; margin:0 0 3mm;">${escapeHtml(it.name)}</h4>`
+                                    : ''}
+                                <div style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; max-height:100%; width:100%;">
+                                    <img src="${u}" alt="" style="${imgStyle}">
                                 </div>
-                            `);
-                            if (idx < urls.length - 1) parts.push('<div class="page-break"></div>');
-                        });
-                        parts.push('<div class="page-break"></div>');
-                    }
+                            </div>
+                        `);
+                    });
                 }
             } catch (e) {
                 console.warn('[PrintPortfolio] embed failed:', it.name, e.message);
