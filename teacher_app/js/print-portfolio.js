@@ -24,7 +24,7 @@
     async function print(ctx) {
         const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes } = ctx;
 
-        // Preload image URLs
+        // Preload image URLs for strategy/initiative photo grids
         const imageUrls = new Map();
         const collect = (list) => {
             for (const row of list) {
@@ -41,9 +41,17 @@
         collect(initiatives);
 
         const root = ensurePrintRoot();
-        root.innerHTML = buildHtml({ teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes });
-
+        root.innerHTML = '<p style="padding:20mm; text-align:center;">⏳ جارٍ تحضير ملف الطباعة (تحويل الملفات والصور)...</p>';
         document.body.classList.add('is-printing');
+
+        try {
+            const html = await buildHtml({ teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes });
+            root.innerHTML = html;
+        } catch (e) {
+            console.error('[PrintPortfolio]', e);
+            root.innerHTML = '<p style="padding:20mm; color:red;">تعذّر تحضير الطباعة: ' + escapeHtml(e.message) + '</p>';
+        }
+
         const cleanup = () => {
             document.body.classList.remove('is-printing');
             imageUrls.forEach((_, url) => URL.revokeObjectURL(url));
@@ -51,7 +59,97 @@
         };
         global.addEventListener('afterprint', cleanup);
 
-        setTimeout(() => global.print(), 150);
+        setTimeout(() => global.print(), 200);
+    }
+
+    /* ---------- file embedding helpers ---------- */
+
+    function blobToDataUrl(blob) {
+        return new Promise((res, rej) => {
+            const fr = new FileReader();
+            fr.onload  = () => res(fr.result);
+            fr.onerror = () => rej(fr.error);
+            fr.readAsDataURL(blob);
+        });
+    }
+
+    let _pdfJsPromise = null;
+    function ensurePdfJs() {
+        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
+        if (_pdfJsPromise) return _pdfJsPromise;
+        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+        _pdfJsPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = base + 'pdf.min.js';
+            s.onload = () => {
+                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+                resolve(global.pdfjsLib);
+            };
+            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة عرض PDF.'));
+            document.head.appendChild(s);
+        });
+        return _pdfJsPromise;
+    }
+
+    async function pdfToImages(blob, maxPages) {
+        const pdfjs = await ensurePdfJs();
+        const buf = await blob.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const n = Math.min(doc.numPages, maxPages || 30);
+        const urls = [];
+        for (let i = 1; i <= n; i++) {
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            urls.push(canvas.toDataURL('image/jpeg', 0.85));
+            page.cleanup();
+        }
+        return urls;
+    }
+
+    function isImageItem(it) {
+        const f = it.file; if (!f) return false;
+        return (f.type || '').startsWith('image/') ||
+               /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(it.filename || '');
+    }
+    function isPdfItem(it) {
+        const f = it.file; if (!f) return false;
+        return f.type === 'application/pdf' || /\.pdf$/i.test(it.filename || '');
+    }
+
+    async function attachmentsBlock(items) {
+        const parts = [];
+        for (const it of items) {
+            if (!it.file) continue;
+            try {
+                if (isImageItem(it)) {
+                    const url = await blobToDataUrl(it.file);
+                    parts.push(`
+                        <div class="portfolio-attachment avoid-break">
+                            <h4>${escapeHtml(it.name)}</h4>
+                            <img src="${url}" alt="" style="max-width:100%; height:auto; display:block; margin:0 auto;">
+                        </div>
+                        <div class="page-break"></div>
+                    `);
+                } else if (isPdfItem(it)) {
+                    const urls = await pdfToImages(it.file);
+                    if (urls.length) {
+                        parts.push(`<div class="portfolio-attachment"><h4>${escapeHtml(it.name)}</h4>`);
+                        urls.forEach((u, idx) => {
+                            parts.push(`<img src="${u}" alt="" style="max-width:100%; height:auto; display:block; margin:0 auto 4mm;">`);
+                            if (idx < urls.length - 1) parts.push('<div class="page-break"></div>');
+                        });
+                        parts.push('</div><div class="page-break"></div>');
+                    }
+                }
+            } catch (e) {
+                console.warn('[PrintPortfolio] embed failed:', it.name, e.message);
+            }
+        }
+        return parts.join('\n');
     }
 
     function ensurePrintRoot() {
@@ -64,10 +162,11 @@
         return el;
     }
 
-    function buildHtml(ctx) {
+    async function buildHtml(ctx) {
         const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives } = ctx;
         const subjects = (teacher.subjects || [teacher.subject]).filter(Boolean).join('، ');
         const todayStr = formatDate(new Date().toISOString());
+        const customSections = portfolio.custom_sections || [];
 
         const parts = [];
 
@@ -106,6 +205,9 @@
                 <li>استراتيجيات التدريس (${strategies.length})</li>
                 <li>المبادرات (${initiatives.length})</li>
                 <li>صور ومرفقات إضافية (${portfolio.extras?.length || 0})</li>
+                ${customSections.map((cs) =>
+                    `<li>${escapeHtml(cs.name)} (${(cs.items || []).length})</li>`
+                ).join('')}
             </ol>
             <div class="page-break"></div>
         `);
@@ -118,6 +220,7 @@
         // 2. Certificates
         parts.push(sectionHeading(2, 'الشهادات والرخصة المهنية'));
         parts.push(fileListBlock(portfolio.certificates || []));
+        parts.push(await attachmentsBlock(portfolio.certificates || []));
         parts.push('<div class="page-break"></div>');
 
         // 3. Mission & vision
@@ -131,6 +234,7 @@
         if ((portfolio.schedules || []).length > 0) {
             parts.push('<h3 style="margin-top:8mm">ملفات مرفقة</h3>');
             parts.push(fileListBlock(portfolio.schedules));
+            parts.push(await attachmentsBlock(portfolio.schedules));
         }
         parts.push('<div class="page-break"></div>');
 
@@ -168,6 +272,16 @@
         // 10. Extras
         parts.push(sectionHeading(10, 'صور ومرفقات إضافية'));
         parts.push(fileListBlock(portfolio.extras || []));
+        parts.push(await attachmentsBlock(portfolio.extras || []));
+
+        // Custom user-defined sections
+        for (let i = 0; i < customSections.length; i++) {
+            const cs = customSections[i];
+            parts.push('<div class="page-break"></div>');
+            parts.push(sectionHeading(11 + i, (cs.icon ? cs.icon + ' ' : '') + cs.name));
+            parts.push(fileListBlock(cs.items || []));
+            parts.push(await attachmentsBlock(cs.items || []));
+        }
 
         return `<div class="print-doc portfolio-doc">${parts.join('\n')}</div>`;
     }
