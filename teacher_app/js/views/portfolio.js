@@ -48,7 +48,7 @@
 
     async function loadPortfolio(teacherId) {
         const row = await global.TeacherDB.get('portfolio', teacherId);
-        return row || {
+        const p = row || {
             teacher_id: teacherId,
             personal: {},
             mission: '',
@@ -57,6 +57,8 @@
             schedules: [],
             extras: []
         };
+        if (!Array.isArray(p.custom_sections)) p.custom_sections = [];
+        return p;
     }
 
     async function savePortfolio(portfolio) {
@@ -129,6 +131,15 @@
 
                 <div class="portfolio-sections" id="portfolio-sections">
                     ${SECTIONS.map((s) => sectionHeader(s, counts, state.openSection === s.key)).join('')}
+                    ${(portfolio.custom_sections || []).map((cs) =>
+                        customSectionHeader(cs, state.openSection === 'custom_' + cs.id)
+                    ).join('')}
+                </div>
+
+                <div style="margin-top: var(--space-4); display:flex; justify-content:flex-end;">
+                    <button class="btn btn-secondary" id="btn-add-custom-section">
+                        + إضافة قسم جديد
+                    </button>
                 </div>
             </div>
         `;
@@ -156,6 +167,9 @@
                 );
             }
         }
+
+        container.querySelector('#btn-add-custom-section')?.addEventListener('click',
+            () => openCustomSectionForm(portfolio, () => render(container)));
 
         container.querySelector('#btn-print-portfolio')?.addEventListener('click', async () => {
             await global.PrintPortfolio.print({
@@ -191,6 +205,12 @@
     }
 
     async function renderSectionBody(key, body, ctx) {
+        if (key && key.startsWith('custom_')) {
+            const id = key.slice('custom_'.length);
+            const sec = (ctx.portfolio.custom_sections || []).find((s) => s.id === id);
+            if (sec) return renderCustomSection(body, ctx, sec);
+            return;
+        }
         switch (key) {
             case 'personal':    return renderPersonal(body, ctx);
             case 'certificates':return renderFileList(body, ctx, 'certificates', 'شهادة', '🏆');
@@ -203,6 +223,209 @@
             case 'initiatives': return global.PortfolioInitiatives.render(body, ctx);
             case 'extras':      return renderFileList(body, ctx, 'extras', 'ملف', '📎');
         }
+    }
+
+    /* ---------- Custom (user-defined) sections ---------- */
+
+    function customSectionHeader(sec, open) {
+        const count = (sec.items || []).length;
+        const icon  = sec.icon || '📂';
+        return `
+            <div class="portfolio-section ${open ? 'is-open' : ''}">
+                <button class="portfolio-section-header" data-section-toggle="custom_${sec.id}">
+                    <span class="portfolio-icon">${escapeHtml(icon)}</span>
+                    <span class="portfolio-title">${escapeHtml(sec.name || 'قسم بدون اسم')}</span>
+                    <span class="badge badge-muted">${count}</span>
+                    <span class="portfolio-chev">${open ? '▼' : '◀'}</span>
+                </button>
+                <div class="portfolio-section-body" data-section-body="custom_${sec.id}" ${open ? '' : 'hidden'}></div>
+            </div>
+        `;
+    }
+
+    function renderCustomSection(body, ctx, sec) {
+        if (!Array.isArray(sec.items)) sec.items = [];
+        const items = sec.items;
+
+        body.innerHTML = `
+            <div class="flex gap-2" style="margin-bottom: var(--space-3); flex-wrap: wrap;">
+                <button class="btn btn-primary" id="cs-add">+ إضافة ملف</button>
+                <button class="btn btn-ghost btn-sm" id="cs-rename">✏️ إعادة تسمية القسم</button>
+                <button class="btn btn-ghost btn-sm" id="cs-delete">🗑️ حذف القسم</button>
+            </div>
+            <div class="file-list">
+                ${items.length === 0
+                    ? `<p class="text-muted">لا توجد ملفات بعد.</p>`
+                    : items.map((it, i) => fileCard(it, i, sec.icon || '📎')).join('')}
+            </div>
+        `;
+
+        body.querySelector('#cs-add').addEventListener('click',
+            () => openCustomItemForm(body, ctx, sec));
+
+        body.querySelector('#cs-rename').addEventListener('click',
+            () => openCustomSectionForm(ctx.portfolio, ctx.refresh, sec));
+
+        body.querySelector('#cs-delete').addEventListener('click', async () => {
+            if (!global.confirm(`حذف قسم "${sec.name}" وكل ملفاته؟`)) return;
+            const idx = ctx.portfolio.custom_sections.findIndex((s) => s.id === sec.id);
+            if (idx > -1) ctx.portfolio.custom_sections.splice(idx, 1);
+            await savePortfolio(ctx.portfolio);
+            state.openSection = 'personal';
+            global.TeacherApp.toast('تم حذف القسم.', 'info');
+            ctx.refresh();
+        });
+
+        body.querySelectorAll('[data-file-edit]').forEach((btn) => {
+            btn.addEventListener('click', () =>
+                openCustomItemForm(body, ctx, sec, Number(btn.dataset.fileEdit)));
+        });
+
+        body.querySelectorAll('[data-file-del]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const i = Number(btn.dataset.fileDel);
+                if (!global.confirm('حذف هذا الملف؟')) return;
+                items.splice(i, 1);
+                await savePortfolio(ctx.portfolio);
+                global.TeacherApp.toast('تم الحذف.', 'info');
+                renderCustomSection(body, ctx, sec);
+            });
+        });
+
+        body.querySelectorAll('[data-file-download]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const i = Number(btn.dataset.fileDownload);
+                const it = items[i];
+                if (!it.file) return;
+                const url = URL.createObjectURL(it.file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = it.filename || it.name;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+    }
+
+    function openCustomSectionForm(portfolio, refresh, existing) {
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <div class="field">
+                <label class="label">اسم القسم *</label>
+                <input class="input" id="cs-name" type="text" required
+                       placeholder="مثلاً: أنشطة طلابية، إنجازات، تدريب..."
+                       value="${existing ? escapeAttr(existing.name) : ''}">
+            </div>
+            <div class="field">
+                <label class="label">رمز / إيموجي (اختياري)</label>
+                <input class="input" id="cs-icon" type="text" maxlength="4"
+                       placeholder="📂"
+                       value="${existing ? escapeAttr(existing.icon || '') : ''}">
+            </div>
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="submit" class="btn btn-primary">${existing ? 'حفظ' : 'إضافة'}</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = form.querySelector('#cs-name').value.trim();
+            const icon = form.querySelector('#cs-icon').value.trim();
+            if (!name) return global.TeacherApp.toast('اسم القسم مطلوب.', 'warning');
+
+            if (!Array.isArray(portfolio.custom_sections)) portfolio.custom_sections = [];
+
+            if (existing) {
+                existing.name = name;
+                existing.icon = icon;
+            } else {
+                const sec = {
+                    id: 'cs_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+                    name, icon, items: []
+                };
+                portfolio.custom_sections.push(sec);
+                state.openSection = 'custom_' + sec.id;
+            }
+
+            await savePortfolio(portfolio);
+            global.Modal.close();
+            global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم إضافة القسم ✅', 'success');
+            refresh();
+        });
+
+        global.Modal.open({ title: existing ? 'تعديل القسم' : 'قسم جديد', body: form });
+    }
+
+    function openCustomItemForm(body, ctx, sec, editIndex) {
+        const existing = editIndex !== undefined ? sec.items[editIndex] : null;
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <div class="field">
+                <label class="label">الاسم *</label>
+                <input class="input" id="f-name" type="text" required
+                       placeholder="اكتب الاسم اللي تبيه..."
+                       value="${existing ? escapeAttr(existing.name) : ''}">
+            </div>
+            <div class="grid grid-2">
+                <div class="field">
+                    <label class="label">التصنيف</label>
+                    <input class="input" id="f-type" type="text"
+                           value="${existing ? escapeAttr(existing.type || '') : ''}">
+                </div>
+                <div class="field">
+                    <label class="label">التاريخ</label>
+                    <input class="input" id="f-date" type="date"
+                           value="${existing ? (existing.date || '') : ''}">
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">الملف (PDF / صورة — اختياري)</label>
+                <input class="input" id="f-file" type="file" accept=".pdf,image/*">
+                <div class="field-hint">${existing && existing.file ? 'ملف محفوظ — اختر ملفاً جديداً للاستبدال.' : ''}</div>
+            </div>
+            <div class="field">
+                <label class="label">ملاحظات</label>
+                <textarea class="textarea" id="f-notes" rows="2">${existing ? escapeHtml(existing.notes || '') : ''}</textarea>
+            </div>
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="submit" class="btn btn-primary">${existing ? 'حفظ' : 'إضافة'}</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const file = form.querySelector('#f-file').files[0];
+                const item = {
+                    id: existing?.id || ('f_' + Date.now()),
+                    name:  form.querySelector('#f-name').value.trim(),
+                    type:  form.querySelector('#f-type').value.trim(),
+                    date:  form.querySelector('#f-date').value,
+                    notes: form.querySelector('#f-notes').value.trim(),
+                    file:     existing?.file || null,
+                    filename: existing?.filename || ''
+                };
+                if (file) {
+                    if (file.size > 50 * 1024 * 1024) throw new Error('حجم الملف كبير (أقصى ~50 MB).');
+                    item.file = file;
+                    item.filename = file.name;
+                }
+
+                if (existing) sec.items[editIndex] = item;
+                else          sec.items.push(item);
+
+                await savePortfolio(ctx.portfolio);
+                global.Modal.close();
+                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
+                renderCustomSection(body, ctx, sec);
+            } catch (err) {
+                global.TeacherApp.toast(err.message, 'error');
+            }
+        });
+
+        global.Modal.open({ title: (existing ? 'تعديل ' : 'إضافة ') + 'ملف', body: form });
     }
 
     /* ---------- Personal info ---------- */
