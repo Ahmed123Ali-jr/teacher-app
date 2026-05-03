@@ -640,7 +640,7 @@
                 });
                 maxInp.addEventListener('change', () => {
                     const n = parseArabicNumber(maxInp.value);
-                    columns[i].max = (n && n > 0) ? Math.min(100, Math.round(n)) : COLUMN_TYPES[columns[i].type].default_max;
+                    columns[i].max = (n && n > 0) ? Math.min(1000, Math.round(n)) : COLUMN_TYPES[columns[i].type].default_max;
                     maxInp.value = columns[i].max;
                 });
             });
@@ -664,6 +664,27 @@
             });
 
             form.querySelector('#btn-save-cols')?.addEventListener('click', async () => {
+                // Read straight from the DOM — relying on the per-input
+                // 'change' events misses values that the user typed but
+                // never blurred out of (common on mobile: tap "تم" while
+                // the keyboard is still up → no change event fires).
+                form.querySelectorAll('.column-row').forEach((row) => {
+                    const i = Number(row.dataset.i);
+                    if (!columns[i]) return;
+                    const nameInp = row.querySelector('[data-field="name"]');
+                    const typeSel = row.querySelector('[data-field="type"]');
+                    const maxInp  = row.querySelector('[data-field="max"]');
+                    if (nameInp) columns[i].name = nameInp.value;
+                    if (typeSel) columns[i].type = typeSel.value;
+                    if (maxInp) {
+                        const n = parseArabicNumber(maxInp.value);
+                        const t = columns[i].type || 'number';
+                        columns[i].max = (n && n > 0)
+                            ? Math.min(1000, Math.round(n))
+                            : COLUMN_TYPES[t].default_max;
+                    }
+                });
+
                 const cleaned = columns
                     .map((c) => ({
                         id: c.id || genColId(),
