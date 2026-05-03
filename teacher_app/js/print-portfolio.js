@@ -122,27 +122,42 @@
 
     async function attachmentsBlock(items) {
         const parts = [];
+        // A4 content area is ~261×180mm with the existing @page margins;
+        // cap the image height so a single PDF page lands on a single
+        // printed page instead of bleeding onto the next one.
+        const imgStyle = 'max-width:100%; max-height:255mm; width:auto; height:auto; '
+                       + 'object-fit:contain; display:block; margin:0 auto;';
+
         for (const it of items) {
             if (!it.file) continue;
             try {
                 if (isImageItem(it)) {
                     const url = await blobToDataUrl(it.file);
                     parts.push(`
-                        <div class="portfolio-attachment avoid-break">
-                            <h4>${escapeHtml(it.name)}</h4>
-                            <img src="${url}" alt="" style="max-width:100%; height:auto; display:block; margin:0 auto;">
+                        <div class="portfolio-attachment avoid-break"
+                             style="page-break-inside:avoid; break-inside:avoid;">
+                            <h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>
+                            <img src="${url}" alt="" style="${imgStyle} max-height:245mm;">
                         </div>
                         <div class="page-break"></div>
                     `);
                 } else if (isPdfItem(it)) {
                     const urls = await pdfToImages(it.file);
                     if (urls.length) {
-                        parts.push(`<div class="portfolio-attachment"><h4>${escapeHtml(it.name)}</h4>`);
                         urls.forEach((u, idx) => {
-                            parts.push(`<img src="${u}" alt="" style="max-width:100%; height:auto; display:block; margin:0 auto 4mm;">`);
+                            const showTitle = (idx === 0);
+                            parts.push(`
+                                <div class="portfolio-attachment avoid-break"
+                                     style="page-break-inside:avoid; break-inside:avoid; text-align:center;">
+                                    ${showTitle
+                                        ? `<h4 style="margin:0 0 3mm; page-break-after:avoid;">${escapeHtml(it.name)}</h4>`
+                                        : ''}
+                                    <img src="${u}" alt="" style="${imgStyle}${showTitle ? ' max-height:245mm;' : ''}">
+                                </div>
+                            `);
                             if (idx < urls.length - 1) parts.push('<div class="page-break"></div>');
                         });
-                        parts.push('</div><div class="page-break"></div>');
+                        parts.push('<div class="page-break"></div>');
                     }
                 }
             } catch (e) {
