@@ -19,6 +19,7 @@
         { key: 'name',             label: 'الاسم الكامل',       type: 'text',     required: true  },
         { key: 'email',            label: 'البريد الإلكتروني',  type: 'email',    required: false },
         { key: 'school_name',      label: 'اسم المدرسة',        type: 'text',     required: true  },
+        { key: 'region',           label: 'اسم المنطقة',        type: 'text',     required: false },
         { key: 'subjects',         label: 'المواد التي تدرّسها', type: 'subjects', required: true  },
         { key: 'phone',            label: 'رقم الجوال',         type: 'tel',      required: false },
         { key: 'specialization',   label: 'التخصص',             type: 'text',     required: false },

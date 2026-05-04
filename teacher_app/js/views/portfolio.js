@@ -477,6 +477,7 @@
         const qual      =                  t.qualification    || p.qualification    || '';
         const years     = toArabicDigits(t.experience_years ?? p.experience_years ?? '');
         const school    =                  t.school_name      || p.school           || '';
+        const region    =                  t.region           || p.region           || '';
         const subjects  = Array.isArray(t.subjects) ? t.subjects.join('، ')
                         : (t.subject || '');
         const phone     = toArabicDigits(t.phone        || p.phone        || '');
@@ -491,6 +492,7 @@
             ['المؤهل',           qual],
             ['سنوات الخبرة',     years],
             ['المدرسة',          school],
+            ['المنطقة',          region],
             ['المواد',           subjects]
         ];
 

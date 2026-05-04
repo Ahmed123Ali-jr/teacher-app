@@ -158,6 +158,7 @@
         qualification:    'qualification',
         experience_years: 'experience_years',
         civil_id:         'civil_id',
+        region:           'region',
         message:          'message',
         vision:           'vision',
         photo_url:        'photo_url',

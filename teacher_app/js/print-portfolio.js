@@ -225,7 +225,7 @@
 
         // Cover
         const coverYear   = toArabicDigits(global.PrintPrefs?.academicYear || '');
-        const region      = global.PrintPrefs?.region || '';
+        const region      = teacher.region || global.PrintPrefs?.region || '';
         const teacherName = teacher.name ? 'الأستاذ ' + teacher.name : '';
         const fileNumber  = toArabicDigits(global.PrintPrefs?.fileNumber || '001');
 
@@ -392,6 +392,7 @@
         const qual      =                 teacher.qualification  || p.qualification  || '';
         const years     = toArabicDigits(teacher.experience_years ?? p.experience_years ?? '');
         const school    =                 teacher.school_name    || p.school         || '';
+        const region    =                 teacher.region         || p.region         || '';
         const subjects  = Array.isArray(teacher.subjects) ? teacher.subjects.join('، ')
                         : (teacher.subject || '');
         const phone     = toArabicDigits(teacher.phone       || p.phone       || '');
@@ -406,6 +407,7 @@
             ['المؤهل',       qual],
             ['سنوات الخبرة', years],
             ['المدرسة',      school],
+            ['المنطقة',      region],
             ['المواد',       subjects]
         ];
 
