@@ -29,12 +29,16 @@
         const p = profile || {};
         return {
             id: user.id,
-            email: user.email || '',
+            email: p.email || user.email || '',
             name: p.full_name || '',
             school_name: p.school || '',
             subject: p.subject || (Array.isArray(p.subjects) ? p.subjects[0] : '') || '',
             subjects: Array.isArray(p.subjects) ? p.subjects : [],
             phone: p.phone || '',
+            specialization:   p.specialization   || '',
+            qualification:    p.qualification    || '',
+            experience_years: p.experience_years ?? '',
+            civil_id:         p.civil_id         || '',
             photo_url: p.photo_url || '',
             message: p.message || '',
             vision: p.vision || '',
@@ -50,16 +54,21 @@
                 const cached = await global.TeacherDB.get('teachers', userId);
                 if (cached) {
                     return {
-                        id:          cached.id,
-                        full_name:   cached.full_name || cached.name || '',
-                        school:      cached.school || cached.school_name || '',
-                        subject:     cached.subject,
-                        subjects:    cached.subjects,
-                        phone:       cached.phone,
-                        photo_url:   cached.photo_url,
-                        message:     cached.message,
-                        vision:      cached.vision,
-                        created_at:  cached.created_at
+                        id:               cached.id,
+                        full_name:        cached.full_name || cached.name || '',
+                        school:           cached.school || cached.school_name || '',
+                        subject:          cached.subject,
+                        subjects:         cached.subjects,
+                        phone:            cached.phone,
+                        email:            cached.email,
+                        specialization:   cached.specialization,
+                        qualification:    cached.qualification,
+                        experience_years: cached.experience_years,
+                        civil_id:         cached.civil_id,
+                        photo_url:        cached.photo_url,
+                        message:          cached.message,
+                        vision:           cached.vision,
+                        created_at:       cached.created_at
                     };
                 }
             } catch (e) {}
