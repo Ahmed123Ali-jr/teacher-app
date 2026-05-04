@@ -673,7 +673,7 @@
 
     .print-id-inner {
         border: 0.3pt solid #C9A961;
-        padding: 8mm;
+        padding: 12mm 14mm;
     }
 
     .print-id-header {
@@ -707,7 +707,8 @@
 
     .print-id-body {
         display: flex;
-        gap: 8mm;
+        gap: 12mm;
+        padding: 4mm 0;
         align-items: flex-start;
     }
 
@@ -751,7 +752,7 @@
     }
 
     .print-id-table tr {
-        border-bottom: 0.3pt solid #E8D9A8;
+        border-bottom: 0.3pt solid #CCCCCC;
     }
 
     .print-id-table tr:last-child {
@@ -759,18 +760,20 @@
     }
 
     .print-id-label {
-        padding: 2mm 0;
+        padding: 4mm 6mm;
         font-size: 10pt;
         color: #6B6B68;
         letter-spacing: 0;
         width: 35%;
+        vertical-align: middle;
     }
 
     .print-id-value {
-        padding: 2mm 0;
+        padding: 4mm 6mm;
         font-size: 11pt;
         color: #0F2C5C;
         font-weight: 500;
+        vertical-align: middle;
     }
 
     .print-id-value-empty {
@@ -779,7 +782,7 @@
 
     .print-id-footer {
         margin-top: 6mm;
-        padding-top: 4mm;
+        padding-top: 5mm;
         border-top: 1pt solid #C9A961;
         display: flex;
         justify-content: space-between;
