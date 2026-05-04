@@ -459,43 +459,93 @@
 
     /* ---------- Personal info ---------- */
 
+    /* Convert Western digits (0-9) to Arabic-Indic digits (٠-٩). */
+    function toArabicDigits(s) {
+        if (s === null || s === undefined || s === '') return '';
+        const map = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        return String(s).replace(/[0-9]/g, (d) => map[+d]);
+    }
+
     function renderPersonal(body, ctx) {
         const t = ctx.teacher;
         const p = ctx.portfolio.personal || {};
-        // Single source of truth = the teacher record. Legacy portfolio.personal
-        // values are shown as fallback when the teacher record hasn't been updated yet.
+
+        // Source-of-truth = teacher record; legacy portfolio.personal as fallback.
+        const fullName  = t.name           || p.full_name      || '';
+        const civilId   = toArabicDigits(t.civil_id     || p.civil_id     || '');
+        const specialty =                  t.specialization   || p.specialization   || '';
+        const qual      =                  t.qualification    || p.qualification    || '';
+        const years     = toArabicDigits(t.experience_years ?? p.experience_years ?? '');
+        const school    =                  t.school_name      || p.school           || '';
+        const subjects  = Array.isArray(t.subjects) ? t.subjects.join('، ')
+                        : (t.subject || '');
+        const phone     = toArabicDigits(t.phone        || p.phone        || '');
+        const email     =                  t.email        || p.email        || '';
+
+        const displayName = fullName ? 'الأستاذ ' + fullName : '';
+
         const rows = [
-            ['الاسم الكامل',     t.name         || p.full_name],
-            ['التخصص',           t.specialization   || p.specialization],
-            ['المؤهل العلمي',    t.qualification    || p.qualification],
-            ['سنوات الخبرة',     t.experience_years || p.experience_years],
-            ['المدرسة الحالية',  t.school_name  || p.school],
-            ['رقم السجل المدني', t.civil_id         || p.civil_id],
-            ['رقم الجوال',       t.phone        || p.phone],
-            ['البريد الإلكتروني',t.email        || p.email],
-            ['المواد',           Array.isArray(t.subjects) ? t.subjects.join('، ') : (t.subject || '')]
+            ['الاسم رباعي',      displayName],
+            ['رقم الهوية',       civilId],
+            ['التخصص',           specialty],
+            ['المؤهل',           qual],
+            ['سنوات الخبرة',     years],
+            ['المدرسة',          school],
+            ['المواد',           subjects]
         ];
 
+        const cell = (val) => val
+            ? `<td class="pf-id-value">${escapeHtml(val)}</td>`
+            : `<td class="pf-id-value pf-id-value-empty">—</td>`;
+
+        const photoBox = (t.photo instanceof Blob)
+            ? `<img src="${URL.createObjectURL(t.photo)}" alt="">`
+            : `<div class="pf-id-photo-empty"></div>`;
+
         body.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
+            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
                 💡 هذه البيانات تُدار من <a href="#/profile">الملف التعريفي</a>.
                 أي تعديل هناك يظهر هنا تلقائياً.
             </p>
 
-            <table class="info-table-compact">
-                <tbody>
-                    ${rows.map(([label, value]) => `
-                        <tr>
-                            <th>${label}</th>
-                            <td>${value ? escapeHtml(String(value)) : '<span class="text-muted">—</span>'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            <div class="pf-id-card">
+                <div class="pf-id-inner">
+                    <div class="pf-id-header">
+                        <div class="pf-id-country">— المملكة العربية السعودية —</div>
+                        <h3 class="pf-id-title">البـطـاقـة الـشـخـصـيـة</h3>
+                        <div class="pf-id-subtitle">للمعلم</div>
+                    </div>
 
-            <a href="#/profile" class="btn btn-secondary" style="margin-top: var(--space-4);">
-                ✏️ تعديل من الملف التعريفي
-            </a>
+                    <div class="pf-id-body">
+                        <div class="pf-id-photo-wrap">
+                            <div class="pf-id-photo">${photoBox}</div>
+                            <div class="pf-id-photo-label">الصورة الشخصية</div>
+                        </div>
+
+                        <table class="pf-id-table">
+                            <tbody>
+                                ${rows.map(([label, value]) => `
+                                    <tr>
+                                        <td class="pf-id-label">${label}</td>
+                                        ${cell(value)}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pf-id-footer">
+                        <span>📞 ${phone ? escapeHtml(phone) : '—'}</span>
+                        <span>✉️ ${email ? escapeHtml(email) : '—'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top: var(--space-5);">
+                <a href="#/profile" class="btn btn-secondary">
+                    ✏️ تعديل من الملف التعريفي
+                </a>
+            </div>
         `;
     }
 

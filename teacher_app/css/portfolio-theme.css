@@ -203,3 +203,157 @@ a {
 a:hover {
     color: var(--pf-gold);
 }
+
+/* ==========================================================================
+   Personal info — Government-style ID card
+   ========================================================================== */
+#view-portfolio .pf-id-card {
+    background: var(--pf-white);
+    padding: 8px;
+    border: 1px solid var(--pf-gold);
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+#view-portfolio .pf-id-inner {
+    border: 0.5px solid var(--pf-gold);
+    padding: 28px;
+}
+
+#view-portfolio .pf-id-header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--pf-royal);
+    margin-bottom: 24px;
+}
+
+#view-portfolio .pf-id-country {
+    font-size: 11px;
+    color: var(--pf-gold);
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+}
+
+#view-portfolio .pf-id-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--pf-royal);
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+#view-portfolio .pf-id-subtitle {
+    font-size: 10px;
+    color: var(--pf-gray);
+    margin-top: 4px;
+}
+
+#view-portfolio .pf-id-body {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+#view-portfolio .pf-id-photo-wrap {
+    text-align: center;
+}
+
+#view-portfolio .pf-id-photo {
+    width: 100px;
+    height: 130px;
+    border: 1px solid var(--pf-gold);
+    padding: 4px;
+    background: var(--pf-ivory);
+    overflow: hidden;
+}
+
+#view-portfolio .pf-id-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#view-portfolio .pf-id-photo-empty {
+    width: 100%;
+    height: 100%;
+    background: var(--pf-ivory);
+}
+
+#view-portfolio .pf-id-photo-label {
+    font-size: 9px;
+    color: var(--pf-gray);
+    margin-top: 6px;
+    letter-spacing: 1px;
+}
+
+#view-portfolio .pf-id-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#view-portfolio .pf-id-table tr {
+    border-bottom: 0.5px solid var(--pf-gold-light);
+}
+
+#view-portfolio .pf-id-table tr:last-child {
+    border-bottom: none;
+}
+
+#view-portfolio .pf-id-label {
+    padding: 10px 0;
+    font-size: 11px;
+    color: var(--pf-gray);
+    letter-spacing: 1px;
+    width: 35%;
+}
+
+#view-portfolio .pf-id-value {
+    padding: 10px 0;
+    font-size: 13px;
+    color: var(--pf-royal);
+    font-weight: 500;
+}
+
+#view-portfolio .pf-id-value-empty {
+    color: #C0C0C0;
+}
+
+#view-portfolio .pf-id-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 2px solid var(--pf-gold);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--pf-gray);
+}
+
+@media (max-width: 600px) {
+    #view-portfolio .pf-id-body {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    #view-portfolio .pf-id-photo-wrap {
+        margin: 0 auto;
+    }
+
+    #view-portfolio .pf-id-photo {
+        margin: 0 auto;
+    }
+
+    #view-portfolio .pf-id-table {
+        text-align: right;
+    }
+
+    #view-portfolio .pf-id-footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+
+    #view-portfolio .pf-id-inner {
+        padding: 20px 16px;
+    }
+}
