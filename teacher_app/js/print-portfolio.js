@@ -267,7 +267,7 @@
 
         // 1. Personal
         parts.push(sectionHeading(1, 'البيانات الشخصية'));
-        parts.push(personalBlock(teacher, portfolio.personal || {}));
+        parts.push(await personalBlock(teacher, portfolio.personal || {}));
         parts.push('<div class="page-break"></div>');
 
         // 2. Certificates
@@ -348,24 +348,81 @@
         `;
     }
 
-    function personalBlock(teacher, p) {
+    function toArabicDigits(s) {
+        if (s === null || s === undefined || s === '') return '';
+        const map = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        return String(s).replace(/[0-9]/g, (d) => map[+d]);
+    }
+
+    async function personalBlock(teacher, p) {
+        const fullName  = teacher.name        || p.full_name      || '';
+        const civilId   = toArabicDigits(teacher.civil_id    || p.civil_id    || '');
+        const specialty =                 teacher.specialization || p.specialization || '';
+        const qual      =                 teacher.qualification  || p.qualification  || '';
+        const years     = toArabicDigits(teacher.experience_years ?? p.experience_years ?? '');
+        const school    =                 teacher.school_name    || p.school         || '';
+        const subjects  = Array.isArray(teacher.subjects) ? teacher.subjects.join('، ')
+                        : (teacher.subject || '');
+        const phone     = toArabicDigits(teacher.phone       || p.phone       || '');
+        const email     =                 teacher.email       || p.email       || '';
+
+        const displayName = fullName ? 'الأستاذ ' + fullName : '';
+
         const rows = [
-            ['الاسم الكامل',   p.full_name || teacher.name],
-            ['التخصص',         p.specialization],
-            ['المؤهل العلمي',  p.qualification],
-            ['سنوات الخبرة',   p.experience_years],
-            ['المدرسة الحالية', p.school || teacher.school_name],
-            ['رقم السجل المدني', p.civil_id],
-            ['رقم الجوال',     p.phone || teacher.phone],
-            ['البريد الإلكتروني', p.email || teacher.email]
-        ].filter(([, v]) => v);
+            ['الاسم رباعي',  displayName],
+            ['رقم الهوية',   civilId],
+            ['التخصص',       specialty],
+            ['المؤهل',       qual],
+            ['سنوات الخبرة', years],
+            ['المدرسة',      school],
+            ['المواد',       subjects]
+        ];
+
+        const cell = (val) => val
+            ? `<td class="print-id-value">${escapeHtml(val)}</td>`
+            : `<td class="print-id-value print-id-value-empty">—</td>`;
+
+        let photoBox = `<div class="print-id-photo-empty"></div>`;
+        if (teacher.photo instanceof Blob) {
+            try {
+                const url = await blobToDataUrl(teacher.photo);
+                photoBox = `<img src="${url}" alt="">`;
+            } catch (e) { /* keep empty */ }
+        }
 
         return `
-            <table class="info-table">
-                <tbody>
-                    ${rows.map(([k, v]) => `<tr><th>${k}</th><td>${escapeHtml(v)}</td></tr>`).join('')}
-                </tbody>
-            </table>
+            <div class="print-id-card">
+                <div class="print-id-inner">
+                    <div class="print-id-header">
+                        <div class="print-id-country">— المملكة العربية السعودية —</div>
+                        <h2 class="print-id-title">البـطـاقـة الـشـخـصـيـة</h2>
+                        <div class="print-id-subtitle">للمعلم</div>
+                    </div>
+
+                    <div class="print-id-body">
+                        <div class="print-id-photo-wrap">
+                            <div class="print-id-photo">${photoBox}</div>
+                            <div class="print-id-photo-label">الصورة الشخصية</div>
+                        </div>
+
+                        <table class="print-id-table">
+                            <tbody>
+                                ${rows.map(([label, value]) => `
+                                    <tr>
+                                        <td class="print-id-label">${label}</td>
+                                        ${cell(value)}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="print-id-footer">
+                        <span>📞 ${phone ? escapeHtml(phone) : '—'}</span>
+                        <span>✉️ ${email ? escapeHtml(email) : '—'}</span>
+                    </div>
+                </div>
+            </div>
         `;
     }
 

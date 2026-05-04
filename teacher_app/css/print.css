@@ -537,3 +537,146 @@
     }
     .print-legend strong { font-weight: 700; }
 }
+
+/* ==========================================================================
+   Force colored backgrounds and borders to print (for the ID card and any
+   themed element that relies on gold / royal-blue fills).
+   ========================================================================== */
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust:         exact !important;
+        color-adjust:               exact !important;
+    }
+}
+
+/* ==========================================================================
+   Personal info — Government-style ID card (PRINT)
+   Class names use the print-id-* prefix to avoid colliding with the
+   on-screen pf-id-* styles.
+   ========================================================================== */
+@media print {
+    .print-id-card {
+        background: #FFFFFF;
+        padding: 4mm;
+        border: 1pt solid #C9A961;
+        max-width: 170mm;
+        margin: 10mm auto;
+        page-break-inside: avoid;
+    }
+
+    .print-id-inner {
+        border: 0.3pt solid #C9A961;
+        padding: 8mm;
+    }
+
+    .print-id-header {
+        text-align: center;
+        padding-bottom: 5mm;
+        border-bottom: 1pt solid #0F2C5C;
+        margin-bottom: 6mm;
+    }
+
+    .print-id-country {
+        font-size: 9pt;
+        color: #C9A961;
+        letter-spacing: 2pt;
+        margin-bottom: 2mm;
+    }
+
+    .print-id-title {
+        font-size: 14pt;
+        font-weight: 500;
+        color: #0F2C5C;
+        margin: 0;
+        letter-spacing: 1pt;
+    }
+
+    .print-id-subtitle {
+        font-size: 8pt;
+        color: #6B6B68;
+        margin-top: 1mm;
+    }
+
+    .print-id-body {
+        display: flex;
+        gap: 8mm;
+        align-items: flex-start;
+    }
+
+    .print-id-photo-wrap {
+        flex-shrink: 0;
+        text-align: center;
+    }
+
+    .print-id-photo {
+        width: 28mm;
+        height: 36mm;
+        border: 0.3pt solid #C9A961;
+        padding: 1mm;
+        background: #F8F6F0;
+        overflow: hidden;
+    }
+
+    .print-id-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .print-id-photo-empty {
+        width: 100%;
+        height: 100%;
+        background: #F8F6F0;
+    }
+
+    .print-id-photo-label {
+        font-size: 7pt;
+        color: #6B6B68;
+        margin-top: 2mm;
+        letter-spacing: 0.5pt;
+    }
+
+    .print-id-table {
+        flex: 1;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .print-id-table tr {
+        border-bottom: 0.3pt solid #E8D9A8;
+    }
+
+    .print-id-table tr:last-child {
+        border-bottom: none;
+    }
+
+    .print-id-label {
+        padding: 2mm 0;
+        font-size: 9pt;
+        color: #6B6B68;
+        letter-spacing: 0.5pt;
+        width: 35%;
+    }
+
+    .print-id-value {
+        padding: 2mm 0;
+        font-size: 11pt;
+        color: #0F2C5C;
+        font-weight: 500;
+    }
+
+    .print-id-value-empty {
+        color: #C0C0C0;
+    }
+
+    .print-id-footer {
+        margin-top: 6mm;
+        padding-top: 4mm;
+        border-top: 1pt solid #C9A961;
+        display: flex;
+        justify-content: space-between;
+        font-size: 9pt;
+        color: #6B6B68;
+    }
+}
