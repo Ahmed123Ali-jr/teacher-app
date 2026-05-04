@@ -408,7 +408,7 @@
             ['سنوات الخبرة', years],
             ['المدرسة',      school],
             ['المنطقة',      region],
-            ['المواد',       subjects]
+            ['مواد التدريس', subjects]
         ];
 
         const cell = (val) => val
