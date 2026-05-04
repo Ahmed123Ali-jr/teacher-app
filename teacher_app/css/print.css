@@ -790,3 +790,84 @@
         color: #6B6B68;
     }
 }
+
+/* ==========================================================================
+   Section dividers — full-page B/W introduction before each section
+   ========================================================================== */
+@media print {
+    .section-divider {
+        background: #FFFFFF;
+        padding: 4mm;
+        border: 1pt solid #000000;
+        max-width: 170mm;
+        min-height: 250mm;
+        margin: 10mm auto;
+        page-break-before: always;
+        page-break-after:  always;
+    }
+
+    .section-divider-inner {
+        border: 0.5pt solid #000000;
+        padding: 12mm 14mm;
+        min-height: calc(250mm - 24mm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .section-divider-header {
+        font-size: 11pt;
+        color: #555555;
+        margin-bottom: 60mm;
+    }
+
+    .section-divider-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .section-divider-tag {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5mm;
+        margin-bottom: 10mm;
+    }
+
+    .section-divider-line {
+        display: inline-block;
+        width: 20mm;
+        height: 0.5pt;
+        background: #000000;
+    }
+
+    .section-divider-tag-text {
+        font-size: 10pt;
+        color: #1A1A1A;
+    }
+
+    .section-divider-title {
+        font-size: 28pt;
+        font-weight: 600;
+        color: #000000;
+        margin: 0 0 8mm;
+        line-height: 1.3;
+        max-width: 140mm;
+    }
+
+    .section-divider-bottom-line {
+        width: 20mm;
+        height: 1pt;
+        background: #000000;
+        margin: 8mm 0 6mm;
+    }
+
+    .section-divider-page-num {
+        font-size: 10pt;
+        color: #555555;
+    }
+}

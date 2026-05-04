@@ -302,17 +302,20 @@
         parts.push('<div class="page-break"></div>');
 
         // 2. Certificates
+        parts.push(sectionDivider('الشهادات والرخص المهنية', 2));
         parts.push(sectionHeading(2, 'الشهادات والرخصة المهنية'));
         parts.push(fileListBlock(portfolio.certificates || []));
         parts.push(await attachmentsBlock(portfolio.certificates || []));
         parts.push('<div class="page-break"></div>');
 
         // 3. Mission & vision
+        parts.push(sectionDivider('الرسالة والرؤية', 3));
         parts.push(sectionHeading(3, 'الرسالة والرؤية'));
         parts.push(missionBlock(portfolio));
         parts.push('<div class="page-break"></div>');
 
         // 4. Schedules (classes summary + uploaded files)
+        parts.push(sectionDivider('الجداول وتوزيع المنهج', 4));
         parts.push(sectionHeading(4, 'الجداول وتوزيع المنهج'));
         parts.push(classesSummaryBlock(ctx.classes || []));
         if ((portfolio.schedules || []).length > 0) {
@@ -323,19 +326,23 @@
         parts.push('<div class="page-break"></div>');
 
         // 5-7. Auto sections
+        parts.push(sectionDivider('الاختبارات', 5));
         parts.push(sectionHeading(5, 'الاختبارات'));
         parts.push(autoListBlock(exams, 'exam'));
         parts.push('<div class="page-break"></div>');
 
+        parts.push(sectionDivider('أوراق العمل', 6));
         parts.push(sectionHeading(6, 'أوراق العمل'));
         parts.push(autoListBlock(worksheets, 'worksheet'));
         parts.push('<div class="page-break"></div>');
 
+        parts.push(sectionDivider('الواجبات', 7));
         parts.push(sectionHeading(7, 'الواجبات'));
         parts.push(autoListBlock(homework, 'homework'));
         parts.push('<div class="page-break"></div>');
 
         // 8. Strategies (with reports)
+        parts.push(sectionDivider('استراتيجيات التدريس', 8));
         parts.push(sectionHeading(8, 'استراتيجيات التدريس'));
         if (strategies.length === 0) parts.push('<p class="text-muted">لا توجد استراتيجيات.</p>');
         else strategies.forEach((s, i) => {
@@ -345,6 +352,7 @@
         parts.push('<div class="page-break"></div>');
 
         // 9. Initiatives (with reports)
+        parts.push(sectionDivider('المبادرات', 9));
         parts.push(sectionHeading(9, 'المبادرات'));
         if (initiatives.length === 0) parts.push('<p class="text-muted">لا توجد مبادرات.</p>');
         else initiatives.forEach((s, i) => {
@@ -354,6 +362,7 @@
         parts.push('<div class="page-break"></div>');
 
         // 10. Extras
+        parts.push(sectionDivider('مرفقات إضافية', 10));
         parts.push(sectionHeading(10, 'صور ومرفقات إضافية'));
         parts.push(fileListBlock(portfolio.extras || []));
         parts.push(await attachmentsBlock(portfolio.extras || []));
@@ -375,6 +384,34 @@
             <div class="portfolio-section-heading">
                 <div class="section-number">${n}</div>
                 <h2>${title}</h2>
+            </div>
+        `;
+    }
+
+    const SECTION_ORDER_AR = [
+        '', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس',
+        'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'
+    ];
+
+    /** Build a full-page divider that introduces a section. */
+    function sectionDivider(sectionTitle, sectionNumber) {
+        const order = SECTION_ORDER_AR[sectionNumber] || '';
+        const num   = toArabicDigits(sectionNumber);
+        return `
+            <div class="section-divider">
+                <div class="section-divider-inner">
+                    <div class="section-divider-header">— ملف الإنجاز المهني —</div>
+                    <div class="section-divider-body">
+                        <div class="section-divider-tag">
+                            <span class="section-divider-line"></span>
+                            <span class="section-divider-tag-text">القسم ${order}</span>
+                            <span class="section-divider-line"></span>
+                        </div>
+                        <h1 class="section-divider-title">${escapeHtml(sectionTitle)}</h1>
+                        <div class="section-divider-bottom-line"></div>
+                        <div class="section-divider-page-num">${num} / ١٠</div>
+                    </div>
+                </div>
             </div>
         `;
     }
