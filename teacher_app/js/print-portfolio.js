@@ -224,19 +224,50 @@
         const parts = [];
 
         // Cover
+        const coverYear   = toArabicDigits(global.PrintPrefs?.academicYear || '');
+        const region      = global.PrintPrefs?.region || '';
+        const teacherName = teacher.name ? 'الأستاذ ' + teacher.name : '';
+        const fileNumber  = toArabicDigits(global.PrintPrefs?.fileNumber || '001');
+
         parts.push(`
-            <div class="portfolio-cover">
-                ${global.PrintPrefs?.logoDataUrl
-                    ? `<img class="cover-logo" src="${global.PrintPrefs.logoDataUrl}" alt="">`
-                    : '<div class="cover-ornament">🎓</div>'}
-                <h1 class="cover-title">ملف الإنجاز المهني</h1>
-                <div class="cover-sub">${escapeHtml(teacher.name)}</div>
-                <div class="cover-meta">
-                    <div>${escapeHtml(teacher.school_name)}</div>
-                    <div>${escapeHtml(subjects)}</div>
-                    <div>العام الدراسي: ${escapeHtml(global.PrintPrefs?.academicYear || new Date().getFullYear())}</div>
-                    <div>التاريخ: ${todayStr}</div>
-                    ${global.PrintPrefs?.principal ? `<div>مدير المدرسة: ${escapeHtml(global.PrintPrefs.principal)}</div>` : ''}
+            <div class="cover-page">
+                <div class="cover-inner">
+
+                    <div class="cover-header">
+                        <div class="cover-country">— المملكة العربية السعودية —</div>
+                        <div class="cover-ministry">وزارة التعليم</div>
+                        ${region ? `<div class="cover-region">إدارة التعليم بمنطقة ${escapeHtml(region)}</div>` : ''}
+                    </div>
+
+                    <div class="cover-body">
+                        ${global.PrintPrefs?.logoDataUrl
+                            ? `<img class="cover-logo" src="${global.PrintPrefs.logoDataUrl}" alt="">`
+                            : '<div class="cover-logo">🎓</div>'}
+
+                        <div class="cover-title-frame-outer">
+                            <div class="cover-title-frame-inner">
+                                <h1 class="cover-title">ملف الإنجاز المهني</h1>
+                            </div>
+                        </div>
+
+                        <div class="cover-divider">
+                            <span class="cover-divider-line"></span>
+                            <span class="cover-divider-text">للمعلم</span>
+                            <span class="cover-divider-line"></span>
+                        </div>
+
+                        <div class="cover-teacher-name">${escapeHtml(teacherName)}</div>
+
+                        <div class="cover-school-info">
+                            <div class="cover-school">${escapeHtml(teacher.school_name || '')}</div>
+                            ${coverYear ? `<div class="cover-year">العام الدراسي ${escapeHtml(coverYear)} هـ</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="cover-footer">
+                        <span>رقم الملف: ${escapeHtml(fileNumber)}</span>
+                    </div>
+
                 </div>
             </div>
             <div class="page-break"></div>
