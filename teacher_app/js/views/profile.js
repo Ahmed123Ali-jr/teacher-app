@@ -17,7 +17,7 @@
 
     const FIELDS = [
         { key: 'name',             label: 'الاسم الكامل',       type: 'text',     required: true  },
-        { key: 'email',            label: 'البريد الإلكتروني',  type: 'email',    required: true  },
+        { key: 'email',            label: 'البريد الإلكتروني',  type: 'email',    required: false },
         { key: 'school_name',      label: 'اسم المدرسة',        type: 'text',     required: true  },
         { key: 'subjects',         label: 'المواد التي تدرّسها', type: 'subjects', required: true  },
         { key: 'phone',            label: 'رقم الجوال',         type: 'tel',      required: false },
