@@ -578,18 +578,19 @@
     }
 
     .print-id-country {
-        font-size: 9pt;
+        font-size: 10pt;
+        font-weight: 500;
         color: #C9A961;
-        letter-spacing: 2pt;
+        letter-spacing: 0;
         margin-bottom: 2mm;
     }
 
     .print-id-title {
-        font-size: 14pt;
-        font-weight: 500;
+        font-size: 16pt;
+        font-weight: 700;
         color: #0F2C5C;
         margin: 0;
-        letter-spacing: 1pt;
+        letter-spacing: 0;
     }
 
     .print-id-subtitle {
@@ -631,10 +632,10 @@
     }
 
     .print-id-photo-label {
-        font-size: 7pt;
+        font-size: 8pt;
         color: #6B6B68;
         margin-top: 2mm;
-        letter-spacing: 0.5pt;
+        letter-spacing: 0;
     }
 
     .print-id-table {
@@ -653,9 +654,9 @@
 
     .print-id-label {
         padding: 2mm 0;
-        font-size: 9pt;
+        font-size: 10pt;
         color: #6B6B68;
-        letter-spacing: 0.5pt;
+        letter-spacing: 0;
         width: 35%;
     }
 

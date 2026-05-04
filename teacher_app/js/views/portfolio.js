@@ -512,7 +512,7 @@
                 <div class="pf-id-inner">
                     <div class="pf-id-header">
                         <div class="pf-id-country">— المملكة العربية السعودية —</div>
-                        <h3 class="pf-id-title">البـطـاقـة الـشـخـصـيـة</h3>
+                        <h3 class="pf-id-title">البطاقة الشخصية</h3>
                         <div class="pf-id-subtitle">للمعلم</div>
                     </div>
 

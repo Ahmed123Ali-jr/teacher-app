@@ -395,7 +395,7 @@
                 <div class="print-id-inner">
                     <div class="print-id-header">
                         <div class="print-id-country">— المملكة العربية السعودية —</div>
-                        <h2 class="print-id-title">البـطـاقـة الـشـخـصـيـة</h2>
+                        <h2 class="print-id-title">البطاقة الشخصية</h2>
                         <div class="print-id-subtitle">للمعلم</div>
                     </div>
 

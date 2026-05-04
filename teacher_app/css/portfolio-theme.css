@@ -228,18 +228,19 @@ a:hover {
 }
 
 #view-portfolio .pf-id-country {
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--pf-gold);
-    letter-spacing: 4px;
+    letter-spacing: 0;
     margin-bottom: 8px;
 }
 
 #view-portfolio .pf-id-title {
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 20px;
+    font-weight: 700;
     color: var(--pf-royal);
     margin: 0;
-    letter-spacing: 2px;
+    letter-spacing: 0;
 }
 
 #view-portfolio .pf-id-subtitle {
@@ -281,10 +282,10 @@ a:hover {
 }
 
 #view-portfolio .pf-id-photo-label {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--pf-gray);
     margin-top: 6px;
-    letter-spacing: 1px;
+    letter-spacing: 0;
 }
 
 #view-portfolio .pf-id-table {
@@ -302,9 +303,9 @@ a:hover {
 
 #view-portfolio .pf-id-label {
     padding: 10px 0;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--pf-gray);
-    letter-spacing: 1px;
+    letter-spacing: 0;
     width: 35%;
 }
 
