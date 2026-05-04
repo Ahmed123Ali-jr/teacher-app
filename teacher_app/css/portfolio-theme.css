@@ -1,18 +1,16 @@
 /* ==========================================================================
-   portfolio-theme.css — Royal/Gold theme scoped to ملف الإنجاز.
-   Affects ONLY #view-portfolio. The rest of the app keeps the standard
-   tech-blue identity.
+   portfolio-theme.css — Royal/Gold theme applied app-wide.
+   Originally scoped to ملف الإنجاز, now promoted to the global identity.
 
    Mechanism:
-     • The portfolio screen redeclares the design tokens (--primary,
-       --bg, --border, …) inside #view-portfolio. Any nested rule that
-       reads those tokens automatically picks up the royal palette.
-     • Element-specific overrides (badges, header gradient, etc.) are
-       added below where the global rules use hardcoded RGBA values
-       that won't change just by retargeting the variables.
+     • :root re-declares the design tokens (--primary, --bg, --border, …)
+       with the royal palette. Every rule across the app that reads
+       those tokens automatically picks up the new look.
+     • Element-specific rules below override hardcoded RGBA values
+       (badges) and add the gold-leaf accents on portfolio elements.
    ========================================================================== */
 
-#view-portfolio {
+:root {
     /* ---------- raw palette ---------- */
     --pf-royal:        #0F2C5C;   /* الأزرق الملكي */
     --pf-royal-light:  #1A3A6E;
@@ -23,7 +21,7 @@
     --pf-gray:         #6B6B68;
     --pf-white:        #FFFFFF;
 
-    /* ---------- override the app-wide design tokens locally ---------- */
+    /* ---------- override the app-wide design tokens ---------- */
     --primary:         var(--pf-royal);
     --primary-light:   var(--pf-royal-light);
     --primary-dark:    var(--pf-royal);
@@ -35,8 +33,9 @@
     --text-muted:      var(--pf-gray);
     --border:          var(--pf-gold-light);
     --border-strong:   var(--pf-gold);
+}
 
-    /* a soft ivory backdrop for the whole portfolio screen */
+body {
     background: var(--pf-ivory);
 }
 
@@ -87,69 +86,70 @@
 }
 
 /* ==========================================================================
-   Accordion sections
+   Accordion sections (portfolio-only)
    ========================================================================== */
-#view-portfolio .portfolio-section {
+.portfolio-section {
     background: var(--pf-white);
     border: 1px solid var(--pf-gold-light);
     transition: border-color var(--dur-fast) var(--ease),
                 box-shadow var(--dur-fast) var(--ease);
 }
-#view-portfolio .portfolio-section:hover {
+.portfolio-section:hover {
     border-color: var(--pf-gold);
     box-shadow: 0 2px 8px rgba(201, 169, 97, 0.18);
 }
-#view-portfolio .portfolio-section.is-open {
+.portfolio-section.is-open {
     border-color: var(--pf-gold);
     box-shadow: 0 4px 12px rgba(201, 169, 97, 0.22);
 }
-#view-portfolio .portfolio-section-header:hover {
+.portfolio-section-header:hover {
     background: var(--pf-ivory);
 }
-#view-portfolio .portfolio-section-body {
+.portfolio-section-body {
     background: var(--pf-ivory);
     border-top: 1px solid var(--pf-gold-light);
 }
-#view-portfolio .portfolio-title {
+.portfolio-title {
     color: var(--pf-royal);
 }
-#view-portfolio .portfolio-section.is-open .portfolio-chev {
+.portfolio-section.is-open .portfolio-chev {
     color: var(--pf-gold);
 }
 
 /* ==========================================================================
-   Portfolio cards (strategies, initiatives) and file cards
+   Generic cards (strategies, initiatives, file cards) — applied app-wide
    ========================================================================== */
-#view-portfolio .portfolio-card,
-#view-portfolio .file-card,
-#view-portfolio .auto-item {
+.portfolio-card,
+.file-card,
+.auto-item {
     background: var(--pf-white);
     border: 1px solid var(--pf-gold-light);
     transition: border-color var(--dur-fast) var(--ease);
 }
-#view-portfolio .portfolio-card:hover,
-#view-portfolio .file-card:hover {
+.portfolio-card:hover,
+.file-card:hover {
     border-color: var(--pf-gold);
 }
-#view-portfolio .portfolio-card-header h4 {
+.portfolio-card-header h4 {
     color: var(--pf-royal);
 }
-#view-portfolio .file-name {
+.file-name {
     color: var(--pf-charcoal);
 }
 
 /* ==========================================================================
    Badges — override the hardcoded rgba() values from components.css
+   (applied app-wide so the visual identity stays consistent)
    ========================================================================== */
-#view-portfolio .badge-info {
+.badge-info {
     background: rgba(15, 44, 92, 0.10);
     color: var(--pf-royal);
 }
-#view-portfolio .badge-warning {
+.badge-warning {
     background: var(--pf-gold-light);
     color: #8C7027;                /* darker gold for legibility on light bg */
 }
-#view-portfolio .badge-muted {
+.badge-muted {
     background: var(--pf-ivory);
     color: var(--pf-charcoal);
     border: 1px solid var(--pf-gold-light);
@@ -157,35 +157,35 @@
 /* badge-success keeps its green for clarity */
 
 /* ==========================================================================
-   Buttons inside portfolio
+   Buttons (app-wide — royal primary, gold-bordered secondary)
    ========================================================================== */
-#view-portfolio .btn-primary {
+.btn-primary {
     background: var(--pf-royal);
     border-color: var(--pf-royal);
     color: var(--pf-white);
 }
-#view-portfolio .btn-primary:hover {
+.btn-primary:hover {
     background: var(--pf-royal-light);
     border-color: var(--pf-royal-light);
 }
-#view-portfolio .btn-secondary {
+.btn-secondary {
     background: var(--pf-white);
     border-color: var(--pf-gold);
     color: var(--pf-royal);
 }
-#view-portfolio .btn-secondary:hover {
+.btn-secondary:hover {
     background: var(--pf-gold-light);
 }
-#view-portfolio .btn-ghost {
+.btn-ghost {
     color: var(--pf-royal);
 }
-#view-portfolio .btn-ghost:hover {
+.btn-ghost:hover {
     background: var(--pf-gold-light);
     color: var(--pf-royal);
 }
 
 /* ==========================================================================
-   Tables (info-table-compact in personal section)
+   Tables (portfolio personal section) — gold-trimmed
    ========================================================================== */
 #view-portfolio .info-table-compact th,
 #view-portfolio .info-table-compact td {
@@ -197,9 +197,9 @@
 }
 
 /* Anchors */
-#view-portfolio a {
+a {
     color: var(--pf-royal);
 }
-#view-portfolio a:hover {
+a:hover {
     color: var(--pf-gold);
 }
