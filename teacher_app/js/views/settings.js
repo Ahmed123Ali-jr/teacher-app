@@ -271,7 +271,7 @@
                 break;
             case 'usage':
                 title = '🤖 استهلاك الذكاء الاصطناعي';
-                body = usageBody(await global.AI.getUsage());
+                body = await usageBodyAsync();
                 bindFn = bindUsage;
                 break;
             case 'backup':
@@ -571,11 +571,42 @@
         `;
     }
 
-    function usageBody(usage) {
-        const cost = global.AI.estimateCost(usage);
-        if (usage.calls === 0) return '<p class="text-muted" style="margin:0;">لم يتم استخدام الذكاء الاصطناعي بعد.</p>';
+    async function usageBodyAsync() {
+        const usage  = await global.AI.getUsage();
+        const cost   = global.AI.estimateCost(usage);
+        const apiKey = (await global.AI.getApiKey()) || '';
+        const masked = apiKey
+            ? apiKey.slice(0, 14) + '…' + apiKey.slice(-6)
+            : '';
+
+        const keyCard = `
+            <div class="card" style="background: var(--surface-alt); margin-bottom: var(--space-5);">
+                <h3 style="margin:0 0 var(--space-3); font-size: var(--fs-lg);">🔑 مفتاح Anthropic API</h3>
+                <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
+                    لازم تضع المفتاح هنا قبل ما تستخدم ميزات الذكاء الاصطناعي (توليد الاختبارات، استيراد الجدول، إلخ).
+                </p>
+                ${apiKey ? `
+                    <div style="font-family: ui-monospace, monospace; padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-3);">
+                        ${masked}
+                    </div>
+                ` : ''}
+                <div class="field">
+                    <label class="label">${apiKey ? 'استبدال المفتاح' : 'لصق المفتاح'}</label>
+                    <input class="input" id="ai-api-key" type="password"
+                           placeholder="sk-ant-api03-..." autocomplete="off">
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="btn-save-api-key">💾 حفظ المفتاح</button>
+                    ${apiKey ? '<button class="btn btn-ghost" id="btn-remove-api-key">🗑️ حذف</button>' : ''}
+                </div>
+            </div>
+        `;
+
+        if (usage.calls === 0) {
+            return keyCard + '<p class="text-muted" style="margin:0;">لم يتم استخدام الذكاء الاصطناعي بعد.</p>';
+        }
         const entries = Object.entries(usage.byKind || {});
-        return `
+        return keyCard + `
             <div class="grid grid-2" style="margin-bottom: var(--space-4);">
                 ${miniStat('🔢', usage.calls, 'طلبات')}
                 ${miniStat('💵', '$' + cost.usd.toFixed(3), '~' + cost.sar.toFixed(2) + ' ر.س')}
@@ -602,6 +633,28 @@
         `;
     }
     function bindUsage(container) {
+        container.querySelector('#btn-save-api-key')?.addEventListener('click', async () => {
+            const inp = container.querySelector('#ai-api-key');
+            const val = (inp?.value || '').trim();
+            if (!val) return global.TeacherApp.toast('الصق المفتاح أولاً.', 'warning');
+            if (!/^sk-ant-/.test(val)) {
+                if (!global.confirm('المفتاح لا يبدأ بـ "sk-ant-". هل أنت متأكد من حفظه؟')) return;
+            }
+            try {
+                await global.AI.setApiKey(val);
+                global.TeacherApp.toast('تم حفظ المفتاح ✅', 'success');
+                await render(container);
+            } catch (err) {
+                global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error');
+            }
+        });
+        container.querySelector('#btn-remove-api-key')?.addEventListener('click', async () => {
+            if (!global.confirm('حذف مفتاح Anthropic API؟ ميزات الذكاء الاصطناعي ستتوقف.')) return;
+            await global.AI.setApiKey(null);
+            global.TeacherApp.toast('تم الحذف.', 'info');
+            await render(container);
+        });
+
         container.querySelector('#btn-reset-usage')?.addEventListener('click', async () => {
             if (!global.confirm('تصفير عدّاد استهلاك الذكاء الاصطناعي؟')) return;
             await global.AI.clearUsage();
