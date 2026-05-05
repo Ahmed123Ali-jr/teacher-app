@@ -304,7 +304,10 @@
 
         // 2. Certificates — one elegant full-page card per cert
         parts.push(sectionDivider('الشهادات والرخص المهنية', 2));
-        parts.push(await certCardsBlock(portfolio.certificates || []));
+        parts.push(await fileHeroBlock(portfolio.certificates || [], {
+            counterLabel: 'شهادة',
+            emptyMsg:     'لا توجد شهادات.'
+        }));
 
         // 3. Mission & vision
         parts.push(sectionDivider('الرسالة والرؤية', 3));
@@ -312,16 +315,14 @@
         parts.push(missionBlock(portfolio));
         parts.push('<div class="page-break"></div>');
 
-        // 4. Schedules (classes summary + uploaded files)
+        // 4. Schedules — classes overview + a hero card per uploaded file
         parts.push(sectionDivider('الجداول وتوزيع المنهج', 4));
         parts.push(sectionHeading(4, 'الجداول وتوزيع المنهج'));
         parts.push(classesSummaryBlock(ctx.classes || []));
-        if ((portfolio.schedules || []).length > 0) {
-            parts.push('<h3 style="margin-top:8mm">ملفات مرفقة</h3>');
-            parts.push(fileListBlock(portfolio.schedules));
-            parts.push(await attachmentsBlock(portfolio.schedules));
-        }
-        parts.push('<div class="page-break"></div>');
+        parts.push(await fileHeroBlock(portfolio.schedules || [], {
+            counterLabel: 'ملف',
+            emptyMsg:     ''   // hide the empty-state line when no files
+        }));
 
         // 5-7. Auto sections
         parts.push(sectionDivider('الاختبارات', 5));
@@ -377,15 +378,21 @@
         return `<div class="print-doc portfolio-doc">${parts.join('\n')}</div>`;
     }
 
-    /** Build one full-page card per certificate with its image embedded. */
-    async function certCardsBlock(certs) {
-        if (!certs.length) {
-            return `<p class="text-muted" style="padding:10mm; text-align:center;">لا توجد شهادات.</p>`;
+    /** Build one full-page card per file (cert / schedule / etc.) with its
+     *  image embedded. Used by sections that want each upload to occupy a
+     *  whole printed page in the cert-card style. */
+    async function fileHeroBlock(items, opts) {
+        opts = opts || {};
+        const counterLabel = opts.counterLabel || 'شهادة';
+        const emptyMsg     = opts.emptyMsg     || 'لا توجد ملفات.';
+        if (!items.length) {
+            if (!emptyMsg) return '';
+            return `<p class="text-muted" style="padding:10mm; text-align:center;">${escapeHtml(emptyMsg)}</p>`;
         }
-        const total = certs.length;
+        const total = items.length;
         const parts = [];
-        for (let i = 0; i < certs.length; i++) {
-            const c = certs[i];
+        for (let i = 0; i < items.length; i++) {
+            const c = items[i];
             const idx = i + 1;
             // Resolve the hero image: image → dataURL, PDF → first page rendered.
             let heroSrc = '';
@@ -416,7 +423,7 @@
                 <div class="cert-card">
                     <div class="cert-card-inner">
                         <div class="cert-card-header">
-                            <div class="cert-card-counter">شهادة رقم ${toArabicDigits(idx)} من ${toArabicDigits(total)}</div>
+                            <div class="cert-card-counter">${escapeHtml(counterLabel)} رقم ${toArabicDigits(idx)} من ${toArabicDigits(total)}</div>
                             <h2 class="cert-card-title">${escapeHtml(c.name || 'بدون اسم')}</h2>
                         </div>
                         <div class="cert-hero">${heroHtml}</div>
