@@ -872,49 +872,35 @@
 }
 
 /* ==========================================================================
-   Mission / Vision / Goals — stacked icon cards
+   Mission / Vision / Goals — centered quotes
    ========================================================================== */
 @media print {
-    .mission-card {
-        display: flex;
-        gap: 6mm;
-        padding: 6mm;
-        margin-bottom: 5mm;
-        border: 0.5pt solid #C9A961;
-        background: #FAF8F2;
-        align-items: flex-start;
+    .mission-quote {
+        text-align: center;
+        margin-bottom: 14mm;
         page-break-inside: avoid;
     }
 
-    .mission-icon {
-        flex: 0 0 18mm;
-        height: 18mm;
-        background: #0F2C5C;
-        color: #FFFFFF;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18pt;
-    }
-
-    .mission-body {
-        flex: 1;
-    }
-
-    .mission-title {
+    .mission-quote-label {
         font-size: 13pt;
+        color: #C9A961;
         font-weight: 700;
-        color: #0F2C5C;
-        margin: 0 0 3mm;
+        margin-bottom: 5mm;
     }
 
-    .mission-text {
-        font-size: 11pt;
-        line-height: 1.8;
+    .mission-quote-mark {
+        font-size: 36pt;
+        color: #C9A961;
+        line-height: 0.5;
+        margin-bottom: 3mm;
+    }
+
+    .mission-quote-text {
+        font-size: 12pt;
+        line-height: 1.9;
         color: #000000;
         margin: 0;
-        text-align: justify;
+        padding: 0 8mm;
     }
 }
 
