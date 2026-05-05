@@ -752,6 +752,14 @@
                            value="${existing ? (existing.date || '') : ''}">
                 </div>
             </div>
+            ${field === 'certificates' ? `
+                <div class="field">
+                    <label class="label">الجهة المانحة</label>
+                    <input class="input" id="f-issuer" type="text"
+                           placeholder="مثلاً: هيئة تقويم التعليم، وزارة التعليم..."
+                           value="${existing ? escapeAttr(existing.issuer || '') : ''}">
+                </div>
+            ` : ''}
             <div class="field">
                 <label class="label">الملف (PDF / صورة — اختياري)</label>
                 <input class="input" id="f-file" type="file" accept=".pdf,image/*">
@@ -779,11 +787,13 @@
                 if (!name) throw new Error('الاسم مطلوب.');
 
                 const file = form.querySelector('#f-file').files[0];
+                const issuerEl = form.querySelector('#f-issuer');
                 const item = {
                     id: existing?.id || ('f_' + Date.now()),
                     name,
                     type:  form.querySelector('#f-type').value.trim(),
                     date:  form.querySelector('#f-date').value,
+                    issuer: issuerEl ? issuerEl.value.trim() : (existing?.issuer || ''),
                     notes: form.querySelector('#f-notes').value.trim(),
                     file:     existing?.file || null,
                     filename: existing?.filename || ''

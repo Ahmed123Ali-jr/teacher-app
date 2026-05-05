@@ -872,6 +872,102 @@
 }
 
 /* ==========================================================================
+   Certificate cards — one full A4 page per certificate (gold-bordered)
+   ========================================================================== */
+@media print {
+    .cert-card {
+        background: #FFFFFF;
+        padding: 4mm;
+        border: 1pt solid #C9A961;
+        max-width: 170mm;
+        min-height: 250mm;
+        margin: 10mm auto;
+        page-break-before: always;
+        page-break-after:  always;
+        page-break-inside: avoid;
+    }
+
+    .cert-card-inner {
+        border: 0.5pt solid #C9A961;
+        padding: 12mm 12mm;
+        min-height: calc(250mm - 24mm);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cert-card-header {
+        text-align: center;
+        padding-bottom: 4mm;
+        border-bottom: 1pt solid #C9A961;
+        margin-bottom: 8mm;
+    }
+
+    .cert-card-counter {
+        font-size: 9pt;
+        color: #888888;
+        margin-bottom: 3mm;
+    }
+
+    .cert-card-title {
+        font-size: 14pt;
+        font-weight: 600;
+        color: #0F2C5C;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .cert-hero {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FAF8F2;
+        border: 0.5pt solid #E8D9A8;
+        padding: 6mm;
+        margin-bottom: 6mm;
+        min-height: 130mm;
+    }
+
+    .cert-hero-img {
+        max-width: 100%;
+        max-height: 160mm;
+        object-fit: contain;
+        border: 1pt solid #C9A961;
+    }
+
+    .cert-hero-empty {
+        font-size: 11pt;
+        color: #999999;
+    }
+
+    .cert-card-meta {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11pt;
+    }
+
+    .cert-card-meta tr {
+        border-bottom: 0.5pt solid #E8D9A8;
+    }
+
+    .cert-card-meta tr:last-child {
+        border-bottom: none;
+    }
+
+    .cert-card-meta-key {
+        padding: 3mm 5mm;
+        color: #666666;
+        width: 35%;
+    }
+
+    .cert-card-meta-val {
+        padding: 3mm 5mm;
+        color: #0F2C5C;
+        font-weight: 600;
+    }
+}
+
+/* ==========================================================================
    Section dividers — full-page B/W introduction before each section
    ========================================================================== */
 @media print {

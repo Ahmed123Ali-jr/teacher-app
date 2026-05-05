@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>تصاميم قسم الشهادات</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    body { margin:0; padding:30px; background:#e5e5e5; font-family:Tajawal,system-ui,sans-serif; }
+    h2 { text-align:center; margin:0 0 12px; }
+    .row { display:flex; gap:30px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+    .page { width:180mm; height:261mm; background:#fff; box-shadow:0 4px 18px rgba(0,0,0,.15); direction:rtl; }
+</style>
+</head>
+<body>
+<div class="row">
+    <!-- A — Table with thumbnails -->
+    <div>
+        <h2>أ — جدول مع صور صغيرة</h2>
+        <div class="page" style="padding:4mm; border:1pt solid #000;">
+            <div style="border:0.5pt solid #000; padding:14mm 12mm; height:calc(100% - 28mm); box-sizing:border-box;">
+                <div style="text-align:center; padding-bottom:5mm; border-bottom:1pt solid #000; margin-bottom:10mm;">
+                    <div style="font-size:11pt; color:#555; margin-bottom:3mm;">— ملف الإنجاز المهني —</div>
+                    <h1 style="font-size:20pt; font-weight:700; color:#000; margin:0;">الشهادات والرخص المهنية</h1>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:10pt;">
+                    <thead>
+                        <tr style="background:#0F2C5C; color:#fff;">
+                            <th style="padding:3mm; border:0.5pt solid #0F2C5C; width:8mm;">م</th>
+                            <th style="padding:3mm; border:0.5pt solid #0F2C5C; width:24mm;">الصورة</th>
+                            <th style="padding:3mm; border:0.5pt solid #0F2C5C; text-align:right;">اسم الشهادة</th>
+                            <th style="padding:3mm; border:0.5pt solid #0F2C5C; width:20mm;">النوع</th>
+                            <th style="padding:3mm; border:0.5pt solid #0F2C5C; width:24mm;">التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rowsA"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- B — Per-cert hero card -->
+    <div>
+        <h2>ب — صفحة لكل شهادة + الصورة</h2>
+        <div class="page" style="padding:4mm; border:1pt solid #C9A961;">
+            <div style="border:0.5pt solid #C9A961; padding:14mm 12mm; height:calc(100% - 28mm); display:flex; flex-direction:column; box-sizing:border-box;">
+                <div style="text-align:center; padding-bottom:4mm; border-bottom:1pt solid #C9A961; margin-bottom:8mm;">
+                    <div style="font-size:10pt; color:#888;">شهادة رقم ١ من ٤</div>
+                    <h2 style="font-size:14pt; color:#0F2C5C; margin:3mm 0 0; font-weight:600;">رخصة المعلم — مستوى ممارس</h2>
+                </div>
+                <div style="flex:1; display:flex; align-items:center; justify-content:center; background:#FAF8F2; border:0.5pt solid #E8D9A8; padding:8mm; margin-bottom:6mm;">
+                    <img id="heroImg" style="max-width:100%; max-height:160mm; object-fit:contain; border:1pt solid #C9A961;">
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:11pt;">
+                    <tr><td style="padding:3mm 5mm; border-bottom:0.5pt solid #E8D9A8; color:#666; width:35%;">النوع</td>
+                        <td style="padding:3mm 5mm; border-bottom:0.5pt solid #E8D9A8; color:#0F2C5C; font-weight:600;">رخصة</td></tr>
+                    <tr><td style="padding:3mm 5mm; border-bottom:0.5pt solid #E8D9A8; color:#666;">الجهة المانحة</td>
+                        <td style="padding:3mm 5mm; border-bottom:0.5pt solid #E8D9A8; color:#0F2C5C; font-weight:600;">هيئة تقويم التعليم</td></tr>
+                    <tr><td style="padding:3mm 5mm; color:#666;">التاريخ</td>
+                        <td style="padding:3mm 5mm; color:#0F2C5C; font-weight:600;">٢٠٢٤/٠١/١٥</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- C — Gallery grid -->
+    <div>
+        <h2>ج — معرض شبكي (٤ في صفحة)</h2>
+        <div class="page" style="padding:4mm; border:1pt solid #000;">
+            <div style="border:0.5pt solid #000; padding:14mm 12mm; height:calc(100% - 28mm); box-sizing:border-box;">
+                <div style="text-align:center; padding-bottom:5mm; border-bottom:1pt solid #000; margin-bottom:8mm;">
+                    <div style="font-size:11pt; color:#555; margin-bottom:3mm;">— ملف الإنجاز المهني —</div>
+                    <h1 style="font-size:20pt; font-weight:700; color:#000; margin:0;">الشهادات والرخص المهنية</h1>
+                </div>
+                <div id="galleryC" style="display:grid; grid-template-columns:1fr 1fr; gap:6mm;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const certs = [
+    { name: 'رخصة المعلم — مستوى ممارس', type: 'رخصة',  date: '٢٠٢٤/٠١/١٥' },
+    { name: 'دورة استراتيجيات التدريس',    type: 'دورة',  date: '٢٠٢٣/١١/٠٢' },
+    { name: 'شهادة TOEFL',                 type: 'شهادة',date: '٢٠٢٣/٠٦/١٠' },
+    { name: 'دبلوم تقنيات التعليم',        type: 'دبلوم',date: '٢٠٢٢/٠٩/٠١' }
+];
+function makeImg(title, subtitle, w=220, h=280) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    x.fillStyle = '#FAF8F2'; x.fillRect(0, 0, w, h);
+    x.strokeStyle = '#C9A961'; x.lineWidth = 4; x.strokeRect(8, 8, w-16, h-16);
+    x.lineWidth = 1; x.strokeRect(14, 14, w-28, h-28);
+    x.fillStyle = '#0F2C5C'; x.direction = 'rtl'; x.textAlign = 'center';
+    x.font = 'bold 16px Tajawal,sans-serif'; x.fillText('شهادة', w/2, 50);
+    x.font = '14px Tajawal,sans-serif'; x.fillStyle = '#555'; x.fillText(title, w/2, 130);
+    x.font = '11px Tajawal,sans-serif'; x.fillStyle = '#888'; x.fillText(subtitle, w/2, 160);
+    x.fillStyle = '#C9A961';
+    x.beginPath(); x.arc(w/2, h-60, 24, 0, Math.PI*2); x.fill();
+    x.fillStyle = '#fff'; x.font = 'bold 14px Tajawal,sans-serif'; x.fillText('★', w/2, h-56);
+    return c.toDataURL();
+}
+const s1 = makeImg('رخصة المعلم', 'مستوى ممارس');
+const s2 = makeImg('TOEFL', 'iBT 95');
+
+document.getElementById('rowsA').innerHTML = certs.map((c, i) => `
+    <tr style="background:${i % 2 ? '#FAF8F2' : '#fff'};">
+        <td style="padding:3mm; border:0.5pt solid #C9A961; text-align:center; font-weight:700; color:#0F2C5C;">${'١٢٣٤'[i]}</td>
+        <td style="padding:2mm; border:0.5pt solid #C9A961; text-align:center;">
+            <img src="${i % 2 ? s2 : s1}" style="width:18mm; height:23mm; object-fit:cover; border:0.5pt solid #C9A961;">
+        </td>
+        <td style="padding:3mm 4mm; border:0.5pt solid #C9A961;">${c.name}</td>
+        <td style="padding:3mm; border:0.5pt solid #C9A961; text-align:center;">${c.type}</td>
+        <td style="padding:3mm; border:0.5pt solid #C9A961; text-align:center;">${c.date}</td>
+    </tr>
+`).join('');
+
+document.getElementById('heroImg').src = makeImg('رخصة المعلم', 'مستوى ممارس', 600, 760);
+
+document.getElementById('galleryC').innerHTML = certs.map((c, i) => `
+    <div style="border:0.5pt solid #C9A961; padding:5mm; text-align:center; background:#FAFAFA;">
+        <img src="${i % 2 ? s2 : s1}" style="width:100%; height:60mm; object-fit:cover; border:0.5pt solid #C9A961; margin-bottom:4mm;">
+        <div style="font-size:11pt; color:#0F2C5C; font-weight:700; margin-bottom:2mm; min-height:11mm;">${c.name}</div>
+        <div style="font-size:9pt; color:#666;">${c.type} · ${c.date}</div>
+    </div>
+`).join('');
+</script>
+</body>
+</html>

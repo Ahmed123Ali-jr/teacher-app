@@ -302,12 +302,9 @@
         parts.push(await personalBlock(teacher, portfolio.personal || {}));
         parts.push('<div class="page-break"></div>');
 
-        // 2. Certificates
+        // 2. Certificates — one elegant full-page card per cert
         parts.push(sectionDivider('الشهادات والرخص المهنية', 2));
-        parts.push(sectionHeading(2, 'الشهادات والرخصة المهنية'));
-        parts.push(fileListBlock(portfolio.certificates || []));
-        parts.push(await attachmentsBlock(portfolio.certificates || []));
-        parts.push('<div class="page-break"></div>');
+        parts.push(await certCardsBlock(portfolio.certificates || []));
 
         // 3. Mission & vision
         parts.push(sectionDivider('الرسالة والرؤية', 3));
@@ -378,6 +375,66 @@
         }
 
         return `<div class="print-doc portfolio-doc">${parts.join('\n')}</div>`;
+    }
+
+    /** Build one full-page card per certificate with its image embedded. */
+    async function certCardsBlock(certs) {
+        if (!certs.length) {
+            return `<p class="text-muted" style="padding:10mm; text-align:center;">لا توجد شهادات.</p>`;
+        }
+        const total = certs.length;
+        const parts = [];
+        for (let i = 0; i < certs.length; i++) {
+            const c = certs[i];
+            const idx = i + 1;
+            // Resolve the hero image: image → dataURL, PDF → first page rendered.
+            let heroSrc = '';
+            if (hasUsableBlob(c)) {
+                try {
+                    if (isImageItem(c)) {
+                        heroSrc = await blobToDataUrl(c.file);
+                    } else if (isPdfItem(c)) {
+                        const urls = await pdfToImages(c.file, 1);
+                        heroSrc = urls[0] || '';
+                    }
+                } catch (e) {
+                    console.warn('[PrintPortfolio] cert image failed:', c.name, e.message);
+                }
+            }
+
+            const heroHtml = heroSrc
+                ? `<img src="${heroSrc}" alt="" class="cert-hero-img">`
+                : `<div class="cert-hero-empty">لا توجد صورة مرفقة</div>`;
+
+            const rows = [];
+            if (c.type)   rows.push(['النوع', c.type]);
+            if (c.issuer) rows.push(['الجهة المانحة', c.issuer]);
+            if (c.date)   rows.push(['التاريخ', formatDate(c.date)]);
+            if (c.notes)  rows.push(['ملاحظات', c.notes]);
+
+            parts.push(`
+                <div class="cert-card">
+                    <div class="cert-card-inner">
+                        <div class="cert-card-header">
+                            <div class="cert-card-counter">شهادة رقم ${toArabicDigits(idx)} من ${toArabicDigits(total)}</div>
+                            <h2 class="cert-card-title">${escapeHtml(c.name || 'بدون اسم')}</h2>
+                        </div>
+                        <div class="cert-hero">${heroHtml}</div>
+                        ${rows.length ? `
+                            <table class="cert-card-meta">
+                                ${rows.map(([k, v]) => `
+                                    <tr>
+                                        <td class="cert-card-meta-key">${escapeHtml(k)}</td>
+                                        <td class="cert-card-meta-val">${escapeHtml(v)}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        ` : ''}
+                    </div>
+                </div>
+            `);
+        }
+        return parts.join('\n');
     }
 
     function sectionHeading(n, title) {
