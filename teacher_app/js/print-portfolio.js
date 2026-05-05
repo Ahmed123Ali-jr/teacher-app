@@ -595,17 +595,24 @@
     }
 
     function missionBlock(portfolio) {
-        const items = [
-            ['الرسالة', portfolio.mission],
-            ['الرؤية', portfolio.vision],
-            ['الأهداف المهنية', portfolio.goals]
-        ].filter(([, v]) => v && v.trim());
+        const cards = [
+            { icon: '✉️', title: 'الرسالة',         text: portfolio.mission },
+            { icon: '🎯', title: 'الرؤية',          text: portfolio.vision  },
+            { icon: '🚩', title: 'الأهداف المهنية', text: portfolio.goals   }
+        ].filter((c) => c.text && c.text.trim());
 
-        if (items.length === 0) return '<p class="text-muted">لم يتم تعبئة الرسالة والرؤية بعد.</p>';
+        if (cards.length === 0) {
+            return '<p class="text-muted">لم يتم تعبئة الرسالة والرؤية بعد.</p>';
+        }
 
-        return items.map(([title, text]) => `
-            <h3>${title}</h3>
-            <p>${escapeHtml(text).split('\n').join('<br>')}</p>
+        return cards.map((c) => `
+            <div class="mission-card">
+                <div class="mission-icon">${c.icon}</div>
+                <div class="mission-body">
+                    <h3 class="mission-title">${escapeHtml(c.title)}</h3>
+                    <p class="mission-text">${escapeHtml(c.text).split('\n').join('<br>')}</p>
+                </div>
+            </div>
         `).join('');
     }
 
