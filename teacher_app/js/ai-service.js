@@ -562,6 +562,60 @@ ${opts.notes ? `ملاحظات خاصة من المعلم: ${opts.notes}` : ''}
         };
     }
 
+    /** Read a weekly-schedule image with Claude vision and return cells.
+     *  classes: list of teacher's classes — used so the model can map
+     *  visible class labels back to real class_id values. */
+    async function extractScheduleFromImage({ imageBase64, mediaType, classes, periodCount }) {
+        const list = (classes || []).map((c) =>
+            `- id: ${c.id} | الصف: ${c.grade} | الشعبة: ${c.section} | المادة: ${c.subject}`
+        ).join('\n') || '(لا توجد فصول مسجّلة)';
+
+        const system = `أنت مساعد لقراءة الجداول الدراسية المدرسية للمعلمين العرب.
+الأيام: الأحد=0 الاثنين=1 الثلاثاء=2 الأربعاء=3 الخميس=4
+أرقام الحصص من 1 إلى ${periodCount || 7}
+
+فصول المعلم المتاحة:
+${list}
+
+لكل خانة في الجدول، حدّد:
+- day (0-4)
+- period (1-N)
+- class_id  (يجب أن يكون من القائمة أعلاه؛ التقط أفضل تطابق)
+- topic     (الموضوع/الدرس إن وُجد، نص قصير)
+
+إذا الخانة لفصل غير موجود في القائمة، اجعل "unmatched": true وضع وصف نصي في class_text.
+
+أخرج JSON فقط دون أي شرح:
+{"cells":[
+  {"day":0,"period":1,"class_id":"<uuid>","topic":""},
+  {"day":1,"period":2,"unmatched":true,"class_text":"الأول/أ — رياضيات","topic":""}
+]}`;
+
+        const user = [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
+            { type: 'text',  text: 'استخرج جدول الحصص من الصورة المرفقة وأعد JSON فقط حسب الشكل في التعليمات.' }
+        ];
+
+        const text = await callClaude({
+            system, user,
+            maxTokens: 4000,
+            temperature: 0.2,
+            kind: 'schedule_import'
+        });
+
+        let json;
+        try {
+            const cleaned = String(text || '')
+                .replace(/^```(?:json)?\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+            json = JSON.parse(cleaned);
+        } catch (e) {
+            throw new Error('لم أتمكن من قراءة استجابة الذكاء الاصطناعي.');
+        }
+        return Array.isArray(json.cells) ? json.cells : [];
+    }
+
     global.AI = {
         getApiKey, setApiKey, hasApiKey,
         getModel, setModel,
@@ -569,6 +623,7 @@ ${opts.notes ? `ملاحظات خاصة من المعلم: ${opts.notes}` : ''}
         generateExam, regenerateQuestion, generateWorksheet,
         generateStrategyReport, generateInitiativeReport,
         generateMissionVision,
+        extractScheduleFromImage,
         getUsage, clearUsage, estimateCost, PRICES,
         DEFAULT_MODEL
     };

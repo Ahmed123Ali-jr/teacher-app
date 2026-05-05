@@ -61,6 +61,7 @@
                         </h2>
                     </div>
                     <div class="flex gap-2">
+                        <button class="btn btn-secondary" id="btn-import-schedule">📷 استيراد من صورة/PDF</button>
                         <button class="btn btn-ghost" id="btn-times">⏰ توقيت الحصص</button>
                         <button class="btn btn-ghost" id="btn-clear-all">🗑️ مسح الكل</button>
                     </div>
@@ -164,6 +165,162 @@
             global.TeacherApp.toast('تم المسح.', 'info');
             await render(container);
         });
+
+        container.querySelector('#btn-import-schedule')?.addEventListener('click', () => {
+            openImportDialog(ctx, container);
+        });
+    }
+
+    /* ==========================================================================
+       Import from image/PDF — Claude vision reads the schedule and fills it.
+       ========================================================================== */
+
+    let _pdfJsPromise = null;
+    function ensurePdfJs() {
+        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
+        if (_pdfJsPromise) return _pdfJsPromise;
+        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+        _pdfJsPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = base + 'pdf.min.js';
+            s.onload = () => {
+                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+                resolve(global.pdfjsLib);
+            };
+            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة عرض PDF.'));
+            document.head.appendChild(s);
+        });
+        return _pdfJsPromise;
+    }
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload  = () => resolve(fr.result);
+            fr.onerror = () => reject(fr.error);
+            fr.readAsDataURL(blob);
+        });
+    }
+
+    /** Convert any uploaded file into { base64, mediaType } that Claude
+     *  vision can ingest. PDFs are rendered to JPEG via PDF.js. */
+    async function fileToImageBase64(file) {
+        const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
+        if (!isPdf) {
+            const dataUrl = await blobToDataUrl(file);
+            const [meta, b64] = dataUrl.split(',');
+            const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
+            return { base64: b64, mediaType };
+        }
+        const pdfjs = await ensurePdfJs();
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const page = await doc.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' };
+    }
+
+    function openImportDialog(ctx, container) {
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
+                ارفع صورة أو ملف PDF لجدولك الأسبوعي وسيقرأه الذكاء الاصطناعي ويعبّيه في الجدول تلقائياً.
+            </p>
+            <p style="color:#B45309; font-size: var(--fs-sm); margin-bottom: var(--space-4);">
+                ⚠️ سيستبدل الجدول الحالي بالكامل.
+            </p>
+            <div class="field">
+                <label class="label">الملف</label>
+                <input class="input" id="import-file" type="file" accept=".pdf,image/*" required>
+                <div class="field-hint">يفضّل صورة واضحة عالية الدقة لجدولك.</div>
+            </div>
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="submit" class="btn btn-primary">📥 استيراد</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = form.querySelector('#import-file').files[0];
+            if (!file) return;
+
+            if (!(await global.AI.hasApiKey())) {
+                return global.TeacherApp.toast(
+                    'مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.',
+                    'warning', 5000
+                );
+            }
+            if (ctx.classes.length === 0) {
+                return global.TeacherApp.toast(
+                    'أضف فصولك من الشاشة الرئيسية أولاً ليتمكن الذكاء الاصطناعي من مطابقتها.',
+                    'warning', 5000
+                );
+            }
+            // Cap input size for safety
+            if (file.size > 20 * 1024 * 1024) {
+                return global.TeacherApp.toast('الملف كبير جداً (أقصى 20MB).', 'warning');
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const orig = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ جارٍ القراءة...';
+
+            try {
+                const { base64, mediaType } = await fileToImageBase64(file);
+                const cells = await global.AI.extractScheduleFromImage({
+                    imageBase64: base64,
+                    mediaType,
+                    classes: ctx.classes,
+                    periodCount: ctx.periods.length
+                });
+
+                const validIds = new Set(ctx.classes.map((c) => c.id));
+                const matched = cells.filter((c) =>
+                    !c.unmatched && c.class_id && validIds.has(c.class_id)
+                    && Number.isInteger(c.day)    && c.day    >= 0 && c.day    <= 4
+                    && Number.isInteger(c.period) && c.period >= 1 && c.period <= ctx.periods.length
+                );
+                const unmatched = cells.length - matched.length;
+
+                if (matched.length === 0) {
+                    throw new Error('لم يستطع الذكاء الاصطناعي قراءة أي حصة من الصورة.');
+                }
+
+                // Replace existing schedule
+                for (const row of ctx.schedule) {
+                    await global.TeacherDB.remove('schedule', row.id);
+                }
+                for (const c of matched) {
+                    await global.TeacherDB.add('schedule', {
+                        teacher_id: ctx.teacher.id,
+                        day: c.day,
+                        period: c.period,
+                        class_id: c.class_id,
+                        topic: (c.topic || '').toString().trim()
+                    });
+                }
+
+                global.Modal.close();
+                const msg = `تم استيراد ${matched.length} حصة ✅`
+                    + (unmatched > 0 ? ` · تم تجاهل ${unmatched} لم تتطابق مع فصولك.` : '');
+                global.TeacherApp.toast(msg, 'success', 5000);
+                await render(container);
+            } catch (err) {
+                console.error('[schedule] import failed:', err);
+                global.TeacherApp.toast('تعذّر الاستيراد: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);
+                submitBtn.disabled = false;
+                submitBtn.textContent = orig;
+            }
+        });
+
+        global.Modal.open({ title: '📷 استيراد جدول من صورة/PDF', body: form });
     }
 
     function openCellEditor(day, period, ctx, container) {
