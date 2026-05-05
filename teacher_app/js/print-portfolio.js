@@ -22,7 +22,8 @@
     }
 
     async function print(ctx) {
-        const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes } = ctx;
+        const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives,
+                classes, scheduleRows, periodTimes } = ctx;
 
         // Preload image URLs for strategy/initiative photo grids
         const imageUrls = new Map();
@@ -45,7 +46,7 @@
         document.body.classList.add('is-printing');
 
         try {
-            const html = await buildHtml({ teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes });
+            const html = await buildHtml({ teacher, portfolio, exams, worksheets, homework, strategies, initiatives, classes, scheduleRows, periodTimes });
             root.innerHTML = html;
         } catch (e) {
             console.error('[PrintPortfolio]', e);
@@ -215,8 +216,77 @@
         return el;
     }
 
+    const SCHEDULE_DAYS = [
+        { index: 0, label: 'الأحد' },
+        { index: 1, label: 'الاثنين' },
+        { index: 2, label: 'الثلاثاء' },
+        { index: 3, label: 'الأربعاء' },
+        { index: 4, label: 'الخميس' }
+    ];
+    const DEFAULT_PERIODS = [
+        { n: 1, start: '07:00', end: '07:45' },
+        { n: 2, start: '07:45', end: '08:30' },
+        { n: 3, start: '08:30', end: '09:15' },
+        { n: 4, start: '09:45', end: '10:30' },
+        { n: 5, start: '10:30', end: '11:15' },
+        { n: 6, start: '11:15', end: '12:00' },
+        { n: 7, start: '12:00', end: '12:45' }
+    ];
+
+    /** Render the teacher's weekly schedule as a printable grid.
+     *  Pulls the schedule rows and period times from the saved data — no
+     *  manual upload required. */
+    function weeklyScheduleBlock(scheduleRows, periodTimes, classes) {
+        const periods = (Array.isArray(periodTimes) && periodTimes.length)
+            ? periodTimes : DEFAULT_PERIODS;
+        const rows = Array.isArray(scheduleRows) ? scheduleRows : [];
+        if (!rows.length) return '';
+
+        const grid = {};
+        for (let d = 0; d < SCHEDULE_DAYS.length; d++) grid[d] = {};
+        for (const r of rows) {
+            if (grid[r.day]) grid[r.day][r.period] = r;
+        }
+        const classById = Object.fromEntries((classes || []).map((c) => [c.id, c]));
+
+        return `
+            <h3 class="weekly-schedule-title">📅 الجدول الأسبوعي</h3>
+            <table class="weekly-schedule">
+                <thead>
+                    <tr>
+                        <th class="weekly-period-col">الحصة</th>
+                        ${SCHEDULE_DAYS.map((d) => `<th>${escapeHtml(d.label)}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${periods.map((p) => `
+                        <tr>
+                            <td class="weekly-period-col">
+                                <div class="weekly-period-n">الحصة ${escapeHtml(toArabicDigits(p.n))}</div>
+                                <div class="weekly-period-time">${escapeHtml(toArabicDigits(p.start))} — ${escapeHtml(toArabicDigits(p.end))}</div>
+                            </td>
+                            ${SCHEDULE_DAYS.map((d) => {
+                                const cell = grid[d.index]?.[p.n];
+                                const cls  = cell ? classById[cell.class_id] : null;
+                                if (!cell || !cls) {
+                                    return `<td class="weekly-cell weekly-cell-empty"></td>`;
+                                }
+                                return `<td class="weekly-cell">
+                                    <div class="weekly-cell-grade">${escapeHtml(cls.grade || '')} / ${escapeHtml(cls.section || '')}</div>
+                                    <div class="weekly-cell-subject">${escapeHtml(cls.subject || '')}</div>
+                                    ${cell.topic ? `<div class="weekly-cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
+                                </td>`;
+                            }).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
     async function buildHtml(ctx) {
-        const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives } = ctx;
+        const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives,
+                scheduleRows, periodTimes } = ctx;
         const subjects = (teacher.subjects || [teacher.subject]).filter(Boolean).join('، ');
         const todayStr = formatDate(new Date().toISOString());
         const customSections = portfolio.custom_sections || [];
@@ -315,13 +385,20 @@
         parts.push(missionBlock(portfolio));
         parts.push('<div class="page-break"></div>');
 
-        // 4. Schedules — classes overview + a hero card per uploaded file
+        // 4. Schedules — classes overview + auto weekly grid + per-file cards
         parts.push(sectionDivider('الجداول وتوزيع المنهج', 4));
         parts.push(sectionHeading(4, 'الجداول وتوزيع المنهج'));
         parts.push(classesSummaryBlock(ctx.classes || []));
+
+        const weekly = weeklyScheduleBlock(scheduleRows, periodTimes, ctx.classes || []);
+        if (weekly) {
+            parts.push('<div class="page-break"></div>');
+            parts.push(weekly);
+        }
+
         parts.push(await fileHeroBlock(portfolio.schedules || [], {
             counterLabel: 'ملف',
-            emptyMsg:     ''   // hide the empty-state line when no files
+            emptyMsg:     ''
         }));
 
         // 5-7. Auto sections

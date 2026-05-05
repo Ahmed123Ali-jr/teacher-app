@@ -872,6 +872,83 @@
 }
 
 /* ==========================================================================
+   Weekly schedule grid — auto-rendered from saved schedule rows
+   ========================================================================== */
+@media print {
+    .weekly-schedule-title {
+        font-size: 13pt;
+        color: #0F2C5C;
+        font-weight: 700;
+        margin: 0 0 5mm;
+        padding-top: 6mm;
+        border-top: 0.5pt dashed #C9A961;
+    }
+
+    .weekly-schedule {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+
+    .weekly-schedule thead th {
+        background: #0F2C5C;
+        color: #FFFFFF;
+        font-weight: 600;
+        padding: 3mm 2mm;
+        border: 0.5pt solid #0F2C5C;
+        text-align: center;
+    }
+
+    .weekly-schedule tbody td {
+        border: 0.5pt solid #C9A961;
+        padding: 3mm 2mm;
+        text-align: center;
+        vertical-align: top;
+        height: 18mm;
+    }
+
+    .weekly-period-col {
+        background: #FAF8F2;
+        width: 22mm;
+    }
+
+    .weekly-period-n {
+        font-weight: 700;
+        color: #0F2C5C;
+        font-size: 9pt;
+        margin-bottom: 1mm;
+    }
+
+    .weekly-period-time {
+        font-size: 8pt;
+        color: #666666;
+    }
+
+    .weekly-cell-grade {
+        font-weight: 700;
+        color: #0F2C5C;
+        font-size: 9pt;
+    }
+
+    .weekly-cell-subject {
+        color: #2C2C2A;
+        font-size: 9pt;
+        margin-top: 1mm;
+    }
+
+    .weekly-cell-topic {
+        color: #888888;
+        font-size: 7.5pt;
+        margin-top: 1mm;
+    }
+
+    .weekly-cell-empty {
+        background: #FAFAFA;
+    }
+}
+
+/* ==========================================================================
    Mission / Vision / Goals — centered quotes
    ========================================================================== */
 @media print {

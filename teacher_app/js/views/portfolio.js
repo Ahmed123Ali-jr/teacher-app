@@ -84,6 +84,11 @@
             homeworkAll.push(...(await global.TeacherDB.getAllByIndex('assignments', 'class_id', c.id)));
         }
 
+        // Pull weekly schedule rows + period times so the printable
+        // version can render the grid automatically.
+        const scheduleRows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+        const periodTimes  = (await global.TeacherDB.Settings.get('period_times')) || null;
+
         const counts = {
             certificates: portfolio.certificates.length,
             schedules:    portfolio.schedules.length,
@@ -175,7 +180,8 @@
             await global.PrintPortfolio.print({
                 teacher, portfolio,
                 exams: examsAll, worksheets: worksheetsAll, homework: homeworkAll,
-                strategies, initiatives, classes
+                strategies, initiatives, classes,
+                scheduleRows, periodTimes
             });
         });
     }
