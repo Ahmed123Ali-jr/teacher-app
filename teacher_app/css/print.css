@@ -438,11 +438,6 @@
         color: #555555;
     }
 
-    .toc {
-        font-size: 13pt;
-        line-height: 2.2;
-        padding-right: 10mm;
-    }
 
     .portfolio-section-heading {
         display: flex;
@@ -788,6 +783,91 @@
         justify-content: space-between;
         font-size: 9pt;
         color: #6B6B68;
+    }
+}
+
+/* ==========================================================================
+   TOC — flag-tab numbers + gold page numbers
+   ========================================================================== */
+@media print {
+    .toc-page {
+        background: #FFFFFF;
+        padding: 4mm;
+        border: 1pt solid #000000;
+        max-width: 170mm;
+        min-height: 250mm;
+        margin: 10mm auto;
+        page-break-after: always;
+    }
+
+    .toc-page-inner {
+        border: 0.5pt solid #000000;
+        padding: 14mm 12mm;
+        min-height: calc(250mm - 24mm);
+    }
+
+    .toc-header {
+        text-align: center;
+        padding-bottom: 5mm;
+        border-bottom: 1pt solid #000000;
+        margin-bottom: 10mm;
+    }
+
+    .toc-doc-title {
+        font-size: 11pt;
+        color: #555555;
+        margin-bottom: 3mm;
+    }
+
+    .toc-main-title {
+        font-size: 22pt;
+        font-weight: 700;
+        color: #000000;
+        margin: 0;
+    }
+
+    .toc-list { display: block; }
+
+    .toc-row {
+        display: flex;
+        align-items: stretch;
+        margin-bottom: 3mm;
+        min-height: 11mm;
+    }
+
+    .toc-num-tag {
+        flex: 0 0 12mm;
+        background: #0F2C5C;
+        color: #FFFFFF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13pt;
+        font-weight: 700;
+        -webkit-clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 3mm 50%);
+        clip-path:         polygon(0 0, 100% 0, 100% 100%, 0 100%, 3mm 50%);
+    }
+
+    .toc-title {
+        flex: 1 1 auto;
+        padding: 3mm 6mm;
+        display: flex;
+        align-items: center;
+        font-size: 12pt;
+        color: #000000;
+        border-bottom: 0.5pt solid #DDDDDD;
+    }
+
+    .toc-page-num {
+        flex: 0 0 14mm;
+        padding: 3mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12pt;
+        font-weight: 700;
+        color: #C9A961;
+        border-bottom: 0.5pt solid #DDDDDD;
     }
 }
 

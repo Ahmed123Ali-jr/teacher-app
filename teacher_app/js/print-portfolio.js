@@ -274,26 +274,27 @@
         `);
 
         // TOC
+        const tocEntries = calculateTocEntries({
+            portfolio, exams, worksheets, homework, strategies, initiatives, customSections
+        });
         parts.push(`
-            <div class="print-header">
-                <h1>الفهرس</h1>
+            <div class="toc-page">
+                <div class="toc-page-inner">
+                    <div class="toc-header">
+                        <div class="toc-doc-title">— ملف الإنجاز المهني —</div>
+                        <h1 class="toc-main-title">الفهرس</h1>
+                    </div>
+                    <div class="toc-list">
+                        ${tocEntries.map((e) => `
+                            <div class="toc-row">
+                                <div class="toc-num-tag">${escapeHtml(toArabicDigits(e.n))}</div>
+                                <div class="toc-title">${escapeHtml(e.title)}</div>
+                                <div class="toc-page-num">${escapeHtml(toArabicDigits(e.page))}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
-            <ol class="toc">
-                <li>البيانات الشخصية</li>
-                <li>الشهادات والرخصة المهنية (${portfolio.certificates?.length || 0})</li>
-                <li>الرسالة والرؤية</li>
-                <li>الجداول وتوزيع المنهج (${portfolio.schedules?.length || 0})</li>
-                <li>الاختبارات (${exams.length})</li>
-                <li>أوراق العمل (${worksheets.length})</li>
-                <li>الواجبات (${homework.length})</li>
-                <li>استراتيجيات التدريس (${strategies.length})</li>
-                <li>المبادرات (${initiatives.length})</li>
-                <li>صور ومرفقات إضافية (${portfolio.extras?.length || 0})</li>
-                ${customSections.map((cs) =>
-                    `<li>${escapeHtml(cs.name)} (${(cs.items || []).length})</li>`
-                ).join('')}
-            </ol>
-            <div class="page-break"></div>
         `);
 
         // 1. Personal
@@ -386,6 +387,46 @@
                 <h2>${title}</h2>
             </div>
         `;
+    }
+
+    /** Predict the start page of each portfolio section.
+     *  Layout: cover=1, TOC=2, section 1 (no divider)=3, then for each
+     *  later section: divider page (1) + content (1) + attachments (1 each).
+     *  Strategies / initiatives use one content page per item (min 1). */
+    function calculateTocEntries(ctx) {
+        const { portfolio, strategies, initiatives, customSections } = ctx;
+        const certs  = (portfolio.certificates || []).filter((c) => c.file).length;
+        const sched  = (portfolio.schedules    || []).filter((s) => s.file).length;
+        const extras = (portfolio.extras       || []).filter((e) => e.file).length;
+        const stratPages = Math.max(strategies.length, 1);
+        const initPages  = Math.max(initiatives.length, 1);
+
+        const entries = [];
+        let cur = 3;  // section 1 starts on page 3 (after cover & TOC)
+
+        const add = (n, title, contentPages, attach) => {
+            entries.push({ n, title, page: cur });
+            const divider = (n === 1) ? 0 : 1;
+            cur += divider + contentPages + attach;
+        };
+
+        add(1,  'البيانات الشخصية',         1, 0);
+        add(2,  'الشهادات والرخص المهنية',  1, certs);
+        add(3,  'الرسالة والرؤية',           1, 0);
+        add(4,  'الجداول وتوزيع المنهج',     1, sched);
+        add(5,  'الاختبارات',                1, 0);
+        add(6,  'أوراق العمل',               1, 0);
+        add(7,  'الواجبات',                  1, 0);
+        add(8,  'استراتيجيات التدريس',        stratPages, 0);
+        add(9,  'المبادرات',                 initPages, 0);
+        add(10, 'مرفقات إضافية',             1, extras);
+
+        for (const cs of (customSections || [])) {
+            const csAttach = (cs.items || []).filter((it) => it.file).length;
+            entries.push({ n: entries.length + 1, title: cs.name || 'قسم', page: cur });
+            cur += 1 + 1 + csAttach;
+        }
+        return entries;
     }
 
     const SECTION_ORDER_AR = [
