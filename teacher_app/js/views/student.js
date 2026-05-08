@@ -116,10 +116,24 @@
         });
 
         container.querySelector('#btn-save-notes')?.addEventListener('click', async () => {
-            student.notes = container.querySelector('#student-notes').value.trim();
-            student.updated_at = new Date().toISOString();
-            await global.TeacherDB.put('students', student);
-            global.TeacherApp.toast('تم حفظ الملاحظات.', 'success');
+            const btn = container.querySelector('#btn-save-notes');
+            const origLabel = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ الحفظ...';
+            try {
+                student.notes = container.querySelector('#student-notes').value.trim();
+                student.updated_at = new Date().toISOString();
+                await global.TeacherDB.put('students', student);
+                global.TeacherApp.toast('تم حفظ الملاحظات ✅', 'success', 1500);
+                // Send the teacher back to the class page (the natural "home"
+                // for student records) once the save lands.
+                global.location.hash = '#/class/' + cls.id;
+            } catch (err) {
+                console.error('[student] save notes failed:', err);
+                global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);
+                btn.disabled = false;
+                btn.textContent = origLabel;
+            }
         });
     }
 
