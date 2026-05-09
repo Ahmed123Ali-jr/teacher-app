@@ -716,14 +716,16 @@
 
         function paint() {
             form.innerHTML = `
-                <div class="filter-bar" style="margin-bottom: var(--space-5);">
+                <div class="filter-bar" style="margin-bottom: var(--space-5); flex-wrap: wrap;">
                     <button class="chip ${mode === 'paste'  ? 'active' : ''}" data-mode="paste">📋 لصق قائمة</button>
                     <button class="chip ${mode === 'manual' ? 'active' : ''}" data-mode="manual">✏️ إدخال واحد</button>
                     <button class="chip ${mode === 'csv'    ? 'active' : ''}" data-mode="csv">📄 ملف CSV</button>
+                    <button class="chip ${mode === 'image'  ? 'active' : ''}" data-mode="image">📷 PDF/صورة (AI)</button>
                 </div>
                 ${mode === 'paste'  ? pasteForm()  : ''}
                 ${mode === 'manual' ? manualForm() : ''}
                 ${mode === 'csv'    ? csvForm()    : ''}
+                ${mode === 'image'  ? imageForm()  : ''}
             `;
             form.querySelectorAll('[data-mode]').forEach((b) =>
                 b.addEventListener('click', () => { mode = b.dataset.mode; paint(); }));
@@ -751,6 +753,13 @@
                 <div class="field-hint">عمود واحد للأسماء. أول صف يُتجاهل تلقائياً إذا كان عنواناً.</div>
             </div>
             ${footer('استيراد')}`; }
+        function imageForm() { return `
+            <div class="field">
+                <label class="label">صورة أو ملف PDF لقائمة الطلاب</label>
+                <input class="input" id="image-file" type="file" accept=".pdf,image/*">
+                <div class="field-hint">سيقرأها الذكاء الاصطناعي ويستخرج الأسماء تلقائياً.</div>
+            </div>
+            ${footer('استخراج وإضافة')}`; }
         function footer(primary) { return `
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-primary" data-submit>${primary}</button>
@@ -762,6 +771,7 @@
             if (!btn) return;
             btn.addEventListener('click', async () => {
                 btn.disabled = true;
+                const origLabel = btn.textContent;
                 try {
                     let names = [];
                     if (mode === 'paste') names = parseNameList(form.querySelector('#paste-names').value);
@@ -772,6 +782,21 @@
                         const file = form.querySelector('#csv-file').files[0];
                         if (!file) throw new Error('اختر ملفاً أولاً.');
                         names = parseCSV(await file.text());
+                    } else if (mode === 'image') {
+                        const file = form.querySelector('#image-file').files[0];
+                        if (!file) throw new Error('اختر ملفاً أولاً.');
+                        if (!(await global.AI.hasApiKey())) {
+                            throw new Error('مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.');
+                        }
+                        if (file.size > 20 * 1024 * 1024) {
+                            throw new Error('الملف كبير جداً (أقصى 20MB).');
+                        }
+                        btn.textContent = '⏳ جارٍ القراءة...';
+                        const { base64, mediaType } = await fileToImageBase64(file);
+                        names = await global.AI.extractStudentNamesFromImage({
+                            imageBase64: base64,
+                            mediaType
+                        });
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
                     for (const name of names) {
@@ -789,11 +814,63 @@
                     if (panel) await renderStudents(panel, cls);
                 } catch (err) {
                     global.TeacherApp.toast(err.message, 'error');
-                } finally { btn.disabled = false; }
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = origLabel;
+                }
             });
         }
 
         global.Modal.open({ title: 'إضافة طلاب', body: form });
+    }
+
+    let _pdfJsPromise = null;
+    function ensurePdfJs() {
+        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
+        if (_pdfJsPromise) return _pdfJsPromise;
+        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+        _pdfJsPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = base + 'pdf.min.js';
+            s.onload = () => {
+                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+                resolve(global.pdfjsLib);
+            };
+            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة عرض PDF.'));
+            document.head.appendChild(s);
+        });
+        return _pdfJsPromise;
+    }
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload  = () => resolve(fr.result);
+            fr.onerror = () => reject(fr.error);
+            fr.readAsDataURL(blob);
+        });
+    }
+
+    /** Image → { base64, mediaType }. PDFs render the first page to JPEG. */
+    async function fileToImageBase64(file) {
+        const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
+        if (!isPdf) {
+            const dataUrl = await blobToDataUrl(file);
+            const [meta, b64] = dataUrl.split(',');
+            const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
+            return { base64: b64, mediaType };
+        }
+        const pdfjs = await ensurePdfJs();
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const page = await doc.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' };
     }
 
     function parseNameList(raw) {

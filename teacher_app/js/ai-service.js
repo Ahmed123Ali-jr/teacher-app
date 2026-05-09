@@ -616,6 +616,48 @@ ${list}
         return Array.isArray(json.cells) ? json.cells : [];
     }
 
+    /** Extract a clean list of Arabic student names from a roster image/PDF.
+     *  Returns string[] (names only). The model is told to drop headers,
+     *  numbers, IDs, and other roster decoration. */
+    async function extractStudentNamesFromImage({ imageBase64, mediaType }) {
+        const system = `أنت مساعد لاستخراج أسماء الطلاب من صور كشوف الفصول العربية.
+
+مهمتك: اقرأ الصورة المرفقة واستخرج فقط أسماء الطلاب، اسم في كل سطر.
+- تجاهل الترقيم، أرقام الهوية، الجنسية، تاريخ الميلاد، وأي بيانات أخرى.
+- تجاهل العناوين والترويسة وأي نص ليس اسم طالب.
+- نظّف الاسم من المسافات الزائدة لكن احتفظ به كما هو (لا تترجمه ولا تختصره).
+
+أخرج JSON فقط:
+{"names":["أحمد بن محمد","سارة بنت عبدالله", ...]}`;
+
+        const user = [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
+            { type: 'text',  text: 'استخرج أسماء الطلاب من الصورة وأعد JSON فقط حسب الشكل المطلوب.' }
+        ];
+
+        const text = await callClaude({
+            system, user,
+            maxTokens: 4000,
+            temperature: 0.1,
+            kind: 'roster_import'
+        });
+
+        let json;
+        try {
+            const cleaned = String(text || '')
+                .replace(/^```(?:json)?\s*/i, '')
+                .replace(/\s*```$/i, '')
+                .trim();
+            json = JSON.parse(cleaned);
+        } catch (e) {
+            throw new Error('لم أتمكن من قراءة استجابة الذكاء الاصطناعي.');
+        }
+        const names = Array.isArray(json.names) ? json.names : [];
+        return names
+            .map((n) => String(n || '').trim())
+            .filter((n) => n.length > 0 && n.length < 200);
+    }
+
     global.AI = {
         getApiKey, setApiKey, hasApiKey,
         getModel, setModel,
@@ -624,6 +666,7 @@ ${list}
         generateStrategyReport, generateInitiativeReport,
         generateMissionVision,
         extractScheduleFromImage,
+        extractStudentNamesFromImage,
         getUsage, clearUsage, estimateCost, PRICES,
         DEFAULT_MODEL
     };
