@@ -792,11 +792,8 @@
                             throw new Error('الملف كبير جداً (أقصى 20MB).');
                         }
                         btn.textContent = '⏳ جارٍ القراءة...';
-                        const { base64, mediaType } = await fileToImageBase64(file);
-                        names = await global.AI.extractStudentNamesFromImage({
-                            imageBase64: base64,
-                            mediaType
-                        });
+                        const pages = await fileToImagePages(file, 20);
+                        names = await global.AI.extractStudentNamesFromImage({ pages });
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
                     for (const name of names) {
@@ -851,26 +848,33 @@
         });
     }
 
-    /** Image → { base64, mediaType }. PDFs render the first page to JPEG. */
-    async function fileToImageBase64(file) {
+    /** File → array of images for Claude vision. Single image returns
+     *  one element; multi-page PDFs return one image per page (capped). */
+    async function fileToImagePages(file, maxPages) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
             const dataUrl = await blobToDataUrl(file);
             const [meta, b64] = dataUrl.split(',');
             const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
-            return { base64: b64, mediaType };
+            return [{ base64: b64, mediaType }];
         }
         const pdfjs = await ensurePdfJs();
         const buf = await file.arrayBuffer();
         const doc = await pdfjs.getDocument({ data: buf }).promise;
-        const page = await doc.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' };
+        const n = Math.min(doc.numPages, maxPages || 20);
+        const pages = [];
+        for (let i = 1; i <= n; i++) {
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            pages.push({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' });
+            page.cleanup();
+        }
+        return pages;
     }
 
     function parseNameList(raw) {

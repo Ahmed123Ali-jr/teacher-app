@@ -202,27 +202,33 @@
         });
     }
 
-    /** Convert any uploaded file into { base64, mediaType } that Claude
-     *  vision can ingest. PDFs are rendered to JPEG via PDF.js. */
-    async function fileToImageBase64(file) {
+    /** Convert any uploaded file into an array of pages Claude vision can
+     *  ingest. Single image → one element; PDFs render every page. */
+    async function fileToImagePages(file, maxPages) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
             const dataUrl = await blobToDataUrl(file);
             const [meta, b64] = dataUrl.split(',');
             const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
-            return { base64: b64, mediaType };
+            return [{ base64: b64, mediaType }];
         }
         const pdfjs = await ensurePdfJs();
         const buf = await file.arrayBuffer();
         const doc = await pdfjs.getDocument({ data: buf }).promise;
-        const page = await doc.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        return { base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' };
+        const n = Math.min(doc.numPages, maxPages || 5);
+        const pages = [];
+        for (let i = 1; i <= n; i++) {
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            pages.push({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' });
+            page.cleanup();
+        }
+        return pages;
     }
 
     function openImportDialog(ctx, container) {
@@ -273,10 +279,9 @@
             submitBtn.textContent = '⏳ جارٍ القراءة...';
 
             try {
-                const { base64, mediaType } = await fileToImageBase64(file);
+                const pages = await fileToImagePages(file, 5);
                 const cells = await global.AI.extractScheduleFromImage({
-                    imageBase64: base64,
-                    mediaType,
+                    pages,
                     classes: ctx.classes,
                     periodCount: ctx.periods.length
                 });

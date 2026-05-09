@@ -585,7 +585,10 @@ ${opts.notes ? `ملاحظات خاصة من المعلم: ${opts.notes}` : ''}
     /** Read a weekly-schedule image with Claude vision and return cells.
      *  classes: list of teacher's classes — used so the model can map
      *  visible class labels back to real class_id values. */
-    async function extractScheduleFromImage({ imageBase64, mediaType, classes, periodCount }) {
+    async function extractScheduleFromImage({ pages, imageBase64, mediaType, classes, periodCount }) {
+        if (!Array.isArray(pages)) {
+            pages = [{ base64: imageBase64, mediaType }];
+        }
         const list = (classes || []).map((c) =>
             `- id: ${c.id} | الصف: ${c.grade} | الشعبة: ${c.section} | المادة: ${c.subject}`
         ).join('\n') || '(لا توجد فصول مسجّلة)';
@@ -612,8 +615,11 @@ ${list}
 ]}`;
 
         const user = [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
-            { type: 'text',  text: 'استخرج جدول الحصص من الصورة المرفقة وأعد JSON فقط حسب الشكل في التعليمات.' }
+            ...pages.map((p) => ({
+                type: 'image',
+                source: { type: 'base64', media_type: p.mediaType, data: p.base64 }
+            })),
+            { type: 'text', text: `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} للجدول الأسبوعي. استخرج كل الحصص وأعد JSON فقط حسب الشكل المطلوب.` }
         ];
 
         const text = await callClaude({
@@ -636,23 +642,33 @@ ${list}
         return Array.isArray(json.cells) ? json.cells : [];
     }
 
-    /** Extract a clean list of Arabic student names from a roster image/PDF.
-     *  Returns string[] (names only). The model is told to drop headers,
-     *  numbers, IDs, and other roster decoration. */
-    async function extractStudentNamesFromImage({ imageBase64, mediaType }) {
+    /** Extract a clean list of Arabic student names from a roster.
+     *  `pages` is an array of { base64, mediaType } — one entry per image
+     *  or per PDF page. All pages are sent in a single message so multi-
+     *  page rosters are read fully. Returns string[] of names. */
+    async function extractStudentNamesFromImage({ pages, imageBase64, mediaType }) {
+        // Backwards compat: accept the older single-image shape.
+        if (!Array.isArray(pages)) {
+            pages = [{ base64: imageBase64, mediaType }];
+        }
+
         const system = `أنت مساعد لاستخراج أسماء الطلاب من صور كشوف الفصول العربية.
 
-مهمتك: اقرأ الصورة المرفقة واستخرج فقط أسماء الطلاب، اسم في كل سطر.
+مهمتك: اقرأ كل الصور المرفقة (قد تكون عدة صفحات لقائمة طلاب واحدة) واستخرج فقط أسماء الطلاب من جميع الصفحات.
 - تجاهل الترقيم، أرقام الهوية، الجنسية، تاريخ الميلاد، وأي بيانات أخرى.
 - تجاهل العناوين والترويسة وأي نص ليس اسم طالب.
 - نظّف الاسم من المسافات الزائدة لكن احتفظ به كما هو (لا تترجمه ولا تختصره).
+- اجمع الأسماء من كل الصفحات في قائمة واحدة بالترتيب.
 
 أخرج JSON فقط:
 {"names":["أحمد بن محمد","سارة بنت عبدالله", ...]}`;
 
         const user = [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
-            { type: 'text',  text: 'استخرج أسماء الطلاب من الصورة وأعد JSON فقط حسب الشكل المطلوب.' }
+            ...pages.map((p) => ({
+                type: 'image',
+                source: { type: 'base64', media_type: p.mediaType, data: p.base64 }
+            })),
+            { type: 'text', text: `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} لكشف الفصل. استخرج أسماء الطلاب من الكل وأعد JSON فقط.` }
         ];
 
         const text = await callClaude({
