@@ -12,14 +12,13 @@
     const API_URL       = 'https://api.anthropic.com/v1/messages';
     const API_VERSION   = '2023-06-01';
 
-    /* The built-in key has been removed for the public repo. Until the
-       Edge Function proxy is deployed, teachers enter their own key in
-       Settings → الذكاء الاصطناعي. */
-    const BUILTIN_API_KEY = '';
+    /* Edge Function proxy: keeps the shared key on the server. The browser
+       calls this URL with the user's Supabase JWT — no Anthropic key ever
+       reaches the client. */
+    const PROXY_URL = 'https://rbsfpsmolxldmwcclhlc.supabase.co/functions/v1/anthropic-proxy';
 
     async function getApiKey() {
-        const stored = await global.TeacherDB.Settings.get('anthropic_api_key');
-        return stored || BUILTIN_API_KEY || '';
+        return (await global.TeacherDB.Settings.get('anthropic_api_key')) || '';
     }
 
     async function setApiKey(key) {
@@ -35,34 +34,55 @@
         if (model) await global.TeacherDB.Settings.set('anthropic_model', model);
     }
 
+    /** AI is reachable when either the user has set a personal key or the
+     *  Edge Function proxy is configured (i.e. there's an active session). */
     async function hasApiKey() {
-        return !!(await getApiKey());
+        if (await getApiKey()) return true;
+        try {
+            const { data } = await global.SB.auth.getSession();
+            return !!(data && data.session);
+        } catch { return false; }
     }
 
-    /** Low-level call to Anthropic Messages API (direct browser).
-     *  `kind` is a short label used for per-usage stats (exam/worksheet/…). */
+    /** Low-level call. Prefers the user's personal key when set; otherwise
+     *  routes through the Supabase Edge Function proxy with the user's
+     *  auth token so the shared Anthropic key stays on the server. */
     async function callClaude({ system, user, maxTokens = 4000, temperature = 0.7, kind = 'other' }) {
-        const apiKey = await getApiKey();
-        if (!apiKey) throw new Error('NO_API_KEY');
-
-        const model = await getModel();
-
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': API_VERSION,
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-                model,
-                max_tokens: maxTokens,
-                temperature,
-                system,
-                messages: [{ role: 'user', content: user }]
-            })
+        const personalKey = await getApiKey();
+        const model       = await getModel();
+        const body = JSON.stringify({
+            model,
+            max_tokens: maxTokens,
+            temperature,
+            system,
+            messages: [{ role: 'user', content: user }]
         });
+
+        let res;
+        if (personalKey) {
+            res = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'content-type':                              'application/json',
+                    'x-api-key':                                 personalKey,
+                    'anthropic-version':                         API_VERSION,
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body
+            });
+        } else {
+            const { data } = await global.SB.auth.getSession();
+            const token = data?.session?.access_token;
+            if (!token) throw new Error('NO_API_KEY');
+            res = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: {
+                    'content-type':  'application/json',
+                    'authorization': 'Bearer ' + token
+                },
+                body
+            });
+        }
 
         if (!res.ok) {
             let msg = `فشل الاتصال (${res.status})`;
