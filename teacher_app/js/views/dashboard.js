@@ -158,16 +158,16 @@
                     ${nextClassWidgetHtml(nextClass)}
 
                     <div class="grid grid-4">
-                        <div class="card stat-card">
+                        <a href="#/classes" class="card stat-card stat-card-link">
                             <div class="stat-icon">📚</div>
                             <div class="stat-value num">${classes.length}</div>
                             <div class="stat-label">فصولي</div>
-                        </div>
-                        <div class="card stat-card">
+                        </a>
+                        <a href="#/classes" class="card stat-card stat-card-link">
                             <div class="stat-icon">👥</div>
                             <div class="stat-value num">${studentsAll.length}</div>
                             <div class="stat-label">إجمالي الطلاب</div>
-                        </div>
+                        </a>
                         <a href="#/schedule" class="card stat-card stat-card-link">
                             <div class="stat-icon">📅</div>
                             <div class="stat-value num">${todayPeriodsCount}</div>
