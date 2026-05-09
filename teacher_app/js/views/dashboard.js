@@ -361,7 +361,14 @@
                 });
                 global.Modal.close();
                 global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success');
-                await render(document.getElementById('view-dashboard'));
+                // Refresh whichever screen is currently in front so the new
+                // class shows up without a manual navigation.
+                const hash = (global.location.hash || '').replace(/^#/, '');
+                if (hash.startsWith('/classes') && global.ClassesView) {
+                    await global.ClassesView.render(document.getElementById('view-classes'));
+                } else {
+                    await render(document.getElementById('view-dashboard'));
+                }
             } catch (err) {
                 global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error');
             } finally {
