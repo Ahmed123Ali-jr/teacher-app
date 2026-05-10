@@ -1228,17 +1228,7 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover { background: var(--surface-alt); }
 
 .st-num   { color: var(--text-muted); width: 48px; }
-.st-name  {
-    width: 140px;
-    max-width: 140px;
-    /* allow long names to wrap onto multiple lines instead of being clipped */
-    white-space: normal;
-    word-break: break-word;
-}
-.st-name-link {
-    display: block;
-    line-height: 1.4;
-}
+.st-name  { min-width: 160px; }
 .st-del   { width: 48px; text-align: center; }
 
 /* Freeze the row-number + name columns + table header. We turn the
