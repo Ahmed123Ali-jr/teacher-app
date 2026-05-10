@@ -1228,7 +1228,16 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover { background: var(--surface-alt); }
 
 .st-num   { color: var(--text-muted); width: 48px; }
-.st-name  { min-width: 160px; }
+.st-name  {
+    width: 110px;
+    max-width: 110px;
+}
+.st-name-link {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .st-del   { width: 48px; text-align: center; }
 
 /* Freeze the row-number + name columns + table header. We turn the
