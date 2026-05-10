@@ -1231,12 +1231,13 @@ body.drawer-open { overflow: hidden; }
 .st-name  {
     width: 140px;
     max-width: 140px;
+    /* allow long names to wrap onto multiple lines instead of being clipped */
+    white-space: normal;
+    word-break: break-word;
 }
 .st-name-link {
     display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.4;
 }
 .st-del   { width: 48px; text-align: center; }
 
