@@ -372,8 +372,8 @@
 
     /** Slow down touch-drag scrolling inside the register so the teacher
      *  can land precisely on a student row / column. We multiply the
-     *  finger delta by SCROLL_SPEED — 0.6 ≈ 40 % slower than native. */
-    const SCROLL_SPEED = 0.6;
+     *  finger delta by SCROLL_SPEED — 0.8 ≈ 20 % slower than native. */
+    const SCROLL_SPEED = 0.8;
     function attachSlowScroll(el) {
         if (el.dataset.slowAttached) return;
         el.dataset.slowAttached = '1';
