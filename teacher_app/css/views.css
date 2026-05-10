@@ -1228,7 +1228,7 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover { background: var(--surface-alt); }
 
 .st-num   { color: var(--text-muted); width: 48px; }
-.st-name  { min-width: 150px; }
+.st-name  { min-width: 145px; }
 .st-del   { width: 48px; text-align: center; }
 
 /* Freeze the row-number + name columns + table header. We turn the
