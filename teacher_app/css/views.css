@@ -1231,6 +1231,31 @@ body.drawer-open { overflow: hidden; }
 .st-name  { min-width: 160px; }
 .st-del   { width: 48px; text-align: center; }
 
+/* Freeze the row-number + name columns so they stay visible while the
+   evaluation columns scroll horizontally (RTL: pinned to right edge). */
+.students-table thead th:nth-child(1),
+.students-table tbody td.st-num {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background: var(--surface);
+}
+.students-table thead th:nth-child(1) { background: var(--surface-alt); z-index: 3; }
+
+.students-table thead th:nth-child(2),
+.students-table tbody td.st-name {
+    position: sticky;
+    right: 48px;    /* width of the # column */
+    z-index: 2;
+    background: var(--surface);
+    box-shadow: -1px 0 0 var(--border);  /* subtle vertical divider on the left edge */
+}
+.students-table thead th:nth-child(2) { background: var(--surface-alt); z-index: 3; }
+
+/* Keep the hover row tint visible on the frozen cells too. */
+.students-table tbody tr:hover td.st-num,
+.students-table tbody tr:hover td.st-name { background: var(--surface-alt); }
+
 .st-name-link {
     color: var(--text);
     font-weight: var(--fw-medium);
