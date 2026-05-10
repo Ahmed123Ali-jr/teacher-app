@@ -1233,48 +1233,42 @@ body.drawer-open { overflow: hidden; }
 
 /* Freeze the row-number + name columns so they stay visible while the
    evaluation columns scroll horizontally (RTL: pinned to right edge).
+   Disabled below 768px — iOS Safari flickers sticky table cells during
+   momentum scroll and the names appear to vanish. */
+@media (min-width: 768px) {
+    .students-table tbody tr        { background-color: #FFFFFF; }
+    .students-table tbody tr:hover  { background-color: #F1F5F9; }
 
-   iOS Safari quirk: during a vertical scroll gesture, sticky cells inside
-   a horizontally-scrolling container briefly render with no background.
-   Workaround: paint a solid background on the WHOLE row (so even if the
-   cell layer flickers, the row's own paint covers it), plus an opaque
-   colour on the sticky cells themselves. */
-.students-table tbody tr   { background-color: #FFFFFF; }
-.students-table tbody tr:hover { background-color: #F1F5F9; }
+    .students-table thead th:nth-child(1),
+    .students-table tbody td.st-num {
+        position: sticky;
+        right: 0;
+        z-index: 3;
+        background-color: #FFFFFF;
+        background-clip: padding-box;
+    }
+    .students-table thead th:nth-child(1) {
+        background-color: #F1F5F9;
+        z-index: 4;
+    }
 
-.students-table thead th:nth-child(1),
-.students-table tbody td.st-num {
-    position: sticky;
-    right: 0;
-    z-index: 3;
-    background-color: #FFFFFF;
-    background-clip: padding-box;
-    -webkit-transform: translateZ(0);
-            transform: translateZ(0);
-}
-.students-table thead th:nth-child(1) {
-    background-color: #F1F5F9;
-    z-index: 4;
-}
+    .students-table thead th:nth-child(2),
+    .students-table tbody td.st-name {
+        position: sticky;
+        right: 48px;
+        z-index: 3;
+        background-color: #FFFFFF;
+        background-clip: padding-box;
+        box-shadow: -1px 0 0 var(--border);
+    }
+    .students-table thead th:nth-child(2) {
+        background-color: #F1F5F9;
+        z-index: 4;
+    }
 
-.students-table thead th:nth-child(2),
-.students-table tbody td.st-name {
-    position: sticky;
-    right: 48px;
-    z-index: 3;
-    background-color: #FFFFFF;
-    background-clip: padding-box;
-    -webkit-transform: translateZ(0);
-            transform: translateZ(0);
-    box-shadow: -1px 0 0 var(--border);
+    .students-table tbody tr:hover td.st-num,
+    .students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 }
-.students-table thead th:nth-child(2) {
-    background-color: #F1F5F9;
-    z-index: 4;
-}
-
-.students-table tbody tr:hover td.st-num,
-.students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 
 .st-name-link {
     color: var(--text);
