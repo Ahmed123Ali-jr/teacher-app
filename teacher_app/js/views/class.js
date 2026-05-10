@@ -348,6 +348,7 @@
         if (newWrapper && prevScrollLeft !== null) {
             newWrapper.scrollLeft = prevScrollLeft;
         }
+        if (newWrapper) attachSlowScroll(newWrapper);
         if (prevWinScrollY) {
             global.scrollTo({ top: prevWinScrollY, behavior: 'instant' });
         }
@@ -367,6 +368,35 @@
                 <button class="btn btn-primary" data-empty-add>+ إضافة طلاب</button>
             </div>
         `;
+    }
+
+    /** Slow down touch-drag scrolling inside the register so the teacher
+     *  can land precisely on a student row / column. We multiply the
+     *  finger delta by SCROLL_SPEED — 0.6 ≈ 40 % slower than native. */
+    const SCROLL_SPEED = 0.6;
+    function attachSlowScroll(el) {
+        if (el.dataset.slowAttached) return;
+        el.dataset.slowAttached = '1';
+        let lastX = 0, lastY = 0, active = false;
+        el.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) { active = false; return; }
+            active = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+        }, { passive: true });
+        el.addEventListener('touchmove', (e) => {
+            if (!active || e.touches.length !== 1) return;
+            const t = e.touches[0];
+            const dx = (lastX - t.clientX) * SCROLL_SPEED;
+            const dy = (lastY - t.clientY) * SCROLL_SPEED;
+            lastX = t.clientX;
+            lastY = t.clientY;
+            el.scrollLeft += dx;
+            el.scrollTop  += dy;
+            e.preventDefault();
+        }, { passive: false });
+        el.addEventListener('touchend',    () => { active = false; });
+        el.addEventListener('touchcancel', () => { active = false; });
     }
 
     function studentsTable(students, attToday, evalToday, columns) {
