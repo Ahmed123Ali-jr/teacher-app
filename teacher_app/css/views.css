@@ -1229,8 +1229,8 @@ body.drawer-open { overflow: hidden; }
 
 .st-num   { color: var(--text-muted); width: 48px; }
 .st-name  {
-    width: 110px;
-    max-width: 110px;
+    width: 140px;
+    max-width: 140px;
 }
 .st-name-link {
     display: block;
