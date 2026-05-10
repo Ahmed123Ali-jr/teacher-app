@@ -1232,29 +1232,43 @@ body.drawer-open { overflow: hidden; }
 .st-del   { width: 48px; text-align: center; }
 
 /* Freeze the row-number + name columns so they stay visible while the
-   evaluation columns scroll horizontally (RTL: pinned to right edge). */
+   evaluation columns scroll horizontally (RTL: pinned to right edge).
+   iOS Safari quirk: sticky cells lose their background mid-scroll unless
+   we force an explicit, fully-opaque colour and a compositor layer. */
 .students-table thead th:nth-child(1),
 .students-table tbody td.st-num {
     position: sticky;
     right: 0;
-    z-index: 2;
-    background: var(--surface);
+    z-index: 3;
+    background-color: #FFFFFF !important;
+    background-clip: padding-box;
+    will-change: transform;
 }
-.students-table thead th:nth-child(1) { background: var(--surface-alt); z-index: 3; }
+.students-table thead th:nth-child(1) {
+    background-color: #F1F5F9 !important;   /* matches --surface-alt */
+    z-index: 4;
+}
 
 .students-table thead th:nth-child(2),
 .students-table tbody td.st-name {
     position: sticky;
-    right: 48px;    /* width of the # column */
-    z-index: 2;
-    background: var(--surface);
-    box-shadow: -1px 0 0 var(--border);  /* subtle vertical divider on the left edge */
+    right: 48px;
+    z-index: 3;
+    background-color: #FFFFFF !important;
+    background-clip: padding-box;
+    will-change: transform;
+    box-shadow: -1px 0 0 var(--border);
 }
-.students-table thead th:nth-child(2) { background: var(--surface-alt); z-index: 3; }
+.students-table thead th:nth-child(2) {
+    background-color: #F1F5F9 !important;
+    z-index: 4;
+}
 
-/* Keep the hover row tint visible on the frozen cells too. */
+/* Hover tint preserved on the frozen cells. */
 .students-table tbody tr:hover td.st-num,
-.students-table tbody tr:hover td.st-name { background: var(--surface-alt); }
+.students-table tbody tr:hover td.st-name {
+    background-color: #F1F5F9 !important;
+}
 
 .st-name-link {
     color: var(--text);
