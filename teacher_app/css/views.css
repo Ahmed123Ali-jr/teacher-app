@@ -1231,42 +1231,60 @@ body.drawer-open { overflow: hidden; }
 .st-name  { min-width: 160px; }
 .st-del   { width: 48px; text-align: center; }
 
-/* Freeze the row-number + name columns so they stay visible while the
-   evaluation columns scroll horizontally (RTL: pinned to right edge).
-   Mobile freeze is disabled until a more iOS-friendly layout is built —
-   the desktop version stays. */
-@media (min-width: 768px) {
-    .students-table tbody tr        { background-color: #FFFFFF; }
-    .students-table tbody tr:hover  { background-color: #F1F5F9; }
-
-    .students-table thead th:nth-child(1),
-    .students-table tbody td.st-num {
-        position: sticky;
-        right: 0;
-        z-index: 3;
-        background-color: #FFFFFF;
-    }
-    .students-table thead th:nth-child(1) {
-        background-color: #F1F5F9;
-        z-index: 4;
-    }
-
-    .students-table thead th:nth-child(2),
-    .students-table tbody td.st-name {
-        position: sticky;
-        right: 48px;
-        z-index: 3;
-        background-color: #FFFFFF;
-        box-shadow: -1px 0 0 var(--border);
-    }
-    .students-table thead th:nth-child(2) {
-        background-color: #F1F5F9;
-        z-index: 4;
-    }
-
-    .students-table tbody tr:hover td.st-num,
-    .students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
+/* Freeze the row-number + name columns + table header. We turn the
+   wrapper into a both-axis scroll container with a capped height so
+   position:sticky has a single, well-defined scroll context — this is
+   the only pattern that works reliably on iOS Safari for both vertical
+   and horizontal scroll. The page-level scroll outside the table still
+   works normally. */
+.table-wrapper {
+    overflow: auto;
+    max-height: 70vh;
+    -webkit-overflow-scrolling: touch;
 }
+
+.students-table tbody tr       { background-color: #FFFFFF; }
+.students-table tbody tr:hover { background-color: #F1F5F9; }
+
+/* Sticky column 1: row number — pinned to right edge */
+.students-table thead th:nth-child(1),
+.students-table tbody td.st-num {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+    background-color: #FFFFFF;
+}
+.students-table thead th:nth-child(1) {
+    top: 0;
+    background-color: #F1F5F9;
+    z-index: 5;     /* above sticky row-cells when they cross paths */
+}
+
+/* Sticky column 2: student name — pinned right of column 1 */
+.students-table thead th:nth-child(2),
+.students-table tbody td.st-name {
+    position: sticky;
+    right: 48px;       /* width of column 1 */
+    z-index: 3;
+    background-color: #FFFFFF;
+    box-shadow: -1px 0 0 var(--border);
+}
+.students-table thead th:nth-child(2) {
+    top: 0;
+    background-color: #F1F5F9;
+    z-index: 5;
+}
+
+/* Sticky header row (the rest of the thead) — pinned to top of wrapper */
+.students-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #F1F5F9;
+}
+
+.students-table tbody tr:hover td.st-num,
+.students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 
 .st-name-link {
     color: var(--text);
