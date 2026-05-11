@@ -267,9 +267,15 @@
                             </td>
                             ${SCHEDULE_DAYS.map((d) => {
                                 const cell = grid[d.index]?.[p.n];
-                                const cls  = cell ? classById[cell.class_id] : null;
-                                if (!cell || !cls) {
+                                if (!cell) {
                                     return `<td class="weekly-cell weekly-cell-empty"></td>`;
+                                }
+                                const cls = classById[cell.class_id];
+                                if (!cls) {
+                                    return `<td class="weekly-cell weekly-cell-waiting">
+                                        <div class="weekly-cell-grade">⏳ انتظار</div>
+                                        ${cell.topic ? `<div class="weekly-cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
+                                    </td>`;
                                 }
                                 return `<td class="weekly-cell">
                                     <div class="weekly-cell-grade">${escapeHtml(cls.grade || '')} / ${escapeHtml(cls.section || '')}</div>

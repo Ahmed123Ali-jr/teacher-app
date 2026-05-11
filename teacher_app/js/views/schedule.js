@@ -127,11 +127,18 @@
                             <td class="day-col">${d.label}</td>
                             ${periods.map((p) => {
                                 const cell = grid[d.index]?.[p.n];
-                                const cls  = cell ? classById[cell.class_id] : null;
-                                if (!cell || !cls) {
+                                if (!cell) {
                                     return `<td class="schedule-cell empty"
                                                data-day="${d.index}" data-period="${p.n}">
                                         <span class="cell-plus">+</span>
+                                    </td>`;
+                                }
+                                const cls = classById[cell.class_id];
+                                if (!cls) {
+                                    return `<td class="schedule-cell waiting"
+                                               data-day="${d.index}" data-period="${p.n}">
+                                        <div class="cell-class">⏳ انتظار</div>
+                                        ${cell.topic ? `<div class="cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
                                     </td>`;
                                 }
                                 return `<td class="schedule-cell filled"
@@ -345,6 +352,9 @@
                 <label class="label">الفصل *</label>
                 <select class="select" id="cell-class" required>
                     <option value="">— اختر فصلاً —</option>
+                    <option value="__waiting__" ${(existing && !existing.class_id) ? 'selected' : ''}>
+                        ⏳ حصة انتظار
+                    </option>
                     ${ctx.classes.map((c) => `
                         <option value="${c.id}" ${existing?.class_id === c.id ? 'selected' : ''}>
                             ${escapeHtml(c.grade)} / ${escapeHtml(c.section)} — ${escapeHtml(c.subject)}
@@ -369,14 +379,15 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const classId = form.querySelector('#cell-class').value || null;
-            const topic   = form.querySelector('#cell-topic').value.trim();
-            if (!classId) return global.TeacherApp.toast('اختر فصلاً.', 'warning');
+            const rawClass = form.querySelector('#cell-class').value;
+            const topic    = form.querySelector('#cell-topic').value.trim();
+            if (!rawClass) return global.TeacherApp.toast('اختر فصلاً أو حصة انتظار.', 'warning');
 
+            const isWaiting = rawClass === '__waiting__';
             const row = {
                 teacher_id: ctx.teacher.id,
                 day, period,
-                class_id: classId,
+                class_id: isWaiting ? null : rawClass,
                 topic,
                 updated_at: new Date().toISOString()
             };

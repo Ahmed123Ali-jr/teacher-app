@@ -946,6 +946,10 @@
     .weekly-cell-empty {
         background: #FAFAFA;
     }
+    .weekly-cell-waiting {
+        background: #FEF3C7;
+        color: #78350F;
+    }
 }
 
 /* ==========================================================================

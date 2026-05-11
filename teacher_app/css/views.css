@@ -1971,6 +1971,13 @@ body.drawer-open { overflow: hidden; }
     opacity: 0.6;
 }
 
+.schedule-cell.waiting {
+    background: #FEF3C7;          /* warm amber tint */
+    border-right: 3px solid #F59E0B;
+    color: #78350F;
+}
+.schedule-cell.waiting:hover { background: #FDE68A; }
+
 .schedule-cell.filled {
     --cell-color: var(--primary);
     background: color-mix(in srgb, var(--cell-color) 8%, white);

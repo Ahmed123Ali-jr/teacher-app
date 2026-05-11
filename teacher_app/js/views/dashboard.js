@@ -318,23 +318,27 @@
                         const cls = classById[r.class_id];
                         const p   = periodByN[r.period];
                         const time = p ? `${p.start} — ${p.end}` : '';
-                        if (!cls) return '';
+                        const isWaiting = !cls;
+                        const color = isWaiting ? '#F59E0B' : (cls?.color || '#1E40AF');
+                        const title = isWaiting
+                            ? '⏳ حصة انتظار'
+                            : `${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}`;
+                        const tag = isWaiting ? 'div' : 'a';
+                        const hrefAttr = isWaiting ? '' : `href="#/class/${cls.id}" data-modal-close`;
                         return `
-                            <a href="#/class/${cls.id}" class="card" data-modal-close
+                            <${tag} ${hrefAttr} class="card"
                                style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); text-decoration:none;
-                                      border-right:4px solid ${cls.color || '#1E40AF'};">
+                                      border-right:4px solid ${color}; ${isWaiting ? 'background:#FEF3C7;' : ''}">
                                 <div style="flex:0 0 56px; text-align:center;">
-                                    <div style="font-size:var(--fs-lg); font-weight:var(--fw-bold); color:var(--primary);">${r.period}</div>
+                                    <div style="font-size:var(--fs-lg); font-weight:var(--fw-bold); color:${isWaiting ? '#78350F' : 'var(--primary)'};">${r.period}</div>
                                     <div style="font-size:var(--fs-xs); color:var(--text-muted);">الحصة</div>
                                 </div>
                                 <div style="flex:1; min-width:0;">
-                                    <div style="font-weight:var(--fw-bold); color:var(--text);">
-                                        ${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}
-                                    </div>
+                                    <div style="font-weight:var(--fw-bold); color:${isWaiting ? '#78350F' : 'var(--text)'};">${title}</div>
                                     ${r.topic ? `<div class="text-muted" style="font-size:var(--fs-sm); margin-top:2px;">${escape(r.topic)}</div>` : ''}
                                     ${time ? `<div class="text-muted" style="font-size:var(--fs-xs); margin-top:2px;">⏰ ${time}</div>` : ''}
                                 </div>
-                            </a>
+                            </${tag}>
                         `;
                     }).join('')}
                 </div>
