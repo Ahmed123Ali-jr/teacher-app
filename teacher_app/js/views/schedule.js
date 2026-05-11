@@ -106,22 +106,26 @@
 
     function renderGrid(grid, periods, classes) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
+        // Days on the right (rows), periods across the top (columns) — so
+        // a teacher fills the day's schedule by moving horizontally.
         return `
             <table class="schedule-table">
                 <thead>
                     <tr>
-                        <th class="period-col">الحصة</th>
-                        ${DAYS.map((d) => `<th>${d.label}</th>`).join('')}
+                        <th class="day-col">اليوم</th>
+                        ${periods.map((p) => `
+                            <th>
+                                <div class="period-n">الحصة ${p.n}</div>
+                                <div class="period-time num">${p.start} — ${p.end}</div>
+                            </th>
+                        `).join('')}
                     </tr>
                 </thead>
                 <tbody>
-                    ${periods.map((p) => `
+                    ${DAYS.map((d) => `
                         <tr>
-                            <td class="period-col">
-                                <div class="period-n">الحصة ${p.n}</div>
-                                <div class="period-time num">${p.start} — ${p.end}</div>
-                            </td>
-                            ${DAYS.map((d) => {
+                            <td class="day-col">${d.label}</td>
+                            ${periods.map((p) => {
                                 const cell = grid[d.index]?.[p.n];
                                 const cls  = cell ? classById[cell.class_id] : null;
                                 if (!cell || !cls) {

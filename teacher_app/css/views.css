@@ -1930,6 +1930,16 @@ body.drawer-open { overflow: hidden; }
     border-left: 1px solid var(--border);
     padding: var(--space-3);
 }
+.schedule-table .day-col {
+    width: 100px;
+    background: var(--surface-alt);
+    color: var(--text);
+    font-weight: var(--fw-bold);
+    text-align: center;
+    vertical-align: middle;
+    border-left: 1px solid var(--border);
+    padding: var(--space-3);
+}
 .period-n { font-weight: var(--fw-bold); }
 .period-time {
     font-size: var(--fs-xs);
@@ -2426,8 +2436,9 @@ body.drawer-open { overflow: hidden; }
     .schedule-wrapper { border-radius: var(--radius-md); }
     .schedule-table { min-width: 640px; }       /* allow horizontal scroll */
     .schedule-table thead th { font-size: var(--fs-xs); padding: var(--space-2); }
-    .schedule-table .period-col {
-        width: 64px;
+    .schedule-table .period-col,
+    .schedule-table .day-col {
+        width: 72px;
         padding: var(--space-2);
     }
     .period-n    { font-size: var(--fs-xs); }
