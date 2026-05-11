@@ -168,11 +168,11 @@
                             <div class="stat-value num">${studentsAll.length}</div>
                             <div class="stat-label">إجمالي الطلاب</div>
                         </a>
-                        <a href="#/schedule" class="card stat-card stat-card-link">
+                        <button type="button" class="card stat-card stat-card-link" id="btn-today-periods" style="border:0; font-family:inherit; cursor:pointer; text-align:right;">
                             <div class="stat-icon">📅</div>
                             <div class="stat-value num">${todayPeriodsCount}</div>
                             <div class="stat-label">حصص اليوم</div>
-                        </a>
+                        </button>
                         <a href="#/reminders" class="card stat-card stat-card-link">
                             <div class="stat-icon">🔔</div>
                             <div class="stat-value num">${remindersToday}</div>
@@ -272,6 +272,78 @@
                 global.TeacherApp.toast('هذه الشاشة ستُبنى في مرحلة لاحقة.', 'info');
             });
         });
+
+        container.querySelector('#btn-today-periods')?.addEventListener('click',
+            () => openTodayPeriodsModal(teacher));
+    }
+
+    /* ---------- Today's periods modal ---------- */
+    const DAY_LABELS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+
+    async function openTodayPeriodsModal(teacher) {
+        const jsDay = new Date().getDay();
+        const todayIdx = (jsDay >= 0 && jsDay <= 4) ? jsDay : -1;
+
+        const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+        const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
+        const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
+        const periods = (await global.TeacherDB.Settings.get('period_times')) || [];
+        const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
+
+        const today = todayIdx === -1
+            ? []
+            : rows.filter((r) => r.day === todayIdx).sort((a, b) => a.period - b.period);
+
+        const body = document.createElement('div');
+        if (todayIdx === -1) {
+            body.innerHTML = `<p class="text-muted" style="text-align:center; padding:var(--space-4);">
+                اليوم عطلة (الجمعة/السبت).
+            </p>`;
+        } else if (today.length === 0) {
+            body.innerHTML = `<p class="text-muted" style="text-align:center; padding:var(--space-4);">
+                لا توجد حصص مسجّلة لليوم.
+                <br><br>
+                <a href="#/schedule" class="btn btn-secondary btn-sm" data-modal-close>إعداد الجدول الأسبوعي</a>
+            </p>`;
+        } else {
+            const escape = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[m]));
+            body.innerHTML = `
+                <p class="text-muted" style="font-size:var(--fs-sm); margin:0 0 var(--space-4);">
+                    📅 ${DAY_LABELS[todayIdx]} — ${today.length} حصص
+                </p>
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                    ${today.map((r) => {
+                        const cls = classById[r.class_id];
+                        const p   = periodByN[r.period];
+                        const time = p ? `${p.start} — ${p.end}` : '';
+                        if (!cls) return '';
+                        return `
+                            <a href="#/class/${cls.id}" class="card" data-modal-close
+                               style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); text-decoration:none;
+                                      border-right:4px solid ${cls.color || '#1E40AF'};">
+                                <div style="flex:0 0 56px; text-align:center;">
+                                    <div style="font-size:var(--fs-lg); font-weight:var(--fw-bold); color:var(--primary);">${r.period}</div>
+                                    <div style="font-size:var(--fs-xs); color:var(--text-muted);">الحصة</div>
+                                </div>
+                                <div style="flex:1; min-width:0;">
+                                    <div style="font-weight:var(--fw-bold); color:var(--text);">
+                                        ${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}
+                                    </div>
+                                    ${r.topic ? `<div class="text-muted" style="font-size:var(--fs-sm); margin-top:2px;">${escape(r.topic)}</div>` : ''}
+                                    ${time ? `<div class="text-muted" style="font-size:var(--fs-xs); margin-top:2px;">⏰ ${time}</div>` : ''}
+                                </div>
+                            </a>
+                        `;
+                    }).join('')}
+                </div>
+                <div style="text-align:center; margin-top:var(--space-4);">
+                    <a href="#/schedule" class="btn btn-ghost btn-sm" data-modal-close>عرض الجدول الكامل</a>
+                </div>
+            `;
+        }
+        global.Modal.open({ title: '📅 حصص اليوم', body });
     }
 
     /* ---------- Add class modal ---------- */
