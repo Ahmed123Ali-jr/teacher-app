@@ -61,14 +61,9 @@
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.bookDelete;
                 if (!global.confirm('حذف هذا الكتاب؟')) return;
-                const book = await global.TeacherDB.get('books', id);
-                // Best-effort cleanup of the Storage object — ignore errors so
-                // a leftover file doesn't block deleting the row.
-                if (book?.storage_path) {
-                    try {
-                        await global.SB.storage.from('books').remove([book.storage_path]);
-                    } catch (e) { console.warn('[books] storage cleanup failed:', e.message); }
-                }
+                // Remove the local PDF blob too (best-effort).
+                try { await global.TeacherDB.BookFiles.remove(id); }
+                catch (e) { console.warn('[books] local file cleanup failed:', e.message); }
                 await global.TeacherDB.remove('books', id);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);
@@ -78,19 +73,28 @@
         panel.querySelectorAll('[data-book-download]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.bookDownload;
+                // Prefer the local IndexedDB blob (new flow, no size limit).
+                const blob = await global.TeacherDB.BookFiles.get(id);
+                if (blob) {
+                    const book = await global.TeacherDB.get('books', id);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = book?.filename || 'book.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    return;
+                }
+                // Otherwise the file might live on Supabase Storage (older
+                // uploads when this device was online and < 50 MB).
                 const book = await global.TeacherDB.get('books', id);
-                if (book?.storage_path) {
+                if (book?.storage_path && book.storage_path !== 'local') {
                     const { data, error } = await global.SB.storage
                         .from('books')
                         .createSignedUrl(book.storage_path, 60 * 60);
-                    if (error) {
-                        global.TeacherApp.toast('تعذّر تنزيل الملف: ' + error.message, 'error', 5000);
-                        return;
-                    }
-                    global.open(data.signedUrl, '_blank');
-                    return;
+                    if (!error) { global.open(data.signedUrl, '_blank'); return; }
                 }
-                // Legacy fallback: books uploaded via the old base64 path
+                // Legacy: base64 in row
                 if (book?.file instanceof Blob) {
                     const url = URL.createObjectURL(book.file);
                     const a = document.createElement('a');
@@ -100,7 +104,7 @@
                     URL.revokeObjectURL(url);
                     return;
                 }
-                global.TeacherApp.toast('لا يوجد ملف لهذا الكتاب.', 'warning');
+                global.TeacherApp.toast('الملف غير محفوظ على هذا الجهاز. أعد رفعه.', 'warning', 5000);
             });
         });
     }
@@ -166,8 +170,8 @@
                 <input class="input" id="b-file" type="file" accept="application/pdf">
                 <div class="field-hint">
                     ${existing && existing.storage_path
-                        ? `ملف موجود: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.`
-                        : 'الحد الأقصى للملف 50 MB (قيد الخطة المجانية). للكتب الأكبر، استخدم خانة "السياق النصي" أدناه فقط — تقدر تحفظ الكتاب بدون PDF.'}
+                        ? `ملف محفوظ: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.`
+                        : 'الملف يُحفظ على جهازك (بدون حد للحجم). لو فتحت التطبيق من جهاز آخر، لازم ترفعه من جديد.'}
                 </div>
             </div>
 
@@ -214,35 +218,30 @@
                 if (existing) row.id = existing.id;
 
                 if (file) {
-                    if (file.size > 50 * 1024 * 1024) {
-                        throw new Error('الملف كبير (أقصى 50 MB في الخطة المجانية). تقدر تحفظ بدون ملف وتستخدم خانة "السياق النصي".');
-                    }
-                    const { data: sess } = await global.SB.auth.getSession();
-                    const teacherId = sess?.session?.user?.id;
-                    if (!teacherId) throw new Error('غير مسجّل دخول.');
-
-                    // Stable book id so reuploads overwrite the same Storage object.
+                    // No size cap — IndexedDB can hold hundreds of MB easily.
+                    // Stable id so re-uploads overwrite the same local blob.
                     if (!row.id) {
                         row.id = (global.crypto && crypto.randomUUID)
                             ? crypto.randomUUID()
                             : ('b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
                     }
-                    const path = `${teacherId}/${row.id}.pdf`;
-
-                    if (btn) btn.textContent = '⏳ جارٍ رفع الملف...';
-                    const { error: upErr } = await global.SB.storage
-                        .from('books')
-                        .upload(path, file, { contentType: 'application/pdf', upsert: true });
-                    if (upErr) throw new Error('فشل رفع الملف: ' + upErr.message);
-
-                    row.storage_path = path;
+                    // Save the PDF locally in IndexedDB — no size limit, no
+                    // server cost. Metadata still goes to Supabase so the
+                    // book shows up in the list across devices (the actual
+                    // file is single-device).
                     row.size_bytes   = file.size;
                     row.mime_type    = file.type || 'application/pdf';
                     row.filename     = file.name;
+                    row.storage_path = 'local';   // marker so download logic knows
                 }
 
-                if (btn) btn.textContent = '⏳ جارٍ حفظ البيانات...';
+                if (btn) btn.textContent = '⏳ جارٍ الحفظ...';
                 await global.TeacherDB.put('books', row);
+                // Save the actual PDF locally AFTER the row insert so we know
+                // the final book id.
+                if (file) {
+                    await global.TeacherDB.BookFiles.save(row.id, file);
+                }
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب ✅', 'success', 2000);
                 await render(panel, cls);

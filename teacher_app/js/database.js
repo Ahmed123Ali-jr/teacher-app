@@ -42,7 +42,7 @@
     /* ---------- IndexedDB cache layer ---------- */
 
     const CACHE_DB_NAME    = 'teacher_app_cache';
-    const CACHE_DB_VERSION = 1;
+    const CACHE_DB_VERSION = 2;   // bumped: added `book_files` store
 
     /** Cache store schema: keyPath + indexes for fast filtering. */
     const CACHE_STORES = [
@@ -55,6 +55,11 @@
         { name: 'exams',         keyPath: 'id',          indexes: [['class_id'], ['teacher_id']] },
         { name: 'worksheets',    keyPath: 'id',          indexes: [['class_id'], ['teacher_id']] },
         { name: 'books',         keyPath: 'id',          indexes: [['class_id'], ['teacher_id']] },
+        // Local-only PDF blobs for books. Kept here because Supabase Storage
+        // free-tier caps each file at 50 MB; saving the binary in the
+        // teacher's browser avoids the limit at the cost of single-device
+        // availability.
+        { name: 'book_files',    keyPath: 'id' },
         { name: 'strategies',    keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'initiatives',   keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'schedule',      keyPath: 'id',          indexes: [['teacher_id']] },
@@ -622,11 +627,32 @@
 
     function open() { return openCache(); }
 
+    /* ---------- Book-file local storage (IndexedDB, single-device) ---------- */
+    const BookFiles = {
+        async save(bookId, blob) {
+            return cacheTx('book_files', 'readwrite', (s) =>
+                reqAsPromise(s.put({ id: bookId, blob, size: blob.size, type: blob.type || 'application/pdf' }))
+            );
+        },
+        async get(bookId) {
+            const row = await cacheTx('book_files', 'readonly', (s) => reqAsPromise(s.get(bookId)));
+            return row?.blob || null;
+        },
+        async remove(bookId) {
+            return cacheTx('book_files', 'readwrite', (s) => reqAsPromise(s.delete(bookId)));
+        },
+        async has(bookId) {
+            const row = await cacheTx('book_files', 'readonly', (s) => reqAsPromise(s.get(bookId)));
+            return !!row;
+        }
+    };
+
     global.TeacherDB = {
         open,
         add, put, get, getAll, getAllByIndex, remove, clear, count,
         destroy, exportAll, importAll,
         Settings,
+        BookFiles,
         STORES: STORE_NAMES,
         VERSION: 'sb-cached-1',
         // Cache control
