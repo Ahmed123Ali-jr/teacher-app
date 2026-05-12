@@ -120,6 +120,7 @@
 
     function openForm(cls, panel, existing) {
         const form = document.createElement('form');
+        form.setAttribute('novalidate', '');
         form.innerHTML = `
             <div class="field">
                 <label class="label" for="b-title">اسم الكتاب *</label>
@@ -161,14 +162,21 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
+            const origLabel = btn ? btn.textContent : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ جارٍ الرفع...';
+            }
             try {
+                const title = form.querySelector('#b-title').value.trim();
+                if (!title) throw new Error('اسم الكتاب مطلوب.');
+
                 const fileInput = form.querySelector('#b-file');
-                const file = fileInput.files[0];
+                const file = fileInput && fileInput.files[0];
 
                 const row = {
                     class_id: cls.id,
-                    title:    form.querySelector('#b-title').value.trim(),
+                    title,
                     type:     form.querySelector('#b-type').value,
                     context:  form.querySelector('#b-context').value.trim(),
                     filename: existing?.filename || '',
@@ -179,21 +187,30 @@
                 if (existing) row.id = existing.id;
 
                 if (file) {
-                    if (file.size > 150 * 1024 * 1024) {
-                        throw new Error('حجم الملف كبير جداً (أقصى حد ~150 MB).');
+                    if (file.size > 25 * 1024 * 1024) {
+                        throw new Error('الملف كبير (أقصى 25 MB). اختر نسخة أصغر.');
                     }
                     row.file = file;
                     row.filename = file.name;
                 }
 
+                console.info('[books] uploading', {
+                    has_file: !!file,
+                    size_kb:  file ? Math.round(file.size / 1024) : 0
+                });
+
                 await global.TeacherDB.put('books', row);
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب ✅', 'success');
+                global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب ✅', 'success', 2000);
                 await render(panel, cls);
             } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
+                console.error('[books] upload failed:', err);
+                global.TeacherApp.toast('تعذّر الرفع: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
             } finally {
-                btn.disabled = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = origLabel;
+                }
             }
         });
 
