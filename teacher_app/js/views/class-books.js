@@ -165,7 +165,9 @@
                 <label class="label" for="b-file">ملف PDF (اختياري)</label>
                 <input class="input" id="b-file" type="file" accept="application/pdf">
                 <div class="field-hint">
-                    ${existing && existing.file ? `ملف موجود: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.` : 'حجم أقصى موصى به: 250 MB'}
+                    ${existing && existing.storage_path
+                        ? `ملف موجود: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.`
+                        : 'الحد الأقصى للملف 50 MB (قيد الخطة المجانية). للكتب الأكبر، استخدم خانة "السياق النصي" أدناه فقط — تقدر تحفظ الكتاب بدون PDF.'}
                 </div>
             </div>
 
@@ -212,8 +214,8 @@
                 if (existing) row.id = existing.id;
 
                 if (file) {
-                    if (file.size > 250 * 1024 * 1024) {
-                        throw new Error('الملف كبير (أقصى 250 MB).');
+                    if (file.size > 50 * 1024 * 1024) {
+                        throw new Error('الملف كبير (أقصى 50 MB في الخطة المجانية). تقدر تحفظ بدون ملف وتستخدم خانة "السياق النصي".');
                     }
                     const { data: sess } = await global.SB.auth.getSession();
                     const teacherId = sess?.session?.user?.id;
