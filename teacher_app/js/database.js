@@ -348,18 +348,13 @@
         _cachedUid = null;
     }
 
-    /* The books table stores PDFs inline as a base64 data URL. Encode the
-       Blob on write and reconstruct it on read so the rest of the app can
-       keep using `book.file` as a normal Blob. */
+    /* Books store the PDF in Supabase Storage (bucket "books"); the row
+       only carries metadata + storage_path. Legacy rows uploaded before
+       Storage was available kept a base64 data URL in file_data — we
+       still decode those on read for backward compatibility. */
     async function booksOut(value) {
         const out = Object.assign({}, value);
-        if (out.file instanceof Blob) {
-            out.file_data = await blobToDataURL(out.file);
-            out.file_type = out.file.type || 'application/pdf';
-            delete out.file;   // not a DB column
-        } else {
-            delete out.file;
-        }
+        delete out.file;   // not a DB column; the binary is in Storage
         return out;
     }
     function booksIn(row) {

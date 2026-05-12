@@ -61,6 +61,14 @@
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.bookDelete;
                 if (!global.confirm('حذف هذا الكتاب؟')) return;
+                const book = await global.TeacherDB.get('books', id);
+                // Best-effort cleanup of the Storage object — ignore errors so
+                // a leftover file doesn't block deleting the row.
+                if (book?.storage_path) {
+                    try {
+                        await global.SB.storage.from('books').remove([book.storage_path]);
+                    } catch (e) { console.warn('[books] storage cleanup failed:', e.message); }
+                }
                 await global.TeacherDB.remove('books', id);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);
@@ -71,13 +79,28 @@
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.bookDownload;
                 const book = await global.TeacherDB.get('books', id);
-                if (!book?.file) return;
-                const url = URL.createObjectURL(book.file);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = book.filename || 'book.pdf';
-                a.click();
-                URL.revokeObjectURL(url);
+                if (book?.storage_path) {
+                    const { data, error } = await global.SB.storage
+                        .from('books')
+                        .createSignedUrl(book.storage_path, 60 * 60);
+                    if (error) {
+                        global.TeacherApp.toast('تعذّر تنزيل الملف: ' + error.message, 'error', 5000);
+                        return;
+                    }
+                    global.open(data.signedUrl, '_blank');
+                    return;
+                }
+                // Legacy fallback: books uploaded via the old base64 path
+                if (book?.file instanceof Blob) {
+                    const url = URL.createObjectURL(book.file);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = book.filename || 'book.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    return;
+                }
+                global.TeacherApp.toast('لا يوجد ملف لهذا الكتاب.', 'warning');
             });
         });
     }
@@ -179,10 +202,12 @@
                     title,
                     type:     form.querySelector('#b-type').value,
                     context:  form.querySelector('#b-context').value.trim(),
-                    filename: existing?.filename || '',
-                    file:     existing?.file || null,
-                    created_at: existing?.created_at || new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    filename:     existing?.filename     || '',
+                    storage_path: existing?.storage_path || null,
+                    size_bytes:   existing?.size_bytes   || null,
+                    mime_type:    existing?.mime_type    || null,
+                    created_at:   existing?.created_at   || new Date().toISOString(),
+                    updated_at:   new Date().toISOString()
                 };
                 if (existing) row.id = existing.id;
 
@@ -190,15 +215,31 @@
                     if (file.size > 150 * 1024 * 1024) {
                         throw new Error('الملف كبير (أقصى 150 MB).');
                     }
-                    row.file = file;
-                    row.filename = file.name;
+                    const { data: sess } = await global.SB.auth.getSession();
+                    const teacherId = sess?.session?.user?.id;
+                    if (!teacherId) throw new Error('غير مسجّل دخول.');
+
+                    // Stable book id so reuploads overwrite the same Storage object.
+                    if (!row.id) {
+                        row.id = (global.crypto && crypto.randomUUID)
+                            ? crypto.randomUUID()
+                            : ('b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+                    }
+                    const path = `${teacherId}/${row.id}.pdf`;
+
+                    if (btn) btn.textContent = '⏳ جارٍ رفع الملف...';
+                    const { error: upErr } = await global.SB.storage
+                        .from('books')
+                        .upload(path, file, { contentType: 'application/pdf', upsert: true });
+                    if (upErr) throw new Error('فشل رفع الملف: ' + upErr.message);
+
+                    row.storage_path = path;
+                    row.size_bytes   = file.size;
+                    row.mime_type    = file.type || 'application/pdf';
+                    row.filename     = file.name;
                 }
 
-                console.info('[books] uploading', {
-                    has_file: !!file,
-                    size_kb:  file ? Math.round(file.size / 1024) : 0
-                });
-
+                if (btn) btn.textContent = '⏳ جارٍ حفظ البيانات...';
                 await global.TeacherDB.put('books', row);
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب ✅', 'success', 2000);
