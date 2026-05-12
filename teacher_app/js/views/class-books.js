@@ -187,8 +187,8 @@
                 if (existing) row.id = existing.id;
 
                 if (file) {
-                    if (file.size > 25 * 1024 * 1024) {
-                        throw new Error('الملف كبير (أقصى 25 MB). اختر نسخة أصغر.');
+                    if (file.size > 150 * 1024 * 1024) {
+                        throw new Error('الملف كبير (أقصى 150 MB).');
                     }
                     row.file = file;
                     row.filename = file.name;
