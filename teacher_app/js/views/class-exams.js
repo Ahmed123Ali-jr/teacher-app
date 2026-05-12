@@ -362,6 +362,16 @@
                           placeholder="مثلاً: ركّز على التطبيق العملي، أو تجنّب الأسئلة الحسابية الطويلة...">${escapeHtml(d.notes)}</textarea>
             </div>
 
+            <div class="card" style="background: rgba(15,44,92,0.05); margin-top: var(--space-4); padding: var(--space-3);">
+                <div style="font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: 2px;">المادة التي سيُولّد الاختبار لها:</div>
+                <div style="font-weight: var(--fw-bold); color: var(--primary); font-size: var(--fs-lg);">
+                    📚 ${escapeHtml(cls.subject)} — ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}
+                </div>
+                ${d.source === 'book' && !d.context.trim()
+                    ? '<div style="color:#B45309; font-size: var(--fs-sm); margin-top: var(--space-2);">⚠️ خانة "السياق النصي" فاضية — الذكاء الاصطناعي سيعتمد على المنهج العام للمادة.</div>'
+                    : ''}
+            </div>
+
             <div class="wizard-footer">
                 <button class="btn btn-ghost" id="btn-back">← رجوع</button>
                 <button class="btn btn-primary" id="btn-generate">⚡ توليد الاختبار</button>
