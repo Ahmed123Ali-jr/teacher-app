@@ -348,6 +348,36 @@
         _cachedUid = null;
     }
 
+    /* The books table stores PDFs inline as a base64 data URL. Encode the
+       Blob on write and reconstruct it on read so the rest of the app can
+       keep using `book.file` as a normal Blob. */
+    async function booksOut(value) {
+        const out = Object.assign({}, value);
+        if (out.file instanceof Blob) {
+            out.file_data = await blobToDataURL(out.file);
+            out.file_type = out.file.type || 'application/pdf';
+            delete out.file;   // not a DB column
+        } else {
+            delete out.file;
+        }
+        return out;
+    }
+    function booksIn(row) {
+        if (!row) return row;
+        const out = Object.assign({}, row);
+        if (typeof out.file_data === 'string' && out.file_data.startsWith('data:')) {
+            try {
+                const [meta, b64] = out.file_data.split(',');
+                const mime = (meta.match(/data:([^;]+)/) || [])[1] || out.file_type || 'application/pdf';
+                const bin = atob(b64);
+                const buf = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+                out.file = new Blob([buf], { type: mime });
+            } catch (e) { /* leave as-is */ }
+        }
+        return out;
+    }
+
     /* ---------- CRUD primitives ---------- */
 
     async function add(storeName, value) {
@@ -381,6 +411,17 @@
             if (error) err('settings add', error);
             await Cache.put('settings', { key: data.key, value: data.value });
             return value.key;
+        }
+
+        if (storeName === 'books') {
+            const uid = await currentUid();
+            const row = await booksOut(value);
+            if (!row.teacher_id) row.teacher_id = uid;
+            delete row.id;
+            const { data, error } = await sb.from(table).insert(row).select('*').single();
+            if (error) err('books add', error);
+            await Cache.put('books', booksIn(data));
+            return data.id;
         }
 
         const row = Object.assign({}, value);
@@ -424,6 +465,23 @@
             return value.key;
         }
 
+        if (storeName === 'books') {
+            const uid = await currentUid();
+            const row = await booksOut(value);
+            if (!row.teacher_id) row.teacher_id = uid;
+            if (row.id == null) {
+                delete row.id;
+                const { data, error } = await sb.from(table).insert(row).select('*').single();
+                if (error) err('books put(insert)', error);
+                await Cache.put('books', booksIn(data));
+                return data.id;
+            }
+            const { data, error } = await sb.from(table).upsert(row, { onConflict: 'id' }).select('*').single();
+            if (error) err('books put', error);
+            await Cache.put('books', booksIn(data));
+            return data.id;
+        }
+
         const row = Object.assign({}, value);
         if (row.id == null) {
             delete row.id;
@@ -453,7 +511,10 @@
             return cached || undefined;
         }
         const cached = await Cache.get(storeName, key);
-        if (cached) return cached;
+        if (cached) {
+            if (storeName === 'books') return booksIn(cached);
+            return cached;
+        }
         return undefined;
     }
 
@@ -462,6 +523,7 @@
 
         const rows = await Cache.getAll(storeName);
         if (storeName === 'portfolio') return rows.map(portfolioIn);
+        if (storeName === 'books')     return rows.map(booksIn);
         return rows;
     }
 
@@ -470,12 +532,13 @@
 
         if (storeName === 'teachers' && indexName === 'email') return [];
 
-        const rows = await Cache.getAllByIndex(storeName, indexName, value);
+        let rows = await Cache.getAllByIndex(storeName, indexName, value);
         // Some legacy callers query an index that wasn't declared on the cache; fall back to filter.
         if (rows.length === 0) {
             const all = await Cache.getAll(storeName);
-            return all.filter((r) => r[indexName] === value);
+            rows = all.filter((r) => r[indexName] === value);
         }
+        if (storeName === 'books') return rows.map(booksIn);
         return rows;
     }
 
