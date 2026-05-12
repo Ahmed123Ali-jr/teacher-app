@@ -182,6 +182,16 @@
                 <div class="field-hint">كلما كان النص أدق، جاءت أسئلة الذكاء الاصطناعي أقرب للمنهج.</div>
             </div>
 
+            <div class="field" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-sm); padding: var(--space-3);">
+                <label style="display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; line-height: 1.5;">
+                    <input type="checkbox" id="b-ownership" ${existing?.ownership_confirmed_at ? 'checked' : ''} style="margin-top: 4px; flex-shrink: 0;">
+                    <span style="font-size: var(--fs-sm);">
+                        أُقرّ بأنني أملك نسخة شرعية من هذا الكتاب، وأرفعه لاستخدامي الشخصي والتعليمي فقط.
+                        أتحمّل المسؤولية القانونية الكاملة لرفعه.
+                    </span>
+                </label>
+            </div>
+
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="submit" class="btn btn-primary">${existing ? 'حفظ التعديل' : 'رفع الكتاب'}</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
@@ -200,6 +210,12 @@
                 const title = form.querySelector('#b-title').value.trim();
                 if (!title) throw new Error('اسم الكتاب مطلوب.');
 
+                const ownershipBox = form.querySelector('#b-ownership');
+                const ownsBook = !!(ownershipBox && ownershipBox.checked);
+                if (!ownsBook) {
+                    throw new Error('يجب الإقرار بأنك تملك نسخة شرعية من الكتاب قبل الرفع.');
+                }
+
                 const fileInput = form.querySelector('#b-file');
                 const file = fileInput && fileInput.files[0];
 
@@ -212,6 +228,7 @@
                     storage_path: existing?.storage_path || null,
                     size_bytes:   existing?.size_bytes   || null,
                     mime_type:    existing?.mime_type    || null,
+                    ownership_confirmed_at: existing?.ownership_confirmed_at || new Date().toISOString(),
                     created_at:   existing?.created_at   || new Date().toISOString(),
                     updated_at:   new Date().toISOString()
                 };
