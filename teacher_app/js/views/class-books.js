@@ -25,6 +25,47 @@
         other: 'أخرى'
     };
 
+    /* ---------- PDF text extraction (browser-side via PDF.js) ---------- */
+    let _pdfJsPromise = null;
+    function ensurePdfJs() {
+        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
+        if (_pdfJsPromise) return _pdfJsPromise;
+        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+        _pdfJsPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = base + 'pdf.min.js';
+            s.onload = () => {
+                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+                resolve(global.pdfjsLib);
+            };
+            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة قراءة PDF.'));
+            document.head.appendChild(s);
+        });
+        return _pdfJsPromise;
+    }
+
+    /** Extract all readable text from a PDF Blob. Returns a single string
+     *  with each page prefixed by "[صفحة N]" so the AI can refer to pages.
+     *  onProgress(current, total) lets the caller surface a progress hint. */
+    async function extractPdfText(file, onProgress) {
+        const pdfjs = await ensurePdfJs();
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const total = doc.numPages;
+        const pages = [];
+        for (let i = 1; i <= total; i++) {
+            if (onProgress) onProgress(i, total);
+            // Let the UI breathe between pages so the modal doesn't freeze.
+            if (i % 5 === 0) await new Promise((r) => setTimeout(r, 0));
+            const page = await doc.getPage(i);
+            const content = await page.getTextContent();
+            const text = content.items.map((it) => it.str || '').join(' ').trim();
+            if (text) pages.push(`[صفحة ${i}]\n${text}`);
+            page.cleanup();
+        }
+        return pages.join('\n\n');
+    }
+
     async function render(panel, cls) {
         const books = await global.TeacherDB.getAllByIndex('books', 'class_id', cls.id);
 
@@ -171,7 +212,7 @@
                 <div class="field-hint">
                     ${existing && existing.storage_path
                         ? `ملف محفوظ: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.`
-                        : 'الملف يُحفظ على جهازك (بدون حد للحجم). لو فتحت التطبيق من جهاز آخر، لازم ترفعه من جديد.'}
+                        : 'الملف يُحفظ على جهازك، وسيُستخرَج نصّه تلقائياً ليستخدمه الذكاء الاصطناعي في توليد الأسئلة.'}
                 </div>
             </div>
 
@@ -236,20 +277,32 @@
 
                 if (file) {
                     // No size cap — IndexedDB can hold hundreds of MB easily.
-                    // Stable id so re-uploads overwrite the same local blob.
                     if (!row.id) {
                         row.id = (global.crypto && crypto.randomUUID)
                             ? crypto.randomUUID()
                             : ('b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
                     }
-                    // Save the PDF locally in IndexedDB — no size limit, no
-                    // server cost. Metadata still goes to Supabase so the
-                    // book shows up in the list across devices (the actual
-                    // file is single-device).
                     row.size_bytes   = file.size;
                     row.mime_type    = file.type || 'application/pdf';
                     row.filename     = file.name;
-                    row.storage_path = 'local';   // marker so download logic knows
+                    row.storage_path = 'local';
+
+                    // Extract the PDF text in the browser so the AI exam
+                    // generator has the real book content. If the teacher
+                    // already pasted custom context, keep theirs untouched.
+                    if (!row.context) {
+                        try {
+                            if (btn) btn.textContent = '⏳ جارٍ قراءة الكتاب...';
+                            const text = await extractPdfText(file, (cur, total) => {
+                                if (btn) btn.textContent = `⏳ قراءة الكتاب (${cur}/${total})...`;
+                            });
+                            row.context = text;
+                            console.info('[books] extracted text chars:', text.length);
+                        } catch (e) {
+                            console.warn('[books] PDF text extraction failed:', e.message);
+                            // Continue without extracted text; teacher can paste manually later
+                        }
+                    }
                 }
 
                 if (btn) btn.textContent = '⏳ جارٍ الحفظ...';
