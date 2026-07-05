@@ -36,7 +36,7 @@
         { id: 'grade',         name: 'التقييم',  type: 'number', max: 10 }
     ];
 
-    const state = { classId: null, activeTab: 'students' };
+    const state = { classId: null, activeTab: null };
 
     /* ---------- Helpers ---------- */
 
@@ -113,8 +113,9 @@
        ENTRY
        ========================================================================== */
 
-    async function render(container, classId) {
+    async function render(container, classId, tab) {
         state.classId = classId;
+        state.activeTab = tab || null;
 
         const cls = await global.TeacherDB.get('classes', classId);
         if (!cls) {
@@ -122,7 +123,7 @@
                 <div class="container"><div class="empty-state">
                     <div class="icon">⚠️</div>
                     <h3>لم يتم العثور على الفصل</h3>
-                    <a href="#/dashboard" class="btn btn-primary">الرجوع للرئيسية</a>
+                    <a href="#/dashboard" class="btn btn-primary">الرئيسية</a>
                 </div></div>`;
             return;
         }
@@ -139,10 +140,49 @@
             await global.TeacherDB.put('classes', cls);
         }
 
-        paint(container, cls);
+        if (state.activeTab) {
+            await paintSection(container, cls);
+        } else {
+            await paintHub(container, cls);
+        }
     }
 
-    async function paint(container, cls) {
+    /* ==========================================================================
+       HUB — landing page for the class: featured students card + section grid
+       ========================================================================== */
+
+    async function paintHub(container, cls) {
+        // Live stats for the featured students card
+        const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
+        const today = todayISO();
+        let present = 0, absent = 0, late = 0, marked = 0;
+        for (const s of students) {
+            const rows = await global.TeacherDB.getAllByIndex('attendance', 'student_id', s.id);
+            const t = rows.find((r) => r.date === today);
+            if (!t) continue;
+            marked++;
+            if (t.status === 'present') present++;
+            else if (t.status === 'absent') absent++;
+            else if (t.status === 'late') late++;
+        }
+        const pct = marked > 0 ? Math.round(((present + late) / marked) * 100) : null;
+
+        // Counts for the section grid
+        const [books, exams, worksheets, homework] = await Promise.all([
+            global.TeacherDB.getAllByIndex('books',       'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('exams',       'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('assignments', 'class_id', cls.id)
+        ]);
+
+        const GRID = [
+            { key: 'books',      icon: '📖', label: 'الكتب',        count: books.length,      tint: '#7C3AED', bg: '#F5F1FE' },
+            { key: 'exams',      icon: '📝', label: 'الاختبارات',   count: exams.length,      tint: '#DC2626', bg: '#FEF1F1' },
+            { key: 'worksheets', icon: '📄', label: 'أوراق العمل',  count: worksheets.length, tint: '#059669', bg: '#EDFBF5' },
+            { key: 'homework',   icon: '📚', label: 'الواجبات',     count: homework.length,   tint: '#D97706', bg: '#FFF8EB' },
+            { key: 'curriculum', icon: '🗓️', label: 'توزيع المنهج', count: null,              tint: '#0891B2', bg: '#EDFAFD' }
+        ];
+
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
@@ -152,7 +192,7 @@
                             <span class="class-dot" style="background:${cls.color || '#1E40AF'}"></span>
                             ${STAGE_LABELS[cls.stage] || ''} — ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}
                         </h2>
-                        <div class="class-subtitle">${escapeHtml(cls.subject)}</div>
+                        <div class="class-subtitle">${escapeHtml(cls.subject)} · ${students.length} طالباً</div>
                     </div>
                     <div class="class-actions">
                         <button class="btn btn-ghost btn-sm" id="btn-edit-class">✏️ تعديل</button>
@@ -160,38 +200,69 @@
                     </div>
                 </div>
 
-                <nav class="tab-bar" role="tablist">
-                    ${TABS.map((t) => `
-                        <button class="tab ${state.activeTab === t.key ? 'active' : ''}"
-                                data-tab="${t.key}" role="tab">
-                            <span class="tab-icon">${t.icon}</span>
-                            <span>${t.label}</span>
-                        </button>
-                    `).join('')}
-                </nav>
+                <a class="hub-featured" href="#/class/${cls.id}/students">
+                    <div class="hub-featured-bubble b1"></div>
+                    <div class="hub-featured-bubble b2"></div>
+                    <div class="hub-featured-head">
+                        <div class="hub-featured-icon">👥</div>
+                        <div class="hub-featured-titles">
+                            <div class="hub-featured-title">الطلاب</div>
+                            <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
+                        </div>
+                        <div class="hub-featured-chev">‹</div>
+                    </div>
+                    <div class="hub-featured-stats">
+                        <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">طالب</div></div>
+                        <div class="hf-stat"><div class="hf-num num">${marked ? present : '—'}</div><div class="hf-lbl">حاضر</div></div>
+                        <div class="hf-stat"><div class="hf-num num">${marked ? absent : '—'}</div><div class="hf-lbl">غائب</div></div>
+                        <div class="hf-stat"><div class="hf-num num">${pct !== null ? pct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
+                    </div>
+                </a>
 
+                <div class="hub-grid">
+                    ${GRID.map((g) => `
+                        <a class="hub-tile" href="#/class/${cls.id}/${g.key}">
+                            <div class="hub-tile-icon" style="background:${g.bg}">${g.icon}</div>
+                            <div class="hub-tile-body">
+                                <div class="hub-tile-label">${g.label}</div>
+                                <div class="hub-tile-count" style="color:${g.count ? g.tint : '#B6BFCC'}">
+                                    ${g.count === null ? 'الخطة' : (g.count || '—')}
+                                </div>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        container.querySelector('#btn-class-back')?.addEventListener('click', () => {
+            global.location.hash = '#/classes';
+        });
+        container.querySelector('#btn-edit-class')?.addEventListener('click', () => editClass(cls, container));
+        container.querySelector('#btn-delete-class')?.addEventListener('click', () => deleteClass(cls));
+    }
+
+    /* ==========================================================================
+       SECTION PAGE — dedicated full page for one section
+       ========================================================================== */
+
+    async function paintSection(container, cls) {
+        const tab = TABS.find((t) => t.key === state.activeTab);
+        if (!tab) { global.location.hash = '#/class/' + cls.id; return; }
+
+        container.innerHTML = `
+            <div class="container">
+                <div class="section-page-bar">
+                    <a class="btn btn-ghost btn-sm" href="#/class/${cls.id}">← ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}</a>
+                    <div class="section-page-title">
+                        <span class="section-page-icon">${tab.icon}</span>
+                        <span>${tab.label}</span>
+                    </div>
+                </div>
                 <div class="tab-panel" id="tab-panel"></div>
             </div>
         `;
 
-        container.querySelectorAll('.tab').forEach((el) => {
-            el.addEventListener('click', () => {
-                state.activeTab = el.dataset.tab;
-                paint(container, cls);
-            });
-        });
-
-        container.querySelector('#btn-class-back')?.addEventListener('click', () => {
-            if (global.history.length > 1) global.history.back();
-            else global.location.hash = '#/classes';
-        });
-        container.querySelector('#btn-edit-class')?.addEventListener('click', () => editClass(cls, container));
-        container.querySelector('#btn-delete-class')?.addEventListener('click', () => deleteClass(cls));
-
-        renderTab(container, cls);
-    }
-
-    async function renderTab(container, cls) {
         const panel = container.querySelector('#tab-panel');
         switch (state.activeTab) {
             case 'students':   await renderStudents(panel, cls); break;
@@ -207,7 +278,14 @@
        STUDENTS TAB
        ========================================================================== */
 
+    /* Guards against interleaved renders: if two renderStudents calls race
+       (fast taps, quick navigation), only the newest one is allowed to touch
+       the DOM — otherwise both attach listeners to the same elements and
+       every click fires twice. */
+    let _studentsRenderGen = 0;
+
     async function renderStudents(panel, cls) {
+        const gen = ++_studentsRenderGen;
         // Wait for any in-flight saves to land in the cache before reading,
         // otherwise the table can paint with stale data.
         await flushWrites();
@@ -225,12 +303,28 @@
             evalToday.push(par.find((r) => r.date === today) || null);
         }
 
+        // A newer render started while we were fetching — abort this one so
+        // listeners never get attached twice to the same elements.
+        if (gen !== _studentsRenderGen) return;
+
         // Preserve horizontal scroll of the table + page scroll across re-renders
         // so tapping a star/number doesn't snap the view back to the start.
         const prevWrapper    = panel.querySelector('.table-wrapper');
         const prevScrollLeft = prevWrapper ? prevWrapper.scrollLeft : null;
         const prevWinScrollY = global.scrollY;
         const prevSearch     = panel.querySelector('#student-search')?.value || '';
+
+        // Today's attendance stats (for the filterable stats bar)
+        const stats = { present: 0, absent: 0, late: 0, excused: 0, unmarked: 0 };
+        attendanceToday.forEach((r) => {
+            if (!r) stats.unmarked++;
+            else if (stats[r.status] !== undefined) stats[r.status]++;
+        });
+        const attMarked = students.length - stats.unmarked;
+        const attPct = attMarked > 0
+            ? Math.round(((stats.present + stats.late) / attMarked) * 100)
+            : null;
+        const activeFilter = panel.dataset.activeAttFilter || '';
 
         panel.innerHTML = `
             <div class="students-toolbar">
@@ -243,11 +337,32 @@
                 <div class="students-actions">
                     <input type="search" class="input search-input" id="student-search"
                            placeholder="🔍 بحث باسم الطالب...">
+                    <button class="btn btn-secondary" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>✓ تحضير الكل</button>
                     <button class="btn btn-ghost" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''}>🖨️ طباعة السجل</button>
                     <button class="btn btn-secondary" id="btn-manage-columns">⚙️ إدارة الخانات</button>
                     <button class="btn btn-primary" id="btn-add-students">+ إضافة طلاب</button>
                 </div>
             </div>
+
+            ${students.length > 0 ? `
+                <div class="att-stats-bar">
+                    <button class="att-stat ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present" style="--stat-color:#059669;">
+                        <span class="att-stat-num num">${stats.present}</span><span>حاضر</span>
+                    </button>
+                    <button class="att-stat ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent" style="--stat-color:#DC2626;">
+                        <span class="att-stat-num num">${stats.absent}</span><span>غائب</span>
+                    </button>
+                    <button class="att-stat ${activeFilter === 'late' ? 'active' : ''}" data-att-filter="late" style="--stat-color:#D97706;">
+                        <span class="att-stat-num num">${stats.late}</span><span>متأخر</span>
+                    </button>
+                    <button class="att-stat ${activeFilter === 'unmarked' ? 'active' : ''}" data-att-filter="unmarked" style="--stat-color:#64748B;">
+                        <span class="att-stat-num num">${stats.unmarked}</span><span>بلا تحضير</span>
+                    </button>
+                    <div class="att-stat att-stat-pct" style="--stat-color:#1E40AF;">
+                        <span class="att-stat-num num">${attPct !== null ? attPct + '٪' : '—'}</span><span>الحضور</span>
+                    </div>
+                </div>
+            ` : ''}
 
             ${students.length === 0 ? emptyStudentsState() : studentsTable(students, attendanceToday, evalToday, columns)}
         `;
@@ -258,14 +373,58 @@
         panel.querySelector('#btn-print-students')?.addEventListener('click', () =>
             openPrintRegisterModal(cls, students, attendanceToday, evalToday, columns));
 
-        const search = panel.querySelector('#student-search');
-        if (search) search.addEventListener('input', (e) => {
-            const q = e.target.value.trim();
+        // "تحضير الكل": mark every UNMARKED student as present (never
+        // overrides a status the teacher already set), then re-render.
+        panel.querySelector('#btn-mark-all')?.addEventListener('click', async () => {
+            const btn = panel.querySelector('#btn-mark-all');
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ التحضير...';
+            try {
+                let count = 0;
+                for (let i = 0; i < students.length; i++) {
+                    if (!attendanceToday[i]) {
+                        await setAttendance(cls, students[i].id, today, 'present');
+                        count++;
+                    }
+                }
+                global.TeacherApp.toast(count > 0
+                    ? `تم تحضير ${count} طالباً كحاضر ✅`
+                    : 'الجميع محضّر مسبقاً.', 'success', 2500);
+            } catch (err) {
+                global.TeacherApp.toast('تعذّر التحضير: ' + err.message, 'error');
+            }
+            await renderStudents(panel, cls);
+        });
+
+        // Stats-bar filtering: tap a stat to show only those rows; tap again to clear.
+        const rowStatus = {};
+        students.forEach((s, i) => {
+            rowStatus[s.id] = attendanceToday[i] ? attendanceToday[i].status : 'unmarked';
+        });
+        function applyRowFilters() {
+            const q = (panel.querySelector('#student-search')?.value || '').trim();
+            const f = panel.dataset.activeAttFilter || '';
             panel.querySelectorAll('.st-row').forEach((row) => {
                 const name = row.dataset.name || '';
-                row.style.display = (q === '' || name.includes(q)) ? '' : 'none';
+                const sid  = row.querySelector('.st-name-link')?.dataset.id;
+                const okSearch = (q === '' || name.includes(q));
+                const okFilter = (f === '' || rowStatus[sid] === f);
+                row.style.display = (okSearch && okFilter) ? '' : 'none';
+            });
+        }
+        panel.querySelectorAll('[data-att-filter]').forEach((el) => {
+            el.addEventListener('click', () => {
+                const f = el.dataset.attFilter;
+                panel.dataset.activeAttFilter = (panel.dataset.activeAttFilter === f) ? '' : f;
+                panel.querySelectorAll('[data-att-filter]').forEach((b) =>
+                    b.classList.toggle('active', b.dataset.attFilter === panel.dataset.activeAttFilter));
+                applyRowFilters();
             });
         });
+        if (activeFilter) applyRowFilters();
+
+        const search = panel.querySelector('#student-search');
+        if (search) search.addEventListener('input', applyRowFilters);
 
         panel.querySelectorAll('.st-name-link').forEach((el) => {
             el.addEventListener('click', (e) => {
@@ -950,7 +1109,7 @@
             await global.TeacherDB.put('classes', cls);
             global.Modal.close();
             global.TeacherApp.toast('تم حفظ التعديل.', 'success');
-            paint(container, cls);
+            paintHub(container, cls);
         });
         global.Modal.open({ title: 'تعديل الفصل', body: form });
     }

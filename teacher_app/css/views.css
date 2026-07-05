@@ -1122,6 +1122,147 @@ body.drawer-open { overflow: hidden; }
     flex-wrap: wrap;
 }
 
+/* ==========================================================================
+   Class hub — featured students card + section grid (design "و")
+   ========================================================================== */
+.hub-featured {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #173B8F, #2B54D4);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(23, 59, 143, .25);
+    margin-bottom: var(--space-4);
+}
+.hub-featured:hover { color: #fff; }
+.hub-featured-bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .06);
+    pointer-events: none;
+}
+.hub-featured-bubble.b1 { width: 120px; height: 120px; left: -24px; top: -24px; }
+.hub-featured-bubble.b2 { width: 90px; height: 90px; left: 40px; bottom: -44px; background: rgba(255,255,255,.05); }
+.hub-featured-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+.hub-featured-icon {
+    width: 50px; height: 50px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, .16);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+.hub-featured-titles { flex: 1; min-width: 0; }
+.hub-featured-title { font-weight: var(--fw-black); font-size: var(--fs-lg); }
+.hub-featured-sub   { font-size: var(--fs-xs); opacity: .85; margin-top: 2px; }
+.hub-featured-chev  { font-size: 18px; opacity: .7; }
+.hub-featured-stats {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+.hf-stat {
+    flex: 1;
+    background: rgba(255, 255, 255, .13);
+    border-radius: 11px;
+    padding: var(--space-2);
+    text-align: center;
+}
+.hf-num { font-weight: var(--fw-black); font-size: 17px; }
+.hf-lbl { font-size: 10px; opacity: .8; margin-top: 1px; }
+
+.hub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    padding-bottom: var(--space-8);
+}
+.hub-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--surface);
+    border: 1px solid #EEF1F5;
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .05);
+    transition: border-color var(--dur-fast) var(--ease),
+                transform var(--dur-fast) var(--ease);
+}
+.hub-tile:hover { border-color: var(--primary-light); transform: translateY(-1px); }
+.hub-tile-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px;
+    flex-shrink: 0;
+}
+.hub-tile-body  { flex: 1; min-width: 0; }
+.hub-tile-label { font-weight: var(--fw-black); font-size: var(--fs-sm); color: var(--text); }
+.hub-tile-count { font-size: var(--fs-xs); font-weight: var(--fw-bold); margin-top: 1px; }
+
+/* Section page top bar (dedicated pages) */
+.section-page-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-block: var(--space-5) var(--space-3);
+    flex-wrap: wrap;
+}
+.section-page-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--fw-black);
+    font-size: var(--fs-h2);
+    color: var(--text);
+}
+.section-page-icon { font-size: 22px; }
+
+/* Attendance stats bar (filterable) */
+.att-stats-bar {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+}
+.att-stat {
+    flex: 1;
+    min-width: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-1);
+    font-family: inherit;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease),
+                background var(--dur-fast) var(--ease);
+}
+.att-stat-num {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-black);
+    color: var(--stat-color, var(--text));
+}
+.att-stat.active {
+    border-color: var(--stat-color, var(--primary));
+    background: color-mix(in srgb, var(--stat-color, var(--primary)) 8%, #fff);
+}
+.att-stat-pct { cursor: default; }
+
 /* Tab bar */
 /* TODO(phase-c): on mobile use horizontal scroll with scroll-snap-align,
    show both icon+label for active tab, larger tap targets (min 44px),

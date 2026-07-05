@@ -16,6 +16,7 @@
         { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true  },
         { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true  },
         { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true },
+        { pattern: /^\/class\/([\w-]+)\/(\w+)$/, keys: ['id', 'tab'], view: 'class', auth: true, chrome: true },
         { pattern: /^\/student\/([\w-]+)$/, keys: ['id'], view: 'student', auth: true, chrome: true },
         { pattern: /^\/settings$/,                 view: 'settings',  auth: true, chrome: true },
         { pattern: /^\/portfolio$/,                view: 'portfolio', auth: true, chrome: true },
@@ -106,7 +107,7 @@
             case 'class': {
                 const el = document.getElementById('view-class');
                 el.hidden = false;
-                await global.ClassView.render(el, params.id);
+                await global.ClassView.render(el, params.id, params.tab || null);
                 await updateHeaderName();
                 break;
             }
