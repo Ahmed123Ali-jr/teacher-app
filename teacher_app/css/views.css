@@ -1263,6 +1263,13 @@ body.drawer-open { overflow: hidden; }
 }
 .att-stat-pct { cursor: default; }
 
+/* "تحضير الكل" toggle — green while everyone is marked present */
+#btn-mark-all.mark-all-on {
+    background: #059669;
+    border-color: #059669;
+    color: #fff;
+}
+
 /* Tab bar */
 /* TODO(phase-c): on mobile use horizontal scroll with scroll-snap-align,
    show both icon+label for active tab, larger tap targets (min 44px),

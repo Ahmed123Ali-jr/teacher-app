@@ -325,6 +325,8 @@
             ? Math.round(((stats.present + stats.late) / attMarked) * 100)
             : null;
         const activeFilter = panel.dataset.activeAttFilter || '';
+        const allPresent = students.length > 0
+            && attendanceToday.every((r) => r && r.status === 'present');
 
         panel.innerHTML = `
             <div class="students-toolbar">
@@ -337,7 +339,7 @@
                 <div class="students-actions">
                     <input type="search" class="input search-input" id="student-search"
                            placeholder="🔍 بحث باسم الطالب...">
-                    <button class="btn btn-secondary" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>✓ تحضير الكل</button>
+                    <button class="btn btn-secondary ${allPresent ? 'mark-all-on' : ''}" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>${allPresent ? '✓ تم تحضير الكل' : '✓ تحضير الكل'}</button>
                     <button class="btn btn-ghost" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''}>🖨️ طباعة السجل</button>
                     <button class="btn btn-secondary" id="btn-manage-columns">⚙️ إدارة الخانات</button>
                     <button class="btn btn-primary" id="btn-add-students">+ إضافة طلاب</button>
@@ -373,23 +375,26 @@
         panel.querySelector('#btn-print-students')?.addEventListener('click', () =>
             openPrintRegisterModal(cls, students, attendanceToday, evalToday, columns));
 
-        // "تحضير الكل": mark every UNMARKED student as present (never
-        // overrides a status the teacher already set), then re-render.
+        // "تحضير الكل" toggle: press once → everyone becomes حاضر (the button
+        // turns green); press again while everyone is حاضر → today's attendance
+        // is cleared for the whole class.
         panel.querySelector('#btn-mark-all')?.addEventListener('click', async () => {
             const btn = panel.querySelector('#btn-mark-all');
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ التحضير...';
             try {
-                let count = 0;
-                for (let i = 0; i < students.length; i++) {
-                    if (!attendanceToday[i]) {
-                        await setAttendance(cls, students[i].id, today, 'present');
-                        count++;
+                if (allPresent) {
+                    btn.textContent = '⏳ جارٍ التراجع...';
+                    for (const s of students) await clearAttendance(s.id, today);
+                    global.TeacherApp.toast('تم التراجع عن تحضير الجميع.', 'success', 2500);
+                } else {
+                    btn.textContent = '⏳ جارٍ التحضير...';
+                    for (let i = 0; i < students.length; i++) {
+                        if (!attendanceToday[i] || attendanceToday[i].status !== 'present') {
+                            await setAttendance(cls, students[i].id, today, 'present');
+                        }
                     }
+                    global.TeacherApp.toast('تم تحضير الجميع كحاضر ✅', 'success', 2500);
                 }
-                global.TeacherApp.toast(count > 0
-                    ? `تم تحضير ${count} طالباً كحاضر ✅`
-                    : 'الجميع محضّر مسبقاً.', 'success', 2500);
             } catch (err) {
                 global.TeacherApp.toast('تعذّر التحضير: ' + err.message, 'error');
             }
@@ -689,6 +694,14 @@
                     date, status
                 });
             }
+        });
+    }
+
+    function clearAttendance(studentId, date) {
+        return queueWrite(async () => {
+            const all = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
+            const existing = all.find((r) => r.date === date);
+            if (existing) await global.TeacherDB.remove('attendance', existing.id);
         });
     }
 
