@@ -1237,15 +1237,19 @@ body.drawer-open { overflow: hidden; }
    Class hub — featured students card + section grid (design "و")
    ========================================================================== */
 .hub-featured {
+    --cls-color: #1E40AF;
     display: block;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #173B8F, #2B54D4);
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--cls-color) 80%, #000) 0%,
+        var(--cls-color) 45%,
+        color-mix(in srgb, var(--cls-color) 85%, #fff) 100%);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
     color: #fff;
     text-decoration: none;
-    box-shadow: 0 8px 20px rgba(23, 59, 143, .25);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--cls-color) 25%, transparent);
     margin-bottom: var(--space-4);
 }
 .hub-featured:hover { color: #fff; }

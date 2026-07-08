@@ -209,7 +209,7 @@
                     </div>
                 </div>
 
-                <a class="hub-featured" href="#/class/${cls.id}/students">
+                <a class="hub-featured" href="#/class/${cls.id}/students" style="--cls-color:${cls.color || '#1E40AF'}">
                     <div class="hub-featured-bubble b1"></div>
                     <div class="hub-featured-bubble b2"></div>
                     <div class="hub-featured-head">
