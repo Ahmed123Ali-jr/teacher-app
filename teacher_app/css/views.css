@@ -1123,80 +1123,114 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* ==========================================================================
-   Class hero — decorated class name at the top of the class page.
-   Tinted by the class's own color (--cls-color) so every class feels distinct.
+   Class hero (design «ح») — split header: a bold diagonal wedge in the
+   class's own color (--cls-color) carrying the section letter, beside the
+   class name and info chips on white.
    ========================================================================== */
-.class-hero {
+.class-hero-split {
     --cls-color: #1E40AF;
     position: relative;
-    overflow: hidden;
     display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    background: linear-gradient(135deg,
-        color-mix(in srgb, var(--cls-color) 9%, #fff), #fff 65%);
-    border: 1px solid color-mix(in srgb, var(--cls-color) 22%, #fff);
+    align-items: stretch;
+    background: var(--surface, #fff);
     border-radius: var(--radius-lg);
-    padding: var(--space-4) var(--space-5);
+    overflow: hidden;
+    min-height: 118px;
+    box-shadow: 0 8px 22px rgba(23, 32, 55, .08), 0 1px 3px rgba(23, 32, 55, .05);
     margin-bottom: var(--space-4);
 }
-.class-hero::after {
-    /* soft color bloom in the top corner */
+.chs-side {
+    position: relative;
+    flex: 0 0 118px;
+    width: 118px;
+}
+.chs-side::before {
+    /* light tint wedge peeking behind the main one */
     content: '';
     position: absolute;
-    inset-inline-start: -34px;
-    top: -44px;
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--cls-color) 13%, transparent);
-    pointer-events: none;
-    z-index: 0;
+    inset: 0;
+    background: color-mix(in srgb, var(--cls-color) 22%, #fff);
+    clip-path: polygon(22% 0, 100% 0, 100% 100%, 2% 100%);
 }
-.class-hero-badge,
-.class-hero-info {
-    position: relative;
+.chs-side::after {
+    /* main diagonal gradient wedge */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(205deg,
+        color-mix(in srgb, var(--cls-color) 82%, #fff) 0%,
+        var(--cls-color) 55%,
+        color-mix(in srgb, var(--cls-color) 72%, #000) 100%);
+    clip-path: polygon(34% 0, 100% 0, 100% 100%, 14% 100%);
+}
+.chs-side-label {
+    position: absolute;
+    inset: 0;
     z-index: 1;
+    /* keep the text off the slanted left edge (app is RTL-only) */
+    padding-left: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
 }
-.class-hero-badge {
-    width: 58px;
-    height: 58px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    border-radius: 18px;
-    background: linear-gradient(140deg,
-        var(--cls-color),
-        color-mix(in srgb, var(--cls-color) 62%, #0B1B4A));
+.chs-side-word {
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    color: rgba(255, 255, 255, .85);
+    line-height: 1.4;
+}
+.chs-side-letter {
+    font-size: 46px;
+    font-weight: 800;
     color: #fff;
-    font-size: 26px;
-    font-weight: var(--fw-black);
-    box-shadow: 0 6px 14px color-mix(in srgb, var(--cls-color) 35%, transparent);
+    line-height: 1.15;
 }
-.class-hero-badge.small { font-size: var(--fs-sm); }
-.class-hero-name {
-    margin: 0 0 var(--space-2);
-    font-size: var(--fs-h2);
-    font-weight: var(--fw-black);
+.chs-side-letter.small { font-size: 22px; }
+.chs-body {
+    flex: 1;
+    min-width: 0;
+    padding: 15px 12px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 9px;
+}
+.chs-name {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
     color: var(--text);
-    line-height: 1.25;
+    line-height: 1.4;
 }
-.class-hero-chips {
+.chs-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    align-items: center;
+    gap: 6px;
 }
-.class-chip {
+.chs-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 10px;
+    background: #F2F4F7;
+    border: 1px solid #E7EAF0;
+    color: #475467;
     border-radius: var(--radius-full);
-    background: #fff;
-    border: 1px solid color-mix(in srgb, var(--cls-color) 25%, #E2E8F0);
-    color: var(--text-muted);
+    padding: 3px 10px;
     font-size: var(--fs-xs);
     font-weight: var(--fw-bold);
+    line-height: 1.6;
+}
+.chs-chip.tinted {
+    background: color-mix(in srgb, var(--cls-color) 10%, #fff);
+    border-color: color-mix(in srgb, var(--cls-color) 22%, #fff);
+    color: color-mix(in srgb, var(--cls-color) 60%, #000);
+}
+@media (min-width: 768px) {
+    .chs-name { font-size: var(--fs-h2); }
+    .chs-side { flex-basis: 132px; width: 132px; }
 }
 
 /* ==========================================================================

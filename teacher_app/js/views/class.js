@@ -193,14 +193,18 @@
                     </div>
                 </div>
 
-                <div class="class-hero" style="--cls-color:${cls.color || '#1E40AF'}">
-                    <div class="class-hero-badge${(cls.section || '').length > 2 ? ' small' : ''}">${escapeHtml(cls.section)}</div>
-                    <div class="class-hero-info">
-                        <h2 class="class-hero-name">${escapeHtml(cls.grade)}</h2>
-                        <div class="class-hero-chips">
-                            <span class="class-chip">🔖 شعبة ${escapeHtml(cls.section)}</span>
-                            <span class="class-chip">📘 ${escapeHtml(cls.subject)}</span>
-                            <span class="class-chip">👥 <span class="num">${students.length}</span> طالباً</span>
+                <div class="class-hero-split" style="--cls-color:${cls.color || '#1E40AF'}">
+                    <div class="chs-side">
+                        <div class="chs-side-label">
+                            <span class="chs-side-word">شعبة</span>
+                            <span class="chs-side-letter${(cls.section || '').length > 2 ? ' small' : ''}">${escapeHtml(cls.section)}</span>
+                        </div>
+                    </div>
+                    <div class="chs-body">
+                        <h2 class="chs-name">${escapeHtml(cls.grade)}</h2>
+                        <div class="chs-chips">
+                            <span class="chs-chip tinted">📘 ${escapeHtml(cls.subject)}</span>
+                            <span class="chs-chip">👥 <span class="num">${students.length}</span> طالباً</span>
                         </div>
                     </div>
                 </div>
