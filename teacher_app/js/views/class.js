@@ -186,17 +186,22 @@
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
-                    <div>
-                        <button type="button" id="btn-class-back" class="btn btn-ghost btn-sm">← الفصول</button>
-                        <h2 class="class-title">
-                            <span class="class-dot" style="background:${cls.color || '#1E40AF'}"></span>
-                            ${STAGE_LABELS[cls.stage] || ''} — ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}
-                        </h2>
-                        <div class="class-subtitle">${escapeHtml(cls.subject)} · ${students.length} طالباً</div>
-                    </div>
+                    <button type="button" id="btn-class-back" class="btn btn-ghost btn-sm">← الفصول</button>
                     <div class="class-actions">
                         <button class="btn btn-ghost btn-sm" id="btn-edit-class">✏️ تعديل</button>
                         <button class="btn btn-ghost btn-sm" id="btn-delete-class">🗑️ حذف</button>
+                    </div>
+                </div>
+
+                <div class="class-hero" style="--cls-color:${cls.color || '#1E40AF'}">
+                    <div class="class-hero-badge${(cls.section || '').length > 2 ? ' small' : ''}">${escapeHtml(cls.section)}</div>
+                    <div class="class-hero-info">
+                        <h2 class="class-hero-name">${escapeHtml(cls.grade)}</h2>
+                        <div class="class-hero-chips">
+                            <span class="class-chip">🔖 شعبة ${escapeHtml(cls.section)}</span>
+                            <span class="class-chip">📘 ${escapeHtml(cls.subject)}</span>
+                            <span class="class-chip">👥 <span class="num">${students.length}</span> طالباً</span>
+                        </div>
                     </div>
                 </div>
 
