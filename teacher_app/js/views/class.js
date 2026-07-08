@@ -284,6 +284,12 @@
        every click fires twice. */
     let _studentsRenderGen = 0;
 
+    /* Frozen membership of the active stats-bar filter: the set of student
+       ids that matched when the filter was tapped. Kept across re-renders so
+       changing a student's status doesn't hide his row; recomputed on the
+       next filter tap (and irrelevant once the filter is off). */
+    let _attFilterIds = null;
+
     async function renderStudents(panel, cls) {
         const gen = ++_studentsRenderGen;
         // Wait for any in-flight saves to land in the cache before reading,
@@ -325,6 +331,7 @@
             ? Math.round(((stats.present + stats.late) / attMarked) * 100)
             : null;
         const activeFilter = panel.dataset.activeAttFilter || '';
+        if (!activeFilter) _attFilterIds = null;
         const allPresent = students.length > 0
             && attendanceToday.every((r) => r && r.status === 'present');
 
@@ -402,6 +409,9 @@
         });
 
         // Stats-bar filtering: tap a stat to show only those rows; tap again to clear.
+        // Membership is FROZEN at the moment the filter is tapped: changing a
+        // student's status afterwards (e.g. marking him absent from the
+        // «بلا تحضير» view) must NOT make his row vanish mid-work.
         const rowStatus = {};
         students.forEach((s, i) => {
             rowStatus[s.id] = attendanceToday[i] ? attendanceToday[i].status : 'unmarked';
@@ -413,7 +423,8 @@
                 const name = row.dataset.name || '';
                 const sid  = row.querySelector('.st-name-link')?.dataset.id;
                 const okSearch = (q === '' || name.includes(q));
-                const okFilter = (f === '' || rowStatus[sid] === f);
+                const okFilter = (f === ''
+                    || (_attFilterIds ? _attFilterIds.has(sid) : rowStatus[sid] === f));
                 row.style.display = (okSearch && okFilter) ? '' : 'none';
             });
         }
@@ -421,6 +432,9 @@
             el.addEventListener('click', () => {
                 const f = el.dataset.attFilter;
                 panel.dataset.activeAttFilter = (panel.dataset.activeAttFilter === f) ? '' : f;
+                _attFilterIds = panel.dataset.activeAttFilter
+                    ? new Set(students.filter((s) => rowStatus[s.id] === f).map((s) => s.id))
+                    : null;
                 panel.querySelectorAll('[data-att-filter]').forEach((b) =>
                     b.classList.toggle('active', b.dataset.attFilter === panel.dataset.activeAttFilter));
                 applyRowFilters();
