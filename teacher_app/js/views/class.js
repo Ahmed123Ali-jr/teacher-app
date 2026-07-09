@@ -186,7 +186,12 @@
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
-                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول">→</button>
+                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                     <div class="class-actions">
                         <button class="btn btn-ghost btn-sm" id="btn-edit-class">✏️ تعديل</button>
                         <button class="btn btn-ghost btn-sm" id="btn-delete-class">🗑️ حذف</button>

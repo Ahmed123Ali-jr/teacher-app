@@ -1106,19 +1106,17 @@ body.drawer-open { overflow: hidden; }
     flex-shrink: 0;
     display: grid;
     place-items: center;
+    padding: 0;
     background: var(--surface, #fff);
     border: 1px solid #E7EAF0;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(23, 32, 55, .06);
     color: #475467;
-    font-size: 19px;
-    font-weight: var(--fw-bold);
-    font-family: inherit;
-    line-height: 1;
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease),
                 transform var(--dur-fast) var(--ease);
 }
+.btn-back-box svg { display: block; }
 .btn-back-box:active { background: #F2F4F7; transform: scale(.96); }
 .class-title {
     margin: var(--space-2) 0 var(--space-1);
