@@ -858,11 +858,6 @@ body.drawer-open { overflow: hidden; }
     font-size: var(--fs-h1);
     font-weight: var(--fw-bold);
 }
-.class-card-meta-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
 /* «تعديل» pill on the colored card — opens the edit/delete menu */
 .class-card-edit {
     background: rgba(255, 255, 255, .16);

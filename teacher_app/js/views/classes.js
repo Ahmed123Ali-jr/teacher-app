@@ -87,11 +87,8 @@
                 </div>
                 <div class="class-card-meta">
                     <span>${c.student_count || 0} طالب</span>
-                    <span class="class-card-meta-actions">
-                        <span class="class-card-edit" role="button" tabindex="0"
-                              data-edit-class="${c.id}">تعديل</span>
-                        <span class="class-card-count">📖</span>
-                    </span>
+                    <span class="class-card-edit" role="button" tabindex="0"
+                          data-edit-class="${c.id}">تعديل</span>
                 </div>
             </button>
         `;
