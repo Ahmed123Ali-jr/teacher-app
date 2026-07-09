@@ -54,12 +54,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <div>
-                        <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
-                        <h2 class="section-title" style="display:inline-block; margin-right:var(--space-3);">
-                            📅 الجدول الأسبوعي
-                        </h2>
-                    </div>
+                    <h2 class="section-title">📅 الجدول الأسبوعي</h2>
                     <div class="flex gap-2">
                         <button class="btn btn-secondary" id="btn-import-schedule">📷 استيراد من صورة/PDF</button>
                         <button class="btn btn-ghost" id="btn-times">⏰ توقيت الحصص</button>

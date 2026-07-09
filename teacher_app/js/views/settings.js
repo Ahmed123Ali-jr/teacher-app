@@ -194,12 +194,7 @@
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <div>
-                        <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
-                        <h2 class="section-title" style="display:inline-block; margin-right:var(--space-3);">
-                            ⚙️ الإعدادات
-                        </h2>
-                    </div>
+                    <h2 class="section-title">⚙️ الإعدادات</h2>
                 </div>
 
                 ${MENU_GROUPS.map(groupHtml).join('')}
