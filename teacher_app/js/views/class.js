@@ -192,10 +192,6 @@
                                   stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>
-                    <div class="class-actions">
-                        <button class="btn btn-ghost btn-sm" id="btn-edit-class">✏️ تعديل</button>
-                        <button class="btn btn-ghost btn-sm" id="btn-delete-class">🗑️ حذف</button>
-                    </div>
                 </div>
 
                 <div class="class-hero-split" style="--cls-color:${cls.color || '#1E40AF'}">
@@ -252,8 +248,6 @@
         container.querySelector('#btn-class-back')?.addEventListener('click', () => {
             global.location.hash = '#/classes';
         });
-        container.querySelector('#btn-edit-class')?.addEventListener('click', () => editClass(cls, container));
-        container.querySelector('#btn-delete-class')?.addEventListener('click', () => deleteClass(cls));
     }
 
     /* ==========================================================================
@@ -1097,7 +1091,9 @@
        EDIT / DELETE CLASS
        ========================================================================== */
 
-    function editClass(cls, container) {
+    /* Opened from the classes list («تعديل» on the class card).
+       onSaved is called after a successful save so the caller can repaint. */
+    function editClass(cls, onSaved) {
         const SUBJECTS = [
             'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
             'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
@@ -1150,12 +1146,12 @@
             await global.TeacherDB.put('classes', cls);
             global.Modal.close();
             global.TeacherApp.toast('تم حفظ التعديل.', 'success');
-            paintHub(container, cls);
+            if (onSaved) onSaved();
         });
         global.Modal.open({ title: 'تعديل الفصل', body: form });
     }
 
-    async function deleteClass(cls) {
+    async function deleteClass(cls, onDone) {
         const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
         const msg = students.length > 0
             ? `سيتم حذف الفصل و ${students.length} طالب وجميع سجلاتهم. متأكد؟`
@@ -1164,7 +1160,8 @@
         for (const s of students) await deleteStudent(s.id);
         await global.TeacherDB.remove('classes', cls.id);
         global.TeacherApp.toast('تم حذف الفصل.', 'info');
-        global.location.hash = '#/dashboard';
+        if (onDone) onDone();
+        else global.location.hash = '#/dashboard';
     }
 
     /* ==========================================================================
@@ -1316,5 +1313,5 @@
         return out;
     }
 
-    global.ClassView = { render };
+    global.ClassView = { render, editClass, deleteClass };
 })(window);

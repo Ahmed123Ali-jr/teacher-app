@@ -28,7 +28,7 @@
             </div>
         `;
 
-        bind(container, teacher);
+        bind(container, teacher, classes);
     }
 
     /** Build sections grouped by stage; empty stages are skipped. */
@@ -87,7 +87,11 @@
                 </div>
                 <div class="class-card-meta">
                     <span>${c.student_count || 0} طالب</span>
-                    <span class="class-card-count">📖</span>
+                    <span class="class-card-meta-actions">
+                        <span class="class-card-edit" role="button" tabindex="0"
+                              data-edit-class="${c.id}">تعديل</span>
+                        <span class="class-card-count">📖</span>
+                    </span>
                 </div>
             </button>
         `;
@@ -99,7 +103,7 @@
         }[m]));
     }
 
-    function bind(container, teacher) {
+    function bind(container, teacher, classes) {
         const openAdd = () => global.DashboardView.openAddClassModal(teacher);
 
         container.querySelector('#btn-add-class')?.addEventListener('click', openAdd);
@@ -107,10 +111,43 @@
             el.addEventListener('click', openAdd);
         });
         container.querySelectorAll('.class-card[data-class-id]').forEach((el) => {
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                // «تعديل» has its own handler — don't navigate into the class.
+                if (e.target.closest('.class-card-edit')) return;
                 global.location.hash = '#/class/' + el.dataset.classId;
             });
         });
+        container.querySelectorAll('[data-edit-class]').forEach((el) => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cls = classes.find((c) => c.id === el.dataset.editClass);
+                if (cls) openClassActions(cls, container);
+            });
+        });
+    }
+
+    /** Small actions menu: edit or delete the class (from the card's «تعديل»). */
+    function openClassActions(cls, container) {
+        const body = document.createElement('div');
+        body.innerHTML = `
+            <p class="text-muted" style="font-size: var(--fs-sm); margin: 0 0 var(--space-4);">
+                ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} — ${escapeHtml(cls.subject)}
+            </p>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <button type="button" class="btn btn-secondary btn-block" id="ca-edit">✏️ تعديل الفصل</button>
+                <button type="button" class="btn btn-ghost btn-block" id="ca-delete"
+                        style="color: #DC2626;">🗑️ حذف الفصل</button>
+            </div>
+        `;
+        body.querySelector('#ca-edit').addEventListener('click', () => {
+            global.Modal.close();
+            global.ClassView.editClass(cls, () => render(container));
+        });
+        body.querySelector('#ca-delete').addEventListener('click', async () => {
+            global.Modal.close();
+            await global.ClassView.deleteClass(cls, () => render(container));
+        });
+        global.Modal.open({ title: 'إدارة الفصل', body });
     }
 
     global.ClassesView = { render };
