@@ -397,7 +397,7 @@
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('[data-empty-add]')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('#btn-manage-columns')?.addEventListener('click', () => openColumnManager(cls, panel));
-        panel.querySelector('#chip-add-column')?.addEventListener('click', () => openColumnManager(cls, panel));
+        panel.querySelector('#chip-add-column')?.addEventListener('click', () => openAddColumnModal(cls, panel));
 
         // Column focus chips: tap a column to see name + that column only.
         panel.querySelectorAll('[data-col-focus]').forEach((el) => {
@@ -792,6 +792,63 @@
        COLUMN MANAGER MODAL
        ========================================================================== */
 
+    /* Quick add from the [+] chip: name + type only — never lists the
+       existing columns (the ⚙️ manager is for managing those). */
+    function openAddColumnModal(cls, panel) {
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <div class="field">
+                <label class="label" for="nc-name">اسم الخانة *</label>
+                <input class="input" id="nc-name" type="text" required maxlength="30"
+                       placeholder="مثال: الواجبات">
+            </div>
+            <div class="field">
+                <label class="label" for="nc-type">طريقة التقييم</label>
+                <select class="select" id="nc-type">
+                    ${Object.entries(COLUMN_TYPES).map(([k, v]) =>
+                        `<option value="${k}" ${k === 'number' ? 'selected' : ''}>${v.label}</option>`).join('')}
+                </select>
+            </div>
+            <div class="field" id="nc-max-field">
+                <label class="label" for="nc-max">الحد الأعلى</label>
+                <input class="input" id="nc-max" type="text" inputmode="numeric" value="10">
+            </div>
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="submit" class="btn btn-primary">إضافة</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+        const typeSel = form.querySelector('#nc-type');
+        const maxInp  = form.querySelector('#nc-max');
+        bindArabicNumberInput(maxInp);
+        typeSel.addEventListener('change', () => {
+            maxInp.value = COLUMN_TYPES[typeSel.value].default_max;
+            form.querySelector('#nc-max-field').style.display =
+                (typeSel.value === 'number' || typeSel.value === 'stars') ? '' : 'none';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = form.querySelector('#nc-name').value.trim();
+            if (!name) return;
+            const type = typeSel.value;
+            const n = parseArabicNumber(maxInp.value);
+            const max = (type === 'number' || type === 'stars') && n && n > 0
+                ? Math.min(1000, Math.round(n))
+                : COLUMN_TYPES[type].default_max;
+            const col = { id: genColId(), name, type, max };
+            cls.eval_columns = ensureColumns(cls).map((c) => ({ ...c })).concat([col]);
+            cls.updated_at = new Date().toISOString();
+            await global.TeacherDB.put('classes', cls);
+            global.Modal.close();
+            global.TeacherApp.toast('تمت إضافة الخانة ✅', 'success');
+            // Jump straight into the new column so grades can be entered now.
+            panel.dataset.activeColFocus = col.id;
+            await renderStudents(panel, cls);
+        });
+        global.Modal.open({ title: '+ خانة جديدة', body: form });
+    }
+
     function openColumnManager(cls, panel) {
         const columns = ensureColumns(cls).map((c) => ({ ...c }));
 
@@ -800,18 +857,13 @@
         function paintList() {
             form.innerHTML = `
                 <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                    أضف أو احذف خانات التقييم التي تناسب طريقتك. التغييرات تحفظ فوراً عند الضغط على "تم".
+                    عدّل أو احذف خانات التقييم الموجودة. لإضافة خانة جديدة استخدم زر [+] في شريط الخانات.
                 </p>
                 <div class="columns-list" id="columns-list">
                     ${columns.length === 0
-                        ? '<p class="text-muted">لا توجد خانات — أضف واحدة أدناه.</p>'
+                        ? '<p class="text-muted">لا توجد خانات — أضف واحدة من زر [+] في شريط الخانات.</p>'
                         : columns.map((c, i) => columnRow(c, i)).join('')}
                 </div>
-
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-add-col"
-                        style="margin-top: var(--space-4);">
-                    + إضافة خانة جديدة
-                </button>
 
                 <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                     <button type="button" class="btn btn-primary" id="btn-save-cols">تم</button>
@@ -866,16 +918,6 @@
                     columns.splice(Number(btn.dataset.remove), 1);
                     paintList();
                 });
-            });
-
-            form.querySelector('#btn-add-col')?.addEventListener('click', () => {
-                columns.push({
-                    id: genColId(),
-                    name: 'خانة جديدة',
-                    type: 'number',
-                    max: COLUMN_TYPES.number.default_max
-                });
-                paintList();
             });
 
             form.querySelector('#btn-save-cols')?.addEventListener('click', async () => {
