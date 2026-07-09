@@ -333,10 +333,27 @@
         const attPct = attMarked > 0
             ? Math.round(((stats.present + stats.late) / attMarked) * 100)
             : null;
+        if (panel.dataset.activeAttFilter
+            && !['present', 'absent'].includes(panel.dataset.activeAttFilter)) {
+            panel.dataset.activeAttFilter = '';
+        }
         const activeFilter = panel.dataset.activeAttFilter || '';
         if (!activeFilter) _attFilterIds = null;
         const allPresent = students.length > 0
             && attendanceToday.every((r) => r && r.status === 'present');
+
+        // Column focus: '' = all columns, 'attendance' = attendance only,
+        // otherwise an eval-column id → show name + that column only.
+        let focus = panel.dataset.activeColFocus || '';
+        if (focus && focus !== 'attendance' && !columns.some((c) => c.id === focus)) {
+            panel.dataset.activeColFocus = '';
+            focus = '';
+        }
+        const showAtt = focus === '' || focus === 'attendance';
+        const visibleCols = focus === '' ? columns
+            : (focus === 'attendance' ? [] : columns.filter((c) => c.id === focus));
+        const prevChips = panel.querySelector('#col-chips');
+        const prevChipsScroll = prevChips ? prevChips.scrollLeft : null;
 
         panel.innerHTML = `
             <div class="students-toolbar">
@@ -346,42 +363,51 @@
                         📅 ${todayHuman()}
                     </span>
                 </div>
-                <div class="students-actions">
-                    <input type="search" class="input search-input" id="student-search"
-                           placeholder="🔍 بحث باسم الطالب...">
-                    <button class="btn btn-secondary ${allPresent ? 'mark-all-on' : ''}" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>${allPresent ? '✓ تم تحضير الكل' : '✓ تحضير الكل'}</button>
-                    <button class="btn btn-ghost" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''}>🖨️ طباعة السجل</button>
-                    <button class="btn btn-secondary" id="btn-manage-columns">⚙️ إدارة الخانات</button>
-                    <button class="btn btn-primary" id="btn-add-students">+ إضافة طلاب</button>
-                </div>
+                <button class="btn btn-ghost btn-sm" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''}>🖨️ طباعة السجل</button>
+            </div>
+
+            <div class="students-actions">
+                <input type="search" class="input search-input" id="student-search"
+                       placeholder="🔍 بحث باسم الطالب...">
+                <button class="btn btn-secondary ${allPresent ? 'mark-all-on' : ''}" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>${allPresent ? '✓ تم تحضير الكل' : '✓ تحضير الكل'}</button>
+                ${students.length > 0 ? `
+                <div class="att-mini-stats">
+                    <button class="att-mini ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present" style="--stat-color:#059669;">حاضر <b class="num">${stats.present}</b></button>
+                    <button class="att-mini ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent" style="--stat-color:#DC2626;">غائب <b class="num">${stats.absent}</b></button>
+                    <span class="att-mini pct" style="--stat-color:#1E40AF;">الحضور <b class="num">${attPct !== null ? attPct + '٪' : '—'}</b></span>
+                </div>` : ''}
+                <button class="btn btn-primary" id="btn-add-students">+ إضافة طلاب</button>
             </div>
 
             ${students.length > 0 ? `
-                <div class="att-stats-bar">
-                    <button class="att-stat ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present" style="--stat-color:#059669;">
-                        <span class="att-stat-num num">${stats.present}</span><span>حاضر</span>
-                    </button>
-                    <button class="att-stat ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent" style="--stat-color:#DC2626;">
-                        <span class="att-stat-num num">${stats.absent}</span><span>غائب</span>
-                    </button>
-                    <button class="att-stat ${activeFilter === 'late' ? 'active' : ''}" data-att-filter="late" style="--stat-color:#D97706;">
-                        <span class="att-stat-num num">${stats.late}</span><span>متأخر</span>
-                    </button>
-                    <button class="att-stat ${activeFilter === 'unmarked' ? 'active' : ''}" data-att-filter="unmarked" style="--stat-color:#64748B;">
-                        <span class="att-stat-num num">${stats.unmarked}</span><span>بلا تحضير</span>
-                    </button>
-                    <div class="att-stat att-stat-pct" style="--stat-color:#1E40AF;">
-                        <span class="att-stat-num num">${attPct !== null ? attPct + '٪' : '—'}</span><span>الحضور</span>
-                    </div>
+                <div class="col-chips-bar" id="col-chips">
+                    <button class="col-chip ${focus === '' ? 'active' : ''}" data-col-focus="">الكل</button>
+                    <button class="col-chip ${focus === 'attendance' ? 'active' : ''}" data-col-focus="attendance">الحضور</button>
+                    ${columns.map((c) => `
+                        <button class="col-chip ${focus === c.id ? 'active' : ''}" data-col-focus="${c.id}">${escapeHtml(c.name)}</button>
+                    `).join('')}
+                    <button class="col-chip col-chip-add" id="chip-add-column" title="إضافة خانة جديدة">+</button>
+                    <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ إدارة الخانات</button>
                 </div>
             ` : ''}
 
-            ${students.length === 0 ? emptyStudentsState() : studentsTable(students, attendanceToday, evalToday, columns)}
+            ${students.length === 0 ? emptyStudentsState() : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt, focus !== '')}
         `;
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('[data-empty-add]')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('#btn-manage-columns')?.addEventListener('click', () => openColumnManager(cls, panel));
+        panel.querySelector('#chip-add-column')?.addEventListener('click', () => openColumnManager(cls, panel));
+
+        // Column focus chips: tap a column to see name + that column only.
+        panel.querySelectorAll('[data-col-focus]').forEach((el) => {
+            el.addEventListener('click', () => {
+                panel.dataset.activeColFocus = el.dataset.colFocus;
+                renderStudents(panel, cls);
+            });
+        });
+        const newChips = panel.querySelector('#col-chips');
+        if (newChips && prevChipsScroll !== null) newChips.scrollLeft = prevChipsScroll;
         panel.querySelector('#btn-print-students')?.addEventListener('click', () =>
             openPrintRegisterModal(cls, students, attendanceToday, evalToday, columns));
 
@@ -550,7 +576,7 @@
         `;
     }
 
-    function studentsTable(students, attToday, evalToday, columns) {
+    function studentsTable(students, attToday, evalToday, columns, showAttendance = true, compact = false) {
         const rows = students.map((s, i) => {
             const att = attToday[i];
             const values = readValues(evalToday[i]);
@@ -564,7 +590,7 @@
                             ${escapeHtml(s.name)}
                         </a>
                     </td>
-                    <td class="st-att">${attendanceButtons(s.id, att)}</td>
+                    ${showAttendance ? `<td class="st-att">${attendanceButtons(s.id, att)}</td>` : ''}
                     ${cells}
                     <td class="st-del">
                         <button class="btn btn-ghost btn-sm"
@@ -578,12 +604,12 @@
 
         return `
             <div class="table-wrapper">
-                <table class="students-table">
+                <table class="students-table${compact ? ' compact' : ''}">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>الاسم</th>
-                            <th>الحضور اليوم</th>
+                            ${showAttendance ? '<th>الحضور اليوم</th>' : ''}
                             ${columns.map((c) => `<th>${escapeHtml(c.name)}${c.type === 'number' ? ` <span class="text-muted" style="font-weight:normal;">(من ${c.max})</span>` : ''}</th>`).join('')}
                             <th></th>
                         </tr>
