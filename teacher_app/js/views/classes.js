@@ -15,7 +15,6 @@
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        const stageColors = (await global.TeacherDB.Settings.get('stage_colors')) || {};
 
         container.innerHTML = `
             <div class="container">
@@ -25,7 +24,7 @@
                 </div>
                 ${classes.length === 0
                     ? global.DashboardView.emptyClassesState()
-                    : groupedHtml(classes, stageColors)}
+                    : groupedHtml(classes)}
             </div>
         `;
 
@@ -33,22 +32,19 @@
     }
 
     /** Build sections grouped by stage; empty stages are skipped. */
-    function groupedHtml(classes, stageColors) {
+    function groupedHtml(classes) {
         const buckets = { primary: [], intermediate: [], secondary: [], other: [] };
         for (const c of classes) {
             if (buckets[c.stage]) buckets[c.stage].push(c);
             else buckets.other.push(c);
         }
 
-        const baseOf = (key) =>
-            (stageColors && stageColors[key]) || buckets[key][0]?.color || '#1E40AF';
-
         const sections = STAGE_ORDER
             .filter((s) => buckets[s].length > 0)
-            .map((s) => sectionHtml(STAGE_LABELS[s], STAGE_ICONS[s], buckets[s], baseOf(s)));
+            .map((s) => sectionHtml(STAGE_LABELS[s], STAGE_ICONS[s], buckets[s]));
 
         if (buckets.other.length) {
-            sections.push(sectionHtml('أخرى', '📚', buckets.other, baseOf('other')));
+            sections.push(sectionHtml('أخرى', '📚', buckets.other));
         }
 
         // Always show the "+ add" tile at the very end
@@ -72,10 +68,10 @@
         return `${n} فصلاً`;
     }
 
-    function sectionHtml(label, icon, list, color) {
+    function sectionHtml(label, icon, list) {
         return `
             <div class="classes-stage-group">
-                <h3 class="stage-banner" style="--stage-color:${color}">
+                <h3 class="stage-banner">
                     <span class="stage-banner-icon">${icon}</span>
                     <span class="stage-banner-label">${label}</span>
                     <span class="stage-banner-count">${classCount(list.length)}</span>
