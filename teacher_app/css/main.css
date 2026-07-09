@@ -30,53 +30,61 @@
     --border:          #E2E8F0;
     --border-strong:   #CBD5E1;
 
-    /* Spacing scale */
-    --space-1:   4px;
-    --space-2:   8px;
-    --space-3:  12px;
-    --space-4:  16px;
-    --space-5:  20px;
-    --space-6:  24px;
-    --space-8:  32px;
-    --space-10: 40px;
-    --space-12: 48px;
-    --space-16: 64px;
+    /* ======================================================================
+       Fibonacci design system
+       Spacing ladder: 3 · 5 · 8 · 13 · 21 · 34 · 55 · 89
+       (each step = sum of the two before it → ratios converge on φ 1.618)
+       ====================================================================== */
 
-    /* Typography scale */
-    --fs-display: 32px;
-    --fs-h1:      24px;
-    --fs-h2:      20px;
-    --fs-lg:      18px;
+    /* Spacing scale — Fibonacci rhythm */
+    --space-1:   3px;
+    --space-2:   5px;
+    --space-3:   8px;
+    --space-4:  13px;
+    --space-5:  21px;
+    --space-6:  21px;
+    --space-8:  34px;
+    --space-10: 55px;
+    --space-12: 55px;
+    --space-16: 89px;
+
+    /* Typography — golden ramp anchored at 16px body
+       (each heading step ≈ ×1.272 = √φ; peaks land on Fibonacci 13/21/34) */
+    --fs-display: 42px;
+    --fs-h1:      34px;
+    --fs-h2:      26px;
+    --fs-lg:      21px;
     --fs-body:    16px;
-    --fs-sm:      14px;
-    --fs-xs:      12px;
+    --fs-sm:      13px;
+    --fs-xs:      11px;
 
     --fw-regular:  400;
     --fw-medium:   500;
     --fw-bold:     700;
     --fw-black:    900;
 
-    --lh-tight:   1.2;
-    --lh-base:    1.6;
+    /* Line heights on the golden ratio */
+    --lh-tight:   1.236;
+    --lh-base:    1.618;
 
-    /* Radii */
+    /* Radii — Fibonacci curves */
     --radius-sm:  8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    --radius-md: 13px;
+    --radius-lg: 21px;
+    --radius-xl: 34px;
     --radius-full: 9999px;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow:    0 4px 6px rgba(0, 0, 0, 0.07);
-    --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.10);
-    --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.10);
+    /* Shadows — layered elevation, Fibonacci offsets/blurs (2·3·5·8·13·21·34·55) */
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow:    0 2px 5px rgba(15, 23, 42, 0.05), 0 8px 21px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 5px 13px rgba(15, 23, 42, 0.07), 0 13px 34px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 8px 21px rgba(15, 23, 42, 0.09), 0 21px 55px rgba(15, 23, 42, 0.11);
 
-    /* Motion */
+    /* Motion — Fibonacci milliseconds */
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
-    --dur-fast: 150ms;
-    --dur-base: 250ms;
-    --dur-slow: 400ms;
+    --dur-fast: 144ms;
+    --dur-base: 233ms;
+    --dur-slow: 377ms;
 
     /* Layout */
     --container-max: 1200px;
@@ -89,9 +97,9 @@
     /* Touch targets (Apple HIG minimum = 44px) */
     --touch-target-min: 44px;
 
-    /* Mobile spacing */
-    --mobile-padding: 16px;
-    --card-gap:       12px;
+    /* Mobile spacing — on the Fibonacci ladder */
+    --mobile-padding: 13px;
+    --card-gap:       13px;
 
     /* Bottom navigation height (mobile only) */
     --bottom-nav-height: 64px;
@@ -371,15 +379,11 @@ body.theme-auto.dark-active .textarea {
    Breakpoints: bp-mobile 480px · bp-tablet 768px · bp-desktop 1024px
    ========================================================================== */
 
-/* Mobile & tablet (≤ 768px): bump body / small / h1 / h2 for readability */
+/* Mobile & tablet (≤ 768px): layout spacing only — type keeps the golden
+   ramp from :root, we just cap the display size. */
 @media (max-width: 768px) {
     :root {
-        --fs-display: 26px;
-        --fs-h1:      26px;
-        --fs-h2:      22px;
-        --fs-lg:      18px;
-        --fs-body:    16px;
-        --fs-sm:      14px;
+        --fs-display: 34px;
     }
 
     .container { padding-inline: var(--mobile-padding); }
@@ -389,12 +393,11 @@ body.theme-auto.dark-active .textarea {
     body { padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); }
 }
 
-/* Very small phones (≤ 480px): tighten further */
+/* Very small phones (≤ 480px): cap the two largest steps to φ² (26 = 16×φ) */
 @media (max-width: 480px) {
     :root {
-        --fs-display: 24px;
-        --fs-h1:      24px;
-        --fs-h2:      20px;
+        --fs-display: 26px;
+        --fs-h1:      26px;
     }
     .container { padding-inline: var(--space-4); }
 }
