@@ -15,6 +15,7 @@
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
+        const stageColors = (await global.TeacherDB.Settings.get('stage_colors')) || {};
 
         container.innerHTML = `
             <div class="container">
@@ -24,7 +25,7 @@
                 </div>
                 ${classes.length === 0
                     ? global.DashboardView.emptyClassesState()
-                    : groupedHtml(classes)}
+                    : groupedHtml(classes, stageColors)}
             </div>
         `;
 
@@ -32,19 +33,22 @@
     }
 
     /** Build sections grouped by stage; empty stages are skipped. */
-    function groupedHtml(classes) {
+    function groupedHtml(classes, stageColors) {
         const buckets = { primary: [], intermediate: [], secondary: [], other: [] };
         for (const c of classes) {
             if (buckets[c.stage]) buckets[c.stage].push(c);
             else buckets.other.push(c);
         }
 
+        const baseOf = (key) =>
+            (stageColors && stageColors[key]) || buckets[key][0]?.color || '#1E40AF';
+
         const sections = STAGE_ORDER
             .filter((s) => buckets[s].length > 0)
-            .map((s) => sectionHtml(STAGE_LABELS[s], STAGE_ICONS[s], buckets[s]));
+            .map((s) => sectionHtml(STAGE_LABELS[s], STAGE_ICONS[s], buckets[s], baseOf(s)));
 
         if (buckets.other.length) {
-            sections.push(sectionHtml('أخرى', '📚', buckets.other));
+            sections.push(sectionHtml('أخرى', '📚', buckets.other, baseOf('other')));
         }
 
         // Always show the "+ add" tile at the very end
@@ -60,15 +64,21 @@
         return sections.join('');
     }
 
-    function sectionHtml(label, icon, list) {
+    /** Arabic-friendly class count: فصل واحد · فصلان · ٣ فصول · ١١ فصلاً */
+    function classCount(n) {
+        if (n === 1) return 'فصل واحد';
+        if (n === 2) return 'فصلان';
+        if (n <= 10) return `${n} فصول`;
+        return `${n} فصلاً`;
+    }
+
+    function sectionHtml(label, icon, list, color) {
         return `
             <div class="classes-stage-group">
-                <h3 class="classes-stage-title">
-                    <span>${icon}</span>
-                    <span>${label}</span>
-                    <span class="text-muted" style="font-size: var(--fs-sm); font-weight: normal;">
-                        (${list.length})
-                    </span>
+                <h3 class="stage-banner" style="--stage-color:${color}">
+                    <span class="stage-banner-icon">${icon}</span>
+                    <span class="stage-banner-label">${label}</span>
+                    <span class="stage-banner-count">${classCount(list.length)}</span>
                 </h3>
                 <div class="grid grid-3 classes-stage-grid">
                     ${list.map(classCardHtml).join('')}
