@@ -646,20 +646,18 @@ body.drawer-open { overflow: hidden; }
 .classes-stage-group {
     margin-bottom: var(--space-6);
 }
-/* Stage banner — prominent stage title tinted with the stage's own color */
+/* Stage banner — prominent stage title. Solid --primary (#0F2C5C with the
+   royal theme): the exact same color as the «+ إضافة فصل» button. */
 .stage-banner {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    background: linear-gradient(135deg,
-        color-mix(in srgb, var(--stage-color, #1E40AF) 86%, #000) 0%,
-        var(--stage-color, #1E40AF) 55%,
-        color-mix(in srgb, var(--stage-color, #1E40AF) 82%, #fff) 100%);
+    background: var(--primary);
     color: #fff;
     border-radius: var(--radius-lg);
     padding: 10px var(--space-4);
     margin: 0 0 var(--space-4);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--stage-color, #1E40AF) 28%, transparent);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 .stage-banner-icon {
     width: 34px;
