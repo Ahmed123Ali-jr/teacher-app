@@ -1093,7 +1093,7 @@
 
     /* Opened from the classes list («تعديل» on the class card).
        onSaved is called after a successful save so the caller can repaint. */
-    function editClass(cls, onSaved) {
+    async function editClass(cls, onSaved) {
         const SUBJECTS = [
             'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
             'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
@@ -1101,7 +1101,9 @@
             'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية', 'أخرى'
         ];
         const COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'];
-        let selectedColor = cls.color || COLORS[0];
+        // The picker edits the STAGE's base color — unified across its classes.
+        const stageBase = await global.StageColors.get(cls.stage);
+        let selectedColor = stageBase || cls.color || COLORS[0];
 
         const form = document.createElement('form');
         form.innerHTML = `
@@ -1117,12 +1119,15 @@
                 </select>
             </div>
             <div class="field">
-                <label class="label">اللون</label>
+                <label class="label">لون المرحلة</label>
                 <div class="color-picker">
                     ${COLORS.map((c) => `
                         <button type="button" class="color-chip ${c === selectedColor ? 'selected' : ''}"
                                 style="background:${c}" data-color="${c}"></button>
                     `).join('')}
+                </div>
+                <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
+                    اللون موحّد للمرحلة كاملة — تغييره يعيد تلوين كل فصولها بدرجات متقاربة.
                 </div>
             </div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
@@ -1141,9 +1146,13 @@
             e.preventDefault();
             cls.section = form.querySelector('#e-section').value.trim();
             cls.subject = form.querySelector('#e-subject').value;
-            cls.color   = selectedColor;
             cls.updated_at = new Date().toISOString();
             await global.TeacherDB.put('classes', cls);
+            // Unify the whole stage on the picked base color; each class keeps
+            // (or gets) its own shade of it — including this one.
+            const prevBase = await global.StageColors.get(cls.stage);
+            await global.StageColors.set(cls.stage, selectedColor);
+            await global.StageColors.applyToStage(cls.teacher_id, cls.stage, selectedColor, prevBase);
             global.Modal.close();
             global.TeacherApp.toast('تم حفظ التعديل.', 'success');
             if (onSaved) onSaved();

@@ -18,6 +18,89 @@
 
     const COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'];
 
+    /* ---------- Stage colors ----------
+       One BASE color per stage (saved in Settings under 'stage_colors');
+       every class in the stage gets an automatic shade of that base so the
+       stage looks unified while each class stays distinguishable.
+       A class's shade slot is recoverable from its stored color, so no extra
+       column is needed on the classes table. */
+    const SHADE_STEPS = [0, -0.18, 0.18, -0.34, 0.28, -0.48];
+
+    /* ratio > 0 → toward white, ratio < 0 → toward black */
+    function mixHex(hex, ratio) {
+        const h = hex.replace('#', '');
+        const t = ratio > 0 ? 255 : 0;
+        const r = Math.abs(ratio);
+        const c = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16));
+        return '#' + c.map((x) => Math.round(x + (t - x) * r)
+            .toString(16).padStart(2, '0')).join('');
+    }
+
+    function shadeOf(base, slot) {
+        const s = SHADE_STEPS[slot % SHADE_STEPS.length];
+        return s === 0 ? base : mixHex(base, s);
+    }
+
+    function slotOf(base, color) {
+        if (!base || !color) return -1;
+        return SHADE_STEPS.findIndex((_, k) => shadeOf(base, k) === color);
+    }
+
+    const StageColors = {
+        shadeOf,
+        async get(stage) {
+            const map = (await global.TeacherDB.Settings.get('stage_colors')) || {};
+            return map[stage] || null;
+        },
+        async set(stage, color) {
+            const map = (await global.TeacherDB.Settings.get('stage_colors')) || {};
+            map[stage] = color;
+            await global.TeacherDB.Settings.set('stage_colors', map);
+        },
+        /** Recolor every class of the stage as shades of `base`. Classes keep
+         *  their previous shade slot when it can be derived from prevBase;
+         *  the rest are assigned free slots in creation order. */
+        async applyToStage(teacherId, stage, base, prevBase) {
+            const all = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacherId);
+            const list = all.filter((c) => c.stage === stage).sort((a, b) =>
+                String(a.created_at || a.id).localeCompare(String(b.created_at || b.id)));
+            const used = new Set();
+            const pending = [];
+            const slots = new Map();
+            for (const c of list) {
+                const k = slotOf(prevBase, c.color);
+                if (k >= 0 && !used.has(k)) { used.add(k); slots.set(c, k); }
+                else pending.push(c);
+            }
+            for (const c of pending) {
+                let k = 0;
+                while (used.has(k)) k++;
+                used.add(k);
+                slots.set(c, k);
+            }
+            for (const c of list) {
+                const color = shadeOf(base, slots.get(c));
+                if (c.color !== color) {
+                    c.color = color;
+                    await global.TeacherDB.put('classes', c);
+                }
+            }
+        },
+        /** Color for a NEW class: the first shade slot not already used. */
+        async nextShade(teacherId, stage, base) {
+            const all = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacherId);
+            const used = new Set();
+            all.filter((c) => c.stage === stage).forEach((c) => {
+                const k = slotOf(base, c.color);
+                if (k >= 0) used.add(k);
+            });
+            let k = 0;
+            while (used.has(k)) k++;
+            return shadeOf(base, k);
+        }
+    };
+    global.StageColors = StageColors;
+
     const SUBJECTS = [
         'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
         'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
@@ -386,12 +469,15 @@
             </div>
 
             <div class="field">
-                <label class="label">لون مميز</label>
+                <label class="label">لون المرحلة</label>
                 <div class="color-picker" id="c-colors">
                     ${COLORS.map((c, i) => `
                         <button type="button" class="color-chip ${i === 0 ? 'selected' : ''}"
                                 style="background:${c}" data-color="${c}" aria-label="${c}"></button>
                     `).join('')}
+                </div>
+                <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
+                    لون موحّد لكل فصول المرحلة، وكل فصل يأخذ درجة مميزة منه تلقائياً.
                 </div>
             </div>
 
@@ -408,8 +494,18 @@
         }
         refreshGrades();
 
+        /* Preselect the stage's saved color so all its classes stay unified. */
+        async function refreshColor() {
+            const saved = await StageColors.get(stage);
+            if (!saved) return;
+            selectedColor = saved;
+            form.querySelectorAll('.color-chip').forEach((c) =>
+                c.classList.toggle('selected', c.dataset.color === saved));
+        }
+        refreshColor();
+
         form.querySelector('#c-stage').addEventListener('change', (e) => {
-            stage = e.target.value; refreshGrades();
+            stage = e.target.value; refreshGrades(); refreshColor();
         });
 
         form.querySelectorAll('.color-chip').forEach((chip) => {
@@ -425,13 +521,22 @@
             const btn = form.querySelector('button[type="submit"]');
             btn.disabled = true;
             try {
+                const chosenStage = form.querySelector('#c-stage').value;
+                // Unify the stage on the chosen base color, then give the new
+                // class the first free shade of it.
+                const prevBase = await StageColors.get(chosenStage);
+                if (prevBase !== selectedColor) {
+                    await StageColors.set(chosenStage, selectedColor);
+                    await StageColors.applyToStage(teacher.id, chosenStage, selectedColor, prevBase);
+                }
+                const color = await StageColors.nextShade(teacher.id, chosenStage, selectedColor);
                 await global.TeacherDB.add('classes', {
                     teacher_id: teacher.id,
-                    stage:      form.querySelector('#c-stage').value,
+                    stage:      chosenStage,
                     grade:      form.querySelector('#c-grade').value,
                     section:    form.querySelector('#c-section').value.trim(),
                     subject:    form.querySelector('#c-subject').value,
-                    color:      selectedColor,
+                    color,
                     student_count: 0,
                     created_at: new Date().toISOString()
                 });
