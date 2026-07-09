@@ -59,7 +59,7 @@
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btn-profile-back">← رجوع</button>
+                    <button type="button" class="btn-back-box" id="btn-profile-back" aria-label="رجوع"></button>
                     <h2 class="section-title" style="display:inline-block; margin-right: var(--space-3);">
                         👤 بياناتي
                     </h2>

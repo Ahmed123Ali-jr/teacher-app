@@ -60,7 +60,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <a href="#/class/${cls.id}" class="btn btn-ghost btn-sm">← فصل ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}</a>
+                    <a href="#/class/${cls.id}" class="btn-back-box" aria-label="الرجوع إلى الفصل"></a>
                 </div>
 
                 <div class="student-header card">

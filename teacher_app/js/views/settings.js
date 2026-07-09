@@ -195,7 +195,7 @@
             <div class="container" style="max-width: 720px;">
                 <div class="section-header" style="margin-top: var(--space-6);">
                     <div>
-                        <a href="#/dashboard" class="btn btn-ghost btn-sm">← الرئيسية</a>
+                        <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
                         <h2 class="section-title" style="display:inline-block; margin-right:var(--space-3);">
                             ⚙️ الإعدادات
                         </h2>
@@ -295,7 +295,7 @@
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
                 <div class="settings-page-header">
-                    <button type="button" class="btn btn-ghost btn-sm" id="btn-back-settings">← رجوع</button>
+                    <button type="button" class="btn-back-box" id="btn-back-settings" aria-label="رجوع"></button>
                     <h2 class="section-title" style="margin: 0 var(--space-3);">${title}</h2>
                 </div>
 

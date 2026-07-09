@@ -1142,7 +1142,9 @@ body.drawer-open { overflow: hidden; }
     flex-wrap: wrap;
     padding-block: var(--space-6) var(--space-4);
 }
-/* Boxed back button — square card with the back arrow */
+/* Boxed back button — square card with a right-pointing back arrow.
+   The arrow is drawn by ::before (CSS mask), so any <a>/<button> with this
+   class renders identically with no inner markup. */
 .btn-back-box {
     width: 42px;
     height: 42px;
@@ -1155,11 +1157,20 @@ body.drawer-open { overflow: hidden; }
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(23, 32, 55, .06);
     color: #475467;
+    text-decoration: none;
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease),
                 transform var(--dur-fast) var(--ease);
 }
-.btn-back-box svg { display: block; }
+.btn-back-box::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h15M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h15M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.btn-back-box:hover { color: #475467; }
 .btn-back-box:active { background: #F2F4F7; transform: scale(.96); }
 .class-title {
     margin: var(--space-2) 0 var(--space-1);

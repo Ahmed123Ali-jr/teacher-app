@@ -186,12 +186,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
-                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.4"
-                                  stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
+                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول"></button>
                 </div>
 
                 <div class="class-hero-split" style="--cls-color:${cls.color || '#1E40AF'}">
@@ -261,7 +256,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="section-page-bar">
-                    <a class="btn btn-ghost btn-sm" href="#/class/${cls.id}">← ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}</a>
+                    <a class="btn-back-box" href="#/class/${cls.id}" aria-label="الرجوع إلى الفصل"></a>
                     <div class="section-page-title">
                         <span class="section-page-icon">${tab.icon}</span>
                         <span>${tab.label}</span>

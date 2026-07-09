@@ -87,7 +87,7 @@
             <div class="container" style="max-width: 880px;">
                 <div class="section-header" style="margin-top: var(--space-6);">
                     <div>
-                        <a href="#/dashboard" class="btn btn-ghost btn-sm">← الرئيسية</a>
+                        <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
                         <h2 class="section-title" style="display:inline-block; margin-right:var(--space-3);">
                             ❓ المساعدة والدليل
                         </h2>
