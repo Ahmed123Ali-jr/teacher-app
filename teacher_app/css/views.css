@@ -1094,11 +1094,32 @@ body.drawer-open { overflow: hidden; }
 .class-topbar {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--space-4);
     flex-wrap: wrap;
     padding-block: var(--space-6) var(--space-4);
 }
+/* Boxed back button — square card with the back arrow */
+.btn-back-box {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: var(--surface, #fff);
+    border: 1px solid #E7EAF0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(23, 32, 55, .06);
+    color: #475467;
+    font-size: 19px;
+    font-weight: var(--fw-bold);
+    font-family: inherit;
+    line-height: 1;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease),
+                transform var(--dur-fast) var(--ease);
+}
+.btn-back-box:active { background: #F2F4F7; transform: scale(.96); }
 .class-title {
     margin: var(--space-2) 0 var(--space-1);
     font-size: var(--fs-h1);

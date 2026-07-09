@@ -186,7 +186,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
-                    <button type="button" id="btn-class-back" class="btn btn-ghost btn-sm">← الفصول</button>
+                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول">←</button>
                     <div class="class-actions">
                         <button class="btn btn-ghost btn-sm" id="btn-edit-class">✏️ تعديل</button>
                         <button class="btn btn-ghost btn-sm" id="btn-delete-class">🗑️ حذف</button>
