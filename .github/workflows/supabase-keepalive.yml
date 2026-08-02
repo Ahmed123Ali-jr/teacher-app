@@ -1,0 +1,25 @@
+# يمنع الإيقاف التلقائي لمشروع Supabase المجاني (يتوقف بعد ٧ أيام بلا نشاط):
+# استعلام خفيف كل ٣ أيام يُحسب نشاطاً على قاعدة البيانات.
+# المفتاح publishable عام أصلاً (موجود في كود الواجهة) — لا سرّ هنا.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 3 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://rbsfpsmolxldmwcclhlc.supabase.co/rest/v1/classes?select=id&limit=1" \
+            -H "apikey: sb_publishable_z5RQ0LotgRBWRSUXjTz38w_GOyBOhUX")
+          echo "Supabase responded: HTTP $code"
+          # 2xx = حي، 4xx = حي لكن محمي بالصلاحيات (مقبول) — فشل فقط عند 5xx/تعذر الاتصال
+          case "$code" in
+            2*|4*) exit 0 ;;
+            *) echo "Supabase unreachable (paused?)"; exit 1 ;;
+          esac
