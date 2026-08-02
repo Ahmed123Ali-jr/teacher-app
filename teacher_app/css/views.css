@@ -698,7 +698,17 @@ body.drawer-open { overflow: hidden; }
 }
 
 @media (max-width: 768px) {
-    .classes-stage-grid { grid-template-columns: 1fr; }
+    /* مربعات جنب بعض (عمودان) والمراحل تحت بعض */
+    .classes-stage-grid { grid-template-columns: repeat(2, 1fr); }
+    .classes-stage-grid .class-card {
+        min-height: 0;
+        aspect-ratio: 1 / 1;
+        padding: var(--space-4);
+        gap: var(--space-2);
+    }
+    .classes-stage-grid .class-card-title   { font-size: var(--fs-body); line-height: 1.35; }
+    .classes-stage-grid .class-card-subject { font-size: var(--fs-xs); }
+    .classes-stage-grid .class-card-meta    { font-size: var(--fs-xs); }
     .classes-add-tile-wrap { max-width: 100%; }
 }
 
