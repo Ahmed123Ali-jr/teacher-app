@@ -195,11 +195,8 @@
         }
 
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        const studentsAll = [];
-        for (const c of classes) {
-            const rows = await global.TeacherDB.getAllByIndex('students', 'class_id', c.id);
-            studentsAll.push(...rows);
-        }
+        // One indexed read instead of a query per class.
+        const studentsAll = await global.TeacherDB.getAllByIndex('students', 'teacher_id', teacher.id);
         const remindersToday = global.RemindersView
             ? await global.RemindersView.todayCount(teacher)
             : 0;

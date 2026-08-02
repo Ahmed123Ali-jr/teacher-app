@@ -153,27 +153,28 @@
 
     async function paintHub(container, cls) {
         // Live stats for the featured students card
-        const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
         const today = todayISO();
+        // One bulk read per store (indexed by class) — no per-student loop.
+        const [students, attAll, books, exams, worksheets, homework] = await Promise.all([
+            global.TeacherDB.getAllByIndex('students',    'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('attendance',  'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('books',       'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('exams',       'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('assignments', 'class_id', cls.id)
+        ]);
+        const studentIds = new Set(students.map((s) => s.id));
         let present = 0, absent = 0, late = 0, marked = 0;
-        for (const s of students) {
-            const rows = await global.TeacherDB.getAllByIndex('attendance', 'student_id', s.id);
-            const t = rows.find((r) => r.date === today);
-            if (!t) continue;
+        const seen = new Set();
+        for (const t of attAll) {
+            if (t.date !== today || !studentIds.has(t.student_id) || seen.has(t.student_id)) continue;
+            seen.add(t.student_id);
             marked++;
             if (t.status === 'present') present++;
             else if (t.status === 'absent') absent++;
             else if (t.status === 'late') late++;
         }
         const pct = marked > 0 ? Math.round(((present + late) / marked) * 100) : null;
-
-        // Counts for the section grid
-        const [books, exams, worksheets, homework] = await Promise.all([
-            global.TeacherDB.getAllByIndex('books',       'class_id', cls.id),
-            global.TeacherDB.getAllByIndex('exams',       'class_id', cls.id),
-            global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
-            global.TeacherDB.getAllByIndex('assignments', 'class_id', cls.id)
-        ]);
 
         const GRID = [
             { key: 'books',      icon: '📖', label: 'الكتب',        count: books.length,      tint: '#7C3AED', bg: '#F5F1FE' },
@@ -303,14 +304,18 @@
         students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
 
         const today = todayISO();
-        const attendanceToday = [];
-        const evalToday = [];
-        for (const s of students) {
-            const att = await global.TeacherDB.getAllByIndex('attendance', 'student_id', s.id);
-            const par = await global.TeacherDB.getAllByIndex('participation', 'student_id', s.id);
-            attendanceToday.push(att.find((r) => r.date === today) || null);
-            evalToday.push(par.find((r) => r.date === today) || null);
-        }
+        // Two bulk reads by class (indexed) instead of 2×N per-student queries:
+        // for 30+ students this is the single biggest speedup on this screen.
+        const [attAll, parAll] = await Promise.all([
+            global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id),
+            global.TeacherDB.getAllByIndex('participation', 'class_id', cls.id)
+        ]);
+        const attByStudent = new Map();
+        for (const r of attAll) if (r.date === today) attByStudent.set(r.student_id, r);
+        const parByStudent = new Map();
+        for (const r of parAll) if (r.date === today) parByStudent.set(r.student_id, r);
+        const attendanceToday = students.map((s) => attByStudent.get(s.id) || null);
+        const evalToday = students.map((s) => parByStudent.get(s.id) || null);
 
         // A newer render started while we were fetching — abort this one so
         // listeners never get attached twice to the same elements.
