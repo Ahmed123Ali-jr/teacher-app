@@ -29,7 +29,7 @@
                 return `
                     <div class="auth-card">
                         <div class="auth-logo">🎓</div>
-                        <h2 class="auth-title">تطبيق المعلم الذكي</h2>
+                        <h2 class="auth-title">تطبيق إنجاز المعلم</h2>
                         <p class="auth-subtitle">سجّل دخولك للمتابعة</p>
 
                         <form id="form-login" novalidate>

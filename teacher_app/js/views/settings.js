@@ -762,7 +762,7 @@
                 <tbody>
                     <tr><th>الإصدار</th><td>${APP_VERSION}</td></tr>
                     <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
-                    <tr><th>الاسم</th><td>تطبيق المعلم الذكي</td></tr>
+                    <tr><th>الاسم</th><td>تطبيق إنجاز المعلم</td></tr>
                     <tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>
                 </tbody>
             </table>
