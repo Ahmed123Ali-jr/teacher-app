@@ -40,7 +40,11 @@ self.addEventListener('activate', (event) => {
     })());
 });
 
-/* Fetch: network-first for same-origin GETs; offline-fallback to cache. */
+/* Fetch:
+ *   • Versioned assets (?v=...) are immutable → CACHE-FIRST (instant paint;
+ *     a new deploy changes the ?v= → new cache key → fetched fresh).
+ *   • Everything else (index.html, sw.js) stays NETWORK-FIRST so updates
+ *     and the update-banner flow keep working exactly as before. */
 self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (req.method !== 'GET') return;
@@ -48,6 +52,19 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(req.url);
     // Don't intercept Supabase / Anthropic / CDN traffic — pass straight through.
     if (url.origin !== self.location.origin) return;
+
+    // Cache-first for immutable versioned assets — the mobile white-screen fix.
+    if (url.searchParams.has('v')) {
+        event.respondWith((async () => {
+            const cache  = await caches.open(CACHE_NAME);
+            const cached = await cache.match(req);
+            if (cached) return cached;
+            const fresh = await fetch(req);
+            if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
+            return fresh;
+        })());
+        return;
+    }
 
     event.respondWith((async () => {
         try {

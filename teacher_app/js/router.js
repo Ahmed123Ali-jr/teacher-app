@@ -179,6 +179,13 @@
 
         // Scroll to top on navigation
         global.scrollTo({ top: 0, behavior: 'instant' });
+
+        // First view is on screen — fade out the boot splash (idempotent).
+        const splash = document.getElementById('splash');
+        if (splash) {
+            splash.style.opacity = '0';
+            global.setTimeout(() => splash.remove(), 300);
+        }
     }
 
     function start() {

@@ -24,6 +24,22 @@
     <link rel="stylesheet" href="css/print.css?v=D17" media="print">
 </head>
 <body>
+    <!-- Instant splash: pure inline HTML/CSS so it paints before any file
+         loads (kills the mobile white screen). Removed by the router after
+         the first view renders; 15s failsafe fades it if boot ever hangs. -->
+    <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:#F8FAFC; font-family:Tajawal,system-ui,sans-serif; transition:opacity 250ms ease;">
+        <div style="font-size:58px; line-height:1;">🎓</div>
+        <div style="font-size:20px; font-weight:700; color:#0F2C5C;">تطبيق المعلم الذكي</div>
+        <div style="width:26px; height:26px; border:3px solid #E2E8F0; border-top-color:#0F2C5C; border-radius:50%; animation:splash-spin .8s linear infinite;"></div>
+        <style>@keyframes splash-spin { to { transform: rotate(360deg); } }</style>
+    </div>
+    <script>
+        setTimeout(function () {
+            var s = document.getElementById('splash');
+            if (s) { s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 300); }
+        }, 15000);
+    </script>
+
     <div id="app" class="app-container">
         <!-- Header is hidden on the auth view -->
         <header class="app-header" id="app-header" hidden>
@@ -185,7 +201,7 @@
     <script src="js/views/schedule.js?v=S8"></script>
     <script src="js/views/help.js?v=8"></script>
     <script src="js/views/reports.js?v=C17"></script>
-    <script src="js/router.js?v=S4"></script>
+    <script src="js/router.js?v=S5"></script>
     <script src="js/app.js?v=S6"></script>
 
     <!-- Service Worker: enables offline + auto-update banner on every deploy. -->
