@@ -20,7 +20,7 @@
             <div class="container">
                 <div class="section-header" style="margin-top: var(--space-6);">
                     <h2 class="section-title">📚 فصولي</h2>
-                    <button class="btn btn-primary" id="btn-add-class">+ إضافة فصل</button>
+                    <button class="btn btn-add-dashed" id="btn-add-class">+ إضافة فصل</button>
                 </div>
                 ${classes.length === 0
                     ? global.DashboardView.emptyClassesState()
