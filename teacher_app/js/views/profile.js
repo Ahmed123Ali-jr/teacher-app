@@ -59,6 +59,28 @@
             || (typeof teacher.photo_url === 'string' && !!teacher.photo_url);
     }
 
+    /** Downscale the picked image to an avatar-sized JPEG (max 512px):
+     *  a 3MB camera photo becomes ~40KB, so saving/sync/rendering stay fast. */
+    function compressPhoto(file) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                const MAX = 512;
+                const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                canvas.toBlob((b) => resolve(b || file), 'image/jpeg', 0.85);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+            img.src = url;
+        });
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
@@ -174,15 +196,19 @@
                 if (file.size > 5 * 1024 * 1024) {
                     return global.TeacherApp.toast('الصورة كبيرة جداً (أقصى ٥ MB).', 'warning');
                 }
+                // Show the ORIGINAL instantly (zero processing), then compress
+                // and sync in the background — the UI never waits for the
+                // JPEG encoder (~1s) or the network.
                 teacher.photo = file;
                 teacher.updated_at = new Date().toISOString();
-                try {
-                    await global.TeacherDB.put('teachers', teacher);
-                    global.TeacherApp.toast('تم حفظ الصورة ✅', 'success', 1500);
-                } catch (err) {
-                    global.TeacherApp.toast('تعذّر حفظ الصورة: ' + err.message, 'error');
-                }
                 paint(container, teacher);
+                global.TeacherApp.toast('تم حفظ الصورة ✅', 'success', 1500);
+                (async () => {
+                    teacher.photo = await compressPhoto(file);
+                    await global.TeacherDB.put('teachers', teacher);
+                })().catch((err) => {
+                    global.TeacherApp.toast('تعذّرت مزامنة الصورة: ' + err.message, 'error');
+                });
             });
         }
 
@@ -192,13 +218,11 @@
             teacher.photo = null;
             teacher.photo_url = null;
             teacher.updated_at = new Date().toISOString();
-            try {
-                await global.TeacherDB.put('teachers', teacher);
-                global.TeacherApp.toast('تم الحذف.', 'info', 1500);
-            } catch (err) {
-                global.TeacherApp.toast('تعذّر الحذف: ' + err.message, 'error');
-            }
             paint(container, teacher);
+            global.TeacherApp.toast('تم الحذف.', 'info', 1500);
+            global.TeacherDB.put('teachers', teacher).catch((err) => {
+                global.TeacherApp.toast('تعذّرت مزامنة الحذف: ' + err.message, 'error');
+            });
         });
 
         // Enter on any single-line field commits the whole form
