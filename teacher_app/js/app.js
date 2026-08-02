@@ -22,13 +22,23 @@
 
             // If we already have a session (page reload), hydrate the cache
             // before rendering so the first view reads from local IndexedDB.
+            let me = null;
             try {
-                const me = await global.Auth.currentTeacher();
+                me = await global.Auth.currentTeacher();
                 if (me && global.TeacherDB.hydrate) {
                     await global.TeacherDB.hydrate();
                 }
             } catch (e) {
                 console.warn('[TeacherApp] boot hydrate skipped:', e.message);
+            }
+
+            // Cold launch always lands on the home screen. On mobile the app
+            // reopens the last URL (e.g. #/settings or #/classes), which is
+            // confusing — a fresh open should show the dashboard. In-app
+            // navigation and hashchange are untouched (this runs once, at boot).
+            if (me) {
+                const path = (global.location.hash || '').replace(/^#/, '').split('?')[0];
+                if (path !== '/login') global.location.hash = '#/dashboard';
             }
 
             this._bindGlobalUI();
