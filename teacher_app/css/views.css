@@ -569,7 +569,12 @@ body.drawer-open { overflow: hidden; }
 }
 .pr-value .pr-input {
     width: 100%;
+    /* .input-sm caps width at 120px for compact table cells — profile fields
+       are full-width data entry, so lift the cap and restore a comfortable size. */
+    max-width: none;
     min-height: var(--touch-target-min);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-body);
 }
 
 .pr-edit, .pr-save, .pr-cancel {
