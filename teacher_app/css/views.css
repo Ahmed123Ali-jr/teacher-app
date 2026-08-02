@@ -938,7 +938,7 @@ body.drawer-open { overflow: hidden; }
 /* «+ إضافة فصل» أعلى صفحة الفصول — مطابق لبطاقة الإضافة السفلية:
    بلا تعبئة، إطار ذهبي متقطع فقط. نفس مقاسات .btn تماماً. */
 .btn-add-dashed {
-    background: transparent;
+    background: var(--surface);
     color: var(--primary);
     border: 2px dashed var(--border-strong);
 }
