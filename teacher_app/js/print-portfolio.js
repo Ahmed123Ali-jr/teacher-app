@@ -646,6 +646,9 @@
                 const url = await blobToDataUrl(teacher.photo);
                 photoBox = `<img src="${url}" alt="">`;
             } catch (e) { /* keep empty */ }
+        } else if (typeof teacher.photo_url === 'string' && teacher.photo_url) {
+            // Saved photo is already a data-URL — usable directly in print.
+            photoBox = `<img src="${teacher.photo_url}" alt="">`;
         }
 
         return `

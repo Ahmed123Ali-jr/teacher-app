@@ -34,6 +34,12 @@
                     const url = URL.createObjectURL(me.photo);
                     avatarEl.innerHTML = `<img src="${url}" alt="">`;
                     global.setTimeout(() => URL.revokeObjectURL(url), 30000);
+                } else if (typeof me.photo_url === 'string' && me.photo_url) {
+                    // Saved photo (data-URL) — the shape after reload/hydrate.
+                    const img = document.createElement('img');
+                    img.src = me.photo_url;
+                    img.alt = '';
+                    avatarEl.replaceChildren(img);
                 } else {
                     avatarEl.textContent = initials(me.name);
                 }

@@ -46,7 +46,17 @@
             if (revoke) global.setTimeout(() => URL.revokeObjectURL(url), 30000);
             return `<img src="${url}" alt="">`;
         }
+        // Saved photo (photo_url data-URL) — what the row looks like after a
+        // reload/hydrate, when the in-session Blob is gone.
+        if (typeof teacher.photo_url === 'string' && teacher.photo_url) {
+            return `<img src="${escapeAttr(teacher.photo_url)}" alt="">`;
+        }
         return `<span>${escapeHtml(initials(teacher.name))}</span>`;
+    }
+
+    function hasPhoto(teacher) {
+        return (teacher.photo instanceof Blob)
+            || (typeof teacher.photo_url === 'string' && !!teacher.photo_url);
     }
 
     async function render(container) {
@@ -69,9 +79,9 @@
                     <div class="profile-avatar-lg">${avatarInner(teacher, true)}</div>
                     <div class="profile-photo-actions">
                         <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-photo">
-                            📷 ${teacher.photo ? 'تغيير الصورة' : 'إضافة صورة شخصية'}
+                            📷 ${hasPhoto(teacher) ? 'تغيير الصورة' : 'إضافة صورة شخصية'}
                         </button>
-                        ${teacher.photo ? `
+                        ${hasPhoto(teacher) ? `
                             <button type="button" class="btn btn-ghost btn-sm" id="btn-remove-photo">
                                 🗑️ حذف
                             </button>` : ''}
@@ -180,6 +190,7 @@
         if (removeBtn) removeBtn.addEventListener('click', async () => {
             if (!global.confirm('حذف الصورة الشخصية؟')) return;
             teacher.photo = null;
+            teacher.photo_url = null;
             teacher.updated_at = new Date().toISOString();
             try {
                 await global.TeacherDB.put('teachers', teacher);
