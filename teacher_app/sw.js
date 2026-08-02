@@ -53,6 +53,35 @@ self.addEventListener('fetch', (event) => {
     // Don't intercept Supabase / Anthropic / CDN traffic — pass straight through.
     if (url.origin !== self.location.origin) return;
 
+    // Navigations (the HTML shell): serve the cached shell INSTANTLY and
+    // refresh it in the background. Without this, every app open waited a
+    // full network round-trip before the first pixel (the white screen).
+    // Updates still arrive: a new deploy changes sw.js (BUILD_ID) → the new
+    // worker's install step pre-caches the fresh index.html → the update
+    // banner asks the user to reload onto it.
+    if (req.mode === 'navigate') {
+        const networkPromise = (async () => {
+            try {
+                const fresh = await fetch(req);
+                if (fresh && fresh.ok) {
+                    const cache = await caches.open(CACHE_NAME);
+                    await cache.put('./index.html', fresh.clone());
+                }
+                return fresh;
+            } catch (e) { return null; }
+        })();
+        event.waitUntil(networkPromise);
+        event.respondWith((async () => {
+            const cache  = await caches.open(CACHE_NAME);
+            const cached = await cache.match('./index.html');
+            if (cached) return cached;
+            const fresh = await networkPromise;
+            if (fresh) return fresh;
+            throw new Error('offline and no cached shell');
+        })());
+        return;
+    }
+
     // Cache-first for immutable versioned assets — the mobile white-screen fix.
     if (url.searchParams.has('v')) {
         event.respondWith((async () => {
