@@ -20,13 +20,31 @@
                 return;
             }
 
-            // If we already have a session (page reload), hydrate the cache
-            // before rendering so the first view reads from local IndexedDB.
+            // Offline-first boot: render from the local cache immediately and
+            // sync from Supabase in the BACKGROUND. Previously boot awaited a
+            // full network hydrate before showing anything — slow to open on
+            // mobile. We only block when the cache is empty (first login), since
+            // there's nothing to render yet.
             let me = null;
             try {
                 me = await global.Auth.currentTeacher();
                 if (me && global.TeacherDB.hydrate) {
-                    await global.TeacherDB.hydrate();
+                    let hasCache = false;
+                    try {
+                        hasCache = (await global.TeacherDB.count('classes')) > 0
+                                || (await global.TeacherDB.count('students')) > 0;
+                    } catch (e) { /* count may fail on a brand-new DB */ }
+
+                    if (hasCache) {
+                        // Warm cache → open instantly, refresh in background,
+                        // then repaint the current view with the fresh data.
+                        global.TeacherDB.hydrate()
+                            .then(() => { try { global.Router.resolve(); } catch (e) {} })
+                            .catch((e) => console.warn('[TeacherApp] bg hydrate failed:', e.message));
+                    } else {
+                        // Cold cache → must fetch before there's anything to show.
+                        await global.TeacherDB.hydrate();
+                    }
                 }
             } catch (e) {
                 console.warn('[TeacherApp] boot hydrate skipped:', e.message);
