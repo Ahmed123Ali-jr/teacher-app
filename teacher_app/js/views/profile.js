@@ -108,16 +108,28 @@
 
     function inputHtml(field, value) {
         if (field.type === 'subjects') {
-            const selected = new Set(Array.isArray(value) ? value : (value ? [value] : []));
+            const arr = Array.isArray(value) ? value : (value ? [value] : []);
+            const selected = new Set(arr);
+            const STD = SUBJECTS.filter((s) => s !== 'أخرى');
+            // Custom subjects the teacher already added (kept as their own chips).
+            const custom = arr.filter((s) => !STD.includes(s) && s !== 'أخرى');
+            const chip = (s) => `
+                <label class="subject-chip">
+                    <input type="checkbox" value="${escapeAttr(s)}" ${selected.has(s) ? 'checked' : ''}>
+                    <span>${escapeHtml(s)}</span>
+                </label>`;
             return `
-                <div class="subject-grid" style="max-height: 220px;">
-                    ${SUBJECTS.map((s) => `
-                        <label class="subject-chip">
-                            <input type="checkbox" value="${escapeAttr(s)}" ${selected.has(s) ? 'checked' : ''}>
-                            <span>${escapeHtml(s)}</span>
-                        </label>
-                    `).join('')}
+                <div class="subject-grid" style="max-height: 260px;">
+                    ${STD.map(chip).join('')}
+                    ${custom.map(chip).join('')}
+                    <label class="subject-chip subject-other-toggle">
+                        <input type="checkbox" id="subj-other-toggle">
+                        <span>➕ أخرى</span>
+                    </label>
                 </div>
+                <input type="text" class="input subj-other-input" id="subj-other-input"
+                       placeholder="اكتب اسم المادة…" hidden
+                       style="margin-top: var(--space-2);">
             `;
         }
         const safe = (value === null || value === undefined) ? '' : escapeAttr(String(value));
@@ -125,6 +137,17 @@
     }
 
     function bind(container, teacher) {
+        // «أخرى» toggle → reveal the custom-subject text box.
+        const otherToggle = container.querySelector('#subj-other-toggle');
+        const otherInput  = container.querySelector('#subj-other-input');
+        if (otherToggle && otherInput) {
+            otherToggle.addEventListener('change', () => {
+                otherInput.hidden = !otherToggle.checked;
+                if (otherToggle.checked) otherInput.focus();
+                else otherInput.value = '';
+            });
+        }
+
         container.querySelector('#btn-profile-back')?.addEventListener('click', () => {
             if (global.history.length > 1) global.history.back();
             else global.location.hash = '#/dashboard';
@@ -193,8 +216,14 @@
             let v;
 
             if (field.type === 'subjects') {
-                v = Array.from(row.querySelectorAll('input[type="checkbox"]:checked'))
+                v = Array.from(row.querySelectorAll('.subject-grid input[type="checkbox"]:checked'))
+                    .filter((c) => c.id !== 'subj-other-toggle')
                     .map((c) => c.value);
+                // Append the custom subject typed under «أخرى».
+                const otherInput = row.querySelector('#subj-other-input');
+                const custom = otherInput ? otherInput.value.trim() : '';
+                if (custom) v.push(custom);
+                v = Array.from(new Set(v.filter((s) => s && s !== 'أخرى')));
             } else {
                 const inp = row.querySelector('.pr-input');
                 const raw = (inp.value || '').trim();

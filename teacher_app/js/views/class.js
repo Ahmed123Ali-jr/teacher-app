@@ -1161,8 +1161,16 @@
             'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
             'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
             'الاجتماعيات', 'التاريخ', 'الجغرافيا',
-            'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية', 'أخرى'
+            'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية'
         ];
+        // Include the teacher's custom subjects (added via «أخرى» in البيانات)
+        // plus this class's own subject, so nothing is lost when editing.
+        const me = await global.Auth.currentTeacher();
+        const mine = (me && Array.isArray(me.subjects)) ? me.subjects : [];
+        const subjectList = Array.from(new Set(
+            SUBJECTS.concat(mine).concat(cls.subject ? [cls.subject] : [])
+                .filter((s) => s && s !== 'أخرى')
+        ));
         const COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'];
         // The picker edits the STAGE's base color — unified across its classes.
         const stageBase = await global.StageColors.get(cls.stage);
@@ -1178,7 +1186,7 @@
             <div class="field">
                 <label class="label">المادة *</label>
                 <select class="select" id="e-subject" required>
-                    ${SUBJECTS.map((s) => `<option value="${s}" ${s === cls.subject ? 'selected' : ''}>${s}</option>`).join('')}
+                    ${subjectList.map((s) => `<option value="${escapeHtml(s)}" ${s === cls.subject ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
                 </select>
             </div>
             <div class="field">
