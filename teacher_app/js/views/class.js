@@ -288,6 +288,25 @@
        every click fires twice. */
     let _studentsRenderGen = 0;
 
+    /* Name search matches the student's OWN name (start of any word), NOT
+       father/grandfather names — so «حمد» finds حمد, not «علي بن حمد».
+       Arabic is normalized (alef/ya/ta-marbuta forms + tashkeel) so the
+       teacher doesn't have to match hamza exactly. */
+    function normalizeArabic(s) {
+        return String(s || '')
+            .replace(/[ً-ْٰ]/g, '')  // strip tashkeel
+            .replace(/[إأآ]/g, 'ا')
+            .replace(/ى/g, 'ي')
+            .replace(/ة/g, 'ه')
+            .trim();
+    }
+    function matchesStudentName(fullName, query) {
+        const q = normalizeArabic(query);
+        if (!q) return true;
+        // Match only the student's first name (the leading word).
+        return normalizeArabic(fullName).startsWith(q);
+    }
+
     /* Frozen membership of the active stats-bar filter: the set of student
        ids that matched when the filter was tapped. Kept across re-renders so
        changing a student's status doesn't hide his row; recomputed on the
@@ -463,7 +482,7 @@
             panel.querySelectorAll('.st-row').forEach((row) => {
                 const name = row.dataset.name || '';
                 const sid  = row.dataset.sid || row.querySelector('.st-name-link')?.dataset.id;
-                const okSearch = (q === '' || name.includes(q));
+                const okSearch = matchesStudentName(name, q);
                 const okFilter = (f === ''
                     || (_attFilterIds ? _attFilterIds.has(sid) : rowStatus[sid] === f));
                 row.style.display = (okSearch && okFilter) ? '' : 'none';
