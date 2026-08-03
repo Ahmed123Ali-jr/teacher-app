@@ -1479,6 +1479,101 @@ body.drawer-open { overflow: hidden; }
 }
 .att-stat-pct { cursor: default; }
 
+/* ==========================================================================
+   نافذة طباعة السجل — أنواع ببطاقات قابلة للتوسّع (الشكل المعتمد)
+   ========================================================================== */
+.popt-lbl {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    font-weight: var(--fw-bold);
+    margin: var(--space-3) 2px var(--space-2);
+}
+.popt {
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 13px;
+    margin-bottom: 10px;
+    transition: border-color var(--dur-fast) var(--ease),
+                background var(--dur-fast) var(--ease);
+}
+.popt.on {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 5%, #fff);
+}
+.popt-hd { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.popt-ic { font-size: 22px; flex-shrink: 0; line-height: 1.3; }
+.popt-tx { min-width: 0; }
+.popt-tt { font-weight: 800; font-size: 15px; color: var(--text); }
+.popt-dd { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+.popt-rd {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-inline-start: auto;
+    margin-top: 2px;
+    display: grid; place-items: center;
+}
+.popt.on .popt-rd { border-color: var(--primary); }
+.popt.on .popt-rd::after {
+    content: '';
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+.popt-sub {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+.popt.on .popt-sub { display: block; }
+.pseg-row { display: flex; gap: 8px; }
+.pseg {
+    flex: 1;
+    min-height: 42px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    border-radius: 11px;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.pseg.on {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 7%, #fff);
+    color: var(--primary);
+}
+.pdates { display: none; gap: 8px; margin-top: 10px; }
+.pdates.show { display: flex; }
+.pdates .fld { flex: 1; }
+.pdates label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: var(--fw-bold);
+    margin-bottom: 4px;
+}
+.pdates input {
+    width: 100%;
+    min-height: 42px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 10px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--surface);
+}
+.pnote {
+    font-size: 11.5px;
+    color: #C9A961;
+    font-weight: var(--fw-bold);
+    margin-top: 8px;
+}
+
 /* "تحضير الكل" toggle — green while everyone is marked present */
 #btn-mark-all.mark-all-on {
     background: #059669;

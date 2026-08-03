@@ -625,6 +625,17 @@
     }
     .students-doc { direction: rtl; }
 
+    /* عنوان اليوم في وضع «جدول مستقل لكل يوم» */
+    .daily-day-title {
+        font-size: 13pt;
+        font-weight: 700;
+        color: #0F2C5C;
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        padding: 2.5mm 4mm;
+        margin: 0 0 3mm;
+    }
+
     .print-legend {
         display: flex;
         gap: 6mm;

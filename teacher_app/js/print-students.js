@@ -64,7 +64,7 @@
     function buildHtml(opts) {
         const { mode, cls, teacher, students, columns, dates, includeEvals, from, to } = opts;
 
-        const periodText = (mode === 'range' || mode === 'summary') && from && to
+        const periodText = (mode === 'range' || mode === 'summary' || mode === 'daily') && from && to
             ? ` · الفترة: ${formatDateShort(from)} → ${formatDateShort(to)}`
             : '';
 
@@ -90,6 +90,8 @@
             table = rangeTable(students, dates, opts.attendance, opts.participation, columns, includeEvals);
         } else if (mode === 'summary') {
             table = summaryTable(students, opts.attendance, opts.participation, columns);
+        } else if (mode === 'daily') {
+            table = dailyTables(students, dates, opts.attendance, opts.participation, columns);
         } else {
             table = simpleTable(students, cls, mode, columns, opts.attendance, opts.participation);
         }
@@ -122,7 +124,8 @@
         blank:   22,
         today:   22,
         range:   18,
-        summary: 20
+        summary: 20,
+        daily:   20
     };
 
     /** Split an array into chunks of a given size. */
@@ -180,6 +183,64 @@
                 </tbody>
             </table>
         `);
+    }
+
+    /** «كامل الخانات لفترة» — جدول مستقل لكل يوم مدرسي: عنوان اليوم ثم جدول
+     *  الحضور وكل خانات التقييم بقيم ذلك اليوم، مع فاصل صفحة بين الأيام. */
+    function dailyTables(students, dates, attendanceAll, participationAll, columns) {
+        const attByDate = new Map();
+        for (const r of attendanceAll || []) {
+            if (!attByDate.has(r.date)) attByDate.set(r.date, new Map());
+            attByDate.get(r.date).set(r.student_id, r);
+        }
+        const parByDate = new Map();
+        for (const r of participationAll || []) {
+            if (!parByDate.has(r.date)) parByDate.set(r.date, new Map());
+            parByDate.get(r.date).set(r.student_id, r);
+        }
+
+        return (dates || []).map((d, di) => {
+            const dt   = new Date(d + 'T00:00:00');
+            const attS = attByDate.get(d) || new Map();
+            const parS = parByDate.get(d) || new Map();
+
+            const table = paginate(students, 'daily', (group, offset) => `
+                <table class="students-register">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th class="col-name">الاسم</th>
+                            <th>الحضور</th>
+                            ${(columns || []).map((c) => `<th>${escapeHtml(c.name)}${c.type === 'number' ? `<br><span class="col-hint">من ${c.max}</span>` : ''}</th>`).join('')}
+                            <th class="col-notes">ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${group.map((s, i) => {
+                            const att  = attS.get(s.id);
+                            const vals = readValues(parS.get(s.id));
+                            return `
+                                <tr>
+                                    <td class="col-num">${offset + i + 1}</td>
+                                    <td class="col-name">${escapeHtml(s.name)}</td>
+                                    <td class="cell-att">${att ? (ATT_CHAR[att.status] || '') : ''}</td>
+                                    ${(columns || []).map((c) => `
+                                        <td class="cell-eval">${formatValue(c, vals[c.id])}</td>
+                                    `).join('')}
+                                    <td class="col-notes"></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `);
+
+            return `
+                <div class="daily-day-title">${DAY_NAMES[dt.getDay()]} — ${formatDateShort(d)}</div>
+                ${table}
+                ${di < dates.length - 1 ? '<div class="page-break"></div>' : ''}
+            `;
+        }).join('');
     }
 
     /** Table for 'range' mode: days as columns, each cell gets attendance code. */

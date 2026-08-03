@@ -1521,129 +1521,141 @@
        PRINT REGISTER MODAL
        ========================================================================== */
 
+    /* نافذة طباعة السجل — ٣ أنواع بخيارات فرعية (بالشكل المعتمد):
+       ١) الحضور والغياب: اليوم / فترة   ٢) كامل الخانات: اليوم / فترة (جدول
+       مستقل لكل يوم)   ٣) مُفرّغ: حضور فقط / كل الخانات. الطباعة بالعرض دائماً. */
     function openPrintRegisterModal(cls, students, attToday, evalToday, columns) {
+        const TYPES = [
+            { k: 'attendance', ic: '✅', t: 'سجل الحضور والغياب', d: 'الحضور فقط — بدون خانات التقييم', sub: 'period' },
+            { k: 'full', ic: '📋', t: 'سجل بكامل الخانات (معبّأ)', d: 'حضور + كل خانات التقييم بقيمها الفعلية', sub: 'period', note: 'الفترة: جدول مستقل لكل يوم' },
+            { k: 'blank', ic: '🗒️', t: 'سجل مُفرّغ', d: 'فاضٍ للتعبئة باليد', sub: 'blankScope' }
+        ];
+
+        const subHtml = (t) => {
+            if (t.sub === 'period') {
+                return `
+                    <div class="popt-lbl">النطاق</div>
+                    <div class="pseg-row">
+                        <button type="button" class="pseg on" data-scope="today">اليوم</button>
+                        <button type="button" class="pseg" data-scope="range">فترة محددة</button>
+                    </div>
+                    <div class="pdates">
+                        <div class="fld"><label>من تاريخ</label><input type="date" data-from value="${isoDaysAgo(13)}"></div>
+                        <div class="fld"><label>إلى تاريخ</label><input type="date" data-to value="${todayISO()}"></div>
+                    </div>
+                    ${t.note ? `<div class="pnote" hidden>▸ ${t.note}</div>` : ''}`;
+            }
+            return `
+                <div class="popt-lbl">نوع الأعمدة</div>
+                <div class="pseg-row">
+                    <button type="button" class="pseg on" data-scope="att">حضور وغياب فقط</button>
+                    <button type="button" class="pseg" data-scope="all">كل الخانات</button>
+                </div>`;
+        };
+
         const form = document.createElement('form');
         form.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                ${students.length} طالب في "${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}"
-            </p>
-
-            <div class="field">
-                <label class="label">نوع السجل</label>
-                <div class="print-mode-list">
-                    <label class="print-mode-option">
-                        <input type="radio" name="mode" value="blank" checked>
-                        <div>
-                            <strong>سجل فارغ</strong>
-                            <div class="text-muted" style="font-size: var(--fs-sm);">
-                                قائمة بأسماء الطلاب + أعمدة فارغة للتعبئة يدوياً.
-                            </div>
+            <div class="popt-lbl" style="margin-top:0;">اختر نوع السجل</div>
+            ${TYPES.map((t, i) => `
+                <div class="popt ${i === 0 ? 'on' : ''}" data-k="${t.k}">
+                    <div class="popt-hd">
+                        <div class="popt-ic">${t.ic}</div>
+                        <div class="popt-tx">
+                            <div class="popt-tt">${t.t}</div>
+                            <div class="popt-dd">${t.d}</div>
                         </div>
-                    </label>
-                    <label class="print-mode-option">
-                        <input type="radio" name="mode" value="today">
-                        <div>
-                            <strong>سجل اليوم (معبّأ)</strong>
-                            <div class="text-muted" style="font-size: var(--fs-sm);">
-                                حضور اليوم والتقييمات كما أُدخلت الآن.
-                            </div>
-                        </div>
-                    </label>
-                    <label class="print-mode-option">
-                        <input type="radio" name="mode" value="range">
-                        <div>
-                            <strong>سجل حضور لفترة</strong>
-                            <div class="text-muted" style="font-size: var(--fs-sm);">
-                                أيام كأعمدة + مجاميع الحضور والغياب.
-                            </div>
-                        </div>
-                    </label>
-                    <label class="print-mode-option">
-                        <input type="radio" name="mode" value="summary">
-                        <div>
-                            <strong>تقرير مجمّع لفترة</strong>
-                            <div class="text-muted" style="font-size: var(--fs-sm);">
-                                ملخّص حضور + متوسط كل تقييم لكل طالب على فترة.
-                            </div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <div id="range-options" hidden>
-                <div class="grid grid-2">
-                    <div class="field">
-                        <label class="label">من تاريخ</label>
-                        <input class="input" id="range-from" type="date" value="${isoDaysAgo(13)}">
+                        <div class="popt-rd"></div>
                     </div>
-                    <div class="field">
-                        <label class="label">إلى تاريخ</label>
-                        <input class="input" id="range-to" type="date" value="${todayISO()}">
-                    </div>
+                    <div class="popt-sub">${subHtml(t)}</div>
                 </div>
-                <label class="cb-row" style="margin-top: var(--space-2);">
-                    <input type="checkbox" id="range-include-evals">
-                    <span>إضافة أعمدة التقييم فارغة في نهاية الجدول</span>
-                </label>
-            </div>
-
+            `).join('')}
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">🖨️ معاينة وطباعة</button>
+                <button type="submit" class="btn btn-primary">معاينة وطباعة</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
 
-        const rangeBox = form.querySelector('#range-options');
-        form.querySelectorAll('input[name="mode"]').forEach((r) => {
-            r.addEventListener('change', () => {
-                const needsRange = (r.value === 'range' || r.value === 'summary');
-                rangeBox.hidden = !needsRange;
+        // اختيار النوع
+        form.querySelectorAll('.popt .popt-hd').forEach((hd) => {
+            hd.addEventListener('click', () => {
+                form.querySelectorAll('.popt').forEach((o) => o.classList.remove('on'));
+                hd.closest('.popt').classList.add('on');
+            });
+        });
+        // الخيارات الفرعية + إظهار التواريخ والملاحظة عند «فترة محددة»
+        form.querySelectorAll('.pseg-row').forEach((row) => {
+            row.querySelectorAll('.pseg').forEach((seg) => {
+                seg.addEventListener('click', () => {
+                    row.querySelectorAll('.pseg').forEach((s) => s.classList.remove('on'));
+                    seg.classList.add('on');
+                    const opt = seg.closest('.popt');
+                    const dates = opt.querySelector('.pdates');
+                    const note = opt.querySelector('.pnote');
+                    if (dates) {
+                        const isRange = seg.dataset.scope === 'range';
+                        dates.classList.toggle('show', isRange);
+                        if (note) note.hidden = !isRange;
+                    }
+                });
             });
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const mode = form.querySelector('input[name="mode"]:checked').value;
+            const opt = form.querySelector('.popt.on');
+            const kind = opt.dataset.k;
+            const scope = opt.querySelector('.pseg.on')?.dataset.scope || 'today';
             const teacher = await global.Auth.currentTeacher();
 
-            if (mode === 'range' || mode === 'summary') {
-                const from = form.querySelector('#range-from').value;
-                const to   = form.querySelector('#range-to').value;
+            // فترة محددة (الحضور أو كامل الخانات)
+            if ((kind === 'attendance' || kind === 'full') && scope === 'range') {
+                const from = opt.querySelector('[data-from]').value;
+                const to   = opt.querySelector('[data-to]').value;
                 if (!from || !to || from > to) {
                     return global.TeacherApp.toast('اختر نطاق تاريخ صحيح.', 'warning');
                 }
-
-                // Collect both attendance and participation in the date window
-                const attendanceAll    = [];
-                const participationAll = [];
-                for (const s of students) {
-                    const att = await global.TeacherDB.getAllByIndex('attendance', 'student_id', s.id);
-                    for (const r of att) if (r.date >= from && r.date <= to) attendanceAll.push(r);
-                    const par = await global.TeacherDB.getAllByIndex('participation', 'student_id', s.id);
-                    for (const r of par) if (r.date >= from && r.date <= to) participationAll.push(r);
-                }
+                // قراءتان مجمّعتان بفهرس الفصل ثم تصفية بالفترة
+                const [attRows, parRows] = await Promise.all([
+                    global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id),
+                    global.TeacherDB.getAllByIndex('participation', 'class_id', cls.id)
+                ]);
+                const sids = new Set(students.map((s) => s.id));
+                const inWin = (r) => sids.has(r.student_id) && r.date >= from && r.date <= to;
+                const attendanceAll    = attRows.filter(inWin);
+                const participationAll = parRows.filter(inWin);
 
                 global.Modal.close();
                 global.PrintStudents.print({
-                    mode, cls, teacher, students, columns,
-                    dates: mode === 'range' ? expandDates(from, to) : null,
+                    mode: kind === 'attendance' ? 'range' : 'daily',
+                    cls, teacher, students,
+                    columns: kind === 'attendance' ? [] : columns,
+                    dates: expandDates(from, to),
                     from, to,
-                    attendance:    attendanceAll,
+                    attendance: attendanceAll,
                     participation: participationAll,
-                    includeEvals:  form.querySelector('#range-include-evals').checked
+                    includeEvals: false
                 });
                 return;
             }
 
             global.Modal.close();
+            if (kind === 'blank') {
+                global.PrintStudents.print({
+                    mode: 'blank', cls, teacher, students,
+                    columns: scope === 'all' ? columns : []
+                });
+                return;
+            }
+            // اليوم (حضور فقط أو كامل الخانات)
             global.PrintStudents.print({
-                mode, cls, teacher, students, columns,
+                mode: 'today', cls, teacher, students,
+                columns: kind === 'attendance' ? [] : columns,
                 attendance: attToday.filter(Boolean),
                 participation: evalToday.filter(Boolean)
             });
         });
 
-        global.Modal.open({ title: '🖨️ طباعة سجل الطلاب', body: form });
+        global.Modal.open({ title: '🖨️ طباعة السجل', body: form, autofocus: false });
     }
 
     function isoDaysAgo(n) {
