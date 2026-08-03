@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>تصاميم سجل المتابعة — للتجربة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{
+        --bg:#F4F1EA; --surface:#FFFFFF; --text:#101828; --muted:#667085;
+        --border:#E7E3D8; --royal:#0F2C5C; --gold:#C9A961;
+        --present:#128A5B; --absent:#DC2626; --late:#D97706; --excused:#2563EB;
+        --c:#12A150; /* class accent (green) */
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 150px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+
+    /* shared page header (same for all so the ROWS are what differ) */
+    .pg-title{display:flex;align-items:center;gap:8px;justify-content:flex-end;font-size:22px;font-weight:900;color:var(--royal);margin:6px 2px 2px;}
+    .pg-sub{ text-align:left;color:var(--muted);font-size:13px;margin:0 2px 12px;}
+    .toolbar{display:flex;gap:8px;margin-bottom:12px;}
+    .search{flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:13px;background:var(--surface);padding:0 14px;font-family:inherit;font-size:14px;color:var(--muted);display:flex;align-items:center;}
+    .addbtn{min-height:44px;border:2px dashed var(--gold);background:#fff;border-radius:13px;padding:0 16px;font-family:inherit;font-weight:700;color:var(--royal);font-size:14px;}
+    .markall{min-height:44px;border:1.5px solid var(--border);background:#fff;border-radius:13px;padding:0 16px;font-family:inherit;font-weight:800;color:var(--present);font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+    .chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;}
+    .chips::-webkit-scrollbar{display:none;}
+    .chip{flex-shrink:0;min-height:40px;border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:0 16px;font-family:inherit;font-weight:700;color:var(--muted);font-size:13.5px;display:flex;align-items:center;}
+    .chip.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 7%,#fff);color:var(--royal);}
+
+    /* mini stat bar */
+    .mini{display:flex;gap:8px;margin-bottom:14px;}
+    .mini .m{flex:1;background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:8px 4px;text-align:center;}
+    .mini .m b{display:block;font-size:18px;font-weight:900;}
+    .mini .m span{font-size:11px;color:var(--muted);}
+
+    .hint{position:fixed;top:10px;left:10px;z-index:60;background:rgba(17,17,17,.85);color:#fff;border-radius:99px;padding:5px 14px;font-size:11px;transition:opacity .5s;}
+    .hint.gone{opacity:0;}
+
+    /* ---- switcher ---- */
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:1.5px solid transparent;border-radius:99px;padding:9px 18px;font-family:inherit;font-size:13px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+</style>
+</head>
+<body>
+<div class="hint">نسخة تجريبية — بدّل من الأسفل</div>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+/* realistic data */
+const STUDENTS = [
+    {n:'إبراهيم حمد القحطاني', s:'present', stars:4},
+    {n:'بندر عبدالله الغامدي', s:'absent',  stars:0},
+    {n:'تركي فهد الشهري',      s:'late',    stars:3},
+    {n:'ثامر ناصر العتيبي',    s:'present', stars:5},
+    {n:'جابر سعيد الزهراني',   s:'',        stars:0},
+    {n:'حسن علي المالكي',      s:'present', stars:2},
+    {n:'خالد يوسف الدوسري',    s:'excused', stars:0},
+];
+const ATT = {
+    present:{i:'✓',c:'var(--present)',l:'حاضر'},
+    absent :{i:'✕',c:'var(--absent)', l:'غائب'},
+    late   :{i:'⏰',c:'var(--late)',   l:'متأخر'},
+    excused:{i:'📝',c:'var(--excused)',l:'مستأذن'},
+};
+function toAr(n){return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function initials(name){const p=name.trim().split(' ');return (p[0]||'')[0]||'؟';}
+
+function header(){
+    return `
+    <div class="pg-title"><span>سجل متابعة الطلاب</span><span>👥</span></div>
+    <div class="pg-sub"><b class="num">٧</b> طلاب · الأربعاء ٢٤ محرم</div>
+    <div class="toolbar">
+        <div class="search">🔍 بحث باسم الطالب…</div>
+        <button class="addbtn">+ إضافة</button>
+    </div>
+    <button class="markall">✓ تحضير الكل</button>
+    <div class="mini">
+        <div class="m"><b style="color:var(--present)" class="num">٣</b><span>حاضر</span></div>
+        <div class="m"><b style="color:var(--absent)" class="num">١</b><span>غائب</span></div>
+        <div class="m"><b style="color:var(--royal)" class="num">٦٧٪</b><span>الحضور</span></div>
+    </div>
+    <div class="chips">
+        <div class="chip on">الكل</div><div class="chip">الحضور</div>
+        <div class="chip">المشاركة</div><div class="chip">الواجبات</div>
+        <div class="chip" style="border-style:dashed;color:var(--royal)">＋</div>
+        <div class="chip">⚙️ تعديل</div>
+    </div>`;
+}
+
+const DESIGNS = [];
+
+/* ========== أ — الحالي (جدول) ========== */
+DESIGNS.push(['أ — الحالي', `
+${header()}
+<style>
+.tblA{width:100%;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#fff;}
+.tblA .r{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--border);}
+.tblA .r:last-child{border-bottom:0;}
+.tblA .nm{font-weight:700;font-size:15px;}
+.tblA .rk{color:var(--muted);font-size:13px;text-align:center;}
+.tblA .ab{display:flex;gap:5px;}
+.tblA .b{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:#fff;display:grid;place-items:center;font-size:14px;color:var(--muted);}
+.tblA .b.on{color:#fff;}
+</style>
+<div class="tblA">
+${STUDENTS.map((st,i)=>`
+  <div class="r">
+    <div class="rk num">${toAr(i+1)}</div>
+    <div class="nm">${st.n}</div>
+    <div class="ab">${Object.entries(ATT).map(([k,a])=>`<div class="b ${st.s===k?'on':''}" style="${st.s===k?`background:${a.c};border-color:${a.c}`:''}">${a.i}</div>`).join('')}</div>
+  </div>`).join('')}
+</div>`]);
+
+/* ========== ب — بطاقات مريحة ========== */
+DESIGNS.push(['ب — بطاقات', `
+${header()}
+<style>
+.cardsB{display:flex;flex-direction:column;gap:10px;}
+.cB{background:#fff;border:1px solid var(--border);border-radius:18px;padding:13px 14px;box-shadow:0 2px 5px rgba(16,24,40,.04);}
+.cB .top{display:flex;align-items:center;gap:11px;}
+.cB .av{width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;font-weight:900;font-size:18px;flex-shrink:0;}
+.cB .nm{font-weight:800;font-size:15.5px;flex:1;min-width:0;}
+.cB .rk{color:var(--muted);font-size:12px;font-weight:700;}
+.cB .seg{display:flex;gap:6px;margin-top:11px;}
+.cB .s{flex:1;min-height:38px;border-radius:11px;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;font-size:13px;font-weight:700;color:var(--muted);}
+.cB .s.on{color:#fff;border-color:transparent;}
+.cB .s .ic{font-size:14px;}
+</style>
+<div class="cardsB">
+${STUDENTS.map((st,i)=>`
+  <div class="cB">
+    <div class="top">
+      <div class="av">${initials(st.n)}</div>
+      <div class="nm">${st.n}</div>
+      <div class="rk num">#${toAr(i+1)}</div>
+    </div>
+    <div class="seg">
+      ${Object.entries(ATT).map(([k,a])=>`<div class="s ${st.s===k?'on':''}" style="${st.s===k?`background:${a.c}`:''}"><span class="ic">${a.i}</span>${a.l}</div>`).join('')}
+    </div>
+  </div>`).join('')}
+</div>`]);
+
+/* ========== ج — صفوف بشريط لوني ========== */
+DESIGNS.push(['ج — شريط لوني', `
+${header()}
+<style>
+.listC{display:flex;flex-direction:column;gap:9px;}
+.cC{position:relative;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 14px 12px 12px;display:flex;align-items:center;gap:11px;overflow:hidden;}
+.cC::before{content:"";position:absolute;top:0;bottom:0;right:0;width:5px;background:var(--stripe,var(--border));}
+.cC .av{width:38px;height:38px;border-radius:11px;background:#F2F4F7;color:var(--muted);display:grid;place-items:center;font-weight:800;font-size:16px;flex-shrink:0;}
+.cC .mid{flex:1;min-width:0;}
+.cC .nm{font-weight:800;font-size:15px;}
+.cC .tag{font-size:12px;font-weight:700;margin-top:2px;}
+.cC .ab{display:flex;gap:5px;}
+.cC .b{width:33px;height:33px;border-radius:10px;border:1.5px solid var(--border);background:#fff;display:grid;place-items:center;font-size:13px;color:var(--muted);}
+.cC .b.on{color:#fff;border-color:transparent;}
+</style>
+<div class="listC">
+${STUDENTS.map((st,i)=>{const a=ATT[st.s];return `
+  <div class="cC" style="--stripe:${a?a.c:'#D8DEE9'}">
+    <div class="av">${initials(st.n)}</div>
+    <div class="mid">
+      <div class="nm">${st.n}</div>
+      <div class="tag" style="color:${a?a.c:'var(--muted)'}">${a?a.l:'بلا تحضير'}</div>
+    </div>
+    <div class="ab">${Object.entries(ATT).map(([k,x])=>`<div class="b ${st.s===k?'on':''}" style="${st.s===k?`background:${x.c}`:''}">${x.i}</div>`).join('')}</div>
+  </div>`}).join('')}
+</div>`]);
+
+/* ========== د — مدمج أنيق ========== */
+DESIGNS.push(['د — مدمج', `
+${header()}
+<style>
+.listD{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.cD{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--border);}
+.cD:last-child{border-bottom:0;}
+.cD:nth-child(even){background:#FBFAF6;}
+.cD .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--d,#D0D5DD);}
+.cD .nm{flex:1;min-width:0;font-weight:700;font-size:14.5px;}
+.cD .ab{display:flex;gap:4px;}
+.cD .b{width:31px;height:31px;border-radius:9px;border:1.5px solid var(--border);background:#fff;display:grid;place-items:center;font-size:12.5px;color:var(--muted);}
+.cD .b.on{color:#fff;border-color:transparent;}
+</style>
+<div class="listD">
+${STUDENTS.map((st)=>{const a=ATT[st.s];return `
+  <div class="cD">
+    <span class="dot" style="background:${a?a.c:'#D0D5DD'}"></span>
+    <div class="nm">${st.n}</div>
+    <div class="ab">${Object.entries(ATT).map(([k,x])=>`<div class="b ${st.s===k?'on':''}" style="${st.s===k?`background:${x.c}`:''}">${x.i}</div>`).join('')}</div>
+  </div>`}).join('')}
+</div>`]);
+
+/* build */
+const root=document.getElementById('root'), sw=document.getElementById('switcher');
+DESIGNS.forEach(([name,html],i)=>{
+    const sc=document.createElement('div');
+    sc.className='screen'+(i===0?' active':'');
+    sc.innerHTML=html;
+    root.appendChild(sc);
+    const b=document.createElement('button');
+    b.textContent=name; if(i===0)b.className='on';
+    b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+    sw.appendChild(b);
+});
+setTimeout(()=>document.querySelector('.hint').classList.add('gone'),2600);
+</script>
+</body>
+</html>
