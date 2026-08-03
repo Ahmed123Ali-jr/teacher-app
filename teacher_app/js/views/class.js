@@ -628,7 +628,7 @@
             <div class="empty-state">
                 <div class="icon">🎒</div>
                 <h3>لا يوجد طلاب بعد</h3>
-                <p>أضف طلاب هذا الفصل يدوياً أو ألصق قائمة، أو ارفع ملف CSV.</p>
+                <p>ألصق قائمة أسماء الطلاب، أو ارفع ملفاً أو صورة للقائمة.</p>
                 <button class="btn btn-primary" data-empty-add>+ إضافة طلاب</button>
             </div>
         `;
@@ -1145,14 +1145,10 @@
             form.innerHTML = `
                 <div class="filter-bar" style="margin-bottom: var(--space-5); flex-wrap: wrap;">
                     <button class="chip ${mode === 'paste'  ? 'active' : ''}" data-mode="paste">📋 لصق قائمة</button>
-                    <button class="chip ${mode === 'manual' ? 'active' : ''}" data-mode="manual">✏️ إدخال واحد</button>
-                    <button class="chip ${mode === 'csv'    ? 'active' : ''}" data-mode="csv">📄 ملف CSV</button>
-                    <button class="chip ${mode === 'image'  ? 'active' : ''}" data-mode="image">📷 PDF/صورة (AI)</button>
+                    <button class="chip ${mode === 'upload' ? 'active' : ''}" data-mode="upload">📎 رفع ملف أو صورة</button>
                 </div>
                 ${mode === 'paste'  ? pasteForm()  : ''}
-                ${mode === 'manual' ? manualForm() : ''}
-                ${mode === 'csv'    ? csvForm()    : ''}
-                ${mode === 'image'  ? imageForm()  : ''}
+                ${mode === 'upload' ? uploadForm() : ''}
             `;
             form.querySelectorAll('[data-mode]').forEach((b) =>
                 b.addEventListener('click', () => { mode = b.dataset.mode; paint(); }));
@@ -1167,26 +1163,13 @@
                 <div class="field-hint">يُتجاهل الفراغ والأسطر الفارغة.</div>
             </div>
             ${footer('إضافة الطلاب')}`; }
-        function manualForm() { return `
+        function uploadForm() { return `
             <div class="field">
-                <label class="label">اسم الطالب</label>
-                <input class="input" id="manual-name" type="text" required placeholder="أحمد بن محمد">
+                <label class="label">ارفع ملف الأسماء أو صورة القائمة</label>
+                <input class="input" id="upload-file" type="file" accept=".csv,.txt,.pdf,image/*">
+                <div class="field-hint">ملف CSV أو نصي (يُقرأ مباشرة)، أو صورة/PDF لقائمة الطلاب (يستخرجها الذكاء الاصطناعي تلقائياً).</div>
             </div>
-            ${footer('إضافة')}`; }
-        function csvForm() { return `
-            <div class="field">
-                <label class="label">ملف CSV أو نصي (.csv / .txt)</label>
-                <input class="input" id="csv-file" type="file" accept=".csv,.txt">
-                <div class="field-hint">عمود واحد للأسماء. أول صف يُتجاهل تلقائياً إذا كان عنواناً.</div>
-            </div>
-            ${footer('استيراد')}`; }
-        function imageForm() { return `
-            <div class="field">
-                <label class="label">صورة أو ملف PDF لقائمة الطلاب</label>
-                <input class="input" id="image-file" type="file" accept=".pdf,image/*">
-                <div class="field-hint">سيقرأها الذكاء الاصطناعي ويستخرج الأسماء تلقائياً.</div>
-            </div>
-            ${footer('استخراج وإضافة')}`; }
+            ${footer('إضافة الطلاب')}`; }
         function footer(primary) { return `
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-primary" data-submit>${primary}</button>
@@ -1201,26 +1184,27 @@
                 const origLabel = btn.textContent;
                 try {
                     let names = [];
-                    if (mode === 'paste') names = parseNameList(form.querySelector('#paste-names').value);
-                    else if (mode === 'manual') {
-                        const v = form.querySelector('#manual-name').value.trim();
-                        if (v) names = [v];
-                    } else if (mode === 'csv') {
-                        const file = form.querySelector('#csv-file').files[0];
+                    if (mode === 'paste') {
+                        names = parseNameList(form.querySelector('#paste-names').value);
+                    } else if (mode === 'upload') {
+                        const file = form.querySelector('#upload-file').files[0];
                         if (!file) throw new Error('اختر ملفاً أولاً.');
-                        names = parseCSV(await file.text());
-                    } else if (mode === 'image') {
-                        const file = form.querySelector('#image-file').files[0];
-                        if (!file) throw new Error('اختر ملفاً أولاً.');
-                        if (!(await global.AI.hasApiKey())) {
-                            throw new Error('مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.');
+                        // Text files (CSV/TXT) are read directly; PDF/images go to AI.
+                        const isText = /\.(csv|txt)$/i.test(file.name)
+                            || file.type === 'text/csv' || file.type === 'text/plain';
+                        if (isText) {
+                            names = parseCSV(await file.text());
+                        } else {
+                            if (!(await global.AI.hasApiKey())) {
+                                throw new Error('مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.');
+                            }
+                            if (file.size > 20 * 1024 * 1024) {
+                                throw new Error('الملف كبير جداً (أقصى 20MB).');
+                            }
+                            btn.textContent = '⏳ جارٍ القراءة...';
+                            const pages = await fileToImagePages(file, 20);
+                            names = await global.AI.extractStudentNamesFromImage({ pages });
                         }
-                        if (file.size > 20 * 1024 * 1024) {
-                            throw new Error('الملف كبير جداً (أقصى 20MB).');
-                        }
-                        btn.textContent = '⏳ جارٍ القراءة...';
-                        const pages = await fileToImagePages(file, 20);
-                        names = await global.AI.extractStudentNamesFromImage({ pages });
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
                     for (const name of names) {
