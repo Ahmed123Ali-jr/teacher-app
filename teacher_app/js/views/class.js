@@ -794,27 +794,25 @@
         const cards = students.map((s, i) => {
             const att    = attToday[i];
             const meta   = att && ATTENDANCE[att.status];
-            const stripe = meta ? meta.color : '#CBD5E1';
+            const stripe = meta ? meta.color : '#D8DEE9';
             const word   = meta ? meta.label : 'بلا تحضير';
             const values = readValues(evalToday[i]);
+            const letter = escapeHtml((s.name || '؟').trim().charAt(0));
 
-            // Single-column focus (grading): the control sits inline in the head.
-            const focusCtl = (!showAttendance && columns.length === 1)
-                ? `<div class="stc-focus-ctl">${renderCell(s.id, columns[0], values[columns[0].id])}</div>`
-                : '';
+            // Left-side control: attendance squares («الكل»/«الحضور») or the
+            // focused column's control (stars / number / check / tri).
+            const ctl = showAttendance
+                ? attendanceButtons(s.id, att)
+                : (columns.length === 1 ? renderCell(s.id, columns[0], values[columns[0].id]) : '');
 
             return `
                 <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:${stripe};">
-                    <div class="stc-head">
-                        <span class="stc-badge num">${i + 1}</span>
-                        <div class="stc-info">
-                            <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
-                            <div class="stc-status" style="color:${stripe};">${word}</div>
-                        </div>
-                        ${focusCtl}
-                        <button class="stc-del" data-del-student="${s.id}" data-name="${escapeHtml(s.name)}" title="حذف">🗑️</button>
+                    <div class="stc-av">${letter}</div>
+                    <div class="stc-info">
+                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
+                        <div class="stc-status" style="color:${meta ? stripe : 'var(--text-muted)'};">${word}</div>
                     </div>
-                    ${showAttendance ? `<div class="stc-att-row">${attendanceButtons(s.id, att)}</div>` : ''}
+                    <div class="stc-ab">${ctl}</div>
                 </div>`;
         }).join('');
         return `<div class="st-cards">${cards}</div>${TABLE_HINT}`;
@@ -823,13 +821,11 @@
     /* Notes focus as cards — name + a comfortable note box (same field shown
        on the student page; saved in the background, no re-render). */
     function studentsNotesCards(students) {
-        const cards = students.map((s, i) => `
-            <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:#CBD5E1;">
-                <div class="stc-head">
-                    <span class="stc-badge num">${i + 1}</span>
-                    <div class="stc-info">
-                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
-                    </div>
+        const cards = students.map((s) => `
+            <div class="st-card st-card-note st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:#D8DEE9;">
+                <div class="stc-av">${escapeHtml((s.name || '؟').trim().charAt(0))}</div>
+                <div class="stc-info">
+                    <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
                 </div>
                 <div class="stc-note">
                     <textarea class="input st-note-input" data-note-sid="${s.id}" rows="2"

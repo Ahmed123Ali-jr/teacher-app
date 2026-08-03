@@ -1730,78 +1730,60 @@ body.drawer-open { overflow: hidden; }
    Register CARDS (design «ج») — one card per student, colored status stripe.
    No horizontal scroll, nothing sticky → the iOS blank-names bug is impossible.
    ========================================================================== */
-.st-cards { display: flex; flex-direction: column; gap: var(--space-3); }
+.st-cards { display: flex; flex-direction: column; gap: 9px; }
 .st-card {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    padding-inline-start: var(--space-5);
+    border-radius: 14px;
+    padding: 12px 12px 12px 14px;
+    padding-inline-start: 17px;   /* 12px + مساحة الشريط اللوني */
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
 }
 .st-card::before {
     content: '';
     position: absolute;
     top: 0; bottom: 0; inset-inline-start: 0;
     width: 5px;
-    background: var(--stripe, #CBD5E1);
+    background: var(--stripe, #D8DEE9);
 }
-.stc-head { display: flex; align-items: center; gap: var(--space-3); }
-.stc-badge {
+/* حرف الطالب الأول في مربع رمادي (نموذج ج) */
+.stc-av {
     flex-shrink: 0;
-    min-width: 30px; height: 30px;
-    padding: 0 6px;
-    display: grid; place-items: center;
+    width: 38px; height: 38px;
+    border-radius: 11px;
     background: var(--surface-alt);
     color: var(--text-muted);
-    border-radius: 9px;
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-bold);
+    display: grid; place-items: center;
+    font-weight: 800;
+    font-size: 16px;
 }
 .stc-info { flex: 1; min-width: 0; }
 .st-card .st-name-link {
     display: block;
-    font-weight: var(--fw-bold);
-    font-size: var(--fs-body);
+    font-weight: 800;
+    font-size: 15px;
     color: var(--text);
     text-decoration: none;
-    line-height: 1.35;
+    line-height: 1.4;
 }
-.stc-status { font-size: var(--fs-xs); font-weight: var(--fw-bold); margin-top: 2px; }
-.stc-focus-ctl { display: flex; align-items: center; flex-shrink: 0; }
-/* Attendance on its own comfortable full-width row → long names never crowd */
-.stc-att-row {
-    display: flex;
-    gap: var(--space-2);
-    margin-top: var(--space-3);
+.stc-status { font-size: 12px; font-weight: 700; margin-top: 2px; }
+/* أزرار الحضور: مربعات صغيرة بجانب الاسم (نموذج ج) */
+.stc-ab { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.st-card .att-btn {
+    width: 33px; height: 33px;
+    margin-left: 0;
+    border-width: 1.5px;
+    border-radius: 10px;
+    font-size: 13px;
 }
-.stc-att-row .att-btn {
-    flex: 1;
-    width: auto;
-    height: 42px;
-    border-radius: var(--radius-md);
-}
-.stc-del {
-    flex-shrink: 0;
-    width: 32px; height: 32px;
-    border: 0; background: transparent;
-    border-radius: 9px;
-    font-size: 15px; cursor: pointer;
-    opacity: .5;
-}
-.stc-del:active { background: var(--surface-alt); }
-.stc-evals {
-    display: flex; flex-wrap: wrap;
-    gap: var(--space-3) var(--space-6);
-    margin-top: var(--space-3);
-    padding-top: var(--space-3);
-    border-top: 1px dashed var(--border);
-}
-.stc-eval { display: flex; align-items: center; gap: var(--space-2); }
-.stc-eval-lbl { font-size: var(--fs-xs); color: var(--text-muted); font-weight: var(--fw-bold); }
-.stc-note { margin-top: var(--space-3); }
+.st-card .att-btn.active { transform: none; }
+/* بطاقة الملاحظات: الحقل بعرض كامل تحت الاسم */
+.st-card-note { flex-wrap: wrap; }
+.stc-note { flex-basis: 100%; }
 .stc-note .st-note-input { width: 100%; min-height: 46px; max-width: none; }
 
 /* ==========================================================================
