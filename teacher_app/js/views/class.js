@@ -449,26 +449,32 @@
             const btn = panel.querySelector('#btn-mark-all');
             btn.disabled = true;
             try {
-                // Drain pending single-cell writes, then do ONE bulk request
-                // for the whole class instead of a write per student.
+                // Drain pending optimistic single-cell writes, then read the
+                // real rows (with ids) so this works even after fast manual
+                // taps left pseudo-rows in the local model.
                 await flushWrites();
-                if (allPresent) {
+                const attNow = (await global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id))
+                    .filter((r) => r.date === today);
+                const byStudent = new Map(attNow.map((r) => [r.student_id, r]));
+                const allPresentNow = students.length > 0
+                    && students.every((s) => byStudent.get(s.id)?.status === 'present');
+                if (allPresentNow) {
                     btn.textContent = '⏳ جارٍ التراجع...';
-                    const ids = attendanceToday.filter(Boolean).map((r) => r.id);
+                    const ids = students.map((s) => byStudent.get(s.id)).filter(Boolean).map((r) => r.id);
                     await global.TeacherDB.bulkRemove('attendance', ids);
                     global.TeacherApp.toast('تم التراجع عن تحضير الجميع.', 'success', 2500);
                 } else {
                     btn.textContent = '⏳ جارٍ التحضير...';
                     const rows = [];
-                    for (let i = 0; i < students.length; i++) {
-                        const cur = attendanceToday[i];
+                    for (const s of students) {
+                        const cur = byStudent.get(s.id);
                         if (cur) {
                             if (cur.status !== 'present') { cur.status = 'present'; rows.push(cur); }
                         } else {
                             rows.push({
                                 teacher_id: cls.teacher_id,
                                 class_id:   cls.id,
-                                student_id: students[i].id,
+                                student_id: s.id,
                                 date: today,
                                 status: 'present'
                             });
@@ -488,9 +494,34 @@
         // student's status afterwards (e.g. marking him absent from the
         // «بلا تحضير» view) must NOT make his row vanish mid-work.
         const rowStatus = {};
+        const sidIndex = {};
         students.forEach((s, i) => {
             rowStatus[s.id] = attendanceToday[i] ? attendanceToday[i].status : 'unmarked';
+            sidIndex[s.id] = i;
         });
+
+        /* Recompute the attendance counters + «تحضير الكل» button from the
+           local model — used by optimistic taps so the screen updates
+           instantly without rebuilding the whole table. */
+        function refreshAttendanceUI() {
+            const st = { present: 0, absent: 0, late: 0, excused: 0, unmarked: 0 };
+            attendanceToday.forEach((r) => {
+                if (!r) st.unmarked++;
+                else if (st[r.status] !== undefined) st[r.status]++;
+            });
+            const marked = students.length - st.unmarked;
+            const pct = marked > 0 ? Math.round(((st.present + st.late) / marked) * 100) : null;
+            const set = (sel, val) => { const el = panel.querySelector(sel); if (el) el.textContent = val; };
+            set('.att-mini[data-att-filter="present"] b', String(st.present));
+            set('.att-mini[data-att-filter="absent"] b',  String(st.absent));
+            set('.att-mini.pct b', pct !== null ? pct + '٪' : '—');
+            const allPres = students.length > 0 && attendanceToday.every((r) => r && r.status === 'present');
+            const mab = panel.querySelector('#btn-mark-all');
+            if (mab) {
+                mab.classList.toggle('mark-all-on', allPres);
+                mab.textContent = allPres ? '✓ تم تحضير الكل' : '✓ تحضير الكل';
+            }
+        }
         function applyRowFilters() {
             const q = (panel.querySelector('#student-search')?.value || '').trim();
             const f = panel.dataset.activeAttFilter || '';
@@ -528,10 +559,21 @@
         });
 
         panel.querySelectorAll('[data-att-btn]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const sid = btn.dataset.sid;
-                await setAttendance(cls, sid, today, btn.dataset.status);
-                await renderStudents(panel, cls);
+            btn.addEventListener('click', () => {
+                const sid    = btn.dataset.sid;
+                const status = btn.dataset.status;
+                const i      = sidIndex[sid];
+                // Optimistic: update the local model + this row's buttons +
+                // counters INSTANTLY, then persist in the background. No full
+                // table rebuild and no waiting on the network.
+                if (attendanceToday[i]) attendanceToday[i].status = status;
+                else attendanceToday[i] = { student_id: sid, status };
+                rowStatus[sid] = status;
+                panel.querySelectorAll(`[data-att-btn][data-sid="${sid}"]`).forEach((b) => {
+                    b.classList.toggle('active', b.dataset.status === status);
+                });
+                refreshAttendanceUI();
+                setAttendance(cls, sid, today, status);
             });
         });
 
