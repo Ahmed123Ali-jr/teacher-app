@@ -413,7 +413,7 @@
                     `).join('')}
                     <button class="col-chip ${focus === 'notes' ? 'active' : ''}" data-col-focus="notes">📝 الملاحظات</button>
                     <button class="col-chip col-chip-add" id="chip-add-column" title="إضافة خانة جديدة">+</button>
-                    <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ إدارة الخانات</button>
+                    <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ تعديل الخانات</button>
                 </div>
             ` : ''}
 
@@ -1144,7 +1144,7 @@
         }
 
         paintList();
-        global.Modal.open({ title: '⚙️ إدارة خانات التقييم', body: form });
+        global.Modal.open({ title: '⚙️ تعديل الخانات', body: form, autofocus: false });
     }
 
     /* ==========================================================================

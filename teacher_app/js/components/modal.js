@@ -13,7 +13,7 @@
     function title() { return document.getElementById('modal-title'); }
     function body()  { return document.getElementById('modal-body'); }
 
-    function open({ title: t, body: b, onClose } = {}) {
+    function open({ title: t, body: b, onClose, autofocus = true } = {}) {
         const r = root();
         if (!r) return;
 
@@ -31,9 +31,12 @@
         r.hidden = false;
         document.body.style.overflow = 'hidden';
 
-        // Focus first focusable element
-        const focusable = bodyEl.querySelector('input, select, textarea, button');
-        if (focusable) focusable.focus();
+        // Focus first focusable element — unless the caller opted out
+        // (e.g. management screens that shouldn't pop the keyboard).
+        if (autofocus) {
+            const focusable = bodyEl.querySelector('input, select, textarea, button');
+            if (focusable) focusable.focus();
+        }
 
         // ESC to close
         state.keyHandler = (e) => { if (e.key === 'Escape') close(); };
