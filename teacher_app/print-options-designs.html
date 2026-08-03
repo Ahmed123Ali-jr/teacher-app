@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>تصاميم نافذة خيارات الطباعة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{ --royal:#0F2C5C; --royal2:#1A3A6E; --gold:#C9A961; --ink:#101828; --muted:#667085; --line:#E7EAF0; --soft:#F5F6F9; }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:#E9EBEF;color:var(--ink);}
+    .screen{display:none;min-height:100vh;padding:16px 14px 150px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    /* modal shell */
+    .sheet{background:#fff;border-radius:20px;max-width:440px;margin:8px auto;box-shadow:0 12px 40px rgba(16,24,40,.16);overflow:hidden;}
+    .sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line);}
+    .sheet-hd h2{margin:0;font-size:18px;font-weight:900;color:var(--royal);}
+    .sheet-hd .x{width:32px;height:32px;border-radius:9px;border:0;background:var(--soft);font-size:18px;color:var(--muted);}
+    .sheet-bd{padding:16px 18px;}
+    .sheet-ft{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:#FCFCFD;}
+    .btn{flex:1;min-height:48px;border:0;border-radius:13px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;}
+    .btn-primary{background:var(--royal);color:#fff;}
+    .btn-ghost{background:transparent;color:var(--muted);flex:0 0 auto;padding:0 18px;}
+    .lbl{font-size:12.5px;color:var(--muted);font-weight:700;margin:0 2px 8px;}
+    .hint{position:fixed;top:10px;left:10px;z-index:60;background:rgba(17,17,17,.85);color:#fff;border-radius:99px;padding:5px 14px;font-size:11px;transition:opacity .5s;}
+    .hint.gone{opacity:0;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+</style>
+</head>
+<body>
+<div class="hint">نماذج نافذة الطباعة — بدّل من الأسفل</div>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const MODES = [
+  { k:'blank',   ic:'📋', t:'سجل فارغ',           d:'أسماء الطلاب + أعمدة فارغة للتعبئة يدوياً' },
+  { k:'today',   ic:'📅', t:'سجل اليوم (معبّأ)',   d:'حضور اليوم والتقييمات كما أُدخلت الآن' },
+  { k:'range',   ic:'🗓️', t:'سجل حضور لفترة',      d:'الأيام كأعمدة + مجاميع الحضور والغياب' },
+  { k:'summary', ic:'📊', t:'تقرير مجمّع لفترة',   d:'ملخّص حضور + متوسط كل تقييم لكل طالب' },
+];
+const DESIGNS = [];
+
+/* ===== أ — قائمة بطاقات (راديو محسّن) ===== */
+DESIGNS.push(['أ — بطاقات', `
+<div class="sheet">
+  <div class="sheet-hd"><h2>🖨️ طباعة السجل</h2><button class="x">×</button></div>
+  <div class="sheet-bd">
+    <div class="lbl">اختر نوع السجل</div>
+    <style>
+      .optA{display:flex;align-items:flex-start;gap:12px;border:1.5px solid var(--line);border-radius:14px;padding:13px;margin-bottom:10px;cursor:pointer;transition:.15s;}
+      .optA.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 5%,#fff);}
+      .optA .ic{font-size:22px;flex-shrink:0;}
+      .optA .tt{font-weight:800;font-size:15px;}
+      .optA .dd{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
+      .optA .rd{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;margin-inline-start:auto;display:grid;place-items:center;}
+      .optA.on .rd{border-color:var(--royal);} .optA.on .rd::after{content:"";width:11px;height:11px;border-radius:50%;background:var(--royal);}
+    </style>
+    ${MODES.map((m,i)=>`<div class="optA ${i===0?'on':''}"><div class="ic">${m.ic}</div>
+      <div><div class="tt">${m.t}</div><div class="dd">${m.d}</div></div>
+      <div class="rd"></div></div>`).join('')}
+    <div class="lbl" style="margin-top:6px">الاتجاه</div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;min-height:42px;border:1.5px solid var(--royal);background:color-mix(in srgb,var(--royal) 6%,#fff);color:var(--royal);border-radius:11px;font-family:inherit;font-weight:800">📄 عمودي</button>
+      <button style="flex:1;min-height:42px;border:1.5px solid var(--line);background:#fff;color:var(--muted);border-radius:11px;font-family:inherit;font-weight:800">📃 بالعرض</button>
+    </div>
+  </div>
+  <div class="sheet-ft"><button class="btn btn-primary">معاينة وطباعة</button><button class="btn btn-ghost">إلغاء</button></div>
+</div>`]);
+
+/* ===== ب — شبكة أيقونات ===== */
+DESIGNS.push(['ب — شبكة', `
+<div class="sheet">
+  <div class="sheet-hd"><h2>🖨️ طباعة السجل</h2><button class="x">×</button></div>
+  <div class="sheet-bd">
+    <div class="lbl">اختر نوع السجل</div>
+    <style>
+      .gridB{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+      .cardB{border:1.5px solid var(--line);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.15s;}
+      .cardB.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 6%,#fff);box-shadow:0 4px 14px color-mix(in srgb,var(--royal) 14%,transparent);}
+      .cardB .ic{font-size:30px;} .cardB .tt{font-weight:800;font-size:14px;margin-top:8px;}
+      .cardB .dd{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45;}
+    </style>
+    <div class="gridB">
+      ${MODES.map((m,i)=>`<div class="cardB ${i===0?'on':''}"><div class="ic">${m.ic}</div><div class="tt">${m.t}</div><div class="dd">${m.d}</div></div>`).join('')}
+    </div>
+    <div class="lbl" style="margin-top:14px">الاتجاه</div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;min-height:42px;border:1.5px solid var(--royal);background:color-mix(in srgb,var(--royal) 6%,#fff);color:var(--royal);border-radius:11px;font-family:inherit;font-weight:800">📄 عمودي</button>
+      <button style="flex:1;min-height:42px;border:1.5px solid var(--line);background:#fff;color:var(--muted);border-radius:11px;font-family:inherit;font-weight:800">📃 بالعرض</button>
+    </div>
+  </div>
+  <div class="sheet-ft"><button class="btn btn-primary">معاينة وطباعة</button><button class="btn btn-ghost">إلغاء</button></div>
+</div>`]);
+
+/* ===== ج — قائمة مصغّرة أنيقة ===== */
+DESIGNS.push(['ج — قائمة أنيقة', `
+<div class="sheet">
+  <div class="sheet-hd"><h2>🖨️ طباعة السجل</h2><button class="x">×</button></div>
+  <div class="sheet-bd" style="padding:8px 0 16px">
+    <style>
+      .rowC{display:flex;align-items:center;gap:13px;padding:14px 18px;cursor:pointer;border-inline-start:4px solid transparent;}
+      .rowC.on{background:color-mix(in srgb,var(--royal) 5%,#fff);border-inline-start-color:var(--gold);}
+      .rowC .ic{width:40px;height:40px;border-radius:11px;background:var(--soft);display:grid;place-items:center;font-size:19px;flex-shrink:0;}
+      .rowC.on .ic{background:var(--royal);}
+      .rowC .tt{font-weight:800;font-size:15px;} .rowC .dd{font-size:12px;color:var(--muted);margin-top:1px;}
+      .rowC .chev{margin-inline-start:auto;color:var(--gold);font-size:18px;opacity:0;} .rowC.on .chev{opacity:1;}
+    </style>
+    ${MODES.map((m,i)=>`<div class="rowC ${i===0?'on':''}"><div class="ic">${m.ic}</div>
+      <div><div class="tt">${m.t}</div><div class="dd">${m.d}</div></div><div class="chev">✓</div></div>`).join('')}
+    <div style="padding:8px 18px 0"><div class="lbl">الاتجاه</div>
+      <div style="display:flex;gap:8px">
+        <button style="flex:1;min-height:42px;border:1.5px solid var(--royal);background:color-mix(in srgb,var(--royal) 6%,#fff);color:var(--royal);border-radius:11px;font-family:inherit;font-weight:800">📄 عمودي</button>
+        <button style="flex:1;min-height:42px;border:1.5px solid var(--line);background:#fff;color:var(--muted);border-radius:11px;font-family:inherit;font-weight:800">📃 بالعرض</button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-ft"><button class="btn btn-primary">معاينة وطباعة</button><button class="btn btn-ghost">إلغاء</button></div>
+</div>`]);
+
+const root=document.getElementById('root'), sw=document.getElementById('switcher');
+DESIGNS.forEach(([name,html],i)=>{
+    const sc=document.createElement('div'); sc.className='screen'+(i===0?' active':''); sc.innerHTML=html; root.appendChild(sc);
+    // make cards clickable to preview selection
+    sc.querySelectorAll('.optA,.cardB,.rowC').forEach(el=>el.addEventListener('click',()=>{
+        el.parentElement.querySelectorAll('.optA,.cardB,.rowC').forEach(x=>x.classList.remove('on')); el.classList.add('on');
+    }));
+    const b=document.createElement('button'); b.textContent=name; if(i===0)b.className='on';
+    b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+    sw.appendChild(b);
+});
+setTimeout(()=>document.querySelector('.hint').classList.add('gone'),2600);
+</script>
+</body>
+</html>
