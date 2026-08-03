@@ -523,9 +523,56 @@
         border: 1px solid #CCC;
     }
 
-    /* ---------- Students register ---------- */
+    /* ---------- Students register — الطابع الكلاسيكي المعتمد ---------- */
     .students-doc .print-header .meta {
         font-size: 10pt;
+    }
+
+    /* ترويسة كلاسيكية: جهة + اسم المدرسة + شعار، ثم صف بيانات أفقي */
+    .classic-header {
+        text-align: right;
+        border-bottom: 2.5px solid #0F2C5C;
+        padding-bottom: 3mm;
+        margin-bottom: 4mm;
+    }
+    .classic-header .ch-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6mm;
+    }
+    .classic-header .ch-authority {
+        font-size: 9pt;
+        color: #555;
+    }
+    .classic-header h1 {
+        font-size: 17pt;
+        color: #0F2C5C;
+        margin: 1mm 0 0;
+    }
+    .classic-header .ch-logo {
+        width: 20mm;
+        height: 20mm;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+    .classic-header .ch-logo-empty {
+        border: 1px dashed #BBB;
+        border-radius: 2mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7.5pt;
+        color: #AAA;
+    }
+    .classic-header .ch-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2mm 7mm;
+        margin-top: 3mm;
+        font-size: 10pt;
+        font-weight: 700;
+        color: #14181F;
     }
 
     .students-register {
@@ -535,13 +582,14 @@
         border-collapse: collapse;
         font-size: 10pt;
         margin-bottom: 0;
+        border: 1.5px solid #0F2C5C;
         /* Each chunked table is self-contained on its own page */
         page-break-inside: avoid !important;
         break-inside:      avoid !important;
     }
     .students-register th,
     .students-register td {
-        border: 1px solid #000;
+        border: 1px solid #C9CDD6;
         padding: 6pt 8pt;
         text-align: right;
         vertical-align: middle;
@@ -550,7 +598,9 @@
     }
     .students-register thead th {
         background: #F1F5F9;
+        color: #0F2C5C;
         font-weight: 700;
+        border-color: #C9CDD6;
     }
     /* Leave a little empty space at the end of each page so the last row doesn't
        get flush against the margin (which can look cut on some printers). */
@@ -625,27 +675,38 @@
     }
     .students-doc { direction: rtl; }
 
-    /* عنوان اليوم في وضع «جدول مستقل لكل يوم» */
+    /* عنوان اليوم في وضع «جدول مستقل لكل يوم» — بالطابع الكلاسيكي */
     .daily-day-title {
-        font-size: 13pt;
+        font-size: 12pt;
         font-weight: 700;
         color: #0F2C5C;
-        background: #F1F5F9;
-        border: 1px solid #CBD5E1;
-        padding: 2.5mm 4mm;
+        border-bottom: 1.5px solid #0F2C5C;
+        padding: 0 0 1.5mm;
         margin: 0 0 3mm;
     }
 
+    /* تذييل كلاسيكي: الرموز على اليمين وتوقيع المعلم على اليسار */
     .print-legend {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 6mm;
-        justify-content: flex-start;
         font-size: 9pt;
         color: #333;
         padding: 3mm 4mm;
         background: #F8FAFC;
         border: 1px solid #CBD5E1;
         margin-top: 4mm;
+    }
+    .print-legend .pl-keys {
+        display: flex;
+        gap: 5mm;
+        align-items: center;
+    }
+    .print-legend .pl-sign {
+        color: #14181F;
+        font-weight: 700;
+        white-space: nowrap;
     }
     .print-legend strong { font-weight: 700; }
 }

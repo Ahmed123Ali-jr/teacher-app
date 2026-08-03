@@ -68,19 +68,32 @@
             ? ` · الفترة: ${formatDateShort(from)} → ${formatDateShort(to)}`
             : '';
 
+        /* الطابع الكلاسيكي المعتمد: سطر الجهة، اسم المدرسة كحلي بارز، خانة
+           الشعار على الطرف، ثم صف بيانات أفقي أسفل خط فاصل. */
         const p = global.PrintPrefs || {};
+        const info = [
+            'سجل متابعة الطلاب',
+            `الصف: ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}`,
+            `المادة: ${escapeHtml(cls.subject)}`,
+            `المعلم: ${escapeHtml(teacher?.name || '')}`,
+            `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`
+        ];
+        if (p.academicYear) info.push(`العام: ${escapeHtml(p.academicYear)}`);
+
         const header = `
-            <div class="print-header ${p.logoDataUrl ? 'has-logo' : ''}">
-                ${p.logoDataUrl ? `<img class="print-logo" src="${p.logoDataUrl}" alt="">` : ''}
-                <h1>${escapeHtml(teacher?.school_name || 'المدرسة')}</h1>
-                <div class="meta">
-                    ${mode === 'summary' ? 'تقرير مجمّع للطلاب' : 'سجل متابعة الطلاب'} ·
-                    ${STAGE_LABELS[cls.stage] || ''} — ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} ·
-                    ${escapeHtml(cls.subject)} ·
-                    المعلم: ${escapeHtml(teacher?.name || '')} ·
-                    التاريخ: ${new Date().toLocaleDateString('ar-SA')}
-                    ${periodText}
-                    ${p.academicYear ? ` · العام: ${escapeHtml(p.academicYear)}` : ''}
+            <div class="print-header classic-header">
+                <div class="ch-top">
+                    <div class="ch-titles">
+                        <div class="ch-authority">المملكة العربية السعودية · وزارة التعليم</div>
+                        <h1>${escapeHtml(teacher?.school_name || 'المدرسة')}</h1>
+                    </div>
+                    ${p.logoDataUrl
+                        ? `<img class="ch-logo" src="${p.logoDataUrl}" alt="">`
+                        : `<div class="ch-logo ch-logo-empty">الشعار</div>`}
+                </div>
+                <div class="ch-info">
+                    ${info.map((x) => `<span>${x}</span>`).join('')}
+                    ${periodText ? `<span>${periodText.replace(/^\s*·\s*/, '')}</span>` : ''}
                 </div>
             </div>
         `;
@@ -98,11 +111,14 @@
 
         const legend = mode === 'summary' ? '' : `
             <div class="print-legend">
-                <strong>الرموز:</strong>
-                <span>✓ حاضر</span>
-                <span>✗ غائب</span>
-                <span>⏰ متأخر</span>
-                <span>م مستأذن</span>
+                <div class="pl-keys">
+                    <strong>الرموز:</strong>
+                    <span>✓ حاضر</span>
+                    <span>✗ غائب</span>
+                    <span>⏰ متأخر</span>
+                    <span>م مستأذن</span>
+                </div>
+                <div class="pl-sign">توقيع المعلم: ____________________</div>
             </div>
         `;
 
