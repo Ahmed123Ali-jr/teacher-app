@@ -1709,6 +1709,18 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover td.st-num,
 .students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 
+/* iOS Safari: stuck cells lose their paint during PAGE vertical scroll and
+   flash blank (the disappearing-names bug). Pinning each sticky cell to its
+   own compositing layer keeps Safari repainting them while scrolling. */
+.students-table thead th:nth-child(1),
+.students-table thead th:nth-child(2),
+.students-table tbody td.st-num,
+.students-table tbody td.st-name {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+}
+
 .st-name-link {
     color: var(--text);
     font-weight: var(--fw-medium);
