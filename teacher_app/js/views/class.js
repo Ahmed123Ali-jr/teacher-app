@@ -366,17 +366,15 @@
         const allPresent = students.length > 0
             && attendanceToday.every((r) => r && r.status === 'present');
 
-        // Column focus: '' = all columns, 'attendance' = attendance only,
+        // Column focus: 'attendance' (default) = attendance only,
         // 'notes' = the fixed notes column, otherwise an eval-column id.
-        let focus = panel.dataset.activeColFocus || '';
-        if (focus && focus !== 'attendance' && focus !== 'notes'
+        let focus = panel.dataset.activeColFocus || 'attendance';
+        if (focus !== 'attendance' && focus !== 'notes'
             && !columns.some((c) => c.id === focus)) {
-            panel.dataset.activeColFocus = '';
-            focus = '';
+            focus = 'attendance';
         }
-        const showAtt = focus === '' || focus === 'attendance';
-        const visibleCols = focus === '' ? columns
-            : (focus === 'attendance' ? [] : columns.filter((c) => c.id === focus));
+        const showAtt = focus === 'attendance';
+        const visibleCols = focus === 'attendance' ? [] : columns.filter((c) => c.id === focus);
         const prevChips = panel.querySelector('#col-chips');
         const prevChipsScroll = prevChips ? prevChips.scrollLeft : null;
 
@@ -406,7 +404,6 @@
 
             ${students.length > 0 ? `
                 <div class="col-chips-bar" id="col-chips">
-                    <button class="col-chip ${focus === '' ? 'active' : ''}" data-col-focus="">الكل</button>
                     <button class="col-chip ${focus === 'attendance' ? 'active' : ''}" data-col-focus="attendance">الحضور</button>
                     ${columns.map((c) => `
                         <button class="col-chip ${focus === c.id ? 'active' : ''}" data-col-focus="${c.id}">${escapeHtml(c.name)}</button>
