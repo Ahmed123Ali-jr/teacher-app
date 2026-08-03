@@ -2775,6 +2775,9 @@ body.drawer-open { overflow: hidden; }
     .students-actions { flex-wrap: wrap; }
     .search-input { min-width: 100%; max-width: 100%; }
     .students-actions .btn { flex: 1; min-width: 120px; }
+    /* «+ إضافة طلاب» sits full-width right under the search (its own row);
+       «تحضير الكل» + the mini stats share the row below it. */
+    .students-actions .sa-add { flex-basis: 100%; }
 
     /* Smaller cells */
     .att-btn { width: 32px; height: 32px; }

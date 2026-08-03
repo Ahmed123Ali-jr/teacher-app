@@ -394,6 +394,7 @@
             <div class="students-actions">
                 <input type="search" class="input search-input" id="student-search"
                        placeholder="🔍 بحث باسم الطالب...">
+                <button class="btn btn-primary sa-add" id="btn-add-students">+ إضافة طلاب</button>
                 <button class="btn btn-secondary ${allPresent ? 'mark-all-on' : ''}" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>${allPresent ? '✓ تم تحضير الكل' : '✓ تحضير الكل'}</button>
                 ${students.length > 0 ? `
                 <div class="att-mini-stats">
@@ -401,7 +402,6 @@
                     <button class="att-mini ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent" style="--stat-color:#DC2626;">غائب <b class="num">${stats.absent}</b></button>
                     <span class="att-mini pct" style="--stat-color:#1E40AF;">الحضور <b class="num">${attPct !== null ? attPct + '٪' : '—'}</b></span>
                 </div>` : ''}
-                <button class="btn btn-primary" id="btn-add-students">+ إضافة طلاب</button>
             </div>
 
             ${students.length > 0 ? `
