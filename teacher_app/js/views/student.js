@@ -60,7 +60,7 @@
         container.innerHTML = `
             <div class="container">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <a href="#/class/${cls.id}" class="btn-back-box" aria-label="الرجوع إلى الفصل"></a>
+                    <a href="#/class/${cls.id}/students" class="btn-back-box" aria-label="الرجوع إلى سجل المتابعة"></a>
                 </div>
 
                 <div class="student-header card">
@@ -108,7 +108,7 @@
             await deleteStudent(studentId);
             await updateClassCount(cls.id);
             global.TeacherApp.toast('تم الحذف.', 'info');
-            global.location.hash = '#/class/' + cls.id;
+            global.location.hash = '#/class/' + cls.id + '/students';
         });
 
         container.querySelector('#btn-edit-student')?.addEventListener('click', () => {
@@ -125,9 +125,9 @@
                 student.updated_at = new Date().toISOString();
                 await global.TeacherDB.put('students', student);
                 global.TeacherApp.toast('تم حفظ الملاحظات ✅', 'success', 1500);
-                // Send the teacher back to the class page (the natural "home"
-                // for student records) once the save lands.
-                global.location.hash = '#/class/' + cls.id;
+                // Back to the register (سجل المتابعة) — where students are
+                // opened from — once the save lands.
+                global.location.hash = '#/class/' + cls.id + '/students';
             } catch (err) {
                 console.error('[student] save notes failed:', err);
                 global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);
