@@ -1675,7 +1675,10 @@ body.drawer-open { overflow: hidden; }
 .table-wrapper {
     overflow-x: auto;
     overflow-y: visible;
-    -webkit-overflow-scrolling: touch;
+    /* NOTE: -webkit-overflow-scrolling: touch was removed on purpose —
+       that legacy flag forces an async composited scroller on iOS, which is
+       exactly what blanks the sticky name/number cells during page scroll.
+       Modern iOS has native momentum without it. */
 }
 
 .students-table tbody tr       { background-color: #FFFFFF; }
@@ -1710,15 +1713,15 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 
 /* iOS Safari: stuck cells lose their paint during PAGE vertical scroll and
-   flash blank (the disappearing-names bug). Pinning each sticky cell to its
-   own compositing layer keeps Safari repainting them while scrolling. */
+   flash blank (the disappearing-names bug). translateZ pins each sticky cell
+   to a compositing layer; will-change was removed on purpose — with dozens
+   of cells it inflates layer memory and can make the blanking WORSE. */
 .students-table thead th:nth-child(1),
 .students-table thead th:nth-child(2),
 .students-table tbody td.st-num,
 .students-table tbody td.st-name {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
-    will-change: transform;
 }
 
 .st-name-link {
