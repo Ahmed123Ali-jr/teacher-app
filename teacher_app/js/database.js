@@ -647,9 +647,42 @@
         }
     };
 
+    /* ---------- bulk writes (one network request for many rows) ----------
+       For simple stores (attendance/participation/…) that need no special
+       out-mapping. Used by «تحضير الكل» so 32 students = 1-2 requests, not 32. */
+    async function bulkPut(storeName, rows) {
+        const table = TABLE[storeName];
+        if (!table) throw new Error('Unknown store: ' + storeName);
+        if (!rows || !rows.length) return [];
+        const results = [];
+        const existing = rows.filter((r) => r.id != null).map((r) => Object.assign({}, r));
+        const fresh    = rows.filter((r) => r.id == null)
+                             .map((r) => { const o = Object.assign({}, r); delete o.id; return o; });
+        if (existing.length) {
+            const { data, error } = await sb.from(table).upsert(existing, { onConflict: 'id' }).select('*');
+            if (error) err(storeName + ' bulkPut', error);
+            if (data && data.length) { results.push(...data); await Cache.putMany(storeName, data); }
+        }
+        if (fresh.length) {
+            const { data, error } = await sb.from(table).insert(fresh).select('*');
+            if (error) err(storeName + ' bulkAdd', error);
+            if (data && data.length) { results.push(...data); await Cache.putMany(storeName, data); }
+        }
+        return results;
+    }
+    async function bulkRemove(storeName, ids) {
+        const table = TABLE[storeName];
+        if (!table) throw new Error('Unknown store: ' + storeName);
+        if (!ids || !ids.length) return;
+        const { error } = await sb.from(table).delete().in('id', ids);
+        if (error) err(storeName + ' bulkRemove', error);
+        for (const id of ids) await Cache.remove(storeName, id);
+    }
+
     global.TeacherDB = {
         open,
         add, put, get, getAll, getAllByIndex, remove, clear, count,
+        bulkPut, bulkRemove,
         destroy, exportAll, importAll,
         Settings,
         BookFiles,

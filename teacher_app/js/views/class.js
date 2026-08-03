@@ -449,17 +449,32 @@
             const btn = panel.querySelector('#btn-mark-all');
             btn.disabled = true;
             try {
+                // Drain pending single-cell writes, then do ONE bulk request
+                // for the whole class instead of a write per student.
+                await flushWrites();
                 if (allPresent) {
                     btn.textContent = '⏳ جارٍ التراجع...';
-                    for (const s of students) await clearAttendance(s.id, today);
+                    const ids = attendanceToday.filter(Boolean).map((r) => r.id);
+                    await global.TeacherDB.bulkRemove('attendance', ids);
                     global.TeacherApp.toast('تم التراجع عن تحضير الجميع.', 'success', 2500);
                 } else {
                     btn.textContent = '⏳ جارٍ التحضير...';
+                    const rows = [];
                     for (let i = 0; i < students.length; i++) {
-                        if (!attendanceToday[i] || attendanceToday[i].status !== 'present') {
-                            await setAttendance(cls, students[i].id, today, 'present');
+                        const cur = attendanceToday[i];
+                        if (cur) {
+                            if (cur.status !== 'present') { cur.status = 'present'; rows.push(cur); }
+                        } else {
+                            rows.push({
+                                teacher_id: cls.teacher_id,
+                                class_id:   cls.id,
+                                student_id: students[i].id,
+                                date: today,
+                                status: 'present'
+                            });
                         }
                     }
+                    await global.TeacherDB.bulkPut('attendance', rows);
                     global.TeacherApp.toast('تم تحضير الجميع كحاضر ✅', 'success', 2500);
                 }
             } catch (err) {
