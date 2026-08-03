@@ -348,9 +348,10 @@
             && attendanceToday.every((r) => r && r.status === 'present');
 
         // Column focus: '' = all columns, 'attendance' = attendance only,
-        // otherwise an eval-column id → show name + that column only.
+        // 'notes' = the fixed notes column, otherwise an eval-column id.
         let focus = panel.dataset.activeColFocus || '';
-        if (focus && focus !== 'attendance' && !columns.some((c) => c.id === focus)) {
+        if (focus && focus !== 'attendance' && focus !== 'notes'
+            && !columns.some((c) => c.id === focus)) {
             panel.dataset.activeColFocus = '';
             focus = '';
         }
@@ -391,15 +392,18 @@
                     ${columns.map((c) => `
                         <button class="col-chip ${focus === c.id ? 'active' : ''}" data-col-focus="${c.id}">${escapeHtml(c.name)}</button>
                     `).join('')}
+                    <button class="col-chip ${focus === 'notes' ? 'active' : ''}" data-col-focus="notes">📝 الملاحظات</button>
                     <button class="col-chip col-chip-add" id="chip-add-column" title="إضافة خانة جديدة">+</button>
                     <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ إدارة الخانات</button>
                 </div>
             ` : ''}
 
             ${students.length === 0 ? emptyStudentsState()
-                : (focus === ''
-                    ? studentsTableSplit(students, attendanceToday, evalToday, columns)
-                    : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt))}
+                : (focus === 'notes'
+                    ? studentsNotesTable(students)
+                    : (focus === ''
+                        ? studentsTableSplit(students, attendanceToday, evalToday, columns)
+                        : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt)))}
         `;
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
@@ -558,6 +562,27 @@
             });
         });
 
+        // Notes column — auto-grow + save in the background (no re-render, so
+        // typing never loses the keyboard/cursor). Writes onto the student row.
+        panel.querySelectorAll('textarea[data-note-sid]').forEach((inp) => {
+            const student = students.find((s) => s.id === inp.dataset.noteSid);
+            const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; };
+            grow();
+            let timer;
+            const commit = () => {
+                clearTimeout(timer);
+                if (!student) return;
+                const v = inp.value.trim();
+                if ((student.notes || '') === v) return;
+                student.notes = v;
+                student.updated_at = new Date().toISOString();
+                global.TeacherDB.put('students', student).catch((err) =>
+                    console.warn('[class.js] note save failed:', err));
+            };
+            inp.addEventListener('input', () => { grow(); clearTimeout(timer); timer = setTimeout(commit, 500); });
+            inp.addEventListener('blur', commit);
+        });
+
         // Restore scroll + search that were lost by innerHTML replacement
         const newWrapper = panel.querySelector('.table-scroll, .table-wrapper');
         if (newWrapper && prevScrollLeft !== null) {
@@ -639,6 +664,36 @@
                             <th></th>
                         </tr>
                     </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+            ${TABLE_HINT}
+        `;
+    }
+
+    /* Notes focus: name + a comfortable notes box per student. The note is
+       the student's own free-text note (same field shown on the student page,
+       single source of truth). Saved in the background — no re-render — so the
+       keyboard/cursor is never lost mid-typing. */
+    function studentsNotesTable(students) {
+        const rows = students.map((s, i) => `
+            <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
+                <td class="st-num num">${i + 1}</td>
+                <td class="st-name">
+                    <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
+                        ${escapeHtml(s.name)}
+                    </a>
+                </td>
+                <td class="st-note">
+                    <textarea class="input st-note-input" data-note-sid="${s.id}" rows="1"
+                              placeholder="اكتب ملاحظة…">${escapeHtml(s.notes || '')}</textarea>
+                </td>
+            </tr>
+        `).join('');
+        return `
+            <div class="table-wrapper">
+                <table class="students-table compact notes-table">
+                    <thead><tr><th>#</th><th>الاسم</th><th>📝 الملاحظات</th></tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
             </div>
