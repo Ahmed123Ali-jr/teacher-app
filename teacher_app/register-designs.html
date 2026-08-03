@@ -20,10 +20,11 @@
 
     /* shared page header (same for all so the ROWS are what differ) */
     .pg-title{display:flex;align-items:center;gap:8px;justify-content:flex-end;font-size:22px;font-weight:900;color:var(--royal);margin:6px 2px 2px;}
-    .pg-sub{ text-align:left;color:var(--muted);font-size:13px;margin:0 2px 12px;}
+    .pg-sub{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px;margin:2px 2px 12px;}
+    .printbtn{border:0;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--royal);padding:6px 4px;}
     .toolbar{display:flex;gap:8px;margin-bottom:12px;}
     .search{flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:13px;background:var(--surface);padding:0 14px;font-family:inherit;font-size:14px;color:var(--muted);display:flex;align-items:center;}
-    .addbtn{min-height:44px;border:2px dashed var(--gold);background:#fff;border-radius:13px;padding:0 16px;font-family:inherit;font-weight:700;color:var(--royal);font-size:14px;}
+    .addbtn{min-height:44px;border:0;background:var(--royal);border-radius:13px;padding:0 18px;font-family:inherit;font-weight:800;color:#fff;font-size:14px;white-space:nowrap;}
     .markall{min-height:44px;border:1.5px solid var(--border);background:#fff;border-radius:13px;padding:0 16px;font-family:inherit;font-weight:800;color:var(--present);font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
     .chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;}
     .chips::-webkit-scrollbar{display:none;}
@@ -73,10 +74,13 @@ function initials(name){const p=name.trim().split(' ');return (p[0]||'')[0]||'؟
 function header(){
     return `
     <div class="pg-title"><span>سجل متابعة الطلاب</span><span>👥</span></div>
-    <div class="pg-sub"><b class="num">٧</b> طلاب · الأربعاء ٢٤ محرم</div>
+    <div class="pg-sub">
+        <button class="printbtn">🖨️ طباعة السجل</button>
+        <span><b class="num">٧</b> طلاب · الأربعاء ٢٤ محرم</span>
+    </div>
     <div class="toolbar">
         <div class="search">🔍 بحث باسم الطالب…</div>
-        <button class="addbtn">+ إضافة</button>
+        <button class="addbtn">+ إضافة طلاب</button>
     </div>
     <button class="markall">✓ تحضير الكل</button>
     <div class="mini">
