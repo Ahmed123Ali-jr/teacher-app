@@ -559,27 +559,34 @@
         panel.querySelectorAll('[data-att-btn]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const sid    = btn.dataset.sid;
-                const status = btn.dataset.status;
                 const i      = sidIndex[sid];
+                const cur    = attendanceToday[i] ? attendanceToday[i].status : null;
+                // Toggle: tapping the ALREADY-active status clears it (back to
+                // «بلا تحضير») — same idea as «تحضير الكل».
+                const status = (cur === btn.dataset.status) ? null : btn.dataset.status;
                 // Optimistic: update the local model + this row's buttons +
-                // counters INSTANTLY, then persist in the background. No full
-                // table rebuild and no waiting on the network.
-                if (attendanceToday[i]) attendanceToday[i].status = status;
+                // counters INSTANTLY, then persist in the background.
+                if (status === null) attendanceToday[i] = null;
+                else if (attendanceToday[i]) attendanceToday[i].status = status;
                 else attendanceToday[i] = { student_id: sid, status };
-                rowStatus[sid] = status;
+                rowStatus[sid] = status || 'unmarked';
                 panel.querySelectorAll(`[data-att-btn][data-sid="${sid}"]`).forEach((b) => {
-                    b.classList.toggle('active', b.dataset.status === status);
+                    b.classList.toggle('active', status !== null && b.dataset.status === status);
                 });
                 // Recolor the card stripe + status word for instant feedback.
-                const meta = ATTENDANCE[status];
+                const meta = status ? ATTENDANCE[status] : null;
                 const card = btn.closest('.st-card');
-                if (card && meta) {
-                    card.style.setProperty('--stripe', meta.color);
+                if (card) {
+                    card.style.setProperty('--stripe', meta ? meta.color : '#D8DEE9');
                     const sw = card.querySelector('.stc-status');
-                    if (sw) { sw.textContent = meta.label; sw.style.color = meta.color; }
+                    if (sw) {
+                        sw.textContent = meta ? meta.label : 'بلا تحضير';
+                        sw.style.color = meta ? meta.color : 'var(--text-muted)';
+                    }
                 }
                 refreshAttendanceUI();
-                setAttendance(cls, sid, today, status);
+                if (status === null) clearAttendance(sid, today);
+                else setAttendance(cls, sid, today, status);
             });
         });
 
