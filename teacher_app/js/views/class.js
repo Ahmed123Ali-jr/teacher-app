@@ -419,10 +419,8 @@
 
             ${students.length === 0 ? emptyStudentsState()
                 : (focus === 'notes'
-                    ? studentsNotesTable(students)
-                    : (focus === ''
-                        ? studentsTableSplit(students, attendanceToday, evalToday, columns)
-                        : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt)))}
+                    ? studentsNotesCards(students)
+                    : studentsCards(students, attendanceToday, evalToday, visibleCols, showAtt))}
         `;
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
@@ -572,6 +570,14 @@
                 panel.querySelectorAll(`[data-att-btn][data-sid="${sid}"]`).forEach((b) => {
                     b.classList.toggle('active', b.dataset.status === status);
                 });
+                // Recolor the card stripe + status word for instant feedback.
+                const meta = ATTENDANCE[status];
+                const card = btn.closest('.st-card');
+                if (card && meta) {
+                    card.style.setProperty('--stripe', meta.color);
+                    const sw = card.querySelector('.stc-status');
+                    if (sw) { sw.textContent = meta.label; sw.style.color = meta.color; }
+                }
                 refreshAttendanceUI();
                 setAttendance(cls, sid, today, status);
             });
@@ -775,6 +781,72 @@
             </div>
             ${TABLE_HINT}
         `;
+    }
+
+    /* ==========================================================================
+       Register CARDS (design «ج») — one comfortable card per student with a
+       colored status stripe. No horizontal scroll → the iOS "blank names"
+       bug is structurally impossible. Emits the SAME data hooks the handlers
+       rely on (.st-row / .st-name-link / [data-att-btn] / [data-eval-btn] /
+       input[data-eval-num] / [data-del-student]).
+       ========================================================================== */
+    function studentsCards(students, attToday, evalToday, columns, showAttendance = true) {
+        const cards = students.map((s, i) => {
+            const att    = attToday[i];
+            const meta   = att && ATTENDANCE[att.status];
+            const stripe = meta ? meta.color : '#CBD5E1';
+            const word   = meta ? meta.label : 'بلا تحضير';
+            const values = readValues(evalToday[i]);
+
+            // Single-column focus (grading): the control sits inline in the head.
+            const focusCtl = (!showAttendance && columns.length === 1)
+                ? `<div class="stc-focus-ctl">${renderCell(s.id, columns[0], values[columns[0].id])}</div>`
+                : '';
+
+            // «الكل»: attendance + a compact controls row for every eval column.
+            const evalsRow = (showAttendance && columns.length)
+                ? `<div class="stc-evals">${columns.map((col) => `
+                        <div class="stc-eval">
+                            <span class="stc-eval-lbl">${escapeHtml(col.name)}${col.type === 'number' ? ` <span class="text-muted">(من ${col.max})</span>` : ''}</span>
+                            ${renderCell(s.id, col, values[col.id])}
+                        </div>`).join('')}</div>`
+                : '';
+
+            return `
+                <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:${stripe};">
+                    <div class="stc-head">
+                        <span class="stc-badge num">${i + 1}</span>
+                        <div class="stc-info">
+                            <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
+                            <div class="stc-status" style="color:${stripe};">${word}</div>
+                        </div>
+                        ${focusCtl}
+                        <button class="stc-del" data-del-student="${s.id}" data-name="${escapeHtml(s.name)}" title="حذف">🗑️</button>
+                    </div>
+                    ${showAttendance ? `<div class="stc-att-row">${attendanceButtons(s.id, att)}</div>` : ''}
+                    ${evalsRow}
+                </div>`;
+        }).join('');
+        return `<div class="st-cards">${cards}</div>${TABLE_HINT}`;
+    }
+
+    /* Notes focus as cards — name + a comfortable note box (same field shown
+       on the student page; saved in the background, no re-render). */
+    function studentsNotesCards(students) {
+        const cards = students.map((s, i) => `
+            <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:#CBD5E1;">
+                <div class="stc-head">
+                    <span class="stc-badge num">${i + 1}</span>
+                    <div class="stc-info">
+                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
+                    </div>
+                </div>
+                <div class="stc-note">
+                    <textarea class="input st-note-input" data-note-sid="${s.id}" rows="2"
+                              placeholder="اكتب ملاحظة…">${escapeHtml(s.notes || '')}</textarea>
+                </div>
+            </div>`).join('');
+        return `<div class="st-cards">${cards}</div>${TABLE_HINT}`;
     }
 
     /* «الكل» view: SPLIT register — the #/name columns live in their own
