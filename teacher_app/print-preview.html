@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معاينة طباعة السجل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css?v=D13">
+<link rel="stylesheet" href="css/components.css?v=5">
+<style>
+    body { background:#E6E7EA; margin:0; font-family:Tajawal,system-ui,sans-serif; }
+    .pp-hint { background:#0F2C5C; color:#fff; text-align:center; padding:10px; font-size:13px; }
+    .pp-label { text-align:center; color:#0F2C5C; font-weight:900; font-size:18px; margin:22px 12px 4px; }
+    .pp-paper { background:#fff; max-width:820px; margin:8px auto 26px; padding:22px; box-shadow:0 3px 14px rgba(0,0,0,.18); border-radius:4px; overflow-x:auto; }
+    .pp-loading { text-align:center; padding:40px; color:#555; }
+</style>
+</head>
+<body>
+<div class="pp-hint">معاينة الشكل الفعلي عند الطباعة — ٤ أنواع سجلات</div>
+<div id="out"><div class="pp-loading">جارٍ التحضير…</div></div>
+<div id="print-root" style="display:none"></div>
+
+<script src="js/print-students.js?v=D5"></script>
+<script>
+(async () => {
+    // Force the real print stylesheet to apply ON SCREEN (it is wrapped in
+    // @media print — swap to @media all so the preview looks like paper).
+    try {
+        const css = await (await fetch('css/print.css?v=D17')).text();
+        const st = document.createElement('style');
+        st.textContent = css.replace(/@media\s+print\s*\{/g, '@media all {');
+        document.head.appendChild(st);
+    } catch (e) {}
+
+    window.PrintPrefs = { logoDataUrl: null };
+    const iso = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const TODAY = new Date();
+    const todayISO = iso(TODAY);
+
+    const teacher = { name:'محمد عسيري', school_name:'مجمع القيرة التعليمي' };
+    const cls = { stage:'secondary', grade:'الصف الأول الثانوي', section:'أ', subject:'اللغة الإنجليزية' };
+    const names = ['إبراهيم حمد القحطاني','بندر عبدالله الغامدي','تركي فهد الشهري','ثامر ناصر العتيبي','جابر سعيد الزهراني','حسن علي المالكي','خالد يوسف الدوسري','سعد مبارك العجمي'];
+    const students = names.map((n,i)=>({ id:'s'+i, name:n }));
+    const columns = [
+        { id:'participation', name:'المشاركة', type:'stars',  max:5 },
+        { id:'homework',      name:'الواجبات', type:'number', max:10 }
+    ];
+
+    // today sample
+    const STAT = ['present','present','absent','late','present','excused','present','present'];
+    const todayAtt = students.map((s,i)=>({ student_id:s.id, date:todayISO, status:STAT[i] }));
+    const todayPar = students.map((s,i)=>({ student_id:s.id, date:todayISO, values:{ participation:(i%5)+1, homework:(i%10) } }));
+
+    // range: last 5 school days
+    const dates = [];
+    let d = new Date(TODAY);
+    while (dates.length < 5) { const g=d.getDay(); if (g!==5 && g!==6) dates.unshift(iso(d)); d.setDate(d.getDate()-1); }
+    const from = dates[0], to = dates[dates.length-1];
+    const rangeAtt = [];
+    students.forEach((s,i)=> dates.forEach((dt,j)=> rangeAtt.push({ student_id:s.id, date:dt, status:['present','present','absent','late','present'][(i+j)%5] })));
+    const rangePar = students.map((s,i)=>({ student_id:s.id, date:dates[0], values:{ participation:(i%5)+1, homework:(i%10) } }));
+
+    const realPrint = window.print;
+    async function cap(opts) {
+        const root = document.getElementById('print-root');
+        window.print = () => {};
+        root.innerHTML = '';
+        await window.PrintStudents.print(opts);
+        window.print = realPrint;
+        const html = root.innerHTML;
+        root.innerHTML = '';
+        document.body.classList.remove('is-printing');
+        return html;
+    }
+
+    const MODES = [
+        ['① سجل فارغ (للتعبئة يدوياً)', { mode:'blank', cls, teacher, students, columns }],
+        ['② سجل اليوم (معبّأ)', { mode:'today', cls, teacher, students, columns, attendance:todayAtt, participation:todayPar }],
+        ['③ سجل حضور لفترة', { mode:'range', cls, teacher, students, columns, dates, from, to, attendance:rangeAtt, participation:rangePar, includeEvals:false }],
+        ['④ تقرير مجمّع لفترة', { mode:'summary', cls, teacher, students, columns, from, to, attendance:rangeAtt, participation:rangePar }],
+    ];
+
+    const out = document.getElementById('out');
+    out.innerHTML = '';
+    for (const [label, opts] of MODES) {
+        let html = '';
+        try { html = await cap(opts); } catch (e) { html = '<p style="color:#b00">تعذّر التوليد: ' + e.message + '</p>'; }
+        const sec = document.createElement('div');
+        sec.innerHTML = `<div class="pp-label">${label}</div><div class="pp-paper is-printing">${html}</div>`;
+        out.appendChild(sec);
+    }
+})();
+</script>
+</body>
+</html>
