@@ -803,15 +803,6 @@
                 ? `<div class="stc-focus-ctl">${renderCell(s.id, columns[0], values[columns[0].id])}</div>`
                 : '';
 
-            // «الكل»: attendance + a compact controls row for every eval column.
-            const evalsRow = (showAttendance && columns.length)
-                ? `<div class="stc-evals">${columns.map((col) => `
-                        <div class="stc-eval">
-                            <span class="stc-eval-lbl">${escapeHtml(col.name)}${col.type === 'number' ? ` <span class="text-muted">(من ${col.max})</span>` : ''}</span>
-                            ${renderCell(s.id, col, values[col.id])}
-                        </div>`).join('')}</div>`
-                : '';
-
             return `
                 <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:${stripe};">
                     <div class="stc-head">
@@ -824,7 +815,6 @@
                         <button class="stc-del" data-del-student="${s.id}" data-name="${escapeHtml(s.name)}" title="حذف">🗑️</button>
                     </div>
                     ${showAttendance ? `<div class="stc-att-row">${attendanceButtons(s.id, att)}</div>` : ''}
-                    ${evalsRow}
                 </div>`;
         }).join('');
         return `<div class="st-cards">${cards}</div>${TABLE_HINT}`;
