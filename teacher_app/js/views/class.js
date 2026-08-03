@@ -323,7 +323,7 @@
 
         // Preserve horizontal scroll of the table + page scroll across re-renders
         // so tapping a star/number doesn't snap the view back to the start.
-        const prevWrapper    = panel.querySelector('.table-wrapper');
+        const prevWrapper    = panel.querySelector('.table-scroll, .table-wrapper');
         const prevScrollLeft = prevWrapper ? prevWrapper.scrollLeft : null;
         const prevWinScrollY = global.scrollY;
         const prevSearch     = panel.querySelector('#student-search')?.value || '';
@@ -396,7 +396,10 @@
                 </div>
             ` : ''}
 
-            ${students.length === 0 ? emptyStudentsState() : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt, focus !== '')}
+            ${students.length === 0 ? emptyStudentsState()
+                : (focus === ''
+                    ? studentsTableSplit(students, attendanceToday, evalToday, columns)
+                    : studentsTable(students, attendanceToday, evalToday, visibleCols, showAtt))}
         `;
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
@@ -455,7 +458,7 @@
             const f = panel.dataset.activeAttFilter || '';
             panel.querySelectorAll('.st-row').forEach((row) => {
                 const name = row.dataset.name || '';
-                const sid  = row.querySelector('.st-name-link')?.dataset.id;
+                const sid  = row.dataset.sid || row.querySelector('.st-name-link')?.dataset.id;
                 const okSearch = (q === '' || name.includes(q));
                 const okFilter = (f === ''
                     || (_attFilterIds ? _attFilterIds.has(sid) : rowStatus[sid] === f));
@@ -556,9 +559,15 @@
         });
 
         // Restore scroll + search that were lost by innerHTML replacement
-        const newWrapper = panel.querySelector('.table-wrapper');
+        const newWrapper = panel.querySelector('.table-scroll, .table-wrapper');
         if (newWrapper && prevScrollLeft !== null) {
             newWrapper.scrollLeft = prevScrollLeft;
+        }
+
+        // Split view: align the frozen (#/name) rows with the data rows.
+        syncSplitRowHeights(panel);
+        if (global.document.fonts && global.document.fonts.ready) {
+            global.document.fonts.ready.then(() => syncSplitRowHeights(panel));
         }
         if (prevWinScrollY) {
             global.scrollTo({ top: prevWinScrollY, behavior: 'instant' });
@@ -581,14 +590,25 @@
         `;
     }
 
-    function studentsTable(students, attToday, evalToday, columns, showAttendance = true, compact = false) {
+    const TABLE_HINT = `
+            <p class="text-muted" style="margin-top: var(--space-3); font-size: var(--fs-sm);">
+                اضغط أيقونة الحضور للتبديل. اضغط على اسم الطالب لعرض تفاصيله.
+                يمكنك كتابة الأرقام بالعربية (٠-٩) أو الإنجليزية.
+            </p>`;
+
+    function colHeader(c) {
+        return `<th>${escapeHtml(c.name)}${c.type === 'number' ? ` <span class="text-muted" style="font-weight:normal;">(من ${c.max})</span>` : ''}</th>`;
+    }
+
+    /* Focus mode: one compact table that fits the screen (no h-scroll). */
+    function studentsTable(students, attToday, evalToday, columns, showAttendance = true) {
         const rows = students.map((s, i) => {
             const att = attToday[i];
             const values = readValues(evalToday[i]);
             const cells = columns.map((col) => `<td class="st-col">${renderCell(s.id, col, values[col.id])}</td>`).join('');
 
             return `
-                <tr class="st-row" data-name="${escapeHtml(s.name)}">
+                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
                     <td class="st-num num">${i + 1}</td>
                     <td class="st-name">
                         <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
@@ -609,24 +629,95 @@
 
         return `
             <div class="table-wrapper">
-                <table class="students-table${compact ? ' compact' : ''}">
+                <table class="students-table compact">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>الاسم</th>
                             ${showAttendance ? '<th>الحضور اليوم</th>' : ''}
-                            ${columns.map((c) => `<th>${escapeHtml(c.name)}${c.type === 'number' ? ` <span class="text-muted" style="font-weight:normal;">(من ${c.max})</span>` : ''}</th>`).join('')}
+                            ${columns.map(colHeader).join('')}
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
             </div>
-            <p class="text-muted" style="margin-top: var(--space-3); font-size: var(--fs-sm);">
-                اضغط أيقونة الحضور للتبديل. اضغط على اسم الطالب لعرض تفاصيله.
-                يمكنك كتابة الأرقام بالعربية (٠-٩) أو الإنجليزية.
-            </p>
+            ${TABLE_HINT}
         `;
+    }
+
+    /* «الكل» view: SPLIT register — the #/name columns live in their own
+       fixed table OUTSIDE the horizontal scroller, so nothing is sticky and
+       the iOS "blank names while scrolling" bug is structurally impossible.
+       Row heights are synced by syncSplitRowHeights() after every render. */
+    function studentsTableSplit(students, attToday, evalToday, columns) {
+        const frozenRows = [];
+        const dataRows = [];
+        students.forEach((s, i) => {
+            const att = attToday[i];
+            const values = readValues(evalToday[i]);
+            const cells = columns.map((col) => `<td class="st-col">${renderCell(s.id, col, values[col.id])}</td>`).join('');
+            frozenRows.push(`
+                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
+                    <td class="st-num num">${i + 1}</td>
+                    <td class="st-name">
+                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
+                            ${escapeHtml(s.name)}
+                        </a>
+                    </td>
+                </tr>`);
+            dataRows.push(`
+                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
+                    <td class="st-att">${attendanceButtons(s.id, att)}</td>
+                    ${cells}
+                    <td class="st-del">
+                        <button class="btn btn-ghost btn-sm"
+                                data-del-student="${s.id}"
+                                data-name="${escapeHtml(s.name)}"
+                                title="حذف">🗑️</button>
+                    </td>
+                </tr>`);
+        });
+
+        return `
+            <div class="register-split" id="register-split">
+                <table class="students-table frozen-cols">
+                    <thead><tr><th>#</th><th>الاسم</th></tr></thead>
+                    <tbody>${frozenRows.join('')}</tbody>
+                </table>
+                <div class="table-scroll">
+                    <table class="students-table data-cols">
+                        <thead>
+                            <tr>
+                                <th>الحضور اليوم</th>
+                                ${columns.map(colHeader).join('')}
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>${dataRows.join('')}</tbody>
+                    </table>
+                </div>
+            </div>
+            ${TABLE_HINT}
+        `;
+    }
+
+    /** Make each frozen row exactly as tall as its data row (and vice versa)
+     *  so the two tables stay perfectly aligned. */
+    function syncSplitRowHeights(panel) {
+        const split = panel.querySelector('#register-split');
+        if (!split) return;
+        const a = split.querySelectorAll('.frozen-cols tr');
+        const b = split.querySelectorAll('.data-cols tr');
+        a.forEach((r) => { r.style.height = ''; });
+        b.forEach((r) => { r.style.height = ''; });
+        const n = Math.min(a.length, b.length);
+        for (let i = 0; i < n; i++) {
+            const h = Math.max(a[i].getBoundingClientRect().height,
+                               b[i].getBoundingClientRect().height);
+            a[i].style.height = h + 'px';
+            b[i].style.height = h + 'px';
+        }
     }
 
     function attendanceButtons(studentId, todayRow) {

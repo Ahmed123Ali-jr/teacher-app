@@ -1712,17 +1712,52 @@ body.drawer-open { overflow: hidden; }
 .students-table tbody tr:hover td.st-num,
 .students-table tbody tr:hover td.st-name { background-color: #F1F5F9; }
 
-/* iOS Safari: stuck cells lose their paint during PAGE vertical scroll and
-   flash blank (the disappearing-names bug). translateZ pins each sticky cell
-   to a compositing layer; will-change was removed on purpose — with dozens
-   of cells it inflates layer memory and can make the blanking WORSE. */
-.students-table thead th:nth-child(1),
-.students-table thead th:nth-child(2),
-.students-table tbody td.st-num,
-.students-table tbody td.st-name {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+/* ==========================================================================
+   Split register («الكل») — the #/name columns live in their own fixed table
+   OUTSIDE the horizontal scroller. Nothing is position:sticky, so the iOS
+   "names go blank while scrolling" WebKit bug cannot happen by construction.
+   ========================================================================== */
+.register-split {
+    display: flex;
+    align-items: flex-start;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
 }
+.register-split .frozen-cols {
+    flex-shrink: 0;
+    width: 200px;
+    min-width: 0;
+    table-layout: fixed;
+    border-inline-end: 1px solid var(--border);
+}
+/* table-layout: fixed reads column widths from the FIRST row (the thead) */
+.register-split .frozen-cols thead th:nth-child(1) { width: 44px; }
+.register-split .frozen-cols .st-num  { width: 44px; }
+.register-split .frozen-cols .st-name { min-width: 0; width: auto; }
+.register-split .table-scroll {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+}
+.register-split .data-cols {
+    width: 100%;
+    min-width: 540px;
+}
+/* Inside the split, the old sticky rules must not apply: these cells are
+   plain static cells in a table that never scrolls. */
+.register-split .students-table thead th:nth-child(1),
+.register-split .students-table thead th:nth-child(2),
+.register-split .students-table tbody td.st-num,
+.register-split .students-table tbody td.st-name {
+    position: static;
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+/* The split container draws the outer border/radius itself. */
+.register-split .students-table { border: 0; }
 
 .st-name-link {
     color: var(--text);
