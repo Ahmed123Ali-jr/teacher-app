@@ -9,7 +9,7 @@
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
 
     const TABS = [
-        { key: 'students',   label: 'الطلاب',       icon: '👥' },
+        { key: 'students',   label: 'سجل متابعة الطلاب', icon: '👥' },
         { key: 'books',      label: 'الكتب',        icon: '📖' },
         { key: 'curriculum', label: 'توزيع المنهج', icon: '🗓️' },
         { key: 'exams',      label: 'الاختبارات',   icon: '📝' },
@@ -212,7 +212,7 @@
                     <div class="hub-featured-head">
                         <div class="hub-featured-icon">👥</div>
                         <div class="hub-featured-titles">
-                            <div class="hub-featured-title">الطلاب</div>
+                            <div class="hub-featured-title">سجل متابعة الطلاب</div>
                             <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
                         </div>
                         <div class="hub-featured-chev">‹</div>
