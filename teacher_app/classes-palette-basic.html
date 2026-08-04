@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الألوان الأساسية السبعة مع الأبيض</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 130px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .gradbar{position:fixed;bottom:56px;right:0;left:0;z-index:50;background:rgba(17,17,17,.85);backdrop-filter:blur(10px);padding:8px 12px;display:flex;justify-content:center;}
+    .gradbar button{border:0;border-radius:99px;padding:8px 15px;font-family:inherit;font-size:11.5px;font-weight:800;background:var(--gold);color:#fff;}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;line-height:1.6;}
+    .sec{font-size:12px;font-weight:800;color:var(--muted);margin:16px 3px 8px;}
+
+    .picker{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;}
+    .prow{display:flex;flex-wrap:wrap;gap:9px;}
+    .prow + .plabel{margin-top:13px;}
+    .plabel{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:7px;}
+    .chip{width:38px;height:38px;border-radius:11px;border:2px solid transparent;box-shadow:0 2px 5px rgba(16,24,40,.14);position:relative;}
+    .chip.light{border-color:#E2DED2;}
+    .chip.on{border-color:var(--royal);box-shadow:0 0 0 3px color-mix(in srgb,var(--royal) 18%,transparent),0 2px 5px rgba(16,24,40,.14);}
+    .chip span{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:900;opacity:0;}
+    .chip.light span{color:var(--royal);}
+    .chip.on span{opacity:1;}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .ccard{position:relative;min-height:104px;padding:12px;border-radius:15px;color:#fff;text-align:right;
+        background:linear-gradient(135deg,var(--cc) 0%,#3B82F6 120%);border:0;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.18),
+                   0 6px 12px color-mix(in srgb,var(--cc) 32%,transparent), 0 2px 4px rgba(16,24,40,.18);
+        display:flex;flex-direction:column;justify-content:space-between;gap:7px;}
+    body.own .ccard{background:linear-gradient(150deg,
+        color-mix(in srgb,var(--cc) 82%,#fff) 0%, var(--cc) 55%, color-mix(in srgb,var(--cc) 72%,#000) 100%);}
+    /* البطاقة الفاتحة/البيضاء: كتابة كحلية وإطار حتى تبان */
+    .ccard.light, body.own .ccard.light{color:var(--royal);
+        background:linear-gradient(150deg,#fff 0%, var(--cc) 60%, color-mix(in srgb,var(--cc) 92%,#000) 100%);
+        border:1.5px solid #E2DED2;
+        box-shadow:inset 0 1.5px 0 #fff, 0 4px 10px rgba(16,24,40,.12);}
+    .ccard.light .cc-edit{background:rgba(15,44,92,.06);border-color:rgba(15,44,92,.25);color:var(--royal);}
+    .cc-g{margin:0;font-weight:900;font-size:13px;line-height:1.35;}
+    .cc-s{font-size:10.5px;font-weight:700;opacity:.9;}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:10px;}
+    .cc-edit{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);border-radius:99px;
+        padding:2px 10px;font-size:9.5px;font-weight:700;line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="gradbar"><button id="gradtg"></button></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+/* الألوان الأساسية السبعة (ألوان الطيف) + الأبيض */
+const BASIC=[['#E11D48','أحمر'],['#F97316','برتقالي'],['#EAB308','أصفر'],['#16A34A','أخضر'],
+             ['#2563EB','أزرق'],['#4338CA','نيلي'],['#7C3AED','بنفسجي'],['#FFFFFF','أبيض']];
+/* الفخمة (جواهر) */
+const LUXE=[['#0F2C5C','كحلي ملكي'],['#046A57','زمرّد'],['#7B1E3B','ياقوت'],['#8C6D2F','برونز'],
+            ['#1D4E6F','سفير'],['#4C2A6E','أماميست'],['#A3541F','عقيق'],['#2F5D3A','يشب']];
+
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const isLight=c=>['#FFFFFF','#EAB308'].includes(c.toUpperCase()) && c.toUpperCase()==='#FFFFFF';
+
+function pickerHtml(groups){
+  return `<div class="picker">${groups.map(([lb,list])=>`
+    ${lb?`<div class="plabel">${lb}</div>`:''}
+    <div class="prow">${list.map(([c,n],i)=>`
+      <button class="chip ${isLight(c)?'light':''} ${i===0&&!lb?'on':''}" style="background:${c}" data-c="${c}" title="${n}"><span>✓</span></button>`).join('')}</div>`).join('')}</div>`;
+}
+function cardsHtml(list){
+  return `<div class="grid">${list.map(([c,n],k)=>`
+    <div class="ccard ${isLight(c)?'light':''}" style="--cc:${c}">
+      <div><h4 class="cc-g">فصل ${['أ','ب','ج','د','هـ','و','ز','ح'][k]}</h4><div class="cc-s">${n}</div></div>
+      <div class="cc-meta"><span class="num">${AR(20+k)} طالب</span><span class="cc-edit">تعديل</span></div>
+    </div>`).join('')}</div>`;
+}
+
+const D=[
+ ['أ — موسّعة','فخمة (جواهر) + الأساسية السبعة والأبيض — ١٦ خياراً',
+  [['ألوان فخمة',LUXE],['الأساسية السبعة والأبيض',BASIC]], LUXE.concat(BASIC)],
+ ['ب — الأساسية فقط','الألوان الأساسية السبعة والأبيض فقط — ٨ خيارات',
+  [['',BASIC]], BASIC],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,groups,cards],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>
+    <div class="sec">في نافذة إضافة الفصل</div>
+    ${pickerHtml(groups)}
+    <div class="sec">شكل الفصول بهذه الألوان</div>
+    ${cardsHtml(cards)}`;
+  root.appendChild(sc);
+  sc.querySelectorAll('.chip').forEach(ch=>{
+    ch.onclick=()=>sc.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===ch));
+  });
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+const tg=document.getElementById('gradtg');
+function paintTg(){tg.textContent=document.body.classList.contains('own')
+  ? 'التدرّج: بلون الفصل نفسه — اضغط للحالي'
+  : 'التدرّج: الحالي (يميل للأزرق) — اضغط لتدرّج بلون الفصل';}
+tg.onclick=()=>{document.body.classList.toggle('own');paintTg();};
+paintTg();
+</script>
+</body>
+</html>
