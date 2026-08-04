@@ -83,12 +83,18 @@
         `;
     }
 
+    /* على البطاقة نكتب الصف بلا كلمة «الصف» — «الرابع الابتدائي» بدل
+       «الصف الرابع الابتدائي». الاسم المخزَّن لا يتغيّر. */
+    function shortGrade(grade) {
+        return String(grade || '').replace(/^\s*الصف\s+/, '');
+    }
+
     function classCardHtml(c) {
         return `
             <button class="class-card" data-class-id="${c.id}"
                     style="--card-color: ${c.color || '#1E40AF'};">
                 <div>
-                    <h4 class="class-card-title">${escapeHtml(c.grade)} / ${escapeHtml(c.section)}</h4>
+                    <h4 class="class-card-title">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</h4>
                     <div class="class-card-subject">${escapeHtml(c.subject)}</div>
                 </div>
                 <div class="class-card-meta">

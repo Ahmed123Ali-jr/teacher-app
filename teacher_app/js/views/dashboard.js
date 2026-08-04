@@ -305,12 +305,17 @@
         `;
     }
 
+    /* «الصف الرابع الابتدائي» → «الرابع الابتدائي» على البطاقة فقط */
+    function shortGrade(grade) {
+        return String(grade || '').replace(/^\s*الصف\s+/, '');
+    }
+
     function classesHtml(classes) {
         const cards = classes.map((c) => `
             <button class="class-card" data-class-id="${c.id}"
                     style="--card-color: ${c.color || '#1E40AF'};">
                 <div>
-                    <h4 class="class-card-title">${STAGE_LABELS[c.stage] || ''} — ${c.grade} / ${c.section}</h4>
+                    <h4 class="class-card-title">${STAGE_LABELS[c.stage] || ''} — ${shortGrade(c.grade)} / ${c.section}</h4>
                     <div class="class-card-subject">${c.subject}</div>
                 </div>
                 <div class="class-card-meta">
