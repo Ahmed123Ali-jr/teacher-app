@@ -313,28 +313,54 @@
        next filter tap (and irrelevant once the filter is off). */
     let _attFilterIds = null;
 
-    async function renderStudents(panel, cls) {
+    /* لقطة البيانات المعروضة حالياً — تُعاد للاستخدام عند التنقّل بين
+       الخانات (تبديل عرض فقط، لا تغيير بيانات) فيصير التنقّل فورياً بلا
+       انتظار الحفظ المعلّق ولا إعادة قراءة من القاعدة. */
+    let _snapshot = null;
+
+    /** يبقي نموذج التقييمات في الذاكرة متوافقاً مع ما يراه المعلم، حتى
+     *  تكون اللقطة صالحة لإعادة العرض. */
+    function syncEvalModel(evalToday, i, sid, colId, value) {
+        if (i == null || i < 0) return;
+        let row = evalToday[i];
+        if (!row) { row = { student_id: sid, values: {} }; evalToday[i] = row; }
+        if (!row.values) row.values = readValues(row);
+        if (!value) delete row.values[colId];
+        else row.values[colId] = value;
+    }
+
+    async function renderStudents(panel, cls, opts = {}) {
         const gen = ++_studentsRenderGen;
-        // Wait for any in-flight saves to land in the cache before reading,
-        // otherwise the table can paint with stale data.
-        await flushWrites();
         const columns = ensureColumns(cls);
-        const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
-        students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+        let students, attendanceToday, evalToday;
+
+        const snapUsable = opts.reuseData && _snapshot && _snapshot.classId === cls.id;
+        if (snapUsable) {
+            ({ students, attendanceToday, evalToday } = _snapshot);
+        } else {
+            // Wait for any in-flight saves to land in the cache before reading,
+            // otherwise the table can paint with stale data.
+            await flushWrites();
+            students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
+            students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+
+            const today0 = todayISO();
+            // Two bulk reads by class (indexed) instead of 2×N per-student queries:
+            // for 30+ students this is the single biggest speedup on this screen.
+            const [attAll, parAll] = await Promise.all([
+                global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id),
+                global.TeacherDB.getAllByIndex('participation', 'class_id', cls.id)
+            ]);
+            const attByStudent = new Map();
+            for (const r of attAll) if (r.date === today0) attByStudent.set(r.student_id, r);
+            const parByStudent = new Map();
+            for (const r of parAll) if (r.date === today0) parByStudent.set(r.student_id, r);
+            attendanceToday = students.map((s) => attByStudent.get(s.id) || null);
+            evalToday = students.map((s) => parByStudent.get(s.id) || null);
+            _snapshot = { classId: cls.id, students, attendanceToday, evalToday };
+        }
 
         const today = todayISO();
-        // Two bulk reads by class (indexed) instead of 2×N per-student queries:
-        // for 30+ students this is the single biggest speedup on this screen.
-        const [attAll, parAll] = await Promise.all([
-            global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id),
-            global.TeacherDB.getAllByIndex('participation', 'class_id', cls.id)
-        ]);
-        const attByStudent = new Map();
-        for (const r of attAll) if (r.date === today) attByStudent.set(r.student_id, r);
-        const parByStudent = new Map();
-        for (const r of parAll) if (r.date === today) parByStudent.set(r.student_id, r);
-        const attendanceToday = students.map((s) => attByStudent.get(s.id) || null);
-        const evalToday = students.map((s) => parByStudent.get(s.id) || null);
 
         // A newer render started while we were fetching — abort this one so
         // listeners never get attached twice to the same elements.
@@ -428,8 +454,10 @@
         // Column focus chips: tap a column to see name + that column only.
         panel.querySelectorAll('[data-col-focus]').forEach((el) => {
             el.addEventListener('click', () => {
+                if (el.classList.contains('active')) return;   // نفس الخانة
                 panel.dataset.activeColFocus = el.dataset.colFocus;
-                renderStudents(panel, cls);
+                // تبديل عرض فقط → أعد استخدام اللقطة الحالية (فوري)
+                renderStudents(panel, cls, { reuseData: true });
             });
         });
         const newChips = panel.querySelector('#col-chips');
@@ -620,6 +648,7 @@
                     }
                 });
 
+                syncEvalModel(evalToday, sidIndex[sid], sid, colId, next);
                 setEvalValue(cls, sid, today, colId, next);
             });
         });
@@ -637,6 +666,7 @@
                 clearTimeout(timer);
                 const value = parseArabicNumber(inp.value);
                 if (value === null) {
+                    syncEvalModel(evalToday, sidIndex[sid], sid, colId, 0);
                     setEvalValue(cls, sid, today, colId, null);
                     return;
                 }
@@ -645,6 +675,7 @@
                     inp.value = '';
                     return;
                 }
+                syncEvalModel(evalToday, sidIndex[sid], sid, colId, value);
                 setEvalValue(cls, sid, today, colId, value);
                 if (showToast) global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
             };
