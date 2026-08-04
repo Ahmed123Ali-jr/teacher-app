@@ -672,10 +672,10 @@
             return `${done}/${values.length}`;
         }
         if (col.type === 'tri') {
-            // 2=done, 1=partial, 0=missing
-            const done    = values.filter((v) => v === 2).length;
-            const partial = values.filter((v) => v === 1).length;
-            const missing = values.filter((v) => v === 0).length;
+            // 3=تم · 2=جزئي · 1=لم يتم · 0/غياب القيمة = فارغة
+            const done    = values.filter((v) => v === 3).length;
+            const partial = values.filter((v) => v === 2).length;
+            const missing = values.filter((v) => v === 1).length;
             return `${done}✓ ${partial}△ ${missing}✗`;
         }
         return values[values.length - 1]; // fallback: last value
@@ -685,7 +685,7 @@
         if (v == null || v === '') return '';
         if (col.type === 'stars') return '★'.repeat(Math.round(v));
         if (col.type === 'check') return v >= 1 ? '✓' : '';
-        if (col.type === 'tri')   return v === 2 ? '✓' : v === 1 ? '△' : v === 0 ? '✗' : '';
+        if (col.type === 'tri')   return v === 3 ? '✓' : v === 2 ? '△' : v === 1 ? '✗' : '';
         return String(v);
     }
 

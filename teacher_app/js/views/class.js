@@ -28,7 +28,7 @@
         stars:  { label: 'تقييم بالنجوم (٠-٥)', default_max: 5  },
         number: { label: 'رقم (مثال: من ١٠)',     default_max: 10 },
         check:  { label: 'علامة ✓ / —',           default_max: 1  },
-        tri:    { label: 'تم / جزئي / لم يتم',    default_max: 2  }
+        tri:    { label: 'تم / جزئي / لم يتم',    default_max: 3  }
     };
 
     const DEFAULT_COLUMNS = [
@@ -589,15 +589,38 @@
 
         // Stars, check, tri buttons (unified)
         panel.querySelectorAll('[data-eval-btn]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', () => {
                 const sid   = btn.dataset.sid;
                 const colId = btn.dataset.col;
                 const value = Number(btn.dataset.value);
                 const current = Number(btn.dataset.current);
-                // Toggle off if clicking the same value (allow clearing)
+                // الضغط على نفس القيمة يمسحها (يرجعها فارغة)
                 const next = current === value ? 0 : value;
-                await setEvalValue(cls, sid, today, colId, next);
-                await renderStudents(panel, cls);
+
+                /* تحديث فوري للأزرار في الشاشة ثم الحفظ بالخلفية — بلا
+                   إعادة رسم السجل كاملاً (كان هذا سبب البطء). */
+                const group = btn.closest('.stars-row, .tri-row') || btn.parentElement;
+                const siblings = group
+                    ? group.querySelectorAll(`[data-eval-btn][data-sid="${sid}"][data-col="${colId}"]`)
+                    : [btn];
+                siblings.forEach((b) => {
+                    const bv = Number(b.dataset.value);
+                    b.dataset.current = String(next);
+                    if (b.classList.contains('star-btn')) {
+                        const on = bv <= next;
+                        b.classList.toggle('on', on);
+                        b.textContent = on ? '★' : '☆';
+                    } else if (b.classList.contains('tri-btn')) {
+                        b.classList.toggle('on', bv === next);
+                    } else if (b.classList.contains('check-btn')) {
+                        const on = next >= 1;
+                        b.classList.toggle('on', on);
+                        b.textContent = on ? '✓' : '○';
+                        b.title = on ? 'تم — اضغط للإلغاء' : 'لم يتم';
+                    }
+                });
+
+                setEvalValue(cls, sid, today, colId, next);
             });
         });
 
@@ -952,10 +975,13 @@
         }
 
         if (col.type === 'tri') {
+            /* القيم: ٣ = تم · ٢ = جزئي · ١ = لم يتم · ٠/غير موجودة = فارغة.
+               («لم يتم» لها قيمة خاصة بها حتى لا تظهر مختارة تلقائياً في
+               الخانة الجديدة الفارغة.) */
             const options = [
-                { v: 2, icon: '✓', label: 'تم',    color: '#10B981' },
-                { v: 1, icon: '△', label: 'جزئي', color: '#F59E0B' },
-                { v: 0, icon: '✗', label: 'لم',    color: '#EF4444' }
+                { v: 3, icon: '✓', label: 'تم',    color: '#10B981' },
+                { v: 2, icon: '△', label: 'جزئي', color: '#F59E0B' },
+                { v: 1, icon: '✗', label: 'لم يتم', color: '#EF4444' }
             ];
             return `<div class="tri-row">` + options.map((o) => `
                 <button type="button" class="tri-btn ${v === o.v ? 'on' : ''}"
