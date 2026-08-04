@@ -911,6 +911,32 @@ body.drawer-open { overflow: hidden; }
     font-size: var(--fs-h1);
     font-weight: var(--fw-bold);
 }
+/* البطاقة الفاتحة (اللوحة المعتمدة): أبيض يتدرّج للون المختار،
+   كتابة كحلية، وإطار رفيع حتى تنفصل عن خلفية الصفحة */
+.class-card.card-light {
+    color: var(--primary);
+    background: linear-gradient(150deg, #fff 0%,
+        color-mix(in srgb, var(--card-color) 42%, #fff) 50%,
+        var(--card-color) 100%);
+    border: 1.5px solid color-mix(in srgb, var(--card-color) 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff,
+                0 5px 11px rgba(16, 24, 40, .12),
+                0 2px 4px color-mix(in srgb, var(--card-color) 45%, transparent);
+}
+.class-card.card-light .class-card-title { color: var(--primary); }
+.class-card.card-light .class-card-subject {
+    color: color-mix(in srgb, var(--primary) 62%, #fff);
+    opacity: 1;
+}
+.class-card.card-light .class-card-edit {
+    background: color-mix(in srgb, var(--primary) 5%, #fff);
+    border-color: color-mix(in srgb, var(--primary) 25%, #fff);
+    color: var(--primary);
+}
+.class-card.card-light .class-card-edit:active {
+    background: color-mix(in srgb, var(--primary) 12%, #fff);
+}
+
 /* «تعديل» pill on the colored card — opens the edit/delete menu */
 .class-card-edit {
     background: rgba(255, 255, 255, .16);

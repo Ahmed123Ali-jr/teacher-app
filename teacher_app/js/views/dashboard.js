@@ -16,7 +16,20 @@
         primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي'
     };
 
-    const COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'];
+    /* اللوحة المعتمدة: أربع بطاقات فاتحة (أبيض بتدرّج) فقط —
+       ذهبي خفيف · كحلي فاتح · بيج · رمادي فاتح.
+       القيمة المخزّنة هي لون نهاية التدرّج، والبطاقة الفاتحة تُرسم
+       بنص كحلي وإطار (انظر .class-card.card-light في views.css). */
+    const COLORS = ['#EFE0BE', '#DCE5F3', '#E9E4D6', '#ECEAE3'];
+
+    /* لكل لون فاتح «رفيق غامق» تستخدمه البطاقات الملوّنة الكبيرة
+       (هيرو الفصل وسجل المتابعة) حتى تبقى الكتابة البيضاء مقروءة. */
+    const DEEP_COMPANION = {
+        '#EFE0BE': '#8C6D2F',   // ذهبي خفيف → ذهبي غامق
+        '#DCE5F3': '#0F2C5C',   // كحلي فاتح → كحلي
+        '#E9E4D6': '#8A6F48',   // بيج → بني رملي
+        '#ECEAE3': '#475569'    // رمادي فاتح → رمادي كحلي
+    };
 
     /* ---------- Stage colors ----------
        One BASE color per stage (saved in Settings under 'stage_colors');
@@ -46,8 +59,34 @@
         return SHADE_STEPS.findIndex((_, k) => shadeOf(base, k) === color);
     }
 
+    /* إضاءة اللون (0..1) لتمييز البطاقات الفاتحة عن الغامقة أياً كان مصدرها */
+    function relLuminance(hex) {
+        const h = String(hex || '').replace('#', '');
+        if (h.length !== 6) return 0;
+        const [r, g, b] = [0, 2, 4].map((i) => {
+            const v = parseInt(h.substr(i, 2), 16) / 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
     const StageColors = {
         shadeOf,
+        /** فاتح لدرجة تستدعي نصاً غامقاً؟ */
+        isLight(color) {
+            return relLuminance(color) > 0.5;
+        },
+        /** الرفيق الغامق للون فاتح — للبطاقات ذات الكتابة البيضاء.
+         *  يتعرّف على درجات اللون المشتقّة (shadeOf) أيضاً. */
+        deepFor(color) {
+            const c = String(color || '').toLowerCase();
+            for (const base of Object.keys(DEEP_COMPANION)) {
+                for (let k = 0; k < SHADE_STEPS.length; k++) {
+                    if (shadeOf(base, k).toLowerCase() === c) return DEEP_COMPANION[base];
+                }
+            }
+            return StageColors.isLight(color) ? '#0F2C5C' : color;
+        },
         async get(stage) {
             const map = (await global.TeacherDB.Settings.get('stage_colors')) || {};
             return map[stage] || null;
@@ -312,7 +351,7 @@
 
     function classesHtml(classes) {
         const cards = classes.map((c) => `
-            <button class="class-card" data-class-id="${c.id}"
+            <button class="class-card ${StageColors.isLight(c.color) ? 'card-light' : ''}" data-class-id="${c.id}"
                     style="--card-color: ${c.color || '#1E40AF'};">
                 <div>
                     <h4 class="class-card-title">${STAGE_LABELS[c.stage] || ''} — ${shortGrade(c.grade)} / ${c.section}</h4>
@@ -404,7 +443,8 @@
                         const p   = periodByN[r.period];
                         const time = p ? `${p.start} — ${p.end}` : '';
                         const isWaiting = !cls;
-                        const color = isWaiting ? '#F59E0B' : (cls?.color || '#1E40AF');
+                        // شريط جانبي فاتح لا يظهر — استخدم الرفيق الغامق
+                        const color = isWaiting ? '#F59E0B' : StageColors.deepFor(cls?.color || '#1E40AF');
                         const title = isWaiting
                             ? '⏳ حصة انتظار'
                             : `${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}`;

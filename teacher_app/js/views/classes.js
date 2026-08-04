@@ -90,8 +90,9 @@
     }
 
     function classCardHtml(c) {
+        const light = global.StageColors && global.StageColors.isLight(c.color);
         return `
-            <button class="class-card" data-class-id="${c.id}"
+            <button class="class-card ${light ? 'card-light' : ''}" data-class-id="${c.id}"
                     style="--card-color: ${c.color || '#1E40AF'};">
                 <div>
                     <h4 class="class-card-title">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</h4>

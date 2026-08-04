@@ -61,6 +61,14 @@
         }[m]));
     }
 
+    /* لون البطاقات الكبيرة (هيرو الفصل وسجل المتابعة): الألوان الفاتحة
+       تُستبدل برفيقها الغامق حتى تبقى الكتابة البيضاء مقروءة. */
+    function heroColor(cls) {
+        const c = (cls && cls.color) || '#1E40AF';
+        return (global.StageColors && global.StageColors.deepFor)
+            ? global.StageColors.deepFor(c) : c;
+    }
+
     /** Convert Arabic-Indic / Persian digits to ASCII and parse as number. */
     function parseArabicNumber(raw) {
         if (raw === null || raw === undefined) return null;
@@ -190,7 +198,7 @@
                     <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول"></button>
                 </div>
 
-                <div class="class-hero-split" style="--cls-color:${cls.color || '#1E40AF'}">
+                <div class="class-hero-split" style="--cls-color:${heroColor(cls)}">
                     <div class="chs-side">
                         <div class="chs-side-label">
                             <span class="chs-side-word">شعبة</span>
@@ -206,7 +214,7 @@
                     </div>
                 </div>
 
-                <a class="hub-featured" href="#/class/${cls.id}/students" style="--cls-color:${cls.color || '#1E40AF'}">
+                <a class="hub-featured" href="#/class/${cls.id}/students" style="--cls-color:${heroColor(cls)}">
                     <div class="hub-featured-bubble b1"></div>
                     <div class="hub-featured-bubble b2"></div>
                     <div class="hub-featured-head">
@@ -404,7 +412,7 @@
         const prevChipsScroll = prevChips ? prevChips.scrollLeft : null;
 
         panel.innerHTML = `
-            <div class="hub-featured reg-hero" style="--cls-color:${cls.color || '#1E40AF'}">
+            <div class="hub-featured reg-hero" style="--cls-color:${heroColor(cls)}">
                 <div class="hub-featured-bubble b1"></div>
                 <div class="hub-featured-bubble b2"></div>
                 <div class="hub-featured-head">
@@ -426,7 +434,7 @@
             <div class="reg-toolrow">
                 <input type="search" class="input search-input" id="student-search"
                        placeholder="🔍 بحث باسم الطالب...">
-                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${cls.color || '#1E40AF'}">+ إضافة طلاب</button>
+                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة طلاب</button>
             </div>
 
             ${students.length > 0 ? `
@@ -1517,7 +1525,8 @@
             SUBJECTS.concat(mine).concat(cls.subject ? [cls.subject] : [])
                 .filter((s) => s && s !== 'أخرى')
         ));
-        const COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#0EA5E9', '#8B5CF6', '#EC4899', '#14B8A6'];
+        // نفس اللوحة المعتمدة في نافذة الإضافة (dashboard.js)
+        const COLORS = ['#EFE0BE', '#DCE5F3', '#E9E4D6', '#ECEAE3'];
         // The picker edits the STAGE's base color — unified across its classes.
         const stageBase = await global.StageColors.get(cls.stage);
         let selectedColor = stageBase || cls.color || COLORS[0];
