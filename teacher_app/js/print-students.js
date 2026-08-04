@@ -115,13 +115,160 @@
         run(opts);
     }
 
-    /** حفظ كملف PDF — عبر وجهة «حفظ كـ PDF» في نافذة الطباعة (تنتج PDF
-     *  نصياً عالي الجودة)، مع اسم ملف وصفي بدل اسم التطبيق. */
-    async function savePdf(opts) {
-        if (global.TeacherApp && global.TeacherApp.toast) {
-            global.TeacherApp.toast('اختر «حفظ كـ PDF» من وجهة الطباعة 📄', 'info', 5000);
+    /* ======================================================================
+       حفظ PDF مباشرة (بدون نافذة الطباعة)
+       نولّد ملف PDF داخل التطبيق ثم نفتح ورقة المشاركة/الحفظ الأصلية —
+       فيختار المعلم «حفظ في الملفات» أو أي تطبيق. تُحمَّل المكتبتان من
+       CDN عند الحاجة فقط (لا تؤثران على سرعة إقلاع التطبيق).
+       ====================================================================== */
+    const CDN = {
+        html2canvas: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+        jspdf:       'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+    };
+
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error('تعذّر تحميل مكوّن PDF'));
+            document.head.appendChild(s);
+        });
+    }
+
+    let _enginePromise = null;
+    /** يُحمّل محرّك PDF مسبقاً (يُستدعى عند فتح نافذة الطباعة) حتى تكون
+     *  الضغطة على «حفظ PDF» سريعة ولا تفقد صلاحية المشاركة في iOS. */
+    function preloadPdfEngine() {
+        if (!_enginePromise) {
+            _enginePromise = Promise.all([
+                loadScript(CDN.html2canvas),
+                loadScript(CDN.jspdf)
+            ]).catch((e) => { _enginePromise = null; throw e; });
         }
-        run(opts, { asPdf: true });
+        return _enginePromise;
+    }
+
+    /** ينسخ تنسيق الطباعة ليعمل على الشاشة أثناء التقاط الصورة. */
+    async function printCssForScreen() {
+        const link = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+            .find((l) => l.href.includes('print.css'));
+        if (!link) return null;
+        const css = await (await fetch(link.href)).text();
+        const el = document.createElement('style');
+        el.textContent = css.replace(/@media\s+print\s*\{/g, '@media all {');
+        return el;
+    }
+
+    /** يقسّم المستند إلى صفحات عند فواصل .page-break، مع تكرار الترويسة. */
+    function splitPages(docEl) {
+        const header = docEl.querySelector('.print-header');
+        const legend = docEl.querySelector('.print-legend');
+        const body = Array.from(docEl.children)
+            .filter((el) => el !== header && el !== legend);
+
+        const groups = [];
+        let current = [];
+        body.forEach((el) => {
+            if (el.classList.contains('page-break')) {
+                if (current.length) groups.push(current);
+                current = [];
+            } else {
+                current.push(el);
+            }
+        });
+        if (current.length) groups.push(current);
+        if (!groups.length) groups.push([]);
+
+        return groups.map((group, i) => {
+            const page = document.createElement('div');
+            page.className = 'print-doc students-doc';
+            if (header) page.appendChild(header.cloneNode(true));
+            group.forEach((el) => page.appendChild(el.cloneNode(true)));
+            if (legend && i === groups.length - 1) page.appendChild(legend.cloneNode(true));
+            return page;
+        });
+    }
+
+    async function savePdf(opts) {
+        const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
+            && global.TeacherApp.toast(m, t, d);
+        let stage = null;
+        try {
+            toast('جارٍ تجهيز ملف PDF…', 'info', 4000);
+            await preloadPdfEngine();
+
+            // مسرح مخفي بعرض ورقة A4 أفقية (1123px ≈ 297mm @96dpi)
+            const PAGE_W = 1123;
+            stage = document.createElement('div');
+            stage.setAttribute('style',
+                `position:fixed; top:0; left:-20000px; width:${PAGE_W}px; background:#fff; z-index:-1;`);
+            const cssEl = await printCssForScreen();
+            if (cssEl) stage.appendChild(cssEl);
+
+            const holder = document.createElement('div');
+            holder.innerHTML = buildHtml(opts);
+            const docEl = holder.querySelector('.print-doc');
+            const pages = splitPages(docEl);
+
+            const pageWrap = document.createElement('div');
+            pageWrap.style.width = PAGE_W + 'px';
+            pageWrap.style.padding = '38px 38px';   // هوامش الورقة
+            pageWrap.style.background = '#fff';
+            stage.appendChild(pageWrap);
+            document.body.appendChild(stage);
+
+            const { jsPDF } = global.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const PW = 297, PH = 210;
+
+            for (let i = 0; i < pages.length; i++) {
+                pageWrap.innerHTML = '';
+                pageWrap.appendChild(pages[i]);
+                // مهلة قصيرة ليكتمل تطبيق التنسيق قبل الالتقاط
+                await new Promise((r) => setTimeout(r, 30));
+                const canvas = await global.html2canvas(pageWrap, {
+                    scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true
+                });
+                let w = PW;
+                let h = (canvas.height * PW) / canvas.width;
+                if (h > PH) { h = PH; w = (canvas.width * PH) / canvas.height; }
+                if (i > 0) pdf.addPage('a4', 'landscape');
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG',
+                             (PW - w) / 2, 0, w, h);
+            }
+
+            const fileName = buildFileName(opts) + '.pdf';
+            const blob = pdf.output('blob');
+
+            // ورقة المشاركة الأصلية (حفظ في الملفات / واتساب / …)
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            if (global.navigator.canShare && global.navigator.canShare({ files: [file] })) {
+                try {
+                    await global.navigator.share({ files: [file], title: fileName });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;   // ألغى المعلم
+                    /* غير ذلك: ننزّل الملف بدلاً من المشاركة */
+                }
+            }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            toast('تم حفظ الملف ✅', 'success', 2500);
+        } catch (err) {
+            console.warn('[print-students] savePdf failed:', err);
+            toast('تعذّر إنشاء PDF — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
+            run(opts, { asPdf: true });   // مسار احتياطي مضمون
+        } finally {
+            if (stage && stage.parentNode) stage.parentNode.removeChild(stage);
+        }
     }
 
     function buildHtml(opts) {
@@ -482,5 +629,5 @@
         return String(v);
     }
 
-    global.PrintStudents = { print, savePdf };
+    global.PrintStudents = { print, savePdf, preloadPdfEngine };
 })(window);

@@ -1668,6 +1668,10 @@
             global.PrintStudents.savePdf(opts);
         });
 
+        // تحميل محرّك PDF بالخلفية فور فتح النافذة حتى تكون ضغطة «حفظ PDF» فورية.
+        if (global.PrintStudents && global.PrintStudents.preloadPdfEngine) {
+            global.PrintStudents.preloadPdfEngine().catch(() => {});
+        }
         global.Modal.open({ title: '🖨️ طباعة السجل', body: form, autofocus: false });
     }
 
