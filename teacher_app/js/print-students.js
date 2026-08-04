@@ -284,7 +284,7 @@
         const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
             && global.TeacherApp.toast(m, t, d);
         try {
-            toast('جارٍ تجهيز ملف PDF…', 'info', 4000);
+            toast('جارٍ تجهيز السجل…', 'info', 4000);
             const images = await renderPageImages(opts);
 
             const { jsPDF } = global.jspdf;
@@ -316,10 +316,10 @@
             a.click();
             a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 10000);
-            toast('تم حفظ الملف ✅', 'success', 2500);
+            toast('تم حفظ السجل ✅ افتح الملف للطباعة', 'success', 4000);
         } catch (err) {
             console.warn('[print-students] savePdf failed:', err);
-            toast('تعذّر إنشاء PDF — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
+            toast('تعذّر إنشاء الملف — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
             run(opts, { asPdf: true });   // مسار احتياطي مضمون
         }
     }

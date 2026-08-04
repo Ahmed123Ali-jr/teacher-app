@@ -1571,8 +1571,7 @@
                 </div>
             `).join('')}
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">🖨️ معاينة وطباعة</button>
-                <button type="button" class="btn btn-secondary" id="btn-save-pdf">📄 حفظ PDF</button>
+                <button type="submit" class="btn btn-primary">📄 حفظ وطباعة</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
@@ -1653,15 +1652,11 @@
             };
         }
 
+        /* زر واحد «حفظ وطباعة»: يُنشئ ملف PDF ثم تفتح ورقة المشاركة التي
+           تتيح الحفظ في الملفات أو الطباعة أو الإرسال — والمطبوع مطابق
+           للملف لأن كليهما من نفس الصور. */
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const opts = await buildPrintOptions();
-            if (!opts) return;
-            global.Modal.close();
-            global.PrintStudents.print(opts);
-        });
-
-        form.querySelector('#btn-save-pdf').addEventListener('click', async () => {
             const opts = await buildPrintOptions();
             if (!opts) return;
             global.Modal.close();
