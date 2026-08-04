@@ -1570,7 +1570,8 @@
                 </div>
             `).join('')}
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">معاينة وطباعة</button>
+                <button type="submit" class="btn btn-primary">🖨️ معاينة وطباعة</button>
+                <button type="button" class="btn btn-secondary" id="btn-save-pdf">📄 حفظ PDF</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
@@ -1600,8 +1601,9 @@
             });
         });
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        /** يبني خيارات الطباعة من اختيار المعلم — مشتركة بين الطباعة وحفظ PDF.
+         *  يُرجع null إذا كان نطاق التاريخ غير صحيح (بعد إظهار تنبيه). */
+        async function buildPrintOptions() {
             const opt = form.querySelector('.popt.on');
             const kind = opt.dataset.k;
             const scope = opt.querySelector('.pseg.on')?.dataset.scope || 'today';
@@ -1612,7 +1614,8 @@
                 const from = opt.querySelector('[data-from]').value;
                 const to   = opt.querySelector('[data-to]').value;
                 if (!from || !to || from > to) {
-                    return global.TeacherApp.toast('اختر نطاق تاريخ صحيح.', 'warning');
+                    global.TeacherApp.toast('اختر نطاق تاريخ صحيح.', 'warning');
+                    return null;
                 }
                 // قراءتان مجمّعتان بفهرس الفصل ثم تصفية بالفترة
                 const [attRows, parRows] = await Promise.all([
@@ -1621,38 +1624,47 @@
                 ]);
                 const sids = new Set(students.map((s) => s.id));
                 const inWin = (r) => sids.has(r.student_id) && r.date >= from && r.date <= to;
-                const attendanceAll    = attRows.filter(inWin);
-                const participationAll = parRows.filter(inWin);
 
-                global.Modal.close();
-                global.PrintStudents.print({
+                return {
                     mode: kind === 'attendance' ? 'range' : 'daily',
                     cls, teacher, students,
                     columns: kind === 'attendance' ? [] : columns,
                     dates: expandDates(from, to),
                     from, to,
-                    attendance: attendanceAll,
-                    participation: participationAll,
+                    attendance: attRows.filter(inWin),
+                    participation: parRows.filter(inWin),
                     includeEvals: false
-                });
-                return;
+                };
             }
 
-            global.Modal.close();
             if (kind === 'blank') {
-                global.PrintStudents.print({
+                return {
                     mode: 'blank', cls, teacher, students,
                     columns: scope === 'all' ? columns : []
-                });
-                return;
+                };
             }
             // اليوم (حضور فقط أو كامل الخانات)
-            global.PrintStudents.print({
+            return {
                 mode: 'today', cls, teacher, students,
                 columns: kind === 'attendance' ? [] : columns,
                 attendance: attToday.filter(Boolean),
                 participation: evalToday.filter(Boolean)
-            });
+            };
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const opts = await buildPrintOptions();
+            if (!opts) return;
+            global.Modal.close();
+            global.PrintStudents.print(opts);
+        });
+
+        form.querySelector('#btn-save-pdf').addEventListener('click', async () => {
+            const opts = await buildPrintOptions();
+            if (!opts) return;
+            global.Modal.close();
+            global.PrintStudents.savePdf(opts);
         });
 
         global.Modal.open({ title: '🖨️ طباعة السجل', body: form, autofocus: false });

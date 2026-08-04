@@ -61,20 +61,67 @@
         return el;
     }
 
-    async function print(opts) {
+    const MODE_LABELS = {
+        blank:   'سجل_مفرغ',
+        today:   'سجل_اليوم',
+        range:   'سجل_الحضور',
+        daily:   'سجل_كامل',
+        summary: 'تقرير_مجمع'
+    };
+
+    /** اسم ملف وصفي للـPDF: نوع السجل + الصف/الشعبة + التاريخ. */
+    function buildFileName(opts) {
+        const { mode, cls, from, to } = opts;
+        const clean = (s) => String(s || '').trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+        const period = (from && to) ? `${from}_${to}` : todayISO();
+        return [
+            MODE_LABELS[mode] || 'سجل',
+            clean(cls?.grade),
+            clean(cls?.section),
+            period
+        ].filter(Boolean).join('-');
+    }
+
+    function todayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    /** التدفق المشترك: يبني المستند، يفرض الاتجاه الأفقي، ويستدعي print().
+     *  عند حفظ PDF نغيّر عنوان الصفحة مؤقتاً لأن المتصفح يستخدمه كاسم الملف. */
+    function run(opts, { asPdf = false } = {}) {
         const root = ensurePrintRoot();
         root.innerHTML = buildHtml(opts);
 
         // السجل يُطبع بالعرض دائماً.
         const styleEl = applyLandscape();
+        const prevTitle = document.title;
+        if (asPdf) document.title = buildFileName(opts);
+
         document.body.classList.add('is-printing');
         const done = () => {
             document.body.classList.remove('is-printing');
             if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+            document.title = prevTitle;
             global.removeEventListener('afterprint', done);
         };
         global.addEventListener('afterprint', done);
+        // شبكة أمان: بعض المتصفحات لا تُطلق afterprint — نُعيد الحالة بعد مهلة.
+        global.setTimeout(done, 60000);
         setTimeout(() => global.print(), 50);
+    }
+
+    async function print(opts) {
+        run(opts);
+    }
+
+    /** حفظ كملف PDF — عبر وجهة «حفظ كـ PDF» في نافذة الطباعة (تنتج PDF
+     *  نصياً عالي الجودة)، مع اسم ملف وصفي بدل اسم التطبيق. */
+    async function savePdf(opts) {
+        if (global.TeacherApp && global.TeacherApp.toast) {
+            global.TeacherApp.toast('اختر «حفظ كـ PDF» من وجهة الطباعة 📄', 'info', 5000);
+        }
+        run(opts, { asPdf: true });
     }
 
     function buildHtml(opts) {
@@ -432,5 +479,5 @@
         return String(v);
     }
 
-    global.PrintStudents = { print };
+    global.PrintStudents = { print, savePdf };
 })(window);
