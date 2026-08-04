@@ -60,6 +60,18 @@
     .mk-row .txt{flex:1;font-size:12.5px;font-weight:700;color:var(--muted);}
     .mk-row .txt b{color:var(--text);}
     .mk-row button{min-height:38px;border-radius:11px;border:0;background:var(--present);color:#fff;font-family:inherit;font-weight:800;font-size:13.5px;padding:0 15px;}
+    /* هـ/و: الزر يمين والمعلومة يسار */
+    .mk-row.rev{flex-direction:row-reverse;padding:8px 14px 8px 8px;}
+    .mk-row.rev .txt{text-align:left;}
+    .mk-row .txt.names{font-size:12.5px;line-height:1.5;}
+    .mk-row .txt.names b{color:var(--absent);font-weight:800;}
+    .mk-row.done{border-color:color-mix(in srgb,var(--present) 35%,#fff);background:color-mix(in srgb,var(--present) 6%,#fff);}
+    .mk-row.done .txt{color:var(--present);}
+    .mk-row button.ghost{background:#fff;border:1.5px solid var(--border);color:var(--muted);}
+    .states{display:flex;gap:6px;margin:0 0 10px;}
+    .states button{flex:1;min-height:32px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-family:inherit;font-size:11.5px;font-weight:700;}
+    .states button.on{background:var(--royal);color:#fff;border-color:var(--royal);}
+    .states-lbl{font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;}
     /* ج: زر عائم */
     .mk-fab{position:fixed;bottom:118px;left:50%;transform:translateX(-50%);z-index:40;min-height:48px;border-radius:99px;border:0;
         background:var(--present);color:#fff;font-family:inherit;font-weight:800;font-size:14.5px;padding:0 24px;
@@ -155,6 +167,50 @@ D.push(['د — ضمن الخانات', `${hero()}${toolbar}
   ${chips('<div class="chip-mark" data-mark>✓ تحضير الكل</div>')}
   <div data-cards></div>`]);
 
+/* هـ — الزر يمين + المعلومة يسار بالأسماء (ذكي) */
+D.push(['هـ — بالاسم', `${hero()}${toolbar}${chips()}
+  <div class="markbar" data-mark>
+    <div class="mk-row rev" data-smart><button data-mkbtn>✓ تحضير الكل</button><div class="txt" data-mktxt></div></div>
+  </div>
+  <div class="states-lbl" style="margin-top:12px">— جرّب الحالات —</div>
+  <div class="states" data-states>
+    <button data-st="0" class="on">بداية الحصة</button><button data-st="1">بقي ٢</button>
+    <button data-st="2">بقي ١</button><button data-st="3">اكتمل</button>
+  </div>
+  <div data-cards></div>`]);
+
+/* و — نفس هـ لكن الأسماء دائماً بدون عدّاد */
+D.push(['و — الاسم دائماً', `${hero()}${toolbar}${chips()}
+  <div class="markbar" data-mark>
+    <div class="mk-row rev" data-smart data-always><button data-mkbtn>✓ تحضير الكل</button><div class="txt names" data-mktxt></div></div>
+  </div>
+  <div class="states-lbl" style="margin-top:12px">— جرّب الحالات —</div>
+  <div class="states" data-states>
+    <button data-st="0" class="on">بداية الحصة</button><button data-st="1">بقي ٢</button>
+    <button data-st="2">بقي ١</button><button data-st="3">اكتمل</button>
+  </div>
+  <div data-cards></div>`]);
+
+/* حالات الشريط الذكي */
+const SMART = [
+  {txt:'<span style="color:var(--muted)">لم يبدأ التحضير · <b class="num" style="color:var(--text)">٤</b> طلاب</span>',
+   always:'<span style="color:var(--muted)">لم يبدأ التحضير</span>', btn:'✓ تحضير الكل', done:false},
+  {txt:'<span style="color:var(--muted)">بقي <b class="num" style="color:var(--text)">٢</b> بلا تحضير</span>',
+   always:'بقي <b>تركي فهد</b> و<b>ثامر ناصر</b>', btn:'✓ تحضير الباقي', done:false},
+  {txt:'بقي <b>ثامر ناصر</b> بلا تحضير',
+   always:'بقي <b>ثامر ناصر</b> بلا تحضير', btn:'✓ تحضير الباقي', done:false},
+  {txt:'✓ اكتمل تحضير الفصل',
+   always:'✓ اكتمل تحضير الفصل', btn:'↺ تراجع', done:true},
+];
+function paintSmart(sc, i){
+  const row = sc.querySelector('[data-smart]'); if(!row) return;
+  const s = SMART[i], always = row.hasAttribute('data-always');
+  row.querySelector('[data-mktxt]').innerHTML = always ? s.always : s.txt;
+  const b = row.querySelector('[data-mkbtn]');
+  b.textContent = s.btn; b.classList.toggle('ghost', s.done);
+  row.classList.toggle('done', s.done);
+}
+
 const root=document.getElementById('root'), sw=document.getElementById('switcher');
 D.forEach(([name,html],i)=>{
   const sc=document.createElement('div'); sc.className='screen'+(i===0?' active':''); sc.innerHTML=html; root.appendChild(sc);
@@ -167,10 +223,16 @@ D.forEach(([name,html],i)=>{
       if(holder) holder.innerHTML=cards(isAtt);
     };
   });
+  paintSmart(sc, 0);
+  sc.querySelectorAll('[data-states] button').forEach(st=>{
+    st.onclick=()=>{ sc.querySelectorAll('[data-states] button').forEach(x=>x.classList.toggle('on',x===st));
+      paintSmart(sc, +st.dataset.st); };
+  });
   const b=document.createElement('button'); b.textContent=name; if(i===0)b.className='on';
   b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
   sw.appendChild(b);
 });
+sw.querySelectorAll('button')[4].click();   // ابدأ من هـ
 setTimeout(()=>document.querySelector('.hint').classList.add('gone'),3200);
 </script>
 </body>
