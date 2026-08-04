@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>درجات الذهبي مع كتابة بيضاء</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;
+          --fill:#D9CBA8;--brd:rgba(201,169,97,.6);}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 120px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .brdbar{position:fixed;bottom:56px;right:0;left:0;z-index:50;background:rgba(17,17,17,.82);backdrop-filter:blur(10px);padding:8px 12px;display:flex;gap:8px;justify-content:center;align-items:center;}
+    .brdbar span{color:rgba(255,255,255,.75);font-size:11px;font-weight:700;}
+    .brdbar button{border:0;border-radius:99px;padding:7px 14px;font-family:inherit;font-size:11.5px;font-weight:800;background:rgba(255,255,255,.15);color:#fff;}
+    .brdbar button.on{background:#fff;color:#111;}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;}
+
+    .sep-gold{border:0;border-top:1.5px solid color-mix(in srgb,var(--gold) 55%,#fff);margin:21px 6px;}
+
+    .banner{display:flex;align-items:center;gap:10px;color:#fff;border-radius:15px;padding:9px 14px;margin:0 0 12px;
+        background:linear-gradient(180deg,#24498A 0%,var(--royal) 55%,#0A2148 100%);
+        border:1px solid #1B3E75;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.3),
+                   0 7px 14px rgba(15,44,92,.4), 0 2px 4px rgba(15,44,92,.3);}
+    .bn-ic{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:rgba(255,255,255,.18);font-size:14px;}
+    .bn-lb{flex:1;font-size:16.5px;font-weight:900;}
+    .bn-ct{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:2px 11px;font-size:11px;font-weight:700;white-space:nowrap;}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .ccard{border-radius:15px;padding:13px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between;gap:7px;
+        background:var(--fill);color:#fff;border:1.5px solid var(--brd);
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.10),
+                   0 4px 10px rgba(16,24,40,.12);}
+    .cc-g{font-weight:900;font-size:14.5px;line-height:1.35;}
+    .cc-s{font-size:11.5px;font-weight:700;margin-top:1px;color:rgba(255,255,255,.9);}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;}
+    .cc-edit{border-radius:99px;padding:3px 11px;font-size:10.5px;font-weight:800;line-height:1.6;
+        background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.6);color:#fff;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="brdbar" id="brdbar"><span>الإطار:</span></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const STAGES=[
+ ['🏫','ابتدائي','فصلان',[['الصف الرابع / أ','رياضيات',24],['الصف السادس / ب','علوم',27]]],
+ ['📘','متوسط','فصل واحد',[['ثاني متوسط / أ','رياضيات',30]]],
+ ['🎓','ثانوي','فصلان',[['أول ثانوي / ب','فيزياء',28],['ثالث ثانوي / أ','كيمياء',25]]],
+];
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+function stageHtml([ic,lb,ct,list]){
+  return `<div class="banner"><span class="bn-ic">${ic}</span><span class="bn-lb">${lb}</span><span class="bn-ct">${ct}</span></div>
+    <div class="grid">${list.map(([g,sub,n])=>`
+      <div class="ccard">
+        <div><div class="cc-g">${g}</div><div class="cc-s">${sub}</div></div>
+        <div class="cc-meta"><span class="num">${AR(n)} طالب</span><span class="cc-edit">تعديل</span></div>
+      </div>`).join('')}
+    </div>`;
+}
+const body=STAGES.map(stageHtml).join('<hr class="sep-gold">');
+
+/* درجات الذهبي من الأخف إلى الأغمق — الكتابة بيضاء في الكل */
+const D=[
+ ['أ — أخف','#E2D7BC','ذهبي فاتح جداً'],
+ ['ب — خفيف','#D9CBA8','ذهبي فاتح'],
+ ['ج — متوسط','#CDBB93','ذهبي هادئ'],
+ ['د — أغمق','#C0AC7F','ذهبي أوضح'],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,fill,desc],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===1?' active':'');
+  sc.dataset.fill=fill;
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc} · ${fill} — الكتابة بيضاء</div>`+body;
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===1)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    document.documentElement.style.setProperty('--fill',fill);window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+document.documentElement.style.setProperty('--fill',D[1][1]);
+
+const BRD=[['ذهبي','rgba(201,169,97,.75)'],['أبيض','rgba(255,255,255,.85)'],['بلا إطار','transparent']];
+const bb=document.getElementById('brdbar');
+BRD.forEach(([lb,val],i)=>{
+  const b=document.createElement('button');b.textContent=lb;if(i===0)b.className='on';
+  b.onclick=()=>{document.documentElement.style.setProperty('--brd',val);
+    bb.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};
+  bb.appendChild(b);
+});
+</script>
+</body>
+</html>
