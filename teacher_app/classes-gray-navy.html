@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>رصاصي موحّد + سجل كحلي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;
+          --gray:#ECEAE3;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 80px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;line-height:1.6;}
+
+    /* شرائط المراحل والفاصل */
+    .group + .group{border-top:1.5px solid color-mix(in srgb,var(--gold) 55%,#fff);padding-top:21px;margin-top:21px;}
+    .banner{display:flex;align-items:center;gap:10px;color:#fff;border-radius:15px;padding:9px 14px;margin:0 0 13px;
+        background:linear-gradient(180deg,color-mix(in srgb,var(--royal) 76%,#5B8DEF) 0%,var(--royal) 55%,color-mix(in srgb,var(--royal) 62%,#000) 100%);
+        border:1px solid color-mix(in srgb,var(--royal) 80%,#fff);
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.3),
+                   0 7px 14px rgba(15,44,92,.4), 0 2px 4px rgba(15,44,92,.3);}
+    .bn-ic{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:rgba(255,255,255,.18);font-size:14px;}
+    .bn-lb{flex:1;font-size:16.5px;font-weight:900;}
+    .bn-ct{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;white-space:nowrap;}
+
+    /* بطاقة الفصل الرصاصية */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .ccard{position:relative;min-height:104px;padding:12px;border-radius:15px;color:var(--royal);text-align:right;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff, 0 5px 11px rgba(16,24,40,.12);
+        display:flex;flex-direction:column;justify-content:space-between;gap:7px;}
+    .cc-g{margin:0;font-weight:900;font-size:13px;line-height:1.35;}
+    .cc-s{font-size:10.5px;font-weight:700;color:color-mix(in srgb,var(--royal) 62%,#fff);}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:10px;}
+    .cc-edit{background:color-mix(in srgb,var(--royal) 5%,#fff);border:1px solid color-mix(in srgb,var(--royal) 25%,#fff);
+        color:var(--royal);border-radius:99px;padding:2px 10px;font-size:9.5px;font-weight:700;line-height:1.6;}
+    .add-tile{min-height:104px;border-radius:15px;border:2px dashed #CBB77E;background:#fff;color:var(--royal);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:700;font-size:12px;}
+    .add-tile b{font-size:26px;line-height:1;font-weight:500;}
+
+    /* هيرو صفحة الفصل (سبليت) — كحلي */
+    .page-bar{display:flex;margin-bottom:11px;}
+    .backbox{width:42px;height:42px;border-radius:13px;background:#fff;border:1.5px solid var(--border);color:var(--royal);font-size:19px;display:grid;place-items:center;}
+    .split{display:flex;border-radius:19px;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.08);margin-bottom:13px;}
+    .sp-side{width:96px;background:linear-gradient(160deg,color-mix(in srgb,var(--royal) 85%,#fff) 0%,var(--royal) 70%);
+        color:#fff;display:grid;place-items:center;clip-path:polygon(0 0,100% 0,100% 100%,18px 100%);}
+    .sp-side .w{font-size:11px;opacity:.85;display:block;text-align:center;}
+    .sp-side .l{font-size:34px;font-weight:900;line-height:1.1;text-align:center;}
+    .sp-body{flex:1;padding:15px 17px;}
+    .sp-name{margin:0;font-size:19px;font-weight:900;}
+    .sp-chips{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;}
+    .sp-chip{border-radius:99px;padding:3px 12px;font-size:11px;font-weight:800;background:#F2F4F7;color:var(--muted);}
+    .sp-chip.tint{background:color-mix(in srgb,var(--royal) 8%,#fff);color:var(--royal);}
+
+    /* بطاقة سجل المتابعة — كحلية */
+    .hub{position:relative;overflow:hidden;border-radius:21px;padding:21px;color:#fff;margin-bottom:13px;display:block;
+        background:linear-gradient(135deg,color-mix(in srgb,var(--royal) 80%,#000) 0%,var(--royal) 45%,color-mix(in srgb,var(--royal) 85%,#fff) 100%);
+        box-shadow:0 8px 20px color-mix(in srgb,var(--royal) 25%,transparent);}
+    .hub .b1{position:absolute;border-radius:50%;background:rgba(255,255,255,.06);width:120px;height:120px;left:-24px;top:-24px;}
+    .hub .b2{position:absolute;border-radius:50%;background:rgba(255,255,255,.05);width:90px;height:90px;left:40px;bottom:-44px;}
+    .hub-head{display:flex;align-items:center;gap:12px;position:relative;}
+    .hub-ic{width:50px;height:50px;border-radius:15px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:24px;flex-shrink:0;}
+    .hub-tt{flex:1;}
+    .hub-t1{font-weight:900;font-size:19px;}
+    .hub-t2{font-size:11.5px;opacity:.85;margin-top:2px;}
+    .hub-x{font-size:18px;opacity:.7;}
+    .hub-print{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.18);border:0;font-size:17px;display:grid;place-items:center;flex-shrink:0;}
+    .hub-stats{display:flex;gap:8px;margin-top:14px;position:relative;}
+    .hs{flex:1;background:rgba(255,255,255,.13);border-radius:13px;padding:9px 4px;text-align:center;}
+    .hs b{display:block;font-size:19px;font-weight:900;}
+    .hs span{font-size:11px;opacity:.85;}
+
+    .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #EEF1F5;border-radius:14px;padding:13px;}
+    .tile .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px;}
+    .tile .lb{font-weight:900;font-size:13px;}
+    .tile .ct{font-size:11px;color:#B6BFCC;font-weight:700;margin-top:1px;}
+
+    /* سجل المتابعة */
+    .toolrow{display:flex;gap:8px;margin-bottom:12px;}
+    .search{flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:13px;background:#fff;padding:0 13px;font-size:13.5px;color:var(--muted);display:flex;align-items:center;}
+    .btn-add{min-height:44px;border-radius:13px;border:0;background:var(--royal);color:#fff;font-weight:800;font-size:13.5px;padding:0 15px;font-family:inherit;}
+    .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+    .chips::-webkit-scrollbar{display:none;}
+    .chip{flex-shrink:0;min-height:40px;border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:0 15px;font-size:13.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;}
+    .chip.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 8%,#fff);color:var(--royal);}
+    .mark-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:8px;margin-top:10px;}
+    .mark-bar button{min-height:38px;border-radius:11px;border:0;background:#059669;color:#fff;font-family:inherit;font-weight:800;font-size:13.5px;padding:0 15px;}
+    .card{position:relative;display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 17px 12px 14px;overflow:hidden;margin-top:9px;}
+    .card::before{content:"";position:absolute;top:0;bottom:0;right:0;width:5px;background:#D8DEE9;}
+    .av{width:38px;height:38px;border-radius:11px;background:#F2F4F7;color:var(--muted);display:grid;place-items:center;font-weight:800;font-size:16px;}
+    .nm{font-weight:800;font-size:15px;}
+    .stt{font-size:12px;font-weight:700;color:var(--muted);margin-top:2px;}
+    .ab{display:flex;gap:5px;margin-right:auto;}
+    .ab b{width:33px;height:33px;border:1.5px solid var(--border);border-radius:10px;background:#fff;display:grid;place-items:center;font-size:13px;color:var(--muted);font-weight:400;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+function card(g,sub,n){return `<div class="ccard"><div><h4 class="cc-g">${g}</h4><div class="cc-s">${sub}</div></div>
+  <div class="cc-meta"><span class="num">${AR(n)} طالب</span><span class="cc-edit">تعديل</span></div></div>`;}
+
+const D=[
+ ['أ — قائمة الفصول','كل الفصول رصاصي موحّد — بلا اختيار لون (حقل اللون ينحذف من الإضافة والتعديل)',
+  `<div class="group">
+     <div class="banner"><span class="bn-ic">🏫</span><span class="bn-lb">ابتدائي</span><span class="bn-ct">٣ فصول</span></div>
+     <div class="grid">${card('الرابع الابتدائي / أ','رياضيات',24)}${card('السادس الابتدائي / ب','علوم',27)}
+       ${card('الخامس الابتدائي / ج','لغتي',22)}<div class="add-tile"><b>+</b>إضافة فصل جديد</div></div>
+   </div>
+   <div class="group">
+     <div class="banner"><span class="bn-ic">📘</span><span class="bn-lb">متوسط</span><span class="bn-ct">فصلان</span></div>
+     <div class="grid">${card('الثاني المتوسط / أ','رياضيات',30)}${card('الثالث المتوسط / ب','علوم',28)}</div>
+   </div>`],
+
+ ['ب — صفحة الفصل','داخل الفصل: الهيرو وسجل المتابعة بالكحلي — نفس شكل الكحلي الفاتح الحالي',
+  `<div class="page-bar"><div class="backbox">→</div></div>
+   <div class="split">
+     <div class="sp-body"><h2 class="sp-name">الصف الرابع الابتدائي</h2>
+       <div class="sp-chips"><span class="sp-chip tint">📘 رياضيات</span><span class="sp-chip">👥 <span class="num">٢٤</span> طالباً</span></div></div>
+     <div class="sp-side"><div><span class="w">شعبة</span><span class="l">أ</span></div></div>
+   </div>
+   <div class="hub"><div class="b1"></div><div class="b2"></div>
+     <div class="hub-head"><div class="hub-ic">👥</div>
+       <div class="hub-tt"><div class="hub-t1">سجل متابعة الطلاب</div><div class="hub-t2">التحضير والغياب والمشاركة</div></div>
+       <div class="hub-x">‹</div></div>
+     <div class="hub-stats">
+       <div class="hs"><b class="num">٢٤</b><span>طالب</span></div><div class="hs"><b class="num">٢٢</b><span>حاضر</span></div>
+       <div class="hs"><b class="num">٢</b><span>غائب</span></div><div class="hs"><b class="num">٩٢٪</b><span>الحضور</span></div>
+     </div></div>
+   <div class="tiles">
+     <div class="tile"><div class="ic" style="background:#EEF4FF">📚</div><div><div class="lb">الكتب</div><div class="ct">—</div></div></div>
+     <div class="tile"><div class="ic" style="background:#FDF2F2">📝</div><div><div class="lb">الاختبارات</div><div class="ct">—</div></div></div>
+     <div class="tile"><div class="ic" style="background:#F0FDF4">📄</div><div><div class="lb">أوراق العمل</div><div class="ct">—</div></div></div>
+     <div class="tile"><div class="ic" style="background:#FFFBEB">📖</div><div><div class="lb">الواجبات</div><div class="ct">—</div></div></div>
+   </div>`],
+
+ ['ج — سجل المتابعة','رأس السجل كحلي أيضاً — نفس المعتمد سابقاً لكن بالكحلي دائماً',
+  `<div class="page-bar"><div class="backbox">→</div></div>
+   <div class="hub"><div class="b1"></div><div class="b2"></div>
+     <div class="hub-head"><div class="hub-ic">👥</div>
+       <div class="hub-tt"><div class="hub-t1">سجل متابعة الطلاب</div><div class="hub-t2">📅 الثلاثاء ٢٠ صفر</div></div>
+       <button class="hub-print">🖨️</button></div>
+     <div class="hub-stats">
+       <div class="hs"><b class="num">٢٤</b><span>طالب</span></div><div class="hs"><b class="num">—</b><span>حاضر</span></div>
+       <div class="hs"><b class="num">—</b><span>غائب</span></div><div class="hs"><b class="num">—</b><span>الحضور</span></div>
+     </div></div>
+   <div class="toolrow"><div class="search">🔍 بحث باسم الطالب…</div><button class="btn-add">+ إضافة طلاب</button></div>
+   <div class="chips"><div class="chip on">الحضور</div><div class="chip">المشاركة</div><div class="chip">الواجبات</div>
+     <div class="chip">📝 الملاحظات</div><div class="chip" style="border-style:dashed">＋</div><div class="chip">⚙️ تعديل</div></div>
+   <div class="mark-bar"><button>✓ تحضير الكل</button></div>
+   <div class="card"><div class="av">إ</div><div><div class="nm">إبراهيم حمد القحطاني</div><div class="stt">بلا تحضير</div></div>
+     <div class="ab"><b>✓</b><b>✕</b><b>⏰</b><b>📝</b></div></div>
+   <div class="card"><div class="av">ب</div><div><div class="nm">بندر عبدالله الغامدي</div><div class="stt">بلا تحضير</div></div>
+     <div class="ab"><b>✓</b><b>✕</b><b>⏰</b><b>📝</b></div></div>`],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
