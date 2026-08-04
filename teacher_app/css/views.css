@@ -861,18 +861,16 @@ body.drawer-open { overflow: hidden; }
 /* Class cards */
 /* TODO(phase-d): on mobile (<768px) place cards in a single column,
    reduce min-height, and make the tap area fill the full card. */
-/* بطاقة بيضاء بنفس المقاسات، ولون الفصل خط علوي فقط */
 .class-card {
     --card-color: var(--primary);
     position: relative;
-    overflow: hidden;
     min-height: 160px;
     padding: var(--space-6);
-    color: var(--text);
-    background: var(--surface);
-    border: 1px solid var(--border);
+    color: var(--text-inverse);
+    background: linear-gradient(135deg, var(--card-color) 0%, var(--primary-light) 120%);
+    border: 0;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -881,13 +879,6 @@ body.drawer-open { overflow: hidden; }
     transition: transform var(--dur-base) var(--ease),
                 box-shadow var(--dur-base) var(--ease);
 }
-.class-card::before {
-    content: "";
-    position: absolute;
-    top: 0; right: 0; left: 0;
-    height: 5px;
-    background: var(--card-color);
-}
 .class-card:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
@@ -895,11 +886,11 @@ body.drawer-open { overflow: hidden; }
 .class-card-title {
     margin: 0;
     font-size: var(--fs-h2);
-    color: var(--text);
+    color: var(--text-inverse);
 }
 .class-card-subject {
     font-size: var(--fs-sm);
-    color: var(--text-muted);
+    opacity: 0.9;
 }
 .class-card-meta {
     display: flex;
@@ -911,11 +902,11 @@ body.drawer-open { overflow: hidden; }
     font-size: var(--fs-h1);
     font-weight: var(--fw-bold);
 }
-/* «تعديل» pill on the white card — opens the edit/delete menu */
+/* «تعديل» pill on the colored card — opens the edit/delete menu */
 .class-card-edit {
-    background: color-mix(in srgb, var(--card-color) 8%, #fff);
-    border: 1px solid color-mix(in srgb, var(--card-color) 30%, #fff);
-    color: color-mix(in srgb, var(--card-color) 75%, #000);
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .38);
+    color: var(--text-inverse);
     border-radius: var(--radius-full);
     padding: 4px 14px;
     font-size: var(--fs-xs);
@@ -924,7 +915,7 @@ body.drawer-open { overflow: hidden; }
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease);
 }
-.class-card-edit:active { background: color-mix(in srgb, var(--card-color) 18%, #fff); }
+.class-card-edit:active { background: rgba(255, 255, 255, .32); }
 
 /* Empty state */
 .empty-state {
@@ -953,7 +944,6 @@ body.drawer-open { overflow: hidden; }
     text-align: center;
     font-weight: var(--fw-medium);
 }
-.class-card-add::before { display: none; }
 
 /* «+ إضافة فصل» أعلى صفحة الفصول — مطابق لبطاقة الإضافة السفلية:
    بلا تعبئة، إطار ذهبي متقطع فقط. نفس مقاسات .btn تماماً. */
