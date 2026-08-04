@@ -883,6 +883,7 @@ body.drawer-open { overflow: hidden; }
     flex-direction: column;
     justify-content: space-between;
     gap: 7px;
+    text-align: right;   /* البطاقة زر، والنص يبدأ من اليمين مثل نموذج أ */
     transition: transform var(--dur-base) var(--ease),
                 box-shadow var(--dur-base) var(--ease);
 }
