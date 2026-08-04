@@ -37,7 +37,9 @@
        stage looks unified while each class stays distinguishable.
        A class's shade slot is recoverable from its stored color, so no extra
        column is needed on the classes table. */
-    const SHADE_STEPS = [0, -0.18, 0.18, -0.34, 0.28, -0.48];
+    /* بقرار المستخدم (2026-08-04): كل فصول المرحلة بنفس اللون تماماً —
+       درجة واحدة فقط. بقيت آلية الدرجات كما هي لو رجعنا نفعّلها. */
+    const SHADE_STEPS = [0];
 
     /* ratio > 0 → toward white, ratio < 0 → toward black */
     function mixHex(hex, ratio) {
@@ -519,7 +521,7 @@
                     `).join('')}
                 </div>
                 <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
-                    لون موحّد لكل فصول المرحلة، وكل فصل يأخذ درجة مميزة منه تلقائياً.
+                    لون موحّد — كل فصول المرحلة تأخذ نفس اللون تماماً.
                 </div>
             </div>
 

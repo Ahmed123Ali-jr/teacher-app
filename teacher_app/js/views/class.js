@@ -1553,7 +1553,7 @@
                     `).join('')}
                 </div>
                 <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
-                    اللون موحّد للمرحلة كاملة — تغييره يعيد تلوين كل فصولها بدرجات متقاربة.
+                    اللون موحّد للمرحلة كاملة — تغييره يلوّن كل فصولها بنفس اللون.
                 </div>
             </div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
