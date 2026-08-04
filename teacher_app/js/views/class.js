@@ -485,10 +485,8 @@
             btn.classList.toggle('undo', allMarked);
             btn.textContent = allMarked ? '✕ إلغاء تحضير الكل' : '✓ تحضير الكل';
             if (markedCount > 0 && !allMarked) {
-                const names = students
-                    .filter((_, i) => !attendanceToday[i])
-                    .map((s) => escapeHtml(s.name.trim().split(/\s+/).slice(0, 2).join(' ')));
-                miss.innerHTML = '<b>لم يتم تحضير :</b> ' + names.join(' · ');
+                const remaining = students.length - markedCount;
+                miss.innerHTML = '<b>لم يتم تحضير :</b> <span class="num">' + remaining + '</span>';
             } else {
                 miss.innerHTML = '';
             }
