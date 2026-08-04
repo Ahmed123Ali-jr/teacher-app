@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>تنظيم رأس سجل المتابعة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{
+        --bg:#F4F1EA; --surface:#fff; --text:#101828; --muted:#667085; --border:#E7E3D8;
+        --royal:#0F2C5C; --gold:#C9A961; --present:#10B981; --absent:#EF4444; --late:#F59E0B; --excused:#2563EB;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:12px 13px 150px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .hint{position:fixed;top:8px;left:8px;z-index:60;background:rgba(17,17,17,.85);color:#fff;border-radius:99px;padding:5px 13px;font-size:11px;transition:opacity .5s;}
+    .hint.gone{opacity:0;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 15px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+
+    /* ===== عناصر مشتركة (البطاقات لا تتغير إطلاقاً) ===== */
+    .pg-title{display:flex;align-items:center;gap:8px;justify-content:flex-end;font-size:21px;font-weight:900;color:var(--royal);}
+    .backbox{width:42px;height:42px;border:1px solid #E7EAF0;border-radius:12px;background:#fff;display:grid;place-items:center;font-size:19px;color:#475467;}
+    .search{flex:1;min-height:44px;border:1.5px solid var(--border);border-radius:13px;background:#fff;padding:0 14px;font-size:14px;color:var(--muted);display:flex;align-items:center;}
+    .btn{min-height:44px;border-radius:13px;font-family:inherit;font-weight:800;font-size:14px;border:1.5px solid var(--border);background:#fff;color:var(--muted);padding:0 16px;white-space:nowrap;}
+    .btn-primary{background:var(--royal);color:#fff;border-color:var(--royal);}
+    .btn-mark{color:var(--present);}
+    .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+    .chips::-webkit-scrollbar{display:none;}
+    .chip{flex-shrink:0;min-height:40px;border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:0 15px;font-size:13.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;}
+    .chip.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 7%,#fff);color:var(--royal);}
+    .mini{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--border);border-radius:99px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--muted);}
+    .mini b{font-size:13.5px;}
+
+    /* بطاقات الطلاب — نسخة طبق الأصل من التطبيق */
+    .cards{display:flex;flex-direction:column;gap:9px;margin-top:12px;}
+    .card{position:relative;display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 17px 12px 14px;overflow:hidden;}
+    .card::before{content:"";position:absolute;top:0;bottom:0;right:0;width:5px;background:var(--stripe,#D8DEE9);}
+    .av{width:38px;height:38px;border-radius:11px;background:#F2F4F7;color:var(--muted);display:grid;place-items:center;font-weight:800;font-size:16px;flex-shrink:0;}
+    .info{flex:1;min-width:0;}
+    .nm{font-weight:800;font-size:15px;line-height:1.4;}
+    .stt{font-size:12px;font-weight:700;margin-top:2px;}
+    .ab{display:flex;gap:5px;flex-shrink:0;}
+    .ab b{width:33px;height:33px;border:1.5px solid var(--border);border-radius:10px;background:#fff;display:grid;place-items:center;font-size:13px;color:var(--muted);font-weight:400;}
+    .ab b.on{color:#fff;border-color:transparent;}
+</style>
+</head>
+<body>
+<div class="hint">٣ تنظيمات للرأس — البطاقات كما هي</div>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const ST = [
+  {n:'إبراهيم حمد القحطاني', s:'present'},
+  {n:'بندر عبدالله الغامدي', s:'absent'},
+  {n:'تركي فهد الشهري',      s:'late'},
+  {n:'ثامر ناصر العتيبي',    s:''},
+];
+const ATT = { present:{i:'✓',c:'var(--present)',l:'حاضر'}, absent:{i:'✕',c:'var(--absent)',l:'غائب'},
+              late:{i:'⏰',c:'var(--late)',l:'متأخر'}, excused:{i:'📝',c:'var(--excused)',l:'مستأذن'} };
+const AR = n => String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+function cards(){
+  return `<div class="cards">${ST.map(s=>{
+    const a = ATT[s.s];
+    return `<div class="card" style="--stripe:${a?a.c:'#D8DEE9'}">
+      <div class="av">${s.n.trim()[0]}</div>
+      <div class="info"><div class="nm">${s.n}</div>
+        <div class="stt" style="color:${a?a.c:'var(--muted)'}">${a?a.l:'بلا تحضير'}</div></div>
+      <div class="ab">${Object.entries(ATT).map(([k,x])=>`<b class="${s.s===k?'on':''}" style="${s.s===k?`background:${x.c}`:''}">${x.i}</b>`).join('')}</div>
+    </div>`;}).join('')}</div>`;
+}
+function chips(){
+  return `<div class="chips">
+    <div class="chip on">الحضور</div><div class="chip">المشاركة</div><div class="chip">الواجبات</div>
+    <div class="chip">📝 الملاحظات</div><div class="chip" style="border-style:dashed;color:var(--royal)">＋</div>
+    <div class="chip">⚙️ تعديل</div></div>`;
+}
+
+const D = [];
+
+/* ===== أ — الحالي (للمقارنة) ===== */
+D.push(['أ — الحالي', `
+  <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px">
+    <div class="backbox">→</div>
+    <div class="pg-title"><span>سجل متابعة الطلاب</span><span>👥</span></div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:13px;color:var(--muted)">
+    <button class="btn" style="border:0;background:transparent;padding:6px 2px;color:var(--royal)">🖨️ طباعة السجل</button>
+    <span><b class="num" style="color:var(--royal);font-size:17px">٤</b> طالب &nbsp;·&nbsp; 📅 الأربعاء ٢٤ محرم</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <div class="search">🔍 بحث باسم الطالب…</div>
+    <button class="btn btn-primary">+ إضافة طلاب</button>
+    <button class="btn btn-mark">✓ تحضير الكل</button>
+    <span class="mini">حاضر <b style="color:var(--present)">١</b></span>
+    <span class="mini">غائب <b style="color:var(--absent)">١</b></span>
+    <span class="mini">الحضور <b style="color:var(--royal)">٦٧٪</b></span>
+  </div>
+  ${chips()}
+  ${cards()}`]);
+
+/* ===== ب — بطاقة رأس مجمّعة ===== */
+D.push(['ب — بطاقة رأس', `
+  <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px">
+    <div class="backbox">→</div>
+    <div class="pg-title"><span>سجل متابعة الطلاب</span><span>👥</span></div>
+  </div>
+  <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:13px 14px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+      <span style="font-size:12.5px;color:var(--muted);font-weight:700">📅 الأربعاء ٢٤ محرم</span>
+      <span style="font-size:13.5px;font-weight:800"><b class="num" style="color:var(--royal);font-size:19px">٤</b> طلاب</span>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:11px">
+      <span class="mini" style="flex:1;justify-content:center;background:color-mix(in srgb,var(--present) 8%,#fff);border-color:color-mix(in srgb,var(--present) 30%,#fff)">حاضر <b style="color:var(--present)">١</b></span>
+      <span class="mini" style="flex:1;justify-content:center;background:color-mix(in srgb,var(--absent) 8%,#fff);border-color:color-mix(in srgb,var(--absent) 30%,#fff)">غائب <b style="color:var(--absent)">١</b></span>
+      <span class="mini" style="flex:1;justify-content:center;background:color-mix(in srgb,var(--royal) 6%,#fff);border-color:color-mix(in srgb,var(--royal) 25%,#fff)">الحضور <b style="color:var(--royal)">٦٧٪</b></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-mark" style="flex:1;border-color:color-mix(in srgb,var(--present) 35%,#fff);background:color-mix(in srgb,var(--present) 7%,#fff)">✓ تحضير الكل</button>
+      <button class="btn" style="width:46px;padding:0;display:grid;place-items:center">🔍</button>
+      <button class="btn" style="width:46px;padding:0;display:grid;place-items:center">🖨️</button>
+      <button class="btn btn-primary" style="width:46px;padding:0;display:grid;place-items:center;font-size:20px">＋</button>
+    </div>
+  </div>
+  ${chips()}
+  ${cards()}`]);
+
+/* ===== ج — سطران فقط + إجراءات في قائمة ===== */
+D.push(['ج — سطران', `
+  <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;gap:8px">
+      <div class="backbox">→</div>
+      <div class="backbox" style="font-size:17px">⋯</div>
+    </div>
+    <div style="text-align:left">
+      <div class="pg-title" style="font-size:19px"><span>سجل متابعة الطلاب</span></div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:2px">٤ طلاب · الأربعاء ٢٤ محرم</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <div class="search">🔍 بحث باسم الطالب…</div>
+    <button class="btn btn-mark" style="border-color:color-mix(in srgb,var(--present) 35%,#fff);background:color-mix(in srgb,var(--present) 7%,#fff)">✓ تحضير الكل</button>
+  </div>
+  <div style="display:flex;gap:7px;margin-bottom:12px">
+    <span class="mini" style="flex:1;justify-content:center">حاضر <b style="color:var(--present)">١</b></span>
+    <span class="mini" style="flex:1;justify-content:center">غائب <b style="color:var(--absent)">١</b></span>
+    <span class="mini" style="flex:1;justify-content:center">الحضور <b style="color:var(--royal)">٦٧٪</b></span>
+  </div>
+  ${chips()}
+  ${cards()}
+  <div style="margin-top:14px;font-size:11.5px;color:var(--muted);text-align:center">
+    ⋯ = إضافة طلاب · طباعة السجل (داخل قائمة)
+  </div>`]);
+
+/* ===== د — رأس لاصق مضغوط ===== */
+D.push(['د — رأس لاصق', `
+  <div style="position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:10px;margin:-12px -13px 0;padding:12px 13px 10px;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px">
+      <div class="backbox">→</div>
+      <div style="text-align:left">
+        <div class="pg-title" style="font-size:19px"><span>سجل متابعة الطلاب</span></div>
+        <div style="font-size:11.5px;color:var(--muted);font-weight:700;margin-top:1px">٤ طلاب · ٢٤ محرم · <span style="color:var(--present)">١ حاضر</span> · <span style="color:var(--absent)">١ غائب</span> · ٦٧٪</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div class="search" style="min-height:40px">🔍 بحث…</div>
+      <button class="btn btn-mark" style="min-height:40px;padding:0 12px;border-color:color-mix(in srgb,var(--present) 35%,#fff);background:color-mix(in srgb,var(--present) 7%,#fff)">✓ تحضير الكل</button>
+      <button class="btn btn-primary" style="min-height:40px;width:42px;padding:0;display:grid;place-items:center;font-size:19px">＋</button>
+      <button class="btn" style="min-height:40px;width:42px;padding:0;display:grid;place-items:center">🖨️</button>
+    </div>
+    ${chips()}
+  </div>
+  ${cards()}
+  ${cards()}`]);
+
+const root=document.getElementById('root'), sw=document.getElementById('switcher');
+D.forEach(([name,html],i)=>{
+  const sc=document.createElement('div'); sc.className='screen'+(i===0?' active':''); sc.innerHTML=html; root.appendChild(sc);
+  const b=document.createElement('button'); b.textContent=name; if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+setTimeout(()=>document.querySelector('.hint').classList.add('gone'),2600);
+</script>
+</body>
+</html>
