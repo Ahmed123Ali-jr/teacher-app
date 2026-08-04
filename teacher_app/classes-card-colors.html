@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ألوان بطاقات الفصول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 80px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;}
+
+    /* الشريط — بأيقونة مصغّرة */
+    .banner{display:flex;align-items:center;gap:10px;background:var(--royal);color:#fff;border-radius:16px;padding:9px 14px;margin:0 0 12px;
+        box-shadow:0 4px 12px rgba(15,44,92,.28);}
+    .bn-ic{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.18);font-size:13px;}
+    .bn-lb{flex:1;font-size:16px;font-weight:900;}
+    .bn-ct{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:2px 11px;font-size:11px;font-weight:700;white-space:nowrap;}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:21px;}
+    .ccard{border-radius:16px;padding:14px 13px;position:relative;overflow:hidden;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;}
+    .cc-g{font-weight:900;font-size:14.5px;}
+    .cc-s{font-size:11.5px;font-weight:700;margin-top:2px;}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:11.5px;}
+    .cc-edit{border-radius:99px;padding:3px 12px;font-size:10.5px;font-weight:800;line-height:1.6;}
+
+    /* أ — التدرّج الحالي */
+    .s-grad .ccard{background:linear-gradient(135deg,var(--cc) 0%,color-mix(in srgb,var(--cc) 60%,#fff) 130%);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--cc) 30%,transparent);}
+    .s-grad .cc-s{color:rgba(255,255,255,.85);}
+    .s-grad .cc-edit{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);color:#fff;}
+    /* ب — سادة */
+    .s-solid .ccard{background:var(--cc);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--cc) 30%,transparent);}
+    .s-solid .cc-s{color:rgba(255,255,255,.85);}
+    .s-solid .cc-edit{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);color:#fff;}
+    /* ج — صبغة فاتحة */
+    .s-tint .ccard{background:color-mix(in srgb,var(--cc) 12%,#fff);border:1.5px solid color-mix(in srgb,var(--cc) 30%,#fff);color:color-mix(in srgb,var(--cc) 80%,#000);}
+    .s-tint .cc-s{color:color-mix(in srgb,var(--cc) 55%,#555);}
+    .s-tint .cc-edit{background:#fff;border:1px solid color-mix(in srgb,var(--cc) 35%,#fff);color:color-mix(in srgb,var(--cc) 75%,#000);}
+    /* د — غامق أنيق */
+    .s-deep .ccard{background:linear-gradient(160deg,color-mix(in srgb,var(--cc) 75%,#000) 0%,var(--cc) 80%);color:#fff;box-shadow:0 5px 14px color-mix(in srgb,var(--cc) 35%,transparent);}
+    .s-deep .cc-s{color:rgba(255,255,255,.8);}
+    .s-deep .cc-edit{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const STYLES=[
+ ['أ — التدرّج (السابق)','s-grad','نرجع للتدرّج اللي كان قبل الأبيض'],
+ ['ب — سادة','s-solid','لون الفصل كامل بدون تدرّج — أنظف وأثبت'],
+ ['ج — صبغة فاتحة','s-tint','خلفية فاتحة من لون الفصل ونص غامق — ملوّنة وهادئة معاً'],
+ ['د — غامق أنيق','s-deep','تدرّج يميل للغامق — فخامة أكثر'],
+];
+const STAGES=[
+ ['🏫','ابتدائي','فصلان',[['الصف الرابع / أ','رياضيات','#12A150',24],['الصف السادس / ب','علوم','#1E40AF',27]]],
+ ['📘','متوسط','فصل واحد',[['ثاني متوسط / أ','رياضيات','#BE185D',30]]],
+ ['🎓','ثانوي','فصلان',[['أول ثانوي / ب','فيزياء','#8B5CF6',28],['ثالث ثانوي / أ','كيمياء','#0891B2',25]]],
+];
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+STYLES.forEach(([name,cls,desc],i)=>{
+  const sc=document.createElement('div');sc.className='screen '+cls+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc} — الأيقونات مصغّرة في الكل</div>`+
+    STAGES.map(([ic,lb,ct,list])=>`
+      <div class="banner"><span class="bn-ic">${ic}</span><span class="bn-lb">${lb}</span><span class="bn-ct">${ct}</span></div>
+      <div class="grid">${list.map(([g,sub,c,n])=>`
+        <div class="ccard" style="--cc:${c}">
+          <div><div class="cc-g">${g}</div><div class="cc-s">${sub}</div></div>
+          <div class="cc-meta"><span class="num">${AR(n)} طالب</span><span class="cc-edit">تعديل</span></div>
+        </div>`).join('')}
+      </div>`).join('');
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
