@@ -29,13 +29,13 @@
     .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:11.5px;}
     .cc-edit{border-radius:99px;padding:3px 12px;font-size:10.5px;font-weight:800;line-height:1.6;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);}
 
-    /* ===== أ — حبة في المنتصف ===== */
-    .hd-a{display:flex;justify-content:center;margin-bottom:13px;}
-    .hd-a .pill{display:inline-flex;align-items:center;gap:10px;background:var(--royal);color:#fff;border-radius:99px;padding:8px 8px 8px 18px;
+    /* ===== أ — حبة على اليمين، والعدد بإطار ذهبي (نمط ج) ===== */
+    .hd-a{display:flex;justify-content:flex-start;margin-bottom:13px;}
+    .hd-a .pill{display:inline-flex;align-items:center;gap:10px;background:var(--royal);color:#fff;border-radius:99px;padding:8px 9px 8px 8px;
         box-shadow:0 5px 14px rgba(15,44,92,.3);}
     .hd-a .ic{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:14px;}
     .hd-a .lb{font-size:18px;font-weight:900;letter-spacing:0;}
-    .hd-a .ct{background:var(--gold);color:#fff;border-radius:99px;padding:4px 13px;font-size:11.5px;font-weight:800;white-space:nowrap;}
+    .hd-a .ct{background:rgba(255,255,255,.16);border:1px solid var(--gold);color:#fff;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:800;white-space:nowrap;}
 
     /* ===== ب — شارة على حافة الحاوية ===== */
     .box-b{padding-top:34px;margin-top:23px;overflow:visible;}
@@ -87,7 +87,7 @@ function cards(list){
 }
 
 const D=[
- ['أ — حبة في المنتصف','شريط كحلي مضغوط في وسط الحاوية، الاسم كبير والعدد ذهبي في آخره',
+ ['أ — حبة على اليمين','شريط كحلي مضغوط على يمين الحاوية، الاسم كبير والعدد بإطار ذهبي (نمط ج)',
   STAGES.map(([ic,lb,ct,list])=>`<div class="stage-box">
     <div class="hd-a"><span class="pill"><span class="ic">${ic}</span><span class="lb">${lb}</span><span class="ct">${ct}</span></span></div>
     ${cards(list)}</div>`).join('')],
