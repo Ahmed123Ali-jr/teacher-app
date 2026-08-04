@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ألوان فخمة لخيارات الفصل</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--pl:#3B82F6;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 80px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;line-height:1.6;}
+    .sec{font-size:12px;font-weight:800;color:var(--muted);margin:18px 3px 9px;}
+
+    /* منتقي الألوان مثل النافذة */
+    .picker{display:flex;flex-wrap:wrap;gap:9px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;}
+    .chip{width:38px;height:38px;border-radius:11px;border:2px solid transparent;box-shadow:0 2px 5px rgba(16,24,40,.14);position:relative;}
+    .chip.on{border-color:var(--royal);box-shadow:0 0 0 3px color-mix(in srgb,var(--royal) 18%,transparent),0 2px 5px rgba(16,24,40,.14);}
+    .chip span{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:900;opacity:0;}
+    .chip.on span{opacity:1;}
+
+    /* بطاقات الفصول بنفس التصميم المنشور */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .ccard{position:relative;min-height:104px;padding:12px;border-radius:15px;color:#fff;text-align:right;
+        background:linear-gradient(135deg,var(--cc) 0%,var(--pl) 120%);border:0;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.18),
+                   0 6px 12px color-mix(in srgb,var(--cc) 32%,transparent), 0 2px 4px rgba(16,24,40,.18);
+        display:flex;flex-direction:column;justify-content:space-between;gap:7px;}
+    .cc-g{margin:0;font-weight:900;font-size:13px;line-height:1.35;}
+    .cc-s{font-size:10.5px;font-weight:700;opacity:.9;}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:10px;}
+    .cc-edit{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);border-radius:99px;
+        padding:2px 10px;font-size:9.5px;font-weight:700;line-height:1.6;}
+    .names{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+    .names i{font-style:normal;font-size:10px;font-weight:800;color:#fff;background:var(--c);border-radius:7px;padding:3px 9px;}
+    /* تدرّج بلون البطاقة نفسها بدل الميل للأزرق */
+    body.own .ccard{background:linear-gradient(150deg,
+        color-mix(in srgb,var(--cc) 82%,#fff) 0%, var(--cc) 55%, color-mix(in srgb,var(--cc) 72%,#000) 100%);}
+    .gradbar{position:fixed;bottom:56px;right:0;left:0;z-index:50;background:rgba(17,17,17,.85);backdrop-filter:blur(10px);
+        padding:8px 12px;display:flex;justify-content:center;}
+    .gradbar button{border:0;border-radius:99px;padding:8px 15px;font-family:inherit;font-size:11.5px;font-weight:800;background:#C9A961;color:#fff;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="gradbar"><button id="gradtg"></button></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const P=[
+ ['الحالي','الألوان المستخدمة الآن — زاهية وقياسية',
+  [['#1E40AF','أزرق'],['#10B981','أخضر'],['#F59E0B','عنبري'],['#EF4444','أحمر'],
+   ['#0EA5E9','سماوي'],['#8B5CF6','بنفسجي'],['#EC4899','وردي'],['#14B8A6','فيروزي']]],
+
+ ['أ — جواهر','ألوان الأحجار الكريمة: زمرّد وياقوت وسفير — غنية وغامقة',
+  [['#0F2C5C','كحلي ملكي'],['#046A57','زمرّد'],['#7B1E3B','ياقوت'],['#8C6D2F','برونز'],
+   ['#1D4E6F','سفير'],['#4C2A6E','أماميست'],['#A3541F','عقيق'],['#2F5D3A','يشب']]],
+
+ ['ب — ترابي فاخر','ألوان طبيعية دافئة مطفية — هادئة وراقية',
+  [['#5C4033','بنّي داكن'],['#8A6F48','رملي'],['#6B7F5E','زيتوني'],['#7D5A50','طيني'],
+   ['#3F5661','رمادي أزرق'],['#94734A','كراميل'],['#556052','حجري'],['#8B5E4B','قرميدي']]],
+
+ ['ج — عميق مطفي','درجات غامقة قليلة السطوع — الأقرب لهوية التطبيق الكحلية',
+  [['#12263F','ليلي'],['#14524B','صنوبري'],['#5B2333','نبيذي'],['#7A5C1E','ذهبي غامق'],
+   ['#26418F','أزرق عميق'],['#3D2C5A','خزامى غامق'],['#8C3B2E','طوبي'],['#2E4C3B','غابي']]],
+];
+
+const SAMPLE=[['الرابع الابتدائي / أ','رياضيات',24],['السادس الابتدائي / ب','علوم',27]];
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+P.forEach(([name,desc,colors],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===1?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>
+    <div class="sec">في نافذة إضافة الفصل</div>
+    <div class="picker">${colors.map(([c,lb],j)=>`
+      <button class="chip ${j===0?'on':''}" style="background:${c}" data-c="${c}"><span>✓</span></button>`).join('')}</div>
+    <div class="names">${colors.map(([c,lb])=>`<i style="--c:${c}">${lb}</i>`).join('')}</div>
+    <div class="sec">شكل الفصول بهذه الألوان</div>
+    <div class="grid">${SAMPLE.map(([g,sub,n],k)=>`
+      <div class="ccard" style="--cc:${colors[k===0?1:0][0]}">
+        <div><h4 class="cc-g">${g}</h4><div class="cc-s">${sub}</div></div>
+        <div class="cc-meta"><span class="num">${AR(n)} طالب</span><span class="cc-edit">تعديل</span></div>
+      </div>`).join('')}</div>
+    <div class="grid" style="margin-top:10px">${colors.slice(2,6).map((cl,k)=>`
+      <div class="ccard" style="--cc:${cl[0]}">
+        <div><h4 class="cc-g">فصل تجريبي / ${['ج','د','هـ','و'][k]}</h4><div class="cc-s">${cl[1]}</div></div>
+        <div class="cc-meta"><span class="num">${AR(20+k)} طالب</span><span class="cc-edit">تعديل</span></div>
+      </div>`).join('')}</div>`;
+  root.appendChild(sc);
+  /* اختيار لون يحدّث البطاقات */
+  sc.querySelectorAll('.chip').forEach(ch=>{
+    ch.onclick=()=>{sc.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===ch));
+      sc.querySelectorAll('.grid .ccard')[0].style.setProperty('--cc',ch.dataset.c);};
+  });
+  const b=document.createElement('button');b.textContent=name;if(i===1)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+const tg=document.getElementById('gradtg');
+function paintTg(){tg.textContent=document.body.classList.contains('own')
+  ? 'التدرّج: بلون الفصل نفسه — اضغط للتدرّج الحالي'
+  : 'التدرّج: الحالي (يميل للأزرق) — اضغط لتدرّج بلون الفصل';}
+tg.onclick=()=>{document.body.classList.toggle('own');paintTg();};
+paintTg();
+</script>
+</body>
+</html>
