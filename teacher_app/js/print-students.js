@@ -199,8 +199,14 @@
             toast('جارٍ تجهيز ملف PDF…', 'info', 4000);
             await preloadPdfEngine();
 
-            // مسرح مخفي بعرض ورقة A4 أفقية (1123px ≈ 297mm @96dpi)
+            // مسرح مخفي بمقاس ورقة A4 أفقية كاملاً (1123×794px @96dpi)
             const PAGE_W = 1123;
+            const PAGE_H = 794;
+            /* عدد الصفوف لكل صفحة PDF — مقيس فعلياً على صندوق 1123×794:
+               ارتفاع الصف ≈37px، والترويسة+رأس الجدول+التذييل ≈233px،
+               والمتاح 726px ⇒ 13 صفاً تملأ الصفحة دون اقتطاع. */
+            const PDF_ROWS = { blank: 13, today: 13, daily: 13, range: 12, summary: 12 };
+            _rowsOverride = PDF_ROWS[opts.mode] || 12;
             stage = document.createElement('div');
             stage.setAttribute('style',
                 `position:fixed; top:0; left:-20000px; width:${PAGE_W}px; background:#fff; z-index:-1;`);
@@ -212,10 +218,16 @@
             const docEl = holder.querySelector('.print-doc');
             const pages = splitPages(docEl);
 
+            // صندوق بمقاس الورقة تماماً → كل الصفحات بنفس النسبة والحجم
             const pageWrap = document.createElement('div');
-            pageWrap.style.width = PAGE_W + 'px';
-            pageWrap.style.padding = '38px 38px';   // هوامش الورقة
-            pageWrap.style.background = '#fff';
+            pageWrap.style.cssText = [
+                `width:${PAGE_W}px`,
+                `height:${PAGE_H}px`,
+                'box-sizing:border-box',
+                'padding:34px 38px',
+                'background:#fff',
+                'overflow:hidden'
+            ].join(';');
             stage.appendChild(pageWrap);
             document.body.appendChild(stage);
 
@@ -229,14 +241,13 @@
                 // مهلة قصيرة ليكتمل تطبيق التنسيق قبل الالتقاط
                 await new Promise((r) => setTimeout(r, 30));
                 const canvas = await global.html2canvas(pageWrap, {
-                    scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true
+                    scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true,
+                    width: PAGE_W, height: PAGE_H,
+                    windowWidth: PAGE_W, windowHeight: PAGE_H
                 });
-                let w = PW;
-                let h = (canvas.height * PW) / canvas.width;
-                if (h > PH) { h = PH; w = (canvas.width * PH) / canvas.height; }
                 if (i > 0) pdf.addPage('a4', 'landscape');
-                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG',
-                             (PW - w) / 2, 0, w, h);
+                // الصندوق بنسبة A4 تماماً → كل صفحة تملأ الورقة بنفس الحجم
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, PW, PH);
             }
 
             const fileName = buildFileName(opts) + '.pdf';
@@ -267,6 +278,7 @@
             toast('تعذّر إنشاء PDF — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
             run(opts, { asPdf: true });   // مسار احتياطي مضمون
         } finally {
+            _rowsOverride = null;
             if (stage && stage.parentNode) stage.parentNode.removeChild(stage);
         }
     }
@@ -357,6 +369,10 @@
         daily:   20
     };
 
+    /* عند توليد PDF نثبّت صندوق الصفحة على نسبة A4 الأفقية، فيجب أن يكون
+       عدد الصفوف موحّداً ومناسباً للارتفاع حتى تخرج كل الصفحات بحجم واحد. */
+    let _rowsOverride = null;
+
     /** Split an array into chunks of a given size. */
     function chunk(arr, size) {
         const out = [];
@@ -367,7 +383,7 @@
     /** Render multiple self-contained tables, one per page, separated by
      *  explicit .page-break divs. Avoids any cross-page row/border clipping. */
     function paginate(rows, mode, renderTable) {
-        const size = ROWS_PER_PAGE[mode] || 20;
+        const size = _rowsOverride || ROWS_PER_PAGE[mode] || 20;
         const groups = chunk(rows, size);
         if (groups.length === 0) return renderTable([], 0, 1);
         return groups.map((g, i) => `
