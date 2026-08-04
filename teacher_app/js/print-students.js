@@ -48,13 +48,29 @@
      * Main entry.
      * @param {object} opts — { mode, cls, teacher, students, attendance?, participation?, dates?, columns? }
      */
+    /** يفرض اتجاه الورقة أفقياً بحقن قاعدة @page لحظة الطباعة فقط، ثم
+     *  يزيلها حتى تبقى بقية المستندات (ملف الإنجاز/الاختبارات) عمودية. */
+    function applyLandscape() {
+        let el = document.getElementById('print-orientation');
+        if (!el) {
+            el = document.createElement('style');
+            el.id = 'print-orientation';
+            document.head.appendChild(el);
+        }
+        el.textContent = '@page { size: A4 landscape; margin: 14mm 10mm; }';
+        return el;
+    }
+
     async function print(opts) {
         const root = ensurePrintRoot();
         root.innerHTML = buildHtml(opts);
 
+        // السجل يُطبع بالعرض دائماً.
+        const styleEl = applyLandscape();
         document.body.classList.add('is-printing');
         const done = () => {
             document.body.classList.remove('is-printing');
+            if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
             global.removeEventListener('afterprint', done);
         };
         global.addEventListener('afterprint', done);
