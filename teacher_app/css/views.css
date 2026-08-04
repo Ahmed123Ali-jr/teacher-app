@@ -1574,12 +1574,106 @@ body.drawer-open { overflow: hidden; }
     margin-top: 8px;
 }
 
-/* "تحضير الكل" toggle — green while everyone is marked present */
-#btn-mark-all.mark-all-on {
-    background: #059669;
-    border-color: #059669;
+/* ==========================================================================
+   Register page header — class-colored hero + toolrow + mark-all bar
+   ========================================================================== */
+
+/* زر الطباعة داخل البطاقة الملوّنة */
+.reg-hero-print {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .18);
+    border: 0;
+    font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--dur-fast) var(--ease);
+}
+.reg-hero-print:hover { background: rgba(255, 255, 255, .28); }
+.reg-hero-print[disabled] { opacity: .45; cursor: default; }
+
+/* إحصائيتا حاضر/غائب قابلتان للضغط (فلترة) */
+.reg-hero button.hf-stat {
+    border: 0;
+    font-family: inherit;
+    color: #fff;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease);
+}
+.reg-hero .hf-stat.active {
+    background: rgba(255, 255, 255, .32);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .85);
+}
+
+/* البحث القصير + إضافة طلاب بلون الفصل */
+.reg-toolrow {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+.reg-toolrow .search-input {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+}
+.reg-add {
+    --cls-color: #1E40AF;
+    background: var(--cls-color);
+    border-color: var(--cls-color);
+    color: #fff;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.reg-add:hover {
+    background: color-mix(in srgb, var(--cls-color) 88%, #000);
+    border-color: color-mix(in srgb, var(--cls-color) 88%, #000);
     color: #fff;
 }
+
+/* شريط تحضير الكل: الزر يمين، وأسماء غير المحضَّرين يسار */
+.mark-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    margin-top: var(--space-3);
+}
+.mark-bar-btn {
+    min-height: 38px;
+    border: 0;
+    border-radius: 11px;
+    background: #059669;
+    color: #fff;
+    font-family: inherit;
+    font-weight: var(--fw-black);
+    font-size: var(--fs-sm);
+    padding: 0 var(--space-4);
+    flex-shrink: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--dur-fast) var(--ease);
+}
+.mark-bar-btn.undo { background: #DC2626; }
+.mark-bar-btn[disabled] { opacity: .6; cursor: default; }
+/* الأسماء بالأحمر، وعبارة «لم يتم تحضير :» بالأسود */
+.mark-bar-miss {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: #DC2626;
+    line-height: 1.55;
+    padding-left: var(--space-2);
+}
+.mark-bar-miss b { color: var(--text); }
+.mark-bar-miss:empty { display: none; }
 
 /* Tab bar */
 /* TODO(phase-c): on mobile use horizontal scroll with scroll-snap-align,

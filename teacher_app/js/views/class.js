@@ -258,10 +258,11 @@
             <div class="container">
                 <div class="section-page-bar">
                     <a class="btn-back-box" href="#/class/${cls.id}" aria-label="الرجوع إلى الفصل"></a>
+                    ${state.activeTab === 'students' ? '' : `
                     <div class="section-page-title">
                         <span class="section-page-icon">${tab.icon}</span>
                         <span>${tab.label}</span>
-                    </div>
+                    </div>`}
                 </div>
                 <div class="tab-panel" id="tab-panel"></div>
             </div>
@@ -389,8 +390,6 @@
         }
         const activeFilter = panel.dataset.activeAttFilter || '';
         if (!activeFilter) _attFilterIds = null;
-        const allPresent = students.length > 0
-            && attendanceToday.every((r) => r && r.status === 'present');
 
         // Column focus: 'attendance' (default) = attendance only,
         // 'notes' = the fixed notes column, otherwise an eval-column id.
@@ -405,27 +404,29 @@
         const prevChipsScroll = prevChips ? prevChips.scrollLeft : null;
 
         panel.innerHTML = `
-            <div class="students-toolbar">
-                <div class="students-meta">
-                    <strong class="num">${students.length}</strong> طالب
-                    <span class="text-muted" style="margin-right:var(--space-3);">
-                        📅 ${todayHuman()}
-                    </span>
+            <div class="hub-featured reg-hero" style="--cls-color:${cls.color || '#1E40AF'}">
+                <div class="hub-featured-bubble b1"></div>
+                <div class="hub-featured-bubble b2"></div>
+                <div class="hub-featured-head">
+                    <div class="hub-featured-icon">👥</div>
+                    <div class="hub-featured-titles">
+                        <div class="hub-featured-title">سجل متابعة الطلاب</div>
+                        <div class="hub-featured-sub">📅 ${todayHuman()}</div>
+                    </div>
+                    <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">🖨️</button>
                 </div>
-                <button class="btn btn-ghost btn-sm" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''}>🖨️ طباعة السجل</button>
+                <div class="hub-featured-stats">
+                    <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">طالب</div></div>
+                    <button class="hf-stat hf-tap ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present"><div class="hf-num num" data-hf="present">${stats.present}</div><div class="hf-lbl">حاضر</div></button>
+                    <button class="hf-stat hf-tap ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent"><div class="hf-num num" data-hf="absent">${stats.absent}</div><div class="hf-lbl">غائب</div></button>
+                    <div class="hf-stat"><div class="hf-num num" data-hf="pct">${attPct !== null ? attPct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
+                </div>
             </div>
 
-            <div class="students-actions">
+            <div class="reg-toolrow">
                 <input type="search" class="input search-input" id="student-search"
                        placeholder="🔍 بحث باسم الطالب...">
-                <button class="btn btn-primary sa-add" id="btn-add-students">+ إضافة طلاب</button>
-                <button class="btn btn-secondary ${allPresent ? 'mark-all-on' : ''}" id="btn-mark-all" ${students.length === 0 ? 'disabled' : ''}>${allPresent ? '✓ تم تحضير الكل' : '✓ تحضير الكل'}</button>
-                ${students.length > 0 ? `
-                <div class="att-mini-stats">
-                    <button class="att-mini ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present" style="--stat-color:#059669;">حاضر <b class="num">${stats.present}</b></button>
-                    <button class="att-mini ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent" style="--stat-color:#DC2626;">غائب <b class="num">${stats.absent}</b></button>
-                    <span class="att-mini pct" style="--stat-color:#1E40AF;">الحضور <b class="num">${attPct !== null ? attPct + '٪' : '—'}</b></span>
-                </div>` : ''}
+                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${cls.color || '#1E40AF'}">+ إضافة طلاب</button>
             </div>
 
             ${students.length > 0 ? `
@@ -437,6 +438,13 @@
                     <button class="col-chip ${focus === 'notes' ? 'active' : ''}" data-col-focus="notes">📝 الملاحظات</button>
                     <button class="col-chip col-chip-add" id="chip-add-column" title="إضافة خانة جديدة">+</button>
                     <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ تعديل الخانات</button>
+                </div>
+            ` : ''}
+
+            ${showAtt && students.length > 0 ? `
+                <div class="mark-bar">
+                    <button class="mark-bar-btn" id="btn-mark-all"></button>
+                    <div class="mark-bar-miss" id="mark-miss"></div>
                 </div>
             ` : ''}
 
@@ -465,9 +473,30 @@
         panel.querySelector('#btn-print-students')?.addEventListener('click', () =>
             openPrintRegisterModal(cls, students, attendanceToday, evalToday, columns));
 
-        // "تحضير الكل" toggle: press once → everyone becomes حاضر (the button
-        // turns green); press again while everyone is حاضر → today's attendance
-        // is cleared for the whole class.
+        /* شريط التحضير: الزر يمين، ويسارُه أسماء مَن لم يُحضَّروا (تظهر فقط
+           بعد بدء التحضير). عند اكتمال الجميع ينقلب الزر أحمر «إلغاء تحضير
+           الكل» وضغطه يمسح تحضير اليوم كاملاً. */
+        function paintMarkBar() {
+            const btn  = panel.querySelector('#btn-mark-all');
+            const miss = panel.querySelector('#mark-miss');
+            if (!btn || !miss) return;
+            const markedCount = attendanceToday.filter(Boolean).length;
+            const allMarked   = students.length > 0 && markedCount === students.length;
+            btn.classList.toggle('undo', allMarked);
+            btn.textContent = allMarked ? '✕ إلغاء تحضير الكل' : '✓ تحضير الكل';
+            if (markedCount > 0 && !allMarked) {
+                const names = students
+                    .filter((_, i) => !attendanceToday[i])
+                    .map((s) => escapeHtml(s.name.trim().split(/\s+/).slice(0, 2).join(' ')));
+                miss.innerHTML = '<b>لم يتم تحضير :</b> ' + names.join(' · ');
+            } else {
+                miss.innerHTML = '';
+            }
+        }
+        paintMarkBar();
+
+        // "تحضير الكل": يحضّر غير المحضَّرين فقط (لا يغيّر الغائب/المتأخر).
+        // وعند اكتمال تحضير الجميع يصبح «إلغاء تحضير الكل» ويمسح تحضير اليوم.
         panel.querySelector('#btn-mark-all')?.addEventListener('click', async () => {
             const btn = panel.querySelector('#btn-mark-all');
             btn.disabled = true;
@@ -479,30 +508,24 @@
                 const attNow = (await global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id))
                     .filter((r) => r.date === today);
                 const byStudent = new Map(attNow.map((r) => [r.student_id, r]));
-                const allPresentNow = students.length > 0
-                    && students.every((s) => byStudent.get(s.id)?.status === 'present');
-                if (allPresentNow) {
-                    btn.textContent = '⏳ جارٍ التراجع...';
+                const allMarkedNow = students.length > 0
+                    && students.every((s) => byStudent.get(s.id));
+                if (allMarkedNow) {
+                    btn.textContent = '⏳ جارٍ الإلغاء...';
                     const ids = students.map((s) => byStudent.get(s.id)).filter(Boolean).map((r) => r.id);
                     await global.TeacherDB.bulkRemove('attendance', ids);
-                    global.TeacherApp.toast('تم التراجع عن تحضير الجميع.', 'success', 2500);
+                    global.TeacherApp.toast('تم إلغاء تحضير الجميع.', 'success', 2500);
                 } else {
                     btn.textContent = '⏳ جارٍ التحضير...';
-                    const rows = [];
-                    for (const s of students) {
-                        const cur = byStudent.get(s.id);
-                        if (cur) {
-                            if (cur.status !== 'present') { cur.status = 'present'; rows.push(cur); }
-                        } else {
-                            rows.push({
-                                teacher_id: cls.teacher_id,
-                                class_id:   cls.id,
-                                student_id: s.id,
-                                date: today,
-                                status: 'present'
-                            });
-                        }
-                    }
+                    const rows = students
+                        .filter((s) => !byStudent.get(s.id))
+                        .map((s) => ({
+                            teacher_id: cls.teacher_id,
+                            class_id:   cls.id,
+                            student_id: s.id,
+                            date: today,
+                            status: 'present'
+                        }));
                     await global.TeacherDB.bulkPut('attendance', rows);
                     global.TeacherApp.toast('تم تحضير الجميع كحاضر ✅', 'success', 2500);
                 }
@@ -535,15 +558,10 @@
             const marked = students.length - st.unmarked;
             const pct = marked > 0 ? Math.round(((st.present + st.late) / marked) * 100) : null;
             const set = (sel, val) => { const el = panel.querySelector(sel); if (el) el.textContent = val; };
-            set('.att-mini[data-att-filter="present"] b', String(st.present));
-            set('.att-mini[data-att-filter="absent"] b',  String(st.absent));
-            set('.att-mini.pct b', pct !== null ? pct + '٪' : '—');
-            const allPres = students.length > 0 && attendanceToday.every((r) => r && r.status === 'present');
-            const mab = panel.querySelector('#btn-mark-all');
-            if (mab) {
-                mab.classList.toggle('mark-all-on', allPres);
-                mab.textContent = allPres ? '✓ تم تحضير الكل' : '✓ تحضير الكل';
-            }
+            set('[data-hf="present"]', String(st.present));
+            set('[data-hf="absent"]',  String(st.absent));
+            set('[data-hf="pct"]', pct !== null ? pct + '٪' : '—');
+            paintMarkBar();
         }
         function applyRowFilters() {
             const q = (panel.querySelector('#student-search')?.value || '').trim();
