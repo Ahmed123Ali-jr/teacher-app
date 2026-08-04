@@ -375,15 +375,18 @@
             table = simpleTable(students, cls, mode, columns, opts.attendance, opts.participation);
         }
 
+        /* مفتاح الرموز يشرح ما هو مطبوع فعلاً — فلا معنى له في السجل
+           المُفرّغ (خاناته فارغة يعبّئها المعلم بخطه). يبقى التوقيع. */
         const legend = mode === 'summary' ? '' : `
             <div class="print-legend">
+                ${mode === 'blank' ? '<div class="pl-keys"></div>' : `
                 <div class="pl-keys">
                     <strong>الرموز:</strong>
                     <span>✓ حاضر</span>
                     <span>✗ غائب</span>
                     <span>⏰ متأخر</span>
                     <span>م مستأذن</span>
-                </div>
+                </div>`}
                 <div class="pl-sign">توقيع المعلم: ____________________</div>
             </div>
         `;
