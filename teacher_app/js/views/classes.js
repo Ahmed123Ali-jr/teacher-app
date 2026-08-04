@@ -14,6 +14,7 @@
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
+        if (global.StageColors?.normalizeAll) await global.StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
 
         container.innerHTML = `

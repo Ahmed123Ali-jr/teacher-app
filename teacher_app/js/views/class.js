@@ -1525,12 +1525,7 @@
             SUBJECTS.concat(mine).concat(cls.subject ? [cls.subject] : [])
                 .filter((s) => s && s !== 'أخرى')
         ));
-        // نفس اللوحة المعتمدة في نافذة الإضافة (dashboard.js)
-        const COLORS = ['#EFE0BE', '#DCE5F3', '#E9E4D6', '#ECEAE3'];
-        // The picker edits the STAGE's base color — unified across its classes.
-        const stageBase = await global.StageColors.get(cls.stage);
-        let selectedColor = stageBase || cls.color || COLORS[0];
-
+        // اللون موحّد لكل الفصول (رصاصي) — لا حقل لون في التعديل.
         const form = document.createElement('form');
         form.innerHTML = `
             <div class="field">
@@ -1544,41 +1539,17 @@
                     ${subjectList.map((s) => `<option value="${escapeHtml(s)}" ${s === cls.subject ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
                 </select>
             </div>
-            <div class="field">
-                <label class="label">لون المرحلة</label>
-                <div class="color-picker">
-                    ${COLORS.map((c) => `
-                        <button type="button" class="color-chip ${c === selectedColor ? 'selected' : ''}"
-                                style="background:${c}" data-color="${c}"></button>
-                    `).join('')}
-                </div>
-                <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
-                    اللون موحّد للمرحلة كاملة — تغييره يلوّن كل فصولها بنفس اللون.
-                </div>
-            </div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="submit" class="btn btn-primary">حفظ</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
-        form.querySelectorAll('.color-chip').forEach((chip) => {
-            chip.addEventListener('click', () => {
-                form.querySelectorAll('.color-chip').forEach((c) => c.classList.remove('selected'));
-                chip.classList.add('selected');
-                selectedColor = chip.dataset.color;
-            });
-        });
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             cls.section = form.querySelector('#e-section').value.trim();
             cls.subject = form.querySelector('#e-subject').value;
             cls.updated_at = new Date().toISOString();
             await global.TeacherDB.put('classes', cls);
-            // Unify the whole stage on the picked base color; each class keeps
-            // (or gets) its own shade of it — including this one.
-            const prevBase = await global.StageColors.get(cls.stage);
-            await global.StageColors.set(cls.stage, selectedColor);
-            await global.StageColors.applyToStage(cls.teacher_id, cls.stage, selectedColor, prevBase);
             global.Modal.close();
             global.TeacherApp.toast('تم حفظ التعديل.', 'success');
             if (onSaved) onSaved();

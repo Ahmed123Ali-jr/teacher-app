@@ -16,19 +16,18 @@
         primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي'
     };
 
-    /* اللوحة المعتمدة: أربع بطاقات فاتحة (أبيض بتدرّج) فقط —
-       ذهبي خفيف · كحلي فاتح · بيج · رمادي فاتح.
-       القيمة المخزّنة هي لون نهاية التدرّج، والبطاقة الفاتحة تُرسم
-       بنص كحلي وإطار (انظر .class-card.card-light في views.css). */
-    const COLORS = ['#EFE0BE', '#DCE5F3', '#E9E4D6', '#ECEAE3'];
+    /* بقرار المستخدم (2026-08-04): لون واحد موحّد لكل الفصول —
+       الرصاصي الفاتح. لا يوجد اختيار لون في الإضافة أو التعديل،
+       والبطاقة تُرسم فاتحة بنص كحلي (.class-card.card-light). */
+    const DEFAULT_CLASS_COLOR = '#ECEAE3';
 
-    /* لكل لون فاتح «رفيق غامق» تستخدمه البطاقات الملوّنة الكبيرة
-       (هيرو الفصل وسجل المتابعة) حتى تبقى الكتابة البيضاء مقروءة. */
+    /* الرفيق الغامق للبطاقات الكبيرة (هيرو الفصل وسجل المتابعة):
+       كحلي دائماً — بطلب المستخدم يكون داخل الفصل كحلياً. */
     const DEEP_COMPANION = {
-        '#EFE0BE': '#8C6D2F',   // ذهبي خفيف → ذهبي غامق
-        '#DCE5F3': '#0F2C5C',   // كحلي فاتح → كحلي
-        '#E9E4D6': '#8A6F48',   // بيج → بني رملي
-        '#ECEAE3': '#475569'    // رمادي فاتح → رمادي كحلي
+        '#ECEAE3': '#0F2C5C',   // رصاصي → كحلي
+        '#EFE0BE': '#8C6D2F',   // (قيم قديمة من اللوحة السابقة)
+        '#DCE5F3': '#0F2C5C',
+        '#E9E4D6': '#8A6F48'
     };
 
     /* ---------- Stage colors ----------
@@ -88,6 +87,17 @@
                 }
             }
             return StageColors.isLight(color) ? '#0F2C5C' : color;
+        },
+        /** توحيد كل الفصول على اللون الرصاصي المعتمد — تعمل مرة عند فتح
+         *  القوائم وتتجاهل ما هو موحّد أصلاً (رخيصة وآمنة التكرار). */
+        async normalizeAll(teacherId) {
+            const all = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacherId);
+            for (const c of all) {
+                if (c.color !== DEFAULT_CLASS_COLOR) {
+                    c.color = DEFAULT_CLASS_COLOR;
+                    await global.TeacherDB.put('classes', c);
+                }
+            }
         },
         async get(stage) {
             const map = (await global.TeacherDB.Settings.get('stage_colors')) || {};
@@ -235,6 +245,7 @@
             return;
         }
 
+        await StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         // One indexed read instead of a query per class.
         const studentsAll = await global.TeacherDB.getAllByIndex('students', 'teacher_id', teacher.id);
@@ -479,7 +490,6 @@
 
     /* ---------- Add class modal ---------- */
     function openAddClassModal(teacher) {
-        let selectedColor = COLORS[0];
         let stage = 'primary';
 
         const form = document.createElement('form');
@@ -512,19 +522,6 @@
                 </select>
             </div>
 
-            <div class="field">
-                <label class="label">لون المرحلة</label>
-                <div class="color-picker" id="c-colors">
-                    ${COLORS.map((c, i) => `
-                        <button type="button" class="color-chip ${i === 0 ? 'selected' : ''}"
-                                style="background:${c}" data-color="${c}" aria-label="${c}"></button>
-                    `).join('')}
-                </div>
-                <div class="text-muted" style="font-size: var(--fs-xs); margin-top: 6px;">
-                    لون موحّد — كل فصول المرحلة تأخذ نفس اللون تماماً.
-                </div>
-            </div>
-
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="submit" class="btn btn-primary">حفظ الفصل</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
@@ -538,26 +535,8 @@
         }
         refreshGrades();
 
-        /* Preselect the stage's saved color so all its classes stay unified. */
-        async function refreshColor() {
-            const saved = await StageColors.get(stage);
-            if (!saved) return;
-            selectedColor = saved;
-            form.querySelectorAll('.color-chip').forEach((c) =>
-                c.classList.toggle('selected', c.dataset.color === saved));
-        }
-        refreshColor();
-
         form.querySelector('#c-stage').addEventListener('change', (e) => {
-            stage = e.target.value; refreshGrades(); refreshColor();
-        });
-
-        form.querySelectorAll('.color-chip').forEach((chip) => {
-            chip.addEventListener('click', () => {
-                form.querySelectorAll('.color-chip').forEach((c) => c.classList.remove('selected'));
-                chip.classList.add('selected');
-                selectedColor = chip.dataset.color;
-            });
+            stage = e.target.value; refreshGrades();
         });
 
         form.addEventListener('submit', async (e) => {
@@ -566,14 +545,8 @@
             btn.disabled = true;
             try {
                 const chosenStage = form.querySelector('#c-stage').value;
-                // Unify the stage on the chosen base color, then give the new
-                // class the first free shade of it.
-                const prevBase = await StageColors.get(chosenStage);
-                if (prevBase !== selectedColor) {
-                    await StageColors.set(chosenStage, selectedColor);
-                    await StageColors.applyToStage(teacher.id, chosenStage, selectedColor, prevBase);
-                }
-                const color = await StageColors.nextShade(teacher.id, chosenStage, selectedColor);
+                // كل الفصول بلون واحد معتمد — لا اختيار للون.
+                const color = DEFAULT_CLASS_COLOR;
                 await global.TeacherDB.add('classes', {
                     teacher_id: teacher.id,
                     stage:      chosenStage,
