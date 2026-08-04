@@ -675,6 +675,23 @@
 
     .students-doc { direction: rtl; }
 
+    /* طباعة السجل كصور صفحات جاهزة (نفس صور ملف PDF) — كل صورة تملأ
+       ورقة كاملة، فيتطابق المطبوع مع المحفوظ مهما اختلف المتصفح. */
+    .print-image-doc { margin: 0; padding: 0; }
+    .print-page-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .print-page-img:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
     /* عنوان اليوم في وضع «جدول مستقل لكل يوم» — بالطابع الكلاسيكي */
     .daily-day-title {
         font-size: 12pt;

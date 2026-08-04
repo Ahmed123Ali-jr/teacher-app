@@ -50,14 +50,14 @@
      */
     /** يفرض اتجاه الورقة أفقياً بحقن قاعدة @page لحظة الطباعة فقط، ثم
      *  يزيلها حتى تبقى بقية المستندات (ملف الإنجاز/الاختبارات) عمودية. */
-    function applyLandscape() {
+    function applyLandscape(margin = '14mm 10mm') {
         let el = document.getElementById('print-orientation');
         if (!el) {
             el = document.createElement('style');
             el.id = 'print-orientation';
             document.head.appendChild(el);
         }
-        el.textContent = '@page { size: A4 landscape; margin: 14mm 10mm; }';
+        el.textContent = `@page { size: A4 landscape; margin: ${margin}; }`;
         return el;
     }
 
@@ -111,8 +111,43 @@
         setTimeout(() => global.print(), 50);
     }
 
+    /** الطباعة تمرّ بنفس مسار «حفظ PDF»: نُولّد صور الصفحات بمقاس A4 أفقي
+     *  ثابت ثم نطبعها كصور تملأ الورقة — فيخرج المطبوع مطابقاً للملف
+     *  المحفوظ تماماً، ولا يتأثر باختلاف تعامل المتصفحات مع @page
+     *  (خصوصاً iOS الذي كان يطبعها عمودية). */
     async function print(opts) {
-        run(opts);
+        const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
+            && global.TeacherApp.toast(m, t, d);
+        try {
+            toast('جارٍ تجهيز الطباعة…', 'info', 3000);
+            const images = await renderPageImages(opts);
+
+            const root = ensurePrintRoot();
+            root.innerHTML = `
+                <div class="print-image-doc">
+                    ${images.map((src) => `<img class="print-page-img" src="${src}" alt="">`).join('')}
+                </div>`;
+
+            // بلا هوامش: الصورة نفسها تتضمّن هوامش الورقة، فتملأ الصفحة تماماً.
+            const styleEl = applyLandscape('0');
+            document.body.classList.add('is-printing');
+            const done = () => {
+                document.body.classList.remove('is-printing');
+                if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+                global.removeEventListener('afterprint', done);
+            };
+            global.addEventListener('afterprint', done);
+            global.setTimeout(done, 60000);
+            // ننتظر تحميل الصور قبل استدعاء الطباعة
+            const imgs = Array.from(root.querySelectorAll('img'));
+            await Promise.all(imgs.map((im) => im.complete
+                ? Promise.resolve()
+                : new Promise((r) => { im.onload = im.onerror = r; })));
+            setTimeout(() => global.print(), 60);
+        } catch (err) {
+            console.warn('[print-students] print via images failed:', err);
+            run(opts);   // مسار احتياطي: الطباعة بالـHTML مباشرة
+        }
     }
 
     /* ======================================================================
@@ -191,64 +226,73 @@
         });
     }
 
-    async function savePdf(opts) {
-        const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
-            && global.TeacherApp.toast(m, t, d);
-        let stage = null;
+    /* مقاس ورقة A4 أفقية بالبكسل (96dpi) وبالمليمتر. */
+    const PAGE_W = 1123, PAGE_H = 794;
+    const PW_MM = 297, PH_MM = 210;
+    /* عدد الصفوف لكل صفحة — مقيس فعلياً على صندوق 1123×794:
+       ارتفاع الصف ≈37px، والترويسة+رأس الجدول+التذييل ≈233px،
+       والمتاح 726px ⇒ 13 صفاً تملأ الصفحة دون اقتطاع. */
+    const FIXED_ROWS = { blank: 13, today: 13, daily: 13, range: 12, summary: 12 };
+
+    /** يلتقط كل صفحة كصورة بمقاس A4 أفقي ثابت — الأساس المشترك بين
+     *  «حفظ PDF» و«الطباعة» حتى يخرج الاثنان متطابقين تماماً. */
+    async function renderPageImages(opts) {
+        await preloadPdfEngine();
+        _rowsOverride = FIXED_ROWS[opts.mode] || 12;
+
+        const stage = document.createElement('div');
+        stage.setAttribute('style',
+            `position:fixed; top:0; left:-20000px; width:${PAGE_W}px; background:#fff; z-index:-1;`);
+        const cssEl = await printCssForScreen();
+        if (cssEl) stage.appendChild(cssEl);
+
+        const holder = document.createElement('div');
+        holder.innerHTML = buildHtml(opts);
+        const pages = splitPages(holder.querySelector('.print-doc'));
+
+        // صندوق بمقاس الورقة تماماً → كل الصفحات بنفس النسبة والحجم
+        const pageWrap = document.createElement('div');
+        pageWrap.style.cssText = [
+            `width:${PAGE_W}px`, `height:${PAGE_H}px`,
+            'box-sizing:border-box', 'padding:34px 38px',
+            'background:#fff', 'overflow:hidden'
+        ].join(';');
+        stage.appendChild(pageWrap);
+        document.body.appendChild(stage);
+
+        const images = [];
         try {
-            toast('جارٍ تجهيز ملف PDF…', 'info', 4000);
-            await preloadPdfEngine();
-
-            // مسرح مخفي بمقاس ورقة A4 أفقية كاملاً (1123×794px @96dpi)
-            const PAGE_W = 1123;
-            const PAGE_H = 794;
-            /* عدد الصفوف لكل صفحة PDF — مقيس فعلياً على صندوق 1123×794:
-               ارتفاع الصف ≈37px، والترويسة+رأس الجدول+التذييل ≈233px،
-               والمتاح 726px ⇒ 13 صفاً تملأ الصفحة دون اقتطاع. */
-            const PDF_ROWS = { blank: 13, today: 13, daily: 13, range: 12, summary: 12 };
-            _rowsOverride = PDF_ROWS[opts.mode] || 12;
-            stage = document.createElement('div');
-            stage.setAttribute('style',
-                `position:fixed; top:0; left:-20000px; width:${PAGE_W}px; background:#fff; z-index:-1;`);
-            const cssEl = await printCssForScreen();
-            if (cssEl) stage.appendChild(cssEl);
-
-            const holder = document.createElement('div');
-            holder.innerHTML = buildHtml(opts);
-            const docEl = holder.querySelector('.print-doc');
-            const pages = splitPages(docEl);
-
-            // صندوق بمقاس الورقة تماماً → كل الصفحات بنفس النسبة والحجم
-            const pageWrap = document.createElement('div');
-            pageWrap.style.cssText = [
-                `width:${PAGE_W}px`,
-                `height:${PAGE_H}px`,
-                'box-sizing:border-box',
-                'padding:34px 38px',
-                'background:#fff',
-                'overflow:hidden'
-            ].join(';');
-            stage.appendChild(pageWrap);
-            document.body.appendChild(stage);
-
-            const { jsPDF } = global.jspdf;
-            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-            const PW = 297, PH = 210;
-
-            for (let i = 0; i < pages.length; i++) {
+            for (const page of pages) {
                 pageWrap.innerHTML = '';
-                pageWrap.appendChild(pages[i]);
-                // مهلة قصيرة ليكتمل تطبيق التنسيق قبل الالتقاط
+                pageWrap.appendChild(page);
                 await new Promise((r) => setTimeout(r, 30));
                 const canvas = await global.html2canvas(pageWrap, {
                     scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true,
                     width: PAGE_W, height: PAGE_H,
                     windowWidth: PAGE_W, windowHeight: PAGE_H
                 });
-                if (i > 0) pdf.addPage('a4', 'landscape');
-                // الصندوق بنسبة A4 تماماً → كل صفحة تملأ الورقة بنفس الحجم
-                pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, PW, PH);
+                images.push(canvas.toDataURL('image/jpeg', 0.92));
             }
+        } finally {
+            _rowsOverride = null;
+            stage.remove();
+        }
+        return images;
+    }
+
+    async function savePdf(opts) {
+        const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
+            && global.TeacherApp.toast(m, t, d);
+        try {
+            toast('جارٍ تجهيز ملف PDF…', 'info', 4000);
+            const images = await renderPageImages(opts);
+
+            const { jsPDF } = global.jspdf;
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            images.forEach((img, i) => {
+                if (i > 0) pdf.addPage('a4', 'landscape');
+                pdf.addImage(img, 'JPEG', 0, 0, PW_MM, PH_MM);
+            });
 
             const fileName = buildFileName(opts) + '.pdf';
             const blob = pdf.output('blob');
@@ -277,9 +321,6 @@
             console.warn('[print-students] savePdf failed:', err);
             toast('تعذّر إنشاء PDF — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
             run(opts, { asPdf: true });   // مسار احتياطي مضمون
-        } finally {
-            _rowsOverride = null;
-            if (stage && stage.parentNode) stage.parentNode.removeChild(stage);
         }
     }
 
