@@ -139,7 +139,10 @@
             `الصف: ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}`,
             `المادة: ${escapeHtml(cls.subject)}`,
             `المعلم: ${escapeHtml(teacher?.name || '')}`,
-            `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`
+            // السجل المُفرّغ للتعبئة اليدوية: خط فارغ يكتب المعلم فيه التاريخ.
+            mode === 'blank'
+                ? 'التاريخ: ..................'
+                : `التاريخ: ${new Date().toLocaleDateString('ar-SA')}`
         ];
         if (p.academicYear) info.push(`العام: ${escapeHtml(p.academicYear)}`);
 
