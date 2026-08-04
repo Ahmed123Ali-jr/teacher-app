@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>فصل المراحل عن بعض</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#667085;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 13px 80px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:50;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:13px;font-weight:800;color:var(--muted);margin:2px 3px 12px;}
+
+    .banner{display:flex;align-items:center;gap:10px;background:var(--royal);color:#fff;border-radius:16px;padding:9px 14px;margin:0 0 12px;
+        box-shadow:0 4px 12px rgba(15,44,92,.28);}
+    .bn-ic{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.18);font-size:13px;}
+    .bn-lb{flex:1;font-size:16px;font-weight:900;}
+    .bn-ct{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:2px 11px;font-size:11px;font-weight:700;white-space:nowrap;}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .ccard{border-radius:16px;padding:14px 13px;position:relative;overflow:hidden;min-height:118px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;
+        background:var(--cc);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--cc) 30%,transparent);}
+    .cc-g{font-weight:900;font-size:14.5px;}
+    .cc-s{font-size:11.5px;font-weight:700;margin-top:2px;color:rgba(255,255,255,.85);}
+    .cc-meta{display:flex;justify-content:space-between;align-items:flex-end;font-size:11.5px;}
+    .cc-edit{border-radius:99px;padding:3px 12px;font-size:10.5px;font-weight:800;line-height:1.6;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);}
+
+    /* ===== الفواصل ===== */
+    /* أ — خط رفيع */
+    .sep-line{border:0;border-top:1.5px solid var(--border);margin:21px 4px;}
+    /* ب — فاصل ذهبي بزخرفة */
+    .sep-gold{display:flex;align-items:center;gap:10px;margin:21px 8px;color:var(--gold);}
+    .sep-gold::before,.sep-gold::after{content:"";flex:1;border-top:1.5px solid color-mix(in srgb,var(--gold) 45%,#fff);}
+    .sep-gold span{font-size:11px;line-height:1;}
+    /* ج — كل مرحلة في حاوية بيضاء */
+    .stage-box{background:#fff;border:1px solid var(--border);border-radius:21px;padding:13px;margin-bottom:16px;box-shadow:0 1px 4px rgba(16,24,40,.05);}
+    .stage-box .banner{margin-bottom:12px;}
+    /* د — تباعد كبير فقط */
+    .sep-space{height:34px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const STAGES=[
+ ['🏫','ابتدائي','فصلان',[['الصف الرابع / أ','رياضيات','#12A150',24],['الصف السادس / ب','علوم','#1E40AF',27]]],
+ ['📘','متوسط','فصل واحد',[['ثاني متوسط / أ','رياضيات','#BE185D',30]]],
+ ['🎓','ثانوي','فصلان',[['أول ثانوي / ب','فيزياء','#8B5CF6',28],['ثالث ثانوي / أ','كيمياء','#0891B2',25]]],
+];
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+function stageHtml([ic,lb,ct,list]){
+  return `<div class="banner"><span class="bn-ic">${ic}</span><span class="bn-lb">${lb}</span><span class="bn-ct">${ct}</span></div>
+    <div class="grid">${list.map(([g,sub,c,n])=>`
+      <div class="ccard" style="--cc:${c}">
+        <div><div class="cc-g">${g}</div><div class="cc-s">${sub}</div></div>
+        <div class="cc-meta"><span class="num">${AR(n)} طالب</span><span class="cc-edit">تعديل</span></div>
+      </div>`).join('')}
+    </div>`;
+}
+
+const D=[
+ ['أ — خط رفيع','خط فاصل هادئ بين كل مرحلة والثانية',
+   STAGES.map(stageHtml).join('<hr class="sep-line">')],
+ ['ب — فاصل ذهبي','خط ذهبي بزخرفة ◆ في المنتصف — من هوية التطبيق',
+   STAGES.map(stageHtml).join('<div class="sep-gold"><span>◆</span></div>')],
+ ['ج — حاوية لكل مرحلة','كل مرحلة داخل بطاقة بيضاء تجمع الشريط وفصوله — الفصل الأوضح',
+   STAGES.map(s=>`<div class="stage-box">${stageHtml(s)}</div>`).join('')],
+ ['د — تباعد أكبر','بدون أي خط — فقط مسافة أكبر بين المراحل',
+   STAGES.map(stageHtml).join('<div class="sep-space"></div>')],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
