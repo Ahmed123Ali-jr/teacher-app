@@ -49,6 +49,19 @@
     .v-white .cc-s{color:color-mix(in srgb,var(--royal) 62%,#fff);}
     .v-white .cc-edit{background:rgba(201,169,97,.10);border:1px solid rgba(201,169,97,.55);color:var(--royal);}
 
+    /* ===== د — بلون الخلفية + كتابة بيضاء ===== */
+    .v-bgwhite .ccard{background:var(--bg);color:#fff;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7), 0 3px 8px rgba(16,24,40,.08);}
+    .v-bgwhite .cc-s{color:rgba(255,255,255,.85);}
+    .v-bgwhite .cc-edit{background:rgba(201,169,97,.12);border:1px solid rgba(201,169,97,.55);color:#fff;}
+
+    /* ===== هـ — بيج أغمق + كتابة بيضاء ===== */
+    .v-bgdark .ccard{background:#B9AE96;color:#fff;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.12),
+                   0 4px 10px rgba(16,24,40,.14);}
+    .v-bgdark .cc-s{color:rgba(255,255,255,.88);}
+    .v-bgdark .cc-edit{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.55);color:#fff;}
+
     /* ===== ج — كحلي + كتابة بيضاء ===== */
     .v-navy .ccard{background:linear-gradient(180deg,#24498A 0%,var(--royal) 55%,#0A2148 100%);color:#fff;
         box-shadow:inset 0 1.5px 0 rgba(255,255,255,.25), inset 0 -2px 4px rgba(0,0,0,.25),
@@ -84,6 +97,8 @@ const D=[
  ['أ — بلون الخلفية + كحلي','البطاقة بنفس لون خلفية الصفحة، إطار ذهبي وكتابة كحلية','v-bgnavy'],
  ['ب — أبيض + كحلي','البطاقة بيضاء بإطار ذهبي وكتابة كحلية','v-white'],
  ['ج — كحلي + أبيض','البطاقة كحلية بإطار ذهبي وكتابة بيضاء','v-navy'],
+ ['د — بلون الخلفية + أبيض','البطاقة بلون خلفية الصفحة والكتابة بيضاء','v-bgwhite'],
+ ['هـ — بيج أغمق + أبيض','نفس الفكرة لكن الخلفية بيج أغمق ليظهر الأبيض','v-bgdark'],
 ];
 
 const root=document.getElementById('root'),sw=document.getElementById('switcher');
@@ -96,6 +111,7 @@ D.forEach(([name,desc,cls],i)=>{
     sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
   sw.appendChild(b);
 });
+sw.querySelectorAll('button')[3].click();   // ابدأ من د
 </script>
 </body>
 </html>
