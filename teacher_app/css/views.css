@@ -1754,6 +1754,221 @@ body.drawer-open { overflow: hidden; }
 .tab-panel { padding-bottom: var(--space-10); }
 
 /* ==========================================================================
+   الرئيسية الجديدة (المعتمدة) — home-v2
+   ========================================================================== */
+.home-v2 { padding-bottom: var(--space-10); }
+
+/* الهيدر: تحية + هجري + صورة */
+.home-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5) 0 var(--space-3);
+}
+.home-hd-tt h2 { margin: 0; font-size: 21px; font-weight: var(--fw-black); color: var(--primary); }
+.home-hij {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 3px;
+    display: flex; align-items: center; gap: 6px;
+}
+.home-hij::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #C9A961; }
+.home-av {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: grid; place-items: center;
+    font-weight: var(--fw-black); font-size: 17px;
+    border: 1.5px solid #C9A961;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-decoration: none;
+}
+.home-av img { width: 100%; height: 100%; object-fit: cover; }
+
+/* بطاقة التذكيرات المطويّة — تدرّج رصاصي كالفصول */
+.rem-card {
+    border-radius: 15px;
+    overflow: hidden;
+    color: var(--primary);
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 5px 11px rgba(16, 24, 40, .12);
+    margin-bottom: var(--space-3);
+}
+.rem-head { display: flex; align-items: center; gap: 10px; padding: 11px 13px; }
+.rem-ic {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255, 255, 255, .75);
+    display: grid; place-items: center; font-size: 16px;
+}
+.rem-head b { font-size: var(--fs-sm); color: var(--primary); }
+.rem-bd {
+    background: #C9A961; color: var(--primary);
+    font-weight: var(--fw-black); font-size: 12px;
+    min-width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+}
+.rem-toggle {
+    margin-right: auto;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 0; background: rgba(255, 255, 255, .75);
+    color: var(--primary); font-size: 14px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: transform .22s var(--ease);
+}
+.rem-card.open .rem-toggle { transform: rotate(180deg); }
+.rem-body { display: none; }
+.rem-card.open .rem-body { display: block; }
+.rem-it {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 13px;
+    border-top: 1px solid color-mix(in srgb, #ECEAE3 80%, #000);
+}
+.rem-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rem-tx { flex: 1; min-width: 0; }
+.rem-tt { font-size: 13.5px; font-weight: var(--fw-bold); color: var(--text); }
+.rem-ss { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.rem-tag {
+    font-size: 10.5px; font-weight: var(--fw-black);
+    border-radius: 7px; padding: 2px 8px; flex-shrink: 0;
+}
+.rem-it.rem-all { justify-content: center; }
+.rem-it.rem-all a { font-size: 12.5px; color: var(--primary); text-decoration: underline; }
+
+/* صندوق حصص اليوم — كحلي فاخر (البديل ب) */
+.pday-box {
+    border-radius: 19px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #1B3E75 0%, var(--primary) 55%, #0A2148 100%);
+    border: 1px solid #1B3E75;
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .25), 0 8px 18px rgba(15, 44, 92, .32);
+    margin-bottom: var(--space-3);
+}
+.pday-head { display: flex; align-items: center; gap: 8px; padding: 13px 15px 11px; }
+.pday-head b { font-size: var(--fs-sm); font-weight: var(--fw-black); color: #fff; }
+.pday-cnt {
+    background: #C9A961; color: var(--primary);
+    font-weight: var(--fw-black); font-size: 13px;
+    border-radius: var(--radius-full); padding: 2px 10px;
+}
+.pday-head a { margin-right: auto; font-size: 12.5px; color: rgba(255,255,255,.8); text-decoration: underline; }
+.pday-chips {
+    display: flex; gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 15px 15px;
+}
+.pday-chips::-webkit-scrollbar { display: none; }
+.pchip {
+    flex-shrink: 0;
+    width: 68px; height: 76px;
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .16);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+    text-decoration: none;
+}
+.pchip .pc-n { font-weight: var(--fw-black); font-size: var(--fs-sm); color: #fff; }
+.pchip .pc-t { font-size: 11px; color: rgba(255, 255, 255, .6); }
+.pchip .pc-c { font-size: 11px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .85); }
+.pchip.past { background: rgba(255, 255, 255, .05); border-color: transparent; }
+.pchip.past .pc-n,
+.pchip.past .pc-c { color: rgba(255, 255, 255, .45); }
+.pchip.past .pc-n::after { content: " ✓"; font-size: 11px; }
+.pchip.live {
+    background: #C9A961; border-color: transparent;
+    transform: scale(1.05);
+    box-shadow: 0 3px 13px rgba(201, 169, 97, .5);
+}
+.pchip.live .pc-n, .pchip.live .pc-t, .pchip.live .pc-c { color: var(--primary); font-weight: var(--fw-black); }
+.pchip.wait { background: rgba(231, 200, 123, .15); border-color: rgba(231, 200, 123, .45); }
+.pchip.wait .pc-c { color: #E7C87B; }
+
+/* أزرار التجهيز — تدرّج رصاصي */
+.prep-l { margin: var(--space-5) 3px var(--space-2); font-size: var(--fs-xs); color: var(--text-muted); font-weight: var(--fw-bold); }
+.prep-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.prep-grid a {
+    min-height: 55px;
+    border-radius: 13px;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 12.5px; font-weight: var(--fw-black); color: var(--primary);
+    text-decoration: none;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 5px 11px rgba(16, 24, 40, .12);
+}
+.prep-grid a:active { transform: scale(.98); }
+
+/* مربع حصتك الحالية — كحلي سادة بارز */
+.home-hero {
+    margin-top: var(--space-3);
+    border-radius: 21px;
+    padding: 21px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    background: var(--primary);
+    border: 1px solid #1B3E75;
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .22),
+                0 8px 18px rgba(15, 44, 92, .42), 0 2px 5px rgba(15, 44, 92, .3);
+}
+.hh-badge {
+    position: absolute; top: 15px; left: 15px;
+    background: #C9A961; color: var(--primary);
+    font-weight: var(--fw-black); font-size: 12px;
+    border-radius: 8px; padding: 3px 9px;
+    display: flex; align-items: center; gap: 5px;
+}
+.hh-badge.soft { background: rgba(255, 255, 255, .14); color: #E0C486; }
+.hh-badge i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--primary);
+    animation: hh-pulse 2s infinite;
+    font-style: normal;
+}
+@keyframes hh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.hh-body { display: block; color: inherit; text-decoration: none; }
+.hh-l { font-size: 13px; color: rgba(255, 255, 255, .65); }
+.hh-t { font-size: 26px; font-weight: var(--fw-black); margin-top: 4px; }
+.hh-s { font-size: var(--fs-sm); color: rgba(201, 169, 97, .95); font-weight: var(--fw-bold); margin-top: 4px; }
+.hh-prog { display: flex; align-items: center; gap: 9px; margin-top: 14px; }
+.hh-bar { flex: 1; height: 5px; border-radius: var(--radius-full); background: rgba(255, 255, 255, .15); overflow: hidden; }
+.hh-bar i { display: block; height: 100%; background: #C9A961; border-radius: var(--radius-full); }
+.hh-prog span { font-size: 12px; color: rgba(255, 255, 255, .7); }
+.hh-cta {
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 15px;
+    min-height: 55px;
+    border-radius: 13px;
+    background: #C9A961; color: var(--primary);
+    font-weight: var(--fw-black); font-size: 17px;
+    text-decoration: none;
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .4), 0 4px 10px rgba(0, 0, 0, .2);
+}
+.hh-cta:active { transform: scale(.99); }
+
+/* حالات بديلة للمربع: إجازة / انتهى اليوم / إعداد الجدول / أول فصل */
+.home-hero-alt {
+    margin-top: var(--space-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 21px;
+    padding: var(--space-6);
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(16, 24, 40, .07);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.home-hero-alt.dashed { border: 2px dashed var(--border-strong); box-shadow: none; }
+.home-hero-alt .ha-t { font-size: var(--fs-lg); font-weight: var(--fw-black); color: var(--primary); }
+.home-hero-alt .ha-s { font-size: var(--fs-xs); color: var(--text-muted); }
+
+/* ==========================================================================
    Students tab
    ========================================================================== */
 /* TODO(phase-c): on mobile, search full-width on top row;

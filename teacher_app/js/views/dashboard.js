@@ -238,6 +238,183 @@
         }
     }
 
+    /* ---------- الرئيسية الجديدة (المعتمدة 2026-08-04) ---------- */
+
+    function esc(s) {
+        return String(s || '').replace(/[&<>"']/g, (m) => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[m]));
+    }
+
+    function todayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    /** "07:55" → دقائق من منتصف الليل، أو null */
+    function toMins(hhmm) {
+        const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || '').trim());
+        return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    }
+
+    const REM_TYPES = {
+        exam:     { label: 'اختبار', color: '#EF4444' },
+        homework: { label: 'واجب',   color: '#F59E0B' },
+        meeting:  { label: 'اجتماع', color: '#8B5CF6' },
+        activity: { label: 'نشاط',   color: '#0EA5E9' },
+        other:    { label: 'أخرى',   color: '#64748B' }
+    };
+
+    /** «الرابع الابتدائي / أ» بصيغة مختصرة للحبّات: «الرابع/أ» */
+    function chipName(cls) {
+        const g = String(cls.grade || '').replace(/^\s*الصف\s+/, '').split(/\s+/)[0];
+        return `${g}/${cls.section}`;
+    }
+
+    /* بطاقة التذكيرات المطويّة — تُخفى كلياً عند صفر تذكيرات */
+    function remindersCardHtml(reminders, classById) {
+        if (!reminders.length) return '';
+        const rows = reminders.map((r) => {
+            const meta = REM_TYPES[r.type] || REM_TYPES.other;
+            const cls = r.class_id ? classById[r.class_id] : null;
+            const sub = cls ? `${esc(cls.grade)} / ${esc(cls.section)} · اليوم` : 'اليوم';
+            return `
+                <div class="rem-it">
+                    <span class="rem-dot" style="background:${meta.color}"></span>
+                    <div class="rem-tx">
+                        <div class="rem-tt">${esc(r.title)}</div>
+                        <div class="rem-ss">${sub}</div>
+                    </div>
+                    <span class="rem-tag" style="background:color-mix(in srgb,${meta.color} 8%,#fff);color:${meta.color}">${meta.label}</span>
+                </div>`;
+        }).join('');
+        return `
+            <div class="rem-card" id="rem-card">
+                <div class="rem-head">
+                    <div class="rem-ic">🔔</div>
+                    <b>تذكيرات اليوم</b>
+                    <span class="rem-bd num">${reminders.length}</span>
+                    <button type="button" class="rem-toggle" id="rem-toggle" aria-label="عرض التذكيرات">▾</button>
+                </div>
+                <div class="rem-body">
+                    ${rows}
+                    <div class="rem-it rem-all"><a href="#/reminders">كل التذكيرات ←</a></div>
+                </div>
+            </div>`;
+    }
+
+    /* صندوق حصص اليوم الكحلي — حبّات بحالة كل حصة */
+    function periodsBoxHtml(todayRows, classById, periodByN) {
+        if (!todayRows.length) return '';
+        const now = new Date().getHours() * 60 + new Date().getMinutes();
+        let done = 0;
+        const chips = todayRows.map((r) => {
+            const cls = r.class_id ? classById[r.class_id] : null;
+            const p = periodByN[r.period];
+            const start = p ? toMins(p.start) : null;
+            const end = p ? toMins(p.end) : null;
+            let st = '';
+            if (end !== null && now >= end) { st = 'past'; done++; }
+            else if (start !== null && end !== null && now >= start && now < end) st = 'live';
+            const wait = !cls;
+            const name = wait ? 'انتظار' : esc(chipName(cls));
+            const inner = `
+                <span class="pc-n num">ح${r.period}</span>
+                <span class="pc-t num">${p ? esc(p.start) : ''}</span>
+                <span class="pc-c">${name}</span>`;
+            return wait
+                ? `<div class="pchip wait ${st === 'past' ? 'past' : ''}">${inner}</div>`
+                : `<a href="#/class/${cls.id}" class="pchip ${st}">${inner}</a>`;
+        }).join('');
+        return `
+            <div class="pday-box">
+                <div class="pday-head">
+                    <b>🕐 حصص اليوم</b>
+                    <span class="pday-cnt num">${done} / ${todayRows.length}</span>
+                    <a href="#/schedule">الجدول كاملاً</a>
+                </div>
+                <div class="pday-chips">${chips}</div>
+            </div>`;
+    }
+
+    /* أزرار تجهيز فصل الحصة القادمة/الحالية */
+    function prepHtml(cls) {
+        if (!cls) return '';
+        return `
+            <div class="prep-l">تجهيز ${esc(shortGrade(cls.grade))} / ${esc(cls.section)}</div>
+            <div class="prep-grid">
+                <a href="#/class/${cls.id}/exams">📝 الاختبارات</a>
+                <a href="#/class/${cls.id}/worksheets">📄 أوراق العمل</a>
+                <a href="#/class/${cls.id}/homework">📚 الواجبات</a>
+            </div>`;
+    }
+
+    /* مربع «حصتك الحالية/القادمة» الكحلي في أسفل الصفحة */
+    function heroHtml(info, hasClasses, hasSchedule, isWeekend) {
+        if (!hasClasses) {
+            return `
+                <div class="home-hero-alt dashed">
+                    <div class="ha-t">أضف فصلك الأول 🎒</div>
+                    <div class="ha-s">لتبدأ متابعة طلابك وحصصك من هنا</div>
+                    <button type="button" class="btn btn-primary" data-add-class style="min-height:48px;">+ إضافة فصل</button>
+                </div>`;
+        }
+        if (isWeekend) {
+            return `
+                <div class="home-hero-alt">
+                    <div class="ha-t">🌴 إجازة سعيدة</div>
+                    <div class="ha-s">نلقاك الأحد بإذن الله</div>
+                </div>`;
+        }
+        if (!hasSchedule) {
+            return `
+                <div class="home-hero-alt dashed">
+                    <div class="ha-t">📅 أضف جدولك الأسبوعي</div>
+                    <div class="ha-s">لتظهر حصتك الحالية هنا كل صباح</div>
+                    <a href="#/schedule" class="btn btn-primary" style="min-height:48px;">إعداد الجدول</a>
+                </div>`;
+        }
+        if (!info || info.state === 'done') {
+            return `
+                <div class="home-hero-alt">
+                    <div class="ha-t">🎉 انتهت حصصك اليوم</div>
+                    <div class="ha-s">استمتع بباقي يومك</div>
+                </div>`;
+        }
+        const isNow = info.state === 'now';
+        const badge = isNow
+            ? '<span class="hh-badge"><i></i> الآن</span>'
+            : `<span class="hh-badge soft num">${info.minsUntil <= 5 ? 'بعد دقائق ⏰' : 'بعد ' + info.minsUntil + ' دقيقة'}</span>`;
+        let progress = '';
+        if (isNow) {
+            const s = toMins(info.period.start), e = toMins(info.period.end);
+            const now = new Date().getHours() * 60 + new Date().getMinutes();
+            const pct = (s !== null && e !== null && e > s)
+                ? Math.max(0, Math.min(100, Math.round(((now - s) / (e - s)) * 100)))
+                : 0;
+            progress = `
+                <div class="hh-prog">
+                    <div class="hh-bar"><i style="width:${pct}%"></i></div>
+                    <span class="num">تنتهي ${esc(info.period.end)}</span>
+                </div>`;
+        } else {
+            progress = `<div class="hh-prog"><span class="num">تبدأ ${esc(info.period.start)}</span></div>`;
+        }
+        return `
+            <div class="home-hero">
+                ${badge}
+                <a href="#/class/${info.cls.id}" class="hh-body">
+                    <div class="hh-l">${isNow ? 'حصتك الحالية' : 'حصتك القادمة'}</div>
+                    <div class="hh-t">${esc(shortGrade(info.cls.grade))} / ${esc(info.cls.section)}</div>
+                    <div class="hh-s">${esc(info.cls.subject)} · حصة <span class="num">${info.period.n}</span></div>
+                    ${progress}
+                </a>
+                <a href="#/class/${info.cls.id}/students" class="hh-cta">📋 سجل المتابعة</a>
+            </div>`;
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) {
@@ -247,99 +424,46 @@
 
         await StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        // One indexed read instead of a query per class.
-        const studentsAll = await global.TeacherDB.getAllByIndex('students', 'teacher_id', teacher.id);
-        const remindersToday = global.RemindersView
-            ? await global.RemindersView.todayCount(teacher)
-            : 0;
+        const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
         const nextClass = global.ScheduleView
             ? await global.ScheduleView.nextClassInfo(teacher)
             : null;
 
-        // Today's scheduled periods count (Sun-Thu only; Fri/Sat → 0)
         const scheduleRows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+        const periods = (await global.TeacherDB.Settings.get('period_times')) || [];
+        const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
         const jsDay = new Date().getDay();
         const todayIdx = (jsDay >= 0 && jsDay <= 4) ? jsDay : -1;
-        const todayPeriodsCount = todayIdx === -1
-            ? 0
-            : scheduleRows.filter((r) => r.day === todayIdx).length;
+        const todayRows = todayIdx === -1
+            ? []
+            : scheduleRows.filter((r) => r.day === todayIdx).sort((a, b) => a.period - b.period);
+
+        const t = todayISO();
+        const remindersToday = (await global.TeacherDB.getAllByIndex('reminders', 'teacher_id', teacher.id))
+            .filter((r) => r.date === t && !r.done);
 
         const avatarHtml = global.ProfileView
             ? global.ProfileView.avatarInner(teacher, true)
-            : `<span>${(teacher.name || '').charAt(0)}</span>`;
+            : `<span>${esc((teacher.name || '').charAt(0))}</span>`;
+        const firstName = esc((teacher.name || '').trim().split(/\s+/)[0] || '');
+
+        // فصل التجهيز: فصل الحصة الحالية/القادمة وإلا أول فصل
+        const prepClass = (nextClass && nextClass.cls) || classes[0] || null;
 
         container.innerHTML = `
-            <div class="container">
-                <div class="dashboard-section">
-                    <h2 class="welcome-title">${greet()}، ${teacher.name} 👋</h2>
-                    <p class="welcome-subtitle">
-                        ${hijriToday()}
-                    </p>
-
-                    <a href="#/profile" class="card profile-card">
-                        <div class="profile-card-avatar">${avatarHtml}</div>
-                        <div class="profile-card-body">
-                            <div class="profile-card-name">${teacher.name || ''}</div>
-                            <div class="profile-card-meta">
-                                ${teacher.school_name || ''}${teacherSubjects(teacher).length ? ' · ' + teacherSubjects(teacher).join('، ') : ''}
-                            </div>
-                            <div class="profile-card-hint">اضغط لعرض وتعديل بياناتك ←</div>
-                        </div>
-                    </a>
-
-                    ${nextClassWidgetHtml(nextClass)}
-
-                    <div class="grid grid-4">
-                        <a href="#/classes" class="card stat-card stat-card-link">
-                            <div class="stat-icon">📚</div>
-                            <div class="stat-value num">${classes.length}</div>
-                            <div class="stat-label">فصولي</div>
-                        </a>
-                        <a href="#/classes" class="card stat-card stat-card-link">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-value num">${studentsAll.length}</div>
-                            <div class="stat-label">إجمالي الطلاب</div>
-                        </a>
-                        <button type="button" class="card stat-card stat-card-link" id="btn-today-periods" style="border:0; font-family:inherit; cursor:pointer; text-align:right;">
-                            <div class="stat-icon">📅</div>
-                            <div class="stat-value num">${todayPeriodsCount}</div>
-                            <div class="stat-label">حصص اليوم</div>
-                        </button>
-                        <a href="#/reminders" class="card stat-card stat-card-link">
-                            <div class="stat-icon">🔔</div>
-                            <div class="stat-value num">${remindersToday}</div>
-                            <div class="stat-label">تذكيرات اليوم</div>
-                        </a>
+            <div class="container home-v2">
+                <div class="home-hd">
+                    <div class="home-hd-tt">
+                        <h2>${greet()}، ${firstName} 👋</h2>
+                        <div class="home-hij">${hijriToday()}</div>
                     </div>
+                    <a href="#/profile" class="home-av" aria-label="بياناتي">${avatarHtml}</a>
                 </div>
 
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <h3 class="section-title">📚 فصولي</h3>
-                        <button class="btn btn-primary" id="btn-add-class">+ إضافة فصل</button>
-                    </div>
-                    <div class="grid grid-3" id="classes-grid">
-                        ${classes.length === 0 ? emptyState() : classesHtml(classes)}
-                    </div>
-                </div>
-
-                <div class="dashboard-section">
-                    <h3 class="section-title">⚡ اختصارات سريعة</h3>
-                    <div class="grid grid-4">
-                        <a href="#/portfolio" class="shortcut-tile">
-                            <span class="icon">📁</span>
-                            <span class="label">ملف الإنجاز</span>
-                        </a>
-                        <a href="#/reports" class="shortcut-tile">
-                            <span class="icon">📊</span>
-                            <span class="label">التقارير</span>
-                        </a>
-                        <a href="#/reminders" class="shortcut-tile">
-                            <span class="icon">🔔</span>
-                            <span class="label">تذكيراتي</span>
-                        </a>
-                    </div>
-                </div>
+                ${remindersCardHtml(remindersToday, classById)}
+                ${periodsBoxHtml(todayRows, classById, periodByN)}
+                ${prepHtml(prepClass)}
+                ${heroHtml(nextClass, classes.length > 0, scheduleRows.length > 0, todayIdx === -1)}
             </div>
         `;
 
@@ -402,16 +526,10 @@
             });
         });
 
-        container.querySelectorAll('.shortcut-tile').forEach((el) => {
-            // Only show placeholder toast for shortcuts without a real href
-            if (el.tagName === 'A' && el.getAttribute('href')) return;
-            el.addEventListener('click', () => {
-                global.TeacherApp.toast('هذه الشاشة ستُبنى في مرحلة لاحقة.', 'info');
-            });
+        // طي/فتح بطاقة تذكيرات اليوم
+        container.querySelector('#rem-toggle')?.addEventListener('click', () => {
+            container.querySelector('#rem-card')?.classList.toggle('open');
         });
-
-        container.querySelector('#btn-today-periods')?.addEventListener('click',
-            () => openTodayPeriodsModal(teacher));
     }
 
     /* ---------- Today's periods modal ---------- */
