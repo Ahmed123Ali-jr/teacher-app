@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>تمرير الجدول وتصغيره</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--amber:#F59E0B;--red:#DC2626;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 14px 130px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:60;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:12.5px;font-weight:800;color:var(--muted);margin:4px 3px 14px;line-height:1.6;}
+
+    .headC{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+    .headC h1{flex:1;margin:0;font-size:20px;font-weight:900;color:var(--royal);}
+    .timeSm{display:inline-flex;align-items:center;min-height:36px;border-radius:11px;padding:0 12px;
+        font-family:inherit;font-weight:800;font-size:12.5px;color:var(--royal);white-space:nowrap;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.1);}
+    .clearLink{display:block;width:100%;text-align:center;margin-top:21px;background:none;border:0;font-family:inherit;
+        font-size:13px;font-weight:800;color:var(--red);text-decoration:underline;padding:10px;}
+    .hintline{text-align:center;color:var(--muted);font-size:11.5px;margin-top:9px;}
+
+    /* ===== الجدول: شرائط أيام (ج) — مصغّر ===== */
+    .gwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
+    .gwrap::-webkit-scrollbar{height:0;}
+    table.gt{border-collapse:separate;border-spacing:0 7px;width:max-content;min-width:100%;background:transparent;}
+    table.gt th,table.gt td{padding:0;}
+    .gt thead th{background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;font-weight:800;
+        padding:9px 5px;font-size:11.5px;min-width:84px;text-align:center;}
+    .gt thead th:first-child{border-radius:0 12px 12px 0;}
+    .gt thead th:last-child{border-radius:12px 0 0 12px;}
+    .gt thead th .pt{color:rgba(255,255,255,.72);font-weight:700;display:block;font-size:9.5px;margin-top:1px;}
+    .gt thead th.corner{position:sticky;right:0;z-index:2;min-width:54px;}
+    .gt tbody tr{background:#fff;box-shadow:0 3px 8px rgba(16,24,40,.07);}
+    .gt tbody td:first-child{border-radius:0 12px 12px 0;}
+    .gt tbody td:last-child{border-radius:12px 0 0 12px;}
+    .gt tbody tr.today{outline:2px solid var(--gold);}
+    .gt td.dc{background:var(--gray);color:var(--royal);font-weight:900;font-size:12.5px;position:sticky;right:0;z-index:1;
+        min-width:54px;text-align:center;border-left:1.5px solid color-mix(in srgb,var(--gray) 82%,#000);}
+    .gt tr.today td.dc{background:var(--gold);color:var(--royal);}
+    .gt td.cell{border-left:1px solid var(--border);height:62px;padding:6px;}
+    .cellbox{height:100%;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;}
+    .cellbox.cls{background:linear-gradient(150deg,#fff,var(--gray));border:1px solid color-mix(in srgb,var(--gray) 78%,#000);
+        box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(16,24,40,.08);}
+    .cellbox.cls .c{font-size:12.5px;font-weight:900;color:var(--royal);}
+    .cellbox.cls .s{font-size:10px;color:var(--muted);font-weight:700;}
+    .cellbox.wait{background:color-mix(in srgb,var(--amber) 12%,#fff);border:1px solid color-mix(in srgb,var(--amber) 32%,#fff);color:#B45309;font-size:11.5px;font-weight:800;}
+    .cellbox.empty{color:#CBBE9E;font-size:19px;}
+
+    /* أ — التقاط الأعمدة (snap) */
+    .v-a .gwrap{scroll-snap-type:x mandatory;}
+    .v-a .gt thead th:not(.corner),
+    .v-a .gt td.cell{scroll-snap-align:end;}
+
+    /* ب — أسهم تحريك ناعمة */
+    .navrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+    .navrow .sp{flex:1;}
+    .arrow{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:17px;color:var(--royal);
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.1);}
+    .arrow:active{transform:scale(.94);}
+    .arrow[disabled]{opacity:.4;}
+
+    /* ج — مؤشر نقاط */
+    .dots{display:flex;gap:5px;justify-content:center;margin-top:10px;}
+    .dots i{width:6px;height:6px;border-radius:50%;background:#D8D2C2;transition:all .25s;}
+    .dots i.on{background:var(--royal);width:18px;border-radius:99px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const TODAY=2;
+const PT=['07:00','07:55','08:50','09:45','10:50','11:45','12:40'];
+const W={
+ 0:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'السادس/ب',s:'علوم'},3:'wait',4:{c:'الرابع/أ',s:'رياضيات'},5:{c:'الخامس/ج',s:'لغتي'}},
+ 1:{1:{c:'السادس/ب',s:'علوم'},2:{c:'الرابع/أ',s:'رياضيات'},4:{c:'الخامس/ج',s:'لغتي'},5:'wait'},
+ 2:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'السادس/ب',s:'علوم'},3:{c:'الرابع/أ',s:'رياضيات'},4:'wait',5:{c:'الخامس/ج',s:'لغتي'},6:{c:'السادس/ب',s:'علوم'}},
+ 3:{1:{c:'الخامس/ج',s:'لغتي'},2:{c:'الرابع/أ',s:'رياضيات'},3:{c:'السادس/ب',s:'علوم'}},
+ 4:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'الخامس/ج',s:'لغتي'},5:{c:'السادس/ب',s:'علوم'}},
+};
+const NP=7;
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+function grid(){
+  let head='<th class="corner">اليوم</th>';
+  for(let p=1;p<=NP;p++)head+=`<th>ح${AR(p)}<span class="pt num">${PT[p-1]}</span></th>`;
+  let body='';
+  DAYS.forEach((d,i)=>{
+    let tds=`<td class="dc">${d}</td>`;
+    for(let p=1;p<=NP;p++){const cell=W[i][p];
+      if(!cell)tds+=`<td class="cell"><div class="cellbox empty">+</div></td>`;
+      else if(cell==='wait')tds+=`<td class="cell"><div class="cellbox wait">انتظار</div></td>`;
+      else tds+=`<td class="cell"><div class="cellbox cls"><span class="c">${cell.c}</span><span class="s">${cell.s}</span></div></td>`;
+    }
+    body+=`<tr class="${i===TODAY?'today':''}">${tds}</tr>`;
+  });
+  return `<div class="gwrap"><table class="gt"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+const head = `<div class="headC"><h1>📅 الجدول الأسبوعي</h1><button class="timeSm">توقيت الحصص</button></div>`;
+const foot = `<button class="clearLink">🗑️ مسح الجدول كاملاً</button>`;
+
+const D=[
+ ['أ — التقاط الأعمدة','السحب ناعم ويتوقّف عند كل حصة بدل الانزلاق العشوائي (scroll-snap) — الجدول مصغّر ٦٢px',
+  head+grid()+`<p class="hintline">اسحب — يتوقف عند كل حصة</p>`+foot],
+ ['ب — أسهم ناعمة','سهمان ‹ › يحرّكان الجدول حصة واحدة بحركة انزلاق ناعمة — بلا سحب',
+  head+`<div class="navrow"><button class="arrow" data-dir="-1">›</button><span class="sp"></span><button class="arrow" data-dir="1">‹</button></div>`+grid()+foot],
+ ['ج — أسهم + التقاط + نقاط','الاثنان معاً: أسهم ناعمة وسحب يلتقط الأعمدة، ومؤشر نقاط يبيّن موقعك',
+  head+`<div class="navrow"><button class="arrow" data-dir="-1">›</button><span class="sp"></span><button class="arrow" data-dir="1">‹</button></div>`+grid()+`<div class="dots"></div>`+foot],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen v-'+'abc'[i]+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+
+  const wrap=sc.querySelector('.gwrap');
+  // عرض العمود — إن كانت الشاشة مخفية نستخدم قياساً افتراضياً
+  const colW=()=>{
+    const th=sc.querySelector('.gt thead th:not(.corner)');
+    const w=th?th.getBoundingClientRect().width:0;
+    return w>10?w:88;
+  };
+  /* انزلاق ناعم بأيدينا: بعض المتصفحات لا تنفّذ scrollBy السلس مع القيم
+     السالبة في RTL، فنحرّك scrollLeft تدريجياً على ٣٥٠ms بتخفيف ناعم. */
+  function glideBy(delta){
+    const start=wrap.scrollLeft;
+    const min=-(wrap.scrollWidth-wrap.clientWidth);
+    const target=Math.max(min,Math.min(0,start+delta));
+    const dur=350, t0=Date.now();
+    const prev=wrap.style.scrollBehavior;
+    wrap.style.scrollBehavior='auto';
+    if(wrap._glide)clearInterval(wrap._glide);
+    wrap._glide=setInterval(()=>{
+      const t=Math.min(1,(Date.now()-t0)/dur);
+      const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;   // easeInOutQuad
+      wrap.scrollLeft=start+(target-start)*e;
+      if(t>=1){clearInterval(wrap._glide);wrap._glide=null;wrap.style.scrollBehavior=prev;paintDots();}
+    },16);
+  }
+  // في RTL يبدأ scrollLeft من 0 ويصير سالباً كلما تقدّمنا — فالاتجاه معكوس
+  sc.querySelectorAll('.arrow').forEach(btn=>{
+    btn.onclick=()=>glideBy(-Number(btn.dataset.dir)*colW());
+  });
+  const dots=sc.querySelector('.dots');
+  const paintDots=()=>{
+    if(!dots)return;
+    const idx=Math.round(Math.abs(wrap.scrollLeft)/colW());
+    dots.querySelectorAll('i').forEach((d,k)=>d.classList.toggle('on',k===Math.min(idx,NP-1)));
+  };
+  if(dots){
+    for(let k=0;k<NP;k++)dots.appendChild(document.createElement('i'));
+    wrap.addEventListener('scroll',paintDots);
+  }
+
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);paintDots();};
+  sw.appendChild(b);
+  if(i===0)paintDots();
+});
+</script>
+</body>
+</html>
