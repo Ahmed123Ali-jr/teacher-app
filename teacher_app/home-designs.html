@@ -78,6 +78,73 @@
     .rem-it .ss{font-size:11.5px;color:var(--muted);margin-top:1px;}
     .rem-it .tg{font-size:10.5px;font-weight:800;border-radius:7px;padding:2px 8px;flex-shrink:0;}
 
+    /* ===== صندوق حصص اليوم الفخم ===== */
+    .box{margin:13px 21px 0;border-radius:19px;overflow:hidden;}
+    .box-h{display:flex;align-items:center;gap:8px;padding:13px 15px 11px;}
+    .box-h b{font-size:15px;font-weight:800;}
+    .box-h .cnt{font-weight:800;font-size:13px;border-radius:99px;padding:2px 10px;}
+    .box-h a{margin-right:auto;font-size:12.5px;text-decoration:underline;}
+    .box-b{padding:0 15px 15px;}
+    .box .chips-x{padding:2px 0 4px;}
+
+    /* أ — بيضاء بإطار ذهبي */
+    .box-a{background:#fff;border:1.5px solid rgba(201,169,97,.55);box-shadow:0 5px 14px rgba(16,24,40,.08);}
+    .box-a .box-h{border-bottom:1px solid rgba(201,169,97,.28);}
+    .box-a .box-h b{color:var(--royal);}
+    .box-a .box-h .cnt{background:rgba(201,169,97,.14);color:#8C6D2F;}
+    .box-a .box-h a{color:var(--royal);}
+    .box-a .box-b{padding-top:11px;}
+
+    /* ب — كحلية فاخرة */
+    .box-b2{background:linear-gradient(180deg,#1B3E75 0%,var(--royal) 55%,#0A2148 100%);
+        border:1px solid #1B3E75;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.25),0 8px 18px rgba(15,44,92,.32);}
+    .box-b2 .box-h b{color:#fff;}
+    .box-b2 .box-h .cnt{background:var(--gold);color:var(--royal);}
+    .box-b2 .box-h a{color:rgba(255,255,255,.8);}
+    .box-b2 .pchip{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);}
+    .box-b2 .pchip .n{color:#fff;} .box-b2 .pchip .t{color:rgba(255,255,255,.6);} .box-b2 .pchip .c{color:rgba(255,255,255,.85);}
+    .box-b2 .pchip.past{background:rgba(255,255,255,.05);border-color:transparent;}
+    .box-b2 .pchip.past .n,.box-b2 .pchip.past .c{color:rgba(255,255,255,.45);}
+    .box-b2 .pchip.live{background:var(--gold);border-color:transparent;}
+    .box-b2 .pchip.live .n,.box-b2 .pchip.live .t,.box-b2 .pchip.live .c{color:var(--royal);}
+    .box-b2 .pchip.wait{background:rgba(231,200,123,.15);border-color:rgba(231,200,123,.45);}
+    .box-b2 .pchip.wait .c{color:#E7C87B;}
+
+    /* ج — شبكة ٣×٢ بلا تمرير */
+    .box-c{background:#fff;border:1px solid var(--border);box-shadow:0 5px 14px rgba(16,24,40,.08);}
+    .box-c .box-h{border-bottom:1px solid var(--border);}
+    .box-c .box-h b{color:var(--royal);}
+    .box-c .box-h .cnt{background:rgba(201,169,97,.14);color:#8C6D2F;}
+    .box-c .box-h a{color:var(--royal);}
+    .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:13px;}
+    .grid6 .pchip{width:auto;height:68px;}
+
+    /* د — صفوف مرتبة */
+    .box-d{background:#fff;border:1px solid var(--border);box-shadow:0 5px 14px rgba(16,24,40,.08);}
+    .box-d .box-h{border-bottom:1px solid var(--border);}
+    .box-d .box-h b{color:var(--royal);}
+    .box-d .box-h .cnt{background:rgba(201,169,97,.14);color:#8C6D2F;}
+    .box-d .box-h a{color:var(--royal);}
+    .prow{display:flex;align-items:center;gap:11px;padding:10px 15px;border-bottom:1px solid var(--border);}
+    .prow:last-child{border-bottom:0;}
+    .prow .pn{width:34px;height:34px;border-radius:10px;background:var(--bg);color:var(--royal);font-weight:800;font-size:13px;
+        display:grid;place-items:center;flex-shrink:0;}
+    .prow .pt{flex:1;min-width:0;}
+    .prow .p1{font-size:13.5px;font-weight:700;color:var(--royal);}
+    .prow .p2{font-size:11.5px;color:var(--muted);margin-top:1px;}
+    .prow .pb{font-size:10.5px;font-weight:800;border-radius:7px;padding:2px 9px;flex-shrink:0;}
+    .prow.past{background:#FAFAF7;}
+    .prow.past .p1{color:rgba(15,44,92,.55);}
+    .prow.past .pn{background:var(--gray);color:rgba(15,44,92,.5);}
+    .prow.past .pb{background:rgba(15,44,92,.05);color:rgba(15,44,92,.45);}
+    .prow.live{background:rgba(201,169,97,.09);}
+    .prow.live .pn{background:var(--gold);color:var(--royal);}
+    .prow.live .pb{background:var(--gold);color:var(--royal);}
+    .prow.wait .pn{background:#FCF3DC;color:#A8854C;}
+    .prow.wait .p1{color:#A8854C;}
+    .prow.wait .pb{background:#FCF3DC;color:#A8854C;}
+    .prow .pb.next{background:rgba(15,44,92,.06);color:var(--royal);}
+
     .prep-l{padding:0 21px;margin:21px 0 8px;font-size:13px;color:var(--muted);font-weight:700;}
     .prep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 21px;}
     .prep a{min-height:55px;border-radius:13px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
@@ -105,15 +172,32 @@ const hero = `
     <div class="cta">📋 سجل المتابعة</div>
   </div>`;
 
-const chipsRow = `
-  <div class="sec-h"><b>حصص اليوم</b><span class="cnt num">٢/٦</span><a>الجدول كاملاً</a></div>
-  <div class="chips-x">
-    <div class="pchip past"><span class="n num">ح١</span><span class="t num">٠٧:٠٠</span><span class="c">الرابع/أ</span></div>
-    <div class="pchip past"><span class="n num">ح٢</span><span class="t num">٠٧:٥٥</span><span class="c">السادس/ب</span></div>
-    <div class="pchip live"><span class="n num">ح٣</span><span class="t num">٠٩:٠٠</span><span class="c">الرابع/أ</span></div>
-    <div class="pchip wait"><span class="n num">ح٤</span><span class="t num">٠٩:٥٥</span><span class="c">انتظار</span></div>
-    <div class="pchip"><span class="n num">ح٥</span><span class="t num">١٠:٥٠</span><span class="c">الخامس/ج</span></div>
-    <div class="pchip"><span class="n num">ح٦</span><span class="t num">١١:٤٥</span><span class="c">السادس/ب</span></div>
+const CHIPS = `
+  <div class="pchip past"><span class="n num">ح١</span><span class="t num">٠٧:٠٠</span><span class="c">الرابع/أ</span></div>
+  <div class="pchip past"><span class="n num">ح٢</span><span class="t num">٠٧:٥٥</span><span class="c">السادس/ب</span></div>
+  <div class="pchip live"><span class="n num">ح٣</span><span class="t num">٠٩:٠٠</span><span class="c">الرابع/أ</span></div>
+  <div class="pchip wait"><span class="n num">ح٤</span><span class="t num">٠٩:٥٥</span><span class="c">انتظار</span></div>
+  <div class="pchip"><span class="n num">ح٥</span><span class="t num">١٠:٥٠</span><span class="c">الخامس/ج</span></div>
+  <div class="pchip"><span class="n num">ح٦</span><span class="t num">١١:٤٥</span><span class="c">السادس/ب</span></div>`;
+
+const boxHead = `
+  <div class="box-h"><b>🕐 حصص اليوم</b><span class="cnt num">٢ / ٦</span><a>الجدول كاملاً</a></div>`;
+
+/* أ — بطاقة بيضاء بإطار ذهبي، الشريط داخلها */
+const boxA = `<div class="box box-a">${boxHead}<div class="box-b"><div class="chips-x">${CHIPS}</div></div></div>`;
+/* ب — بطاقة كحلية فاخرة */
+const boxB = `<div class="box box-b2">${boxHead}<div class="box-b"><div class="chips-x">${CHIPS}</div></div></div>`;
+/* ج — شبكة ٣×٢ مرتبة بلا تمرير */
+const boxC = `<div class="box box-c">${boxHead}<div class="box-b"><div class="grid6">${CHIPS}</div></div></div>`;
+/* د — صفوف مرتبة */
+const boxD = `
+  <div class="box box-d">${boxHead}
+    <div class="prow past"><span class="pn num">١</span><div class="pt"><div class="p1">الرابع الابتدائي / أ</div><div class="p2 num">رياضيات · ٠٧:٠٠</div></div><span class="pb">✓ تمت</span></div>
+    <div class="prow past"><span class="pn num">٢</span><div class="pt"><div class="p1">السادس الابتدائي / ب</div><div class="p2 num">علوم · ٠٧:٥٥</div></div><span class="pb">✓ تمت</span></div>
+    <div class="prow live"><span class="pn num">٣</span><div class="pt"><div class="p1">الرابع الابتدائي / أ</div><div class="p2 num">رياضيات · ٠٩:٠٠ — ٠٩:٥٥</div></div><span class="pb">● الآن</span></div>
+    <div class="prow wait"><span class="pn">—</span><div class="pt"><div class="p1">حصة انتظار</div><div class="p2 num">٠٩:٥٥</div></div><span class="pb">انتظار</span></div>
+    <div class="prow"><span class="pn num">٥</span><div class="pt"><div class="p1">الخامس الابتدائي / ج</div><div class="p2 num">علوم · ١٠:٥٠</div></div><span class="pb next num">بعد ٢٥ د</span></div>
+    <div class="prow"><span class="pn num">٦</span><div class="pt"><div class="p1">السادس الابتدائي / ب</div><div class="p2 num">علوم · ١١:٤٥</div></div><span class="pb next">قادمة</span></div>
   </div>`;
 
 /* التذكيرات واضحة: نص كل تذكير + نوعه + فصله/وقته */
@@ -143,11 +227,13 @@ const prep = `
   <div class="prep-l">تجهيز الرابع الابتدائي / أ</div>
   <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>`;
 
+const page = (box) => header + box + remCard + prep + '<div style="height:13px"></div>' + hero;
+
 const D=[
- ['١ — التذكيرات بعد الحصص','التذكيرات مطويّة بعد شريط حصص اليوم — اضغط السهم ▾ لتظهر، ومربع «حصتك الحالية» أسفل التجهيز',
-  header + chipsRow + remCard + prep + '<div style="height:13px"></div>' + hero],
- ['٢ — التذكيرات في الأعلى','التذكيرات المطويّة أول شيء بعد الترحيب، ثم حصص اليوم فالتجهيز فمربع «حصتك الحالية»',
-  header + remCard + chipsRow + prep + '<div style="height:13px"></div>' + hero],
+ ['أ — بيضاء بإطار ذهبي','صندوق أبيض بإطار ذهبي رفيع، رأسه «🕐 حصص اليوم ٢/٦» وحبّات الحصص داخله (تمرير أفقي)', page(boxA)],
+ ['ب — كحلية فاخرة','صندوق كحلي بارز مثل مربع الحصة، الحبّات داخله شفافة والجارية ذهبية — الأفخم', page(boxB)],
+ ['ج — شبكة مرتبة','صندوق أبيض وكل الحصص الست في شبكة ٣×٢ ظاهرة دفعة واحدة بلا تمرير — الأرتب', page(boxC)],
+ ['د — صفوف مفصّلة','صندوق أبيض وكل حصة سطر كامل: الفصل والمادة والوقت وحالتها (تمت/الآن/انتظار/بعد ٢٥ د) — الأوضح', page(boxD)],
 ];
 
 const root=document.getElementById('root'),sw=document.getElementById('switcher');
