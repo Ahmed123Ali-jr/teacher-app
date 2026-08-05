@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>تصاميم الصفحة الرئيسية</title>
+<title>تصميم أ — تعديلات قبل الاعتماد</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
     :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;}
@@ -18,7 +18,6 @@
     .switcher button.on{background:#fff;color:var(--royal);}
     .pal-name{font-size:12.5px;font-weight:800;color:var(--muted);margin:10px 21px;line-height:1.6;}
 
-    /* ===== مشترك ===== */
     .hd{display:flex;align-items:center;justify-content:space-between;padding:21px 21px 13px;}
     .hd-tt h1{margin:0;font-size:21px;font-weight:800;color:var(--royal);}
     .hd-tt .hij{font-size:13px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;}
@@ -32,6 +31,7 @@
         border-radius:8px;padding:3px 9px;display:flex;align-items:center;gap:5px;}
     .hero .badge i{width:6px;height:6px;border-radius:50%;background:var(--royal);animation:pulse 2s infinite;font-style:normal;}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .hero .h-l{font-size:13px;color:rgba(255,255,255,.65);}
     .hero .h-t{font-size:26px;font-weight:900;margin-top:4px;}
     .hero .h-s{font-size:15px;color:rgba(201,169,97,.95);font-weight:700;margin-top:4px;}
     .hero .prog{display:flex;align-items:center;gap:9px;margin-top:14px;}
@@ -60,77 +60,24 @@
     .pchip.wait{background:#FCF3DC;border-color:#E7C87B;}
     .pchip.wait .c{color:#A8854C;}
 
-    .rem-bar{margin:13px 21px 0;background:#fff;border-radius:15px;min-height:55px;display:flex;align-items:center;gap:11px;
-        padding:8px 13px;box-shadow:0 2px 8px rgba(16,24,40,.07);}
-    .rem-bar .ic{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:16px;}
-    .rem-bar b{font-size:15px;color:var(--royal);}
-    .rem-bar .bd{background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
-    .rem-bar .ar{margin-right:auto;color:var(--muted);font-size:16px;}
+    /* تذكيرات اليوم — واضحة بنصوصها */
+    .rem-card{margin:13px 21px 0;background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(16,24,40,.07);overflow:hidden;}
+    .rem-head{display:flex;align-items:center;gap:10px;padding:11px 13px;}
+    .rem-head .ic{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:16px;}
+    .rem-head b{font-size:15px;color:var(--royal);}
+    .rem-head .bd{background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;min-width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
+    .rem-head a{margin-right:auto;font-size:13px;color:var(--royal);text-decoration:underline;}
+    .rem-it{display:flex;align-items:center;gap:10px;padding:11px 13px;border-top:1px solid var(--border);}
+    .rem-it .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .rem-it .tx{flex:1;min-width:0;}
+    .rem-it .tt{font-size:13.5px;font-weight:700;color:var(--text);}
+    .rem-it .ss{font-size:11.5px;color:var(--muted);margin-top:1px;}
+    .rem-it .tg{font-size:10.5px;font-weight:800;border-radius:7px;padding:2px 8px;flex-shrink:0;}
 
     .prep-l{padding:0 21px;margin:21px 0 8px;font-size:13px;color:var(--muted);font-weight:700;}
     .prep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 21px;}
     .prep a{min-height:55px;border-radius:13px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
         gap:5px;font-size:12.5px;font-weight:800;color:var(--royal);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.08);}
-
-    /* ب */
-    .mk3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 21px;}
-    .mk3 a{min-height:89px;border-radius:15px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
-        box-shadow:inset 0 1.5px 0 #fff,0 4px 10px rgba(16,24,40,.09);border:1px solid var(--border);}
-    .mk3 .ci{width:34px;height:34px;border-radius:50%;background:rgba(201,169,97,.15);display:grid;place-items:center;font-size:16px;}
-    .mk3 b{font-size:13px;color:var(--royal);}
-    .att-bar{margin:13px 21px 0;background:#fff;border-radius:15px;min-height:55px;display:flex;align-items:center;gap:9px;padding:8px 13px;
-        box-shadow:0 2px 8px rgba(16,24,40,.07);}
-    .att-bar span{font-size:13px;color:var(--royal);font-weight:700;}
-    .att-bar .pc{font-size:21px;font-weight:800;color:var(--gold);margin-right:auto;}
-    .att-bar .ar{color:var(--muted);}
-
-    /* ج */
-    .c-hd{padding:34px 21px 0;display:flex;justify-content:space-between;align-items:flex-start;}
-    .c-hd h1{margin:0;font-size:26px;font-weight:800;color:var(--royal);}
-    .c-hd .hij{font-size:13px;color:rgba(15,44,92,.6);margin-top:5px;}
-    .c-hero{margin:34px 21px 0;background:var(--royal);border-radius:21px;min-height:89px;display:flex;align-items:center;gap:13px;
-        padding:17px;color:#fff;position:relative;overflow:hidden;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.12),0 13px 34px rgba(15,44,92,.28);}
-    .c-hero::before{content:"";position:absolute;top:0;bottom:0;right:0;width:3px;background:var(--gold);}
-    .c-hero .ic{width:44px;height:44px;border-radius:50%;background:rgba(201,169,97,.18);display:grid;place-items:center;font-size:19px;flex-shrink:0;}
-    .c-hero .t{font-size:17px;font-weight:800;display:flex;align-items:center;gap:7px;}
-    .c-hero .t i{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;font-style:normal;}
-    .c-hero .s{font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;}
-    .c-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:0 21px;margin-top:34px;}
-    .c-tile{min-height:102px;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-        box-shadow:inset 0 1.5px 0 #fff,0 4px 10px rgba(16,24,40,.09);border:1px solid var(--border);position:relative;}
-    .c-tile .em{font-size:26px;}
-    .c-tile b{font-size:15px;font-weight:700;color:var(--royal);}
-    .c-tile .lv{font-size:12px;color:#A8854C;font-weight:700;}
-    .c-tile .bd{position:absolute;top:9px;left:9px;width:21px;height:21px;border-radius:50%;background:var(--gold);color:var(--royal);
-        font-weight:800;font-size:12px;display:grid;place-items:center;}
-
-    /* د */
-    .d-hd{display:flex;align-items:center;gap:9px;padding:21px 21px 13px;}
-    .d-hd h1{margin:0;font-size:17px;font-weight:800;color:var(--royal);}
-    .d-hd .hij{font-size:12px;color:var(--muted);}
-    .d-hd .av{width:34px;height:34px;font-size:14px;margin-right:auto;}
-    .tl{position:relative;margin:8px 21px 0;padding-right:26px;}
-    .tl::before{content:"";position:absolute;top:6px;bottom:6px;right:6px;width:2px;background:var(--gold);opacity:.75;}
-    .tl-it{position:relative;margin-bottom:13px;}
-    .tl-it .nd{position:absolute;right:-26px;top:50%;transform:translate(50%,-50%);width:13px;height:13px;border-radius:50%;
-        background:var(--bg);border:2px solid var(--gold);z-index:1;right:-20px;}
-    .tl-it.done .nd{background:#DFF3E8;border-color:#59B37F;}
-    .tl-it.live .nd{background:var(--gold);animation:pulse 2s infinite;}
-    .tl-row{min-height:55px;border-radius:13px;display:flex;align-items:center;gap:9px;padding:8px 13px;background:#fff;border:1px solid rgba(15,44,92,.13);}
-    .tl-row .tt{font-size:13px;font-weight:700;color:var(--royal);}
-    .tl-row .tm{font-size:11px;color:var(--muted);margin-right:auto;}
-    .tl-it.done .tl-row{background:var(--gray);border-color:transparent;}
-    .tl-it.done .tt{color:rgba(15,44,92,.6);}
-    .tl-it.wait .tl-row{background:#FCF3DC;border-color:#E7C87B;}
-    .tl-it.wait .tt{color:#A8854C;}
-    .tl-next .tl-row{border:1px solid var(--gold);min-height:76px;box-shadow:0 4px 10px rgba(201,169,97,.18);}
-    .tl-next .nb{background:var(--gold);color:var(--royal);font-weight:800;font-size:11px;border-radius:8px;padding:2px 8px;margin-right:auto;}
-    .tl-live{background:var(--royal);border-radius:21px;padding:21px;color:#fff;position:relative;overflow:hidden;
-        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.12),0 8px 21px rgba(15,44,92,.35);}
-    .d-head{display:flex;align-items:center;padding:0 21px;margin:13px 0 11px;}
-    .d-head b{font-size:15px;color:var(--royal);}
-    .d-head span{color:var(--gold);}
-    .d-head a{margin-right:auto;font-size:13px;color:var(--royal);text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -138,11 +85,16 @@
 <div class="switcher" id="switcher"></div>
 
 <script>
-/* بيانات العرض: الثلاثاء، ٦ حصص، جارية = ح٣ رياضيات الرابع/أ */
-const heroNow = `
+const header = `
+  <div class="hd">
+    <div class="hd-tt"><h1>صباح الخير، أحمد 👋</h1><div class="hij">الثلاثاء ١٢ صفر ١٤٤٨هـ</div></div>
+    <div class="av">أ</div>
+  </div>`;
+
+const hero = `
   <div class="hero">
     <div class="badge"><i></i> الآن</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.65)">حصتك الحالية</div>
+    <div class="h-l">حصتك الحالية</div>
     <div class="h-t">الرابع الابتدائي / أ</div>
     <div class="h-s">رياضيات · حصة ٣</div>
     <div class="prog"><div class="bar"><i></i></div><span class="num">تنتهي ٠٩:٥٥</span></div>
@@ -160,94 +112,32 @@ const chipsRow = `
     <div class="pchip"><span class="n num">ح٦</span><span class="t num">١١:٤٥</span><span class="c">السادس/ب</span></div>
   </div>`;
 
-const remBar = `
-  <div class="rem-bar"><div class="ic">🔔</div><b>تذكيرات اليوم</b><span class="bd num">٢</span><span class="ar">‹</span></div>`;
-
-const header = `
-  <div class="hd">
-    <div class="hd-tt"><h1>صباح الخير، أحمد 👋</h1><div class="hij">الثلاثاء ١٢ صفر ١٤٤٨هـ</div></div>
-    <div class="av">أ</div>
+/* التذكيرات واضحة: نص كل تذكير + نوعه + فصله/وقته */
+const remCard = `
+  <div class="rem-card">
+    <div class="rem-head"><div class="ic">🔔</div><b>تذكيرات اليوم</b><span class="bd num">٢</span><a>الكل</a></div>
+    <div class="rem-it">
+      <span class="dot" style="background:#DC2626"></span>
+      <div class="tx"><div class="tt">تسليم أوراق اختبار الفترة الأولى</div><div class="ss">الرابع الابتدائي / أ · اليوم</div></div>
+      <span class="tg" style="background:rgba(220,38,38,.08);color:#DC2626">اختبار</span>
+    </div>
+    <div class="rem-it">
+      <span class="dot" style="background:#2563EB"></span>
+      <div class="tx"><div class="tt">اجتماع لجنة التوجيه الطلابي</div><div class="ss num">غرفة المعلمين · ٠١:٠٠ ظهراً</div></div>
+      <span class="tg" style="background:rgba(37,99,235,.08);color:#2563EB">اجتماع</span>
+    </div>
   </div>`;
 
-const D=[];
-
-/* ===== أ — يوم المعلم أولاً ===== */
-D.push(['أ — يوم المعلم أولاً','هيرو «حصتك الآن» بزر سجل المتابعة + خط حصص اليوم بلا مودال + تجهيز فصل الحصة تحت الإبهام',`
-  ${header}
-  ${heroNow}
-  ${chipsRow}
-  ${remBar}
+const prep = `
   <div class="prep-l">تجهيز الرابع الابتدائي / أ</div>
-  <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>
-`]);
+  <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>`;
 
-/* ===== ب — التوليفة ===== */
-D.push(['ب — التوليفة','نفس هيرو أ وخط الحصص + «إنشاء سريع» لأي فصل + رقم حضور الأسبوع الحي',`
-  ${header}
-  ${heroNow}
-  ${chipsRow}
-  <div class="prep-l">إنشاء سريع</div>
-  <div class="mk3">
-    <a><span class="ci">📝</span><b>اختبار</b></a>
-    <a><span class="ci">📄</span><b>ورقة عمل</b></a>
-    <a><span class="ci">📚</span><b>واجب</b></a>
-  </div>
-  <div class="att-bar">📊<span>حضور هذا الأسبوع</span><span class="pc num">٩٢٪</span><span class="ar">‹</span></div>
-  ${remBar}
-`]);
-
-/* ===== ج — الحد الأدنى الهادئ ===== */
-D.push(['ج — الحد الأدنى','شاشة واحدة بلا تمرير: تحية + بطل واحد + شبكة ٢×٢ تحت الإبهام — والفراغ جزء من التصميم',`
-  <div class="c-hd">
-    <div><h1>صباح الخير، أحمد</h1><div class="hij">الثلاثاء ١٢ صفر ١٤٤٨هـ</div></div>
-    <div class="av">أ</div>
-  </div>
-  <div class="c-hero">
-    <div class="ic">📖</div>
-    <div>
-      <div class="t"><i></i> حصتك الآن: الرابع الابتدائي / أ</div>
-      <div class="s num">رياضيات · حصة ٣ — تنتهي ٠٩:٥٥</div>
-    </div>
-  </div>
-  <div class="c-grid">
-    <div class="c-tile"><span class="em">📊</span><b>التقارير</b><span class="lv">حضور ودرجات</span></div>
-    <div class="c-tile"><span class="em">📁</span><b>ملف الإنجاز</b><span class="lv">&nbsp;</span></div>
-    <div class="c-tile"><span class="em">🕐</span><b>حصص اليوم</b><span class="lv num">٦ حصص · انتظار ١</span></div>
-    <div class="c-tile"><span class="bd num">٢</span><span class="em">🔔</span><b>تذكيراتي</b><span class="lv">&nbsp;</span></div>
-  </div>
-`]);
-
-/* ===== د — تدفّق اليوم ===== */
-D.push(['د — تدفّق اليوم','جريء: يومك كله أجندة على خيط ذهبي — والحصة الجارية تتضخم في مكانها من الخيط',`
-  <div class="d-hd"><h1>صباح الخير، أحمد 👋</h1><span class="hij">١٢ صفر</span><div class="av">أ</div></div>
-  <div class="d-head"><b>يومك · <span class="num">٢/٦</span> حصص</b><a>الجدول كاملاً</a></div>
-  <div class="tl">
-    <div class="tl-it done"><span class="nd"></span>
-      <div class="tl-row"><span class="tt num">ح١ · الرابع/أ</span><span class="tm num">٠٧:٠٠</span></div></div>
-    <div class="tl-it done"><span class="nd"></span>
-      <div class="tl-row"><span class="tt num">ح٢ · السادس/ب</span><span class="tm num">٠٧:٥٥</span></div></div>
-    <div class="tl-it live"><span class="nd"></span>
-      <div class="tl-live">
-        <div class="badge" style="position:absolute;top:15px;left:15px;background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;border-radius:8px;padding:3px 9px;">● الآن</div>
-        <div class="h-t" style="font-size:26px;font-weight:900;">الرابع الابتدائي / أ</div>
-        <div class="h-s" style="font-size:15px;color:rgba(201,169,97,.95);font-weight:700;margin-top:4px;">رياضيات · حصة ٣</div>
-        <div class="prog" style="display:flex;align-items:center;gap:9px;margin-top:14px;">
-          <div class="bar" style="flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden;"><i style="display:block;height:100%;width:60%;background:var(--gold);border-radius:99px;"></i></div>
-          <span class="num" style="font-size:12px;color:rgba(255,255,255,.7);">تنتهي ٠٩:٥٥</span></div>
-        <div class="cta" style="display:flex;align-items:center;justify-content:center;margin-top:15px;min-height:55px;border-radius:13px;background:var(--gold);color:var(--royal);font-weight:800;font-size:17px;">📋 سجل المتابعة</div>
-      </div></div>
-    <div class="tl-it wait"><span class="nd"></span>
-      <div class="tl-row"><span class="tt">حصة انتظار</span><span class="tm num">٠٩:٥٥</span></div></div>
-    <div class="tl-it tl-next"><span class="nd"></span>
-      <div class="tl-row"><span class="tt num">ح٥ · الخامس/ج · علوم</span><span class="nb num">بعد ٢٥ د</span></div></div>
-    <div class="tl-it"><span class="nd"></span>
-      <div class="tl-row"><span class="tt num">ح٦ · السادس/ب</span><span class="tm num">١١:٤٥</span></div></div>
-    <div class="tl-it"><span class="nd" style="background:#fff;"></span>
-      <div class="tl-row"><span class="tt">🔔 تسليم أوراق الاختبار</span><span class="tm">تذكير</span></div></div>
-  </div>
-  <div class="prep-l">تجهيز الرابع الابتدائي / أ</div>
-  <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>
-`]);
+const D=[
+ ['أ١ — الهيرو تحت التجهيز','مثل ما طلبت حرفياً: أزرار تجهيز الفصل أولاً، وتحتها مربع «حصتك الحالية»، ثم حصص اليوم والتذكيرات الواضحة',
+  header + prep + '<div style="height:13px"></div>' + hero + chipsRow + remCard],
+ ['أ٢ — التجهيز تحت الهيرو','الاحتمال الثاني: مربع «حصتك الحالية» أولاً وتحته مباشرة أزرار التجهيز، ثم حصص اليوم والتذكيرات الواضحة',
+  header + hero + prep + chipsRow + remCard],
+];
 
 const root=document.getElementById('root'),sw=document.getElementById('switcher');
 D.forEach(([name,desc,html],i)=>{
