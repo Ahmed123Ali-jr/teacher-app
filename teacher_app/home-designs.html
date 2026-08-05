@@ -61,7 +61,14 @@
     .pchip.wait .c{color:#A8854C;}
 
     /* تذكيرات اليوم — واضحة بنصوصها */
-    .rem-card{margin:13px 21px 0;background:#fff;border-radius:15px;box-shadow:0 2px 8px rgba(16,24,40,.07);overflow:hidden;}
+    /* التذكيرات — نفس تدرّج بطاقات الفصول الرصاصي */
+    .rem-card{margin:13px 21px 0;border-radius:15px;overflow:hidden;color:var(--royal);
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff, 0 5px 11px rgba(16,24,40,.12);}
+    .rem-card .rem-head .ic{background:rgba(255,255,255,.75);}
+    .rem-card .rem-head .tg-btn{background:rgba(255,255,255,.75);}
+    .rem-it{border-top-color:color-mix(in srgb,var(--gray) 80%,#000) !important;}
     .rem-head{display:flex;align-items:center;gap:10px;padding:11px 13px;}
     .rem-head .ic{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:16px;}
     .rem-head b{font-size:15px;color:var(--royal);}
@@ -151,8 +158,12 @@
 
     .prep-l{padding:0 21px;margin:21px 0 8px;font-size:13px;color:var(--muted);font-weight:700;}
     .prep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 21px;}
-    .prep a{min-height:55px;border-radius:13px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
-        gap:5px;font-size:12.5px;font-weight:800;color:var(--royal);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.08);}
+    /* أزرار التجهيز — نفس تدرّج بطاقات الفصول الرصاصي */
+    .prep a{min-height:55px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+        gap:5px;font-size:12.5px;font-weight:800;color:var(--royal);
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff,0 5px 11px rgba(16,24,40,.12);}
 </style>
 </head>
 <body>
