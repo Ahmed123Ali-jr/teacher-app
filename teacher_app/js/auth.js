@@ -162,6 +162,7 @@
     }
 
     async function logout() {
+        invalidateTeacher();
         if (global.TeacherDB) {
             try { await global.TeacherDB.clearLocalCache(); } catch (e) {}
             try { global.TeacherDB.resetHydration(); } catch (e) {}
@@ -169,14 +170,28 @@
         await sb.auth.signOut();
     }
 
+    /* ذاكرة قصيرة لبيانات المعلم: التنقّل بين التبويبات يستدعي currentTeacher()
+       مرّتين-ثلاثاً في كل مرة (حارس المصادقة + اسم الهيدر + رسم الصفحة)، وكل
+       استدعاء كان يعيد getSession() + قراءة IndexedDB للملف — فيتباطأ التنقّل.
+       نخزّن النتيجة لثوانٍ قليلة، ونبطلها فوراً عند أي تغيّر (خروج/دخول/تعديل الملف). */
+    let _teacherCache = null;
+    let _teacherCacheAt = 0;
+    const TEACHER_TTL = 3000;
+
+    function invalidateTeacher() { _teacherCache = null; _teacherCacheAt = 0; }
+
     async function currentTeacher() {
+        const now = Date.now();
+        if (_teacherCache && (now - _teacherCacheAt) < TEACHER_TTL) return _teacherCache;
         // getSession() reads from localStorage (no network) → instant.
         // getUser() would hit /auth/v1/user every time, which slows navigation.
         const { data } = await sb.auth.getSession();
         const user = data && data.session ? data.session.user : null;
-        if (!user) return null;
+        if (!user) { invalidateTeacher(); return null; }
         const profile = await fetchProfile(user.id);
-        return mapProfile(user, profile);
+        _teacherCache = mapProfile(user, profile);
+        _teacherCacheAt = Date.now();
+        return _teacherCache;
     }
 
     async function guestLogin() {
@@ -245,12 +260,14 @@
             .eq('id', me.id);
         if (error) throw new Error(error.message || 'تعذّر حفظ التغييرات.');
 
+        invalidateTeacher();          // بيانات الملف تغيّرت — أعد الجلب
         return await currentTeacher();
     }
 
     /** Subscribe to auth changes. Callback receives the mapped teacher (or null). */
     function onAuthChange(callback) {
         const { data } = sb.auth.onAuthStateChange(async (_event, session) => {
+            invalidateTeacher();      // الجلسة تغيّرت — أبطل الذاكرة
             if (!session || !session.user) {
                 callback(null);
                 return;
