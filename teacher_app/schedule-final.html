@@ -61,6 +61,16 @@
     .btnTime{width:100%;min-height:50px;border-radius:14px;font-family:inherit;font-weight:900;font-size:15px;color:#fff;margin-bottom:13px;
         background:linear-gradient(180deg,#24498A 0%,var(--royal) 55%,#0A2148 100%);border:1px solid #1B3E75;
         box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),0 5px 13px rgba(15,44,92,.3);}
+
+    /* ج المعدّل — مربع توقيت صغير رصاصي فوق يمين بجانب العنوان */
+    .headC{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+    .headC h1{flex:1;margin:0;font-size:20px;font-weight:900;color:var(--royal);}
+    .timeSm{display:inline-flex;align-items:center;gap:6px;min-height:36px;border-radius:11px;padding:0 12px;
+        font-family:inherit;font-weight:800;font-size:12.5px;color:var(--royal);white-space:nowrap;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.1);}
+    .timeSm.icononly{width:36px;padding:0;justify-content:center;font-size:15px;}
     .clearLink{display:block;width:100%;text-align:center;margin-top:21px;background:none;border:0;font-family:inherit;
         font-size:13px;font-weight:800;color:var(--red);text-decoration:underline;padding:10px;}
 
@@ -140,7 +150,15 @@ const D=[
   `<div class="headB"><h1>📅 الجدول الأسبوعي</h1><div class="iconb">⏰</div><div class="iconb danger">🗑️</div></div>
    <div class="capt"><span>توقيت الحصص</span><span style="width:8px"></span><span>مسح الجدول</span></div>
    ${grid()}`],
- ['ج — توقيت بارز + مسح خفيف','زر التوقيت كحلي بارز فوق (يُستخدم كثيراً)، ومسح الجدول رابط أحمر خفيف تحت الجدول (خطر ونادر)',
+ ['ج١ — مربع صغير بالنص','مربع رصاصي صغير «⏰ توقيت الحصص» فوق يمين بجانب العنوان، ومسح الجدول رابط أحمر خفيف تحت الجدول',
+  `<div class="headC"><h1>📅 الجدول الأسبوعي</h1><button class="timeSm">⏰ توقيت الحصص</button></div>
+   ${grid()}
+   <button class="clearLink">🗑️ مسح الجدول كاملاً</button>`],
+ ['ج٢ — أيقونة فقط','نفسه لكن المربع أصغر ما يمكن: أيقونة الساعة فقط ٣٦×٣٦ — أقصى توفير للمساحة',
+  `<div class="headC"><h1>📅 الجدول الأسبوعي</h1><button class="timeSm icononly">⏰</button></div>
+   ${grid()}
+   <button class="clearLink">🗑️ مسح الجدول كاملاً</button>`],
+ ['ج٣ — الكحلي السابق','للمقارنة: زر التوقيت الكحلي العريض السابق',
   `<h1 class="t">📅 الجدول الأسبوعي</h1>
    <button class="btnTime">⏰ توقيت الحصص</button>
    ${grid()}
