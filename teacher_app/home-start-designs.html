@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>صفحة البدء — النسخة المبسّطة</title>
+<title>صفحة البدء — رصاصي</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
     :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--green:#059669;}
@@ -25,45 +25,55 @@
     .av{width:44px;height:44px;border-radius:50%;background:var(--royal);color:#fff;display:grid;place-items:center;
         font-weight:800;font-size:17px;border:1.5px solid var(--gold);flex-shrink:0;}
 
-    /* المربع الكحلي الكبير — نفسه للفصل الأول ثم للجدول */
-    .big{background:var(--royal);border-radius:26px;padding:34px 21px;color:#fff;text-align:center;position:relative;overflow:hidden;
-        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),0 13px 26px rgba(15,44,92,.4);}
-    .big .halo{position:absolute;width:210px;height:210px;border-radius:50%;background:rgba(201,169,97,.12);left:50%;top:-105px;transform:translateX(-50%);}
-    .big .em{font-size:55px;line-height:1;position:relative;}
-    .big .t{font-size:23px;font-weight:900;margin-top:13px;position:relative;}
-    .big .s{font-size:13.5px;color:rgba(255,255,255,.75);margin-top:6px;line-height:1.7;position:relative;}
-    .big .cta{display:flex;align-items:center;justify-content:center;margin:21px auto 0;min-height:55px;max-width:280px;border-radius:14px;
-        background:var(--gold);color:var(--royal);font-weight:900;font-size:17px;position:relative;
-        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),0 5px 13px rgba(0,0,0,.25);}
+    /* لوح رصاصي أساس */
+    .grayfill{background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff,0 6px 14px rgba(16,24,40,.12);}
 
-    /* شريط نجاح إضافة الفصل */
-    .okbar{display:flex;align-items:center;gap:9px;background:color-mix(in srgb,var(--green) 8%,#fff);
-        border:1.5px solid color-mix(in srgb,var(--green) 30%,#fff);border-radius:13px;padding:10px 13px;margin-bottom:13px;}
-    .okbar .ck{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:13px;flex-shrink:0;}
-    .okbar b{font-size:13px;color:var(--royal);}
+    /* ===== أ — بطاقة رصاصية كاملة ===== */
+    .a-box{border-radius:26px;padding:34px 21px;text-align:center;position:relative;overflow:hidden;color:var(--royal);}
+    .a-box .halo{position:absolute;width:210px;height:210px;border-radius:50%;background:rgba(201,169,97,.10);left:50%;top:-115px;transform:translateX(-50%);}
+    .a-box .ring{width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center;margin:0 auto;position:relative;
+        box-shadow:inset 0 0 0 2px rgba(201,169,97,.5),0 6px 14px rgba(16,24,40,.1);}
+    .a-box .ring .em{font-size:46px;line-height:1;}
+    .a-box .t{font-size:23px;font-weight:900;margin-top:15px;position:relative;}
+    .a-box .s{font-size:13.5px;color:color-mix(in srgb,var(--royal) 60%,#fff);margin-top:6px;line-height:1.7;position:relative;}
+    .a-box .cta{display:flex;align-items:center;justify-content:center;margin:21px auto 0;min-height:55px;max-width:280px;border-radius:14px;
+        background:var(--royal);color:#fff;font-weight:900;font-size:17px;position:relative;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),0 5px 13px rgba(15,44,92,.3);}
 
-    /* بطاقة التذكيرات المطوية (كما اعتُمدت) */
+    /* ===== ب — أبيض برأس رصاصي ===== */
+    .b-card{background:#fff;border:1px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:0 6px 16px rgba(16,24,40,.08);}
+    .b-top{background:linear-gradient(150deg,color-mix(in srgb,var(--gray) 55%,#fff) 0%,var(--gray) 100%);
+        padding:26px 21px 21px;text-align:center;border-bottom:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);position:relative;}
+    .b-top .em{font-size:50px;line-height:1;}
+    .b-body{padding:21px;text-align:center;}
+    .b-body .t{font-size:21px;font-weight:900;color:var(--royal);}
+    .b-body .s{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.7;}
+    .b-body .cta{display:flex;align-items:center;justify-content:center;margin:17px auto 0;min-height:53px;border-radius:13px;
+        background:var(--gold);color:var(--royal);font-weight:900;font-size:16px;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),0 4px 11px rgba(0,0,0,.16);}
+
+    /* ===== ج — رصاصي مضغوط بصف أفقي ===== */
+    .c-box{border-radius:21px;padding:21px;display:flex;align-items:center;gap:16px;color:var(--royal);}
+    .c-box .ico{width:64px;height:64px;border-radius:19px;background:#fff;display:grid;place-items:center;font-size:32px;flex-shrink:0;
+        box-shadow:inset 0 0 0 1.5px rgba(201,169,97,.4),0 4px 10px rgba(16,24,40,.08);}
+    .c-box .tx{flex:1;min-width:0;}
+    .c-box .t{font-size:19px;font-weight:900;}
+    .c-box .s{font-size:12.5px;color:color-mix(in srgb,var(--royal) 60%,#fff);margin-top:3px;line-height:1.6;}
+    .c-cta{display:flex;align-items:center;justify-content:center;margin-top:14px;min-height:53px;border-radius:13px;
+        background:var(--royal);color:#fff;font-weight:900;font-size:16px;box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),0 5px 13px rgba(15,44,92,.3);}
+
+    /* بطاقة التذكيرات المطوية */
     .rem{border-radius:15px;color:var(--royal);display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:13px;
         background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
-        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
-        box-shadow:inset 0 1.5px 0 #fff,0 5px 11px rgba(16,24,40,.12);}
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 5px 11px rgba(16,24,40,.12);}
     .rem .ic{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.75);display:grid;place-items:center;font-size:16px;}
     .rem b{font-size:15px;}
     .rem .bd{background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;min-width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
     .rem .tg{margin-right:auto;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.75);display:grid;place-items:center;font-size:14px;}
 
-    /* التجهيز */
-    .prep-l{margin:21px 3px 8px;font-size:13px;color:var(--muted);font-weight:700;}
-    .prep{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-    .prep a{min-height:55px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:5px;
-        font-size:12.5px;font-weight:800;color:var(--royal);
-        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
-        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
-        box-shadow:inset 0 1.5px 0 #fff,0 5px 11px rgba(16,24,40,.12);}
-
-    /* بطاقة «لا حصص اليوم» */
-    .rest{margin-top:13px;background:#fff;border:1px solid var(--border);border-radius:21px;padding:26px 21px;text-align:center;
-        box-shadow:0 3px 10px rgba(16,24,40,.07);}
+    /* بطاقة حالة اليوم البيضاء */
+    .rest{margin-top:0;background:#fff;border:1px solid var(--border);border-radius:21px;padding:26px 21px;text-align:center;box-shadow:0 3px 10px rgba(16,24,40,.07);}
     .rest .em{font-size:47px;line-height:1;}
     .rest .t{font-size:19px;font-weight:900;color:var(--royal);margin-top:11px;}
     .rest .s{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.7;}
@@ -73,10 +83,12 @@
 <body>
 <div id="page"></div>
 <div class="statebar" id="statebar">
-  <button data-st="0" class="on">١ — أول فتح (لا فصول)</button>
-  <button data-st="1">٢ — فصول بلا جدول</button>
-  <button data-st="2">٣ — يوم بلا حصص</button>
-  <button data-st="3">٤ — الجمعة/السبت</button>
+  <button data-v="0" class="on">أ — رصاصي كامل</button>
+  <button data-v="1">ب — أبيض برأس رصاصي</button>
+  <button data-v="2">ج — رصاصي مضغوط</button>
+  <button data-v="3">فصول بلا جدول</button>
+  <button data-v="4">يوم بلا حصص</button>
+  <button data-v="5">إجازة</button>
 </div>
 
 <script>
@@ -85,63 +97,58 @@ const header = `
     <div><h1>أهلاً بك 👋</h1><div class="hij">الثلاثاء ١٢ صفر ١٤٤٨هـ</div></div>
     <div class="av">أ</div>
   </div>`;
-
-const prep = `
-  <div class="prep-l">تجهيز الرابع الابتدائي / أ</div>
-  <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>`;
-
 const rem = `<div class="rem"><div class="ic">🔔</div><b>تذكيرات اليوم</b><span class="bd num">٢</span><span class="tg">▾</span></div>`;
 
-const STATES=[
- ['١ — أول فتح · لا فصول: مربع واحد فقط «أضف فصلك الأول» — بلا خطوات ولا تشتيت',`
-  ${header}
-  <div class="big">
+/* «أضف فصلك الأول» بثلاث صياغات رصاصية */
+const addA = `
+  <div class="a-box grayfill">
     <div class="halo"></div>
-    <div class="em">🎒</div>
+    <div class="ring"><span class="em">🎒</span></div>
     <div class="t">أضف فصلك الأول</div>
     <div class="s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة طلابك خلال دقيقة</div>
     <div class="cta">+ إضافة فصل</div>
-  </div>`],
+  </div>`;
+const addB = `
+  <div class="b-card">
+    <div class="b-top"><div class="em">🎒</div></div>
+    <div class="b-body">
+      <div class="t">أضف فصلك الأول</div>
+      <div class="s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة طلابك خلال دقيقة</div>
+      <div class="cta">+ إضافة فصل</div>
+    </div>
+  </div>`;
+const addC = `
+  <div class="c-box grayfill">
+    <div class="ico">🎒</div>
+    <div class="tx"><div class="t">أضف فصلك الأول</div><div class="s">المرحلة والصف والشعبة والمادة — كل شيء يبدأ من الفصل</div></div>
+  </div>
+  <div class="c-cta">+ إضافة فصل</div>`;
 
- ['٢ — أضاف فصولاً ولم يُعدّ الجدول: نفس المربع تحت أزرار التجهيز يقول «أضف الفصول للجدول»',`
-  ${header}
-  <div class="okbar"><div class="ck">✓</div><b>تمت إضافة الرابع الابتدائي / أ — رياضيات</b></div>
-  ${prep}
-  <div style="height:13px"></div>
-  <div class="big">
+/* «أضف الفصول للجدول» بأسلوب أ الرصاصي (بلا تجهيز ولا شريط نجاح) */
+const addSched = `
+  <div class="a-box grayfill">
     <div class="halo"></div>
-    <div class="em">📅</div>
+    <div class="ring"><span class="em">📅</span></div>
     <div class="t">أضف الفصول للجدول</div>
     <div class="s">حدّد حصص فصولك في الجدول الأسبوعي<br>ليظهر يومك وحصتك القادمة هنا</div>
     <div class="cta">📅 إعداد الجدول</div>
-  </div>`],
+  </div>`;
 
- ['٣ — الجدول مضبوط لكن اليوم ما فيه حصص (مثلاً يومك فاضي): الرئيسية تبقى مفيدة بالتذكيرات والتجهيز',`
-  ${header}
-  ${rem}
-  ${prep}
-  <div class="rest">
-    <div class="em">🌤️</div>
-    <div class="t">لا حصص لك اليوم</div>
-    <div class="s">يومك خالٍ من الحصص — وقت مناسب<br>لتجهيز الاختبارات وأوراق العمل</div>
-    <a class="lk">📅 الجدول كاملاً ←</a>
-  </div>`],
-
- ['٤ — الجمعة والسبت: بطاقة إجازة هادئة',`
-  ${header}
-  ${rem}
-  ${prep}
-  <div class="rest">
-    <div class="em">🌴</div>
-    <div class="t">إجازة سعيدة</div>
-    <div class="s">نلقاك الأحد بإذن الله</div>
-  </div>`],
+const V=[
+ ['أ — رصاصي كامل · بطاقة رصاصية بحلقة ذهبية حول الأيقونة وزر كحلي', header + addA],
+ ['ب — أبيض برأس رصاصي · بطاقة بيضاء رأسها رصاصي وزر ذهبي', header + addB],
+ ['ج — رصاصي مضغوط · صف أفقي أنيق يوفّر مساحة، وزر كحلي تحته', header + addC],
+ ['فصول بلا جدول · فقط مربع «أضف الفصول للجدول» رصاصي — بلا تجهيز ولا شريط نجاح', header + addSched],
+ ['يوم بلا حصص · تذكيرات + بطاقة «لا حصص اليوم» — بلا تجهيز', header + rem +
+   `<div class="rest"><div class="em">🌤️</div><div class="t">لا حصص لك اليوم</div><div class="s">يومك خالٍ من الحصص — وقت مناسب<br>لتجهيز الاختبارات وأوراق العمل</div><a class="lk">📅 الجدول كاملاً ←</a></div>`],
+ ['إجازة · الجمعة/السبت — بلا تجهيز', header + rem +
+   `<div class="rest"><div class="em">🌴</div><div class="t">إجازة سعيدة</div><div class="s">نلقاك الأحد بإذن الله</div></div>`],
 ];
 
 const page=document.getElementById('page');
-function paint(i){page.innerHTML=`<div class="pal-name">${STATES[i][0]}</div>`+STATES[i][1];window.scrollTo(0,0);}
+function paint(i){page.innerHTML=`<div class="pal-name">${V[i][0]}</div>`+V[i][1];window.scrollTo(0,0);}
 document.querySelectorAll('.statebar button').forEach(b=>{
-  b.onclick=()=>{document.querySelectorAll('.statebar button').forEach(x=>x.classList.toggle('on',x===b));paint(+b.dataset.st);};
+  b.onclick=()=>{document.querySelectorAll('.statebar button').forEach(x=>x.classList.toggle('on',x===b));paint(+b.dataset.v);};
 });
 paint(0);
 </script>
