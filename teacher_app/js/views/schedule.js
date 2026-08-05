@@ -51,26 +51,25 @@
 
         const grid = buildGrid(schedule, periods.length);
 
+        const todayIdx = (() => {
+            const d = new Date().getDay();
+            return (d >= 0 && d <= 4) ? d : -1;
+        })();
+
         container.innerHTML = `
-            <div class="container">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <h2 class="section-title">📅 الجدول الأسبوعي</h2>
-                    <div class="flex gap-2">
-                        <button class="btn btn-secondary" id="btn-import-schedule">📷 استيراد من صورة/PDF</button>
-                        <button class="btn btn-ghost" id="btn-times">⏰ توقيت الحصص</button>
-                        <button class="btn btn-ghost" id="btn-clear-all">🗑️ مسح الكل</button>
-                    </div>
+            <div class="container sched-v2">
+                <div class="sched-head">
+                    <h2>📅 الجدول الأسبوعي</h2>
+                    <button type="button" class="sched-time-btn" id="btn-times">توقيت الحصص</button>
                 </div>
 
                 ${classes.length === 0 ? classesEmptyHint() : ''}
 
-                <div class="schedule-wrapper">
-                    ${renderGrid(grid, periods, classes)}
-                </div>
+                ${renderGrid(grid, periods, classes, todayIdx)}
 
-                <p class="text-muted" style="font-size: var(--fs-sm); margin-top: var(--space-3);">
-                    اضغط على أي خانة فارغة لإضافة حصة، أو على خانة مشغولة للتعديل.
-                </p>
+                <p class="sched-hint">← اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>
+
+                <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
             </div>
         `;
 
@@ -99,60 +98,62 @@
         return grid;
     }
 
-    function renderGrid(grid, periods, classes) {
+    /** «الصف الرابع الابتدائي» → «الرابع/أ» — مختصر يناسب خانة الجدول. */
+    function shortCell(cls) {
+        const g = String(cls.grade || '').replace(/^\s*الصف\s+/, '').split(/\s+/)[0];
+        return `${g}/${cls.section}`;
+    }
+
+    /* الشبكة المعتمدة (تصميم ج١): أيام يمين ثابتة، حصص أعلى بترويسة كحلية،
+       اليوم الحالي بشريط ذهبي، والخانات مربّعات رصاصية بارزة. */
+    function renderGrid(grid, periods, classes, todayIdx) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
-        // Days on the right (rows), periods across the top (columns) — so
-        // a teacher fills the day's schedule by moving horizontally.
         return `
-            <table class="schedule-table">
-                <thead>
-                    <tr>
-                        <th class="day-col">اليوم</th>
-                        ${periods.map((p) => `
-                            <th>
-                                <div class="period-n">الحصة ${p.n}</div>
-                                <div class="period-time num">${p.start} — ${p.end}</div>
-                            </th>
-                        `).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-                    ${DAYS.map((d) => `
+            <div class="sched-wrap">
+                <table class="sched-table">
+                    <thead>
                         <tr>
-                            <td class="day-col">${d.label}</td>
-                            ${periods.map((p) => {
-                                const cell = grid[d.index]?.[p.n];
-                                if (!cell) {
-                                    return `<td class="schedule-cell empty"
-                                               data-day="${d.index}" data-period="${p.n}">
-                                        <span class="cell-plus">+</span>
-                                    </td>`;
-                                }
-                                const cls = classById[cell.class_id];
-                                if (!cls) {
-                                    return `<td class="schedule-cell waiting"
-                                               data-day="${d.index}" data-period="${p.n}">
-                                        <div class="cell-class">⏳ انتظار</div>
-                                        ${cell.topic ? `<div class="cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
-                                    </td>`;
-                                }
-                                return `<td class="schedule-cell filled"
-                                           data-day="${d.index}" data-period="${p.n}"
-                                           style="--cell-color: ${cls.color || '#1E40AF'};">
-                                    <div class="cell-class">${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)}</div>
-                                    <div class="cell-subject">${escapeHtml(cls.subject)}</div>
-                                    ${cell.topic ? `<div class="cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
-                                </td>`;
-                            }).join('')}
+                            <th class="sched-corner">اليوم</th>
+                            ${periods.map((p) => `
+                                <th>ح${p.n}<span class="sched-pt num">${escapeHtml(p.start)}</span></th>
+                            `).join('')}
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        ${DAYS.map((d) => `
+                            <tr class="${d.index === todayIdx ? 'is-today' : ''}">
+                                <td class="sched-day">${d.label}</td>
+                                ${periods.map((p) => {
+                                    const cell = grid[d.index]?.[p.n];
+                                    const attrs = `data-day="${d.index}" data-period="${p.n}"`;
+                                    if (!cell) {
+                                        return `<td class="sched-cell" ${attrs}>
+                                            <div class="sched-box empty">+</div>
+                                        </td>`;
+                                    }
+                                    const cls = classById[cell.class_id];
+                                    if (!cls) {
+                                        return `<td class="sched-cell" ${attrs}>
+                                            <div class="sched-box wait">انتظار</div>
+                                        </td>`;
+                                    }
+                                    return `<td class="sched-cell" ${attrs}>
+                                        <div class="sched-box filled">
+                                            <span class="sb-c">${escapeHtml(shortCell(cls))}</span>
+                                            <span class="sb-s">${escapeHtml(cls.subject)}</span>
+                                        </div>
+                                    </td>`;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
     }
 
     function bind(container, ctx) {
-        container.querySelectorAll('.schedule-cell').forEach((td) => {
+        container.querySelectorAll('.sched-cell').forEach((td) => {
             td.addEventListener('click', () => {
                 openCellEditor(
                     Number(td.dataset.day),
@@ -171,168 +172,8 @@
             global.TeacherApp.toast('تم المسح.', 'info');
             await render(container);
         });
-
-        container.querySelector('#btn-import-schedule')?.addEventListener('click', () => {
-            openImportDialog(ctx, container);
-        });
     }
 
-    /* ==========================================================================
-       Import from image/PDF — Claude vision reads the schedule and fills it.
-       ========================================================================== */
-
-    let _pdfJsPromise = null;
-    function ensurePdfJs() {
-        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
-        if (_pdfJsPromise) return _pdfJsPromise;
-        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
-        _pdfJsPromise = new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = base + 'pdf.min.js';
-            s.onload = () => {
-                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
-                resolve(global.pdfjsLib);
-            };
-            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة عرض PDF.'));
-            document.head.appendChild(s);
-        });
-        return _pdfJsPromise;
-    }
-
-    function blobToDataUrl(blob) {
-        return new Promise((resolve, reject) => {
-            const fr = new FileReader();
-            fr.onload  = () => resolve(fr.result);
-            fr.onerror = () => reject(fr.error);
-            fr.readAsDataURL(blob);
-        });
-    }
-
-    /** Convert any uploaded file into an array of pages Claude vision can
-     *  ingest. Single image → one element; PDFs render every page. */
-    async function fileToImagePages(file, maxPages) {
-        const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
-        if (!isPdf) {
-            const dataUrl = await blobToDataUrl(file);
-            const [meta, b64] = dataUrl.split(',');
-            const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
-            return [{ base64: b64, mediaType }];
-        }
-        const pdfjs = await ensurePdfJs();
-        const buf = await file.arrayBuffer();
-        const doc = await pdfjs.getDocument({ data: buf }).promise;
-        const n = Math.min(doc.numPages, maxPages || 5);
-        const pages = [];
-        for (let i = 1; i <= n; i++) {
-            const page = await doc.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-            pages.push({ base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' });
-            page.cleanup();
-        }
-        return pages;
-    }
-
-    function openImportDialog(ctx, container) {
-        const form = document.createElement('form');
-        form.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
-                ارفع صورة أو ملف PDF لجدولك الأسبوعي وسيقرأه الذكاء الاصطناعي ويعبّيه في الجدول تلقائياً.
-            </p>
-            <p style="color:#B45309; font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                ⚠️ سيستبدل الجدول الحالي بالكامل.
-            </p>
-            <div class="field">
-                <label class="label">الملف</label>
-                <input class="input" id="import-file" type="file" accept=".pdf,image/*" required>
-                <div class="field-hint">يفضّل صورة واضحة عالية الدقة لجدولك.</div>
-            </div>
-            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">📥 استيراد</button>
-                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-            </div>
-        `;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const file = form.querySelector('#import-file').files[0];
-            if (!file) return;
-
-            if (!(await global.AI.hasApiKey())) {
-                return global.TeacherApp.toast(
-                    'مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.',
-                    'warning', 5000
-                );
-            }
-            if (ctx.classes.length === 0) {
-                return global.TeacherApp.toast(
-                    'أضف فصولك من الشاشة الرئيسية أولاً ليتمكن الذكاء الاصطناعي من مطابقتها.',
-                    'warning', 5000
-                );
-            }
-            // Cap input size for safety
-            if (file.size > 20 * 1024 * 1024) {
-                return global.TeacherApp.toast('الملف كبير جداً (أقصى 20MB).', 'warning');
-            }
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const orig = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جارٍ القراءة...';
-
-            try {
-                const pages = await fileToImagePages(file, 5);
-                const cells = await global.AI.extractScheduleFromImage({
-                    pages,
-                    classes: ctx.classes,
-                    periodCount: ctx.periods.length
-                });
-
-                const validIds = new Set(ctx.classes.map((c) => c.id));
-                const matched = cells.filter((c) =>
-                    !c.unmatched && c.class_id && validIds.has(c.class_id)
-                    && Number.isInteger(c.day)    && c.day    >= 0 && c.day    <= 4
-                    && Number.isInteger(c.period) && c.period >= 1 && c.period <= ctx.periods.length
-                );
-                const unmatched = cells.length - matched.length;
-
-                if (matched.length === 0) {
-                    throw new Error('لم يستطع الذكاء الاصطناعي قراءة أي حصة من الصورة.');
-                }
-
-                // Replace existing schedule
-                for (const row of ctx.schedule) {
-                    await global.TeacherDB.remove('schedule', row.id);
-                }
-                for (const c of matched) {
-                    await global.TeacherDB.add('schedule', {
-                        teacher_id: ctx.teacher.id,
-                        day: c.day,
-                        period: c.period,
-                        class_id: c.class_id,
-                        topic: (c.topic || '').toString().trim()
-                    });
-                }
-
-                global.Modal.close();
-                const msg = `تم استيراد ${matched.length} حصة ✅`
-                    + (unmatched > 0 ? ` · تم تجاهل ${unmatched} لم تتطابق مع فصولك.` : '');
-                global.TeacherApp.toast(msg, 'success', 5000);
-                await render(container);
-            } catch (err) {
-                console.error('[schedule] import failed:', err);
-                global.TeacherApp.toast('تعذّر الاستيراد: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);
-                submitBtn.disabled = false;
-                submitBtn.textContent = orig;
-            }
-        });
-
-        global.Modal.open({ title: '📷 استيراد جدول من صورة/PDF', body: form });
-    }
 
     function openCellEditor(day, period, ctx, container) {
         const existing = ctx.schedule.find((r) => r.day === day && r.period === period);

@@ -2964,112 +2964,161 @@ body.drawer-open { overflow: hidden; }
 /* TODO(phase-d): on mobile, consider a day-by-day stacked view (pick a day,
    see its periods vertically) instead of the horizontal 5-day grid. Keep
    the grid available on tablet+. */
-.schedule-wrapper {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-4);
-}
-.schedule-table {
-    width: 100%;
-    min-width: 760px;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-.schedule-table thead th {
-    background: var(--surface-alt);
-    color: var(--text-muted);
-    font-weight: var(--fw-medium);
-    font-size: var(--fs-sm);
-    padding: var(--space-3);
-    border-bottom: 1px solid var(--border);
-    text-align: center;
-}
-.schedule-table .period-col {
-    width: 110px;
-    background: var(--surface-alt);
-    text-align: center;
-    vertical-align: middle;
-    border-left: 1px solid var(--border);
-    padding: var(--space-3);
-}
-.schedule-table .day-col {
-    width: 100px;
-    background: var(--surface-alt);
-    color: var(--text);
-    font-weight: var(--fw-bold);
-    text-align: center;
-    vertical-align: middle;
-    border-left: 1px solid var(--border);
-    padding: var(--space-3);
-}
-.period-n { font-weight: var(--fw-bold); }
-.period-time {
-    font-size: var(--fs-xs);
-    color: var(--text-muted);
-    margin-top: 2px;
-}
+/* الجدول الأسبوعي — التصميم المعتمد (ج١) */
+.sched-v2 { padding-bottom: var(--space-10); }
 
-.schedule-cell {
-    height: 78px;
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--border);
-    border-left: 1px solid var(--border);
-    vertical-align: middle;
-    cursor: pointer;
-    transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
-    position: relative;
+.sched-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-5) 0 var(--space-3);
 }
-.schedule-cell:hover { background: var(--surface-alt); }
-.schedule-cell.empty {
-    text-align: center;
-    color: var(--border-strong);
-}
-.schedule-cell.empty:hover {
-    background: rgba(59, 130, 246, 0.06);
+.sched-head h2 {
+    flex: 1;
+    margin: 0;
+    font-size: 20px;
+    font-weight: var(--fw-black);
     color: var(--primary);
 }
-.cell-plus {
-    font-size: 20px;
-    opacity: 0.6;
+/* مربع «توقيت الحصص» الرصاصي الصغير */
+.sched-time-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    border-radius: 11px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-weight: var(--fw-black);
+    font-size: 12.5px;
+    color: var(--primary);
+    white-space: nowrap;
+    cursor: pointer;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .1);
 }
+.sched-time-btn:active { transform: scale(.98); }
 
-.schedule-cell.waiting {
-    background: #FEF3C7;          /* warm amber tint */
-    border-right: 3px solid #F59E0B;
-    color: #78350F;
+.sched-wrap {
+    overflow-x: auto;
+    border-radius: 17px;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 4px 12px rgba(16, 24, 40, .08);
 }
-.schedule-cell.waiting:hover { background: #FDE68A; }
+.sched-wrap::-webkit-scrollbar { height: 0; }
 
-.schedule-cell.filled {
-    --cell-color: var(--primary);
-    background: color-mix(in srgb, var(--cell-color) 8%, white);
-    border-right: 4px solid var(--cell-color);
-    padding: var(--space-2) var(--space-3);
-    text-align: right;
+.sched-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+    min-width: 100%;
+    background: var(--surface);
 }
-.schedule-cell.filled:hover {
-    background: color-mix(in srgb, var(--cell-color) 14%, white);
+.sched-table th,
+.sched-table td { padding: 0; }
+
+.sched-table thead th {
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    color: #fff;
+    padding: 8px 4px;
+    font-size: 11px;
+    font-weight: var(--fw-black);
+    min-width: 78px;
+    text-align: center;
 }
-.cell-class {
+.sched-pt {
+    display: block;
+    margin-top: 1px;
+    font-size: 9.5px;
     font-weight: var(--fw-bold);
-    font-size: var(--fs-sm);
-    color: var(--text);
-    margin-bottom: 2px;
+    color: rgba(255, 255, 255, .7);
 }
-.cell-subject {
-    font-size: var(--fs-xs);
+.sched-table thead th.sched-corner {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    min-width: 52px;
+}
+
+.sched-table td.sched-day {
+    background: #ECEAE3;
+    color: var(--primary);
+    font-weight: var(--fw-black);
+    font-size: 12.5px;
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    min-width: 52px;
+    text-align: center;
+    border-left: 1.5px solid color-mix(in srgb, #ECEAE3 82%, #000);
+}
+.sched-table tr.is-today td.sched-day {
+    background: #C9A961;
+    color: var(--primary);
+}
+
+.sched-cell {
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    height: 52px;
+    padding: 5px;
+    cursor: pointer;
+}
+.sched-box {
+    height: 100%;
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    transition: transform var(--dur-fast) var(--ease);
+}
+.sched-cell:active .sched-box { transform: scale(.96); }
+.sched-box.filled {
+    background: linear-gradient(150deg, #fff, #ECEAE3);
+    border: 1px solid color-mix(in srgb, #ECEAE3 82%, #000);
+}
+.sched-box.filled .sb-c {
+    font-size: 11.5px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+}
+.sched-box.filled .sb-s {
+    font-size: 9.5px;
+    font-weight: var(--fw-bold);
     color: var(--text-muted);
 }
-.cell-topic {
-    font-size: var(--fs-xs);
-    color: var(--cell-color);
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.sched-box.wait {
+    background: color-mix(in srgb, #F59E0B 12%, #fff);
+    border: 1px solid color-mix(in srgb, #F59E0B 30%, #fff);
+    color: #B45309;
+    font-size: 11px;
+    font-weight: var(--fw-black);
+}
+.sched-box.empty { color: #CBBE9E; font-size: 17px; }
+
+.sched-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    margin-top: var(--space-2);
+}
+
+/* مسح الجدول — فعل خطر ونادر: رابط خفيف أسفل الصفحة */
+.sched-clear {
+    display: block;
+    width: 100%;
+    margin-top: var(--space-5);
+    padding: 10px;
+    background: none;
+    border: 0;
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-black);
+    color: #DC2626;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 /* Period times editor */
