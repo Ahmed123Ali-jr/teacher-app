@@ -67,9 +67,7 @@
 
                 ${renderGrid(grid, periods, classes, todayIdx)}
 
-                <div class="sched-dots" id="sched-dots">
-                    ${periods.map(() => '<i></i>').join('')}
-                </div>
+                <div class="sched-dots" id="sched-dots"></div>
 
                 <p class="sched-hint">اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>
 
@@ -168,22 +166,34 @@
             });
         });
 
-        /* مؤشر النقاط: يتبع موضع التمرير الأفقي (في RTL يكون scrollLeft سالباً) */
+        /* مؤشر النقاط: عددها = عدد مواضع التمرير الفعلية (لا عدد الحصص)،
+           لأن آخر شاشة تعرض عدة حصص دفعة واحدة. (في RTL يكون scrollLeft سالباً) */
         const wrap = container.querySelector('.sched-wrap');
         const dots = container.querySelector('#sched-dots');
         if (wrap && dots) {
-            const cells = dots.querySelectorAll('i');
             const colW = () => {
                 const th = container.querySelector('.sched-table thead th:not(.sched-corner)');
                 const w = th ? th.getBoundingClientRect().width : 0;
                 return w > 10 ? w : 88;
             };
+            const maxScroll = () => Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+
+            const buildDots = () => {
+                // نفس تقريب المؤشر: أقصى موضع يصله السحب هو round(maxScroll/colW)
+                const n = maxScroll() < 4 ? 0 : Math.round(maxScroll() / colW()) + 1;
+                dots.innerHTML = n > 1 ? Array.from({ length: n }, () => '<i></i>').join('') : '';
+                paintDots();
+            };
             const paintDots = () => {
+                const cells = dots.querySelectorAll('i');
+                if (!cells.length) return;
                 const idx = Math.round(Math.abs(wrap.scrollLeft) / colW());
                 cells.forEach((d, k) => d.classList.toggle('on', k === Math.min(idx, cells.length - 1)));
             };
+
             wrap.addEventListener('scroll', paintDots, { passive: true });
-            paintDots();
+            global.addEventListener('resize', buildDots);
+            buildDots();
         }
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
