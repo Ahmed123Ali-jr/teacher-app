@@ -29,12 +29,12 @@
             matches: (p) => p === '/schedule'
         },
         {
-            key: 'shortcuts', label: 'اختصارات', icon: '⚡',
-            href: '#/shortcuts',
-            // Also active on any of the destinations reachable from shortcuts
+            key: 'portfolio', label: 'ملف الإنجاز', icon: '📁',
+            href: '#/portfolio',
+            // Highlight on the portfolio page and the other shortcut destinations
             matches: (p) =>
-                p === '/shortcuts' || p === '/portfolio' ||
-                p === '/reports'   || p === '/reminders' || p === '/help'
+                p === '/portfolio' || p === '/shortcuts' ||
+                p === '/reports'   || p === '/help'
         },
         {
             key: 'settings',  label: 'الإعدادات', icon: '⚙️',

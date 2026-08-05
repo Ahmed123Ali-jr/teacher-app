@@ -192,6 +192,7 @@ body.drawer-open { overflow: hidden; }
 /* ==========================================================================
    Bottom navigation (Phase B) — mobile only
    ========================================================================== */
+/* الشريط السفلي (تصميم هـ): خلفية رصاصية متدرّجة، والتبويب النشط حبّة كحلية بارزة */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -199,9 +200,9 @@ body.drawer-open { overflow: hidden; }
     right: 0;
     z-index: 70;
     display: none;                     /* Visible only on mobile (@media below) */
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+    background: linear-gradient(180deg, #fff 0%, #ECEAE3 140%);
+    border-top: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: 0 -4px 14px rgba(16, 24, 40, 0.07);
     padding-bottom: var(--safe-bottom);
 }
 .bottom-nav[hidden] { display: none !important; }
@@ -213,48 +214,46 @@ body.drawer-open { overflow: hidden; }
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
     min-height: var(--bottom-nav-height);
-    padding: 6px 4px 4px;
+    padding: 6px 3px 4px;
     color: var(--text-muted);
     text-decoration: none;
     font-size: 11px;
-    font-weight: var(--fw-medium);
-    line-height: 1.2;
-    transition: color var(--dur-fast) var(--ease),
-                background var(--dur-fast) var(--ease);
-}
-.bottom-nav .bn-item:hover,
-.bottom-nav .bn-item:active { background: var(--surface-alt); color: var(--text); }
-
-/* Active tab: clear top indicator bar + stronger pill + bold label */
-.bottom-nav .bn-item.is-active {
-    color: var(--primary);
-    background: rgba(30, 64, 175, 0.12);
     font-weight: var(--fw-bold);
+    line-height: 1.2;
 }
-.bottom-nav .bn-item.is-active::before {
+
+/* الحبّة الداخلية — هي التي تتلوّن عند التنشيط */
+.bottom-nav .bn-item > * {
+    position: relative;
+    z-index: 1;
+}
+.bottom-nav .bn-item::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 18%;
-    right: 18%;
-    height: 3px;
+    inset: 6px 8px;
+    border-radius: 15px;
+    background: transparent;
+    transition: background var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease);
+}
+.bottom-nav .bn-item.is-active {
+    color: #fff;
+    font-weight: var(--fw-black);
+}
+.bottom-nav .bn-item.is-active::before {
     background: var(--primary);
-    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 11px rgba(15, 44, 92, 0.32),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.18);
 }
 
 .bottom-nav .bn-icon {
     font-size: 22px;
     line-height: 1;
-    opacity: 0.75;
-    transition: opacity var(--dur-fast) var(--ease),
-                transform var(--dur-fast) var(--ease);
+    margin-bottom: 3px;
+    transition: transform var(--dur-fast) var(--ease);
 }
-.bottom-nav .bn-item.is-active .bn-icon {
-    opacity: 1;
-    transform: translateY(-1px) scale(1.08);
-}
+.bottom-nav .bn-item.is-active .bn-icon { transform: scale(1.05); }
 .bottom-nav .bn-label {
     font-size: var(--fs-xs);
     letter-spacing: -0.1px;
