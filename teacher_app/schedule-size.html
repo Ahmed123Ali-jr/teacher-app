@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>تكبير الجدول وفصل الأيام</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--amber:#F59E0B;--red:#DC2626;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 14px 130px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:60;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:12.5px;font-weight:800;color:var(--muted);margin:4px 3px 14px;line-height:1.6;}
+
+    .headC{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+    .headC h1{flex:1;margin:0;font-size:20px;font-weight:900;color:var(--royal);}
+    .timeSm{display:inline-flex;align-items:center;min-height:36px;border-radius:11px;padding:0 12px;
+        font-family:inherit;font-weight:800;font-size:12.5px;color:var(--royal);white-space:nowrap;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.1);}
+    .clearLink{display:block;width:100%;text-align:center;margin-top:21px;background:none;border:0;font-family:inherit;
+        font-size:13px;font-weight:800;color:var(--red);text-decoration:underline;padding:10px;}
+    .hintline{text-align:center;color:var(--muted);font-size:11.5px;margin-top:9px;}
+
+    /* ===== قاعدة الجدول ===== */
+    .gwrap{overflow-x:auto;border-radius:17px;-webkit-overflow-scrolling:touch;box-shadow:0 4px 12px rgba(16,24,40,.08);}
+    .gwrap::-webkit-scrollbar{height:0;}
+    table.gt{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;background:#fff;}
+    table.gt th,table.gt td{padding:0;}
+    .gt thead th{background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;font-weight:800;}
+    .gt thead th .pt{color:rgba(255,255,255,.72);font-weight:700;display:block;}
+    .gt thead th.corner{position:sticky;right:0;z-index:2;}
+    .gt td.dc{background:var(--gray);color:var(--royal);font-weight:900;position:sticky;right:0;z-index:1;text-align:center;
+        border-left:1.5px solid color-mix(in srgb,var(--gray) 82%,#000);}
+    .gt tr.today td.dc{background:var(--gold);color:var(--royal);}
+    .cellbox{height:100%;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+    .cellbox.cls{background:linear-gradient(150deg,#fff,var(--gray));border:1px solid color-mix(in srgb,var(--gray) 78%,#000);
+        box-shadow:inset 0 1px 0 #fff,0 1px 3px rgba(16,24,40,.09);}
+    .cellbox.cls .c{font-weight:900;color:var(--royal);}
+    .cellbox.cls .s{color:var(--muted);font-weight:700;}
+    .cellbox.wait{background:color-mix(in srgb,var(--amber) 12%,#fff);border:1px solid color-mix(in srgb,var(--amber) 32%,#fff);color:#B45309;font-weight:800;}
+    .cellbox.empty{color:#CBBE9E;}
+
+    /* ===== الحالي (للمقارنة) ===== */
+    .v-now .gt thead th{padding:8px 4px;font-size:11px;min-width:78px;}
+    .v-now .gt thead th .pt{font-size:9.5px;margin-top:1px;}
+    .v-now .gt td.dc{font-size:12.5px;min-width:52px;}
+    .v-now .gt td.cell{border-bottom:1px solid var(--border);border-left:1px solid var(--border);height:52px;padding:5px;}
+    .v-now .cellbox.cls .c{font-size:11.5px;} .v-now .cellbox.cls .s{font-size:9.5px;}
+    .v-now .cellbox.wait{font-size:11px;} .v-now .cellbox.empty{font-size:17px;}
+
+    /* ===== أ — أكبر + فاصل بلون الخلفية بين الأيام ===== */
+    .v-a .gt thead th{padding:11px 6px;font-size:12.5px;min-width:96px;}
+    .v-a .gt thead th .pt{font-size:10.5px;margin-top:2px;}
+    .v-a .gt td.dc{font-size:14px;min-width:62px;}
+    .v-a .gt td.cell{border-left:1px solid var(--border);height:72px;padding:7px;
+        border-bottom:5px solid var(--bg);}
+    .v-a .gt td.dc{border-bottom:5px solid var(--bg);}
+    .v-a .gt tbody tr:last-child td{border-bottom:0;}
+    .v-a .cellbox.cls .c{font-size:13.5px;} .v-a .cellbox.cls .s{font-size:11px;}
+    .v-a .cellbox.wait{font-size:12.5px;} .v-a .cellbox.empty{font-size:21px;}
+
+    /* ===== ب — أكبر + خط ذهبي فاصل ===== */
+    .v-b .gt thead th{padding:11px 6px;font-size:12.5px;min-width:96px;}
+    .v-b .gt thead th .pt{font-size:10.5px;margin-top:2px;}
+    .v-b .gt td.dc{font-size:14px;min-width:62px;}
+    .v-b .gt td.cell{border-left:1px solid var(--border);height:72px;padding:7px;
+        border-bottom:2px solid color-mix(in srgb,var(--gold) 55%,#fff);}
+    .v-b .gt td.dc{border-bottom:2px solid color-mix(in srgb,var(--gold) 55%,#fff);}
+    .v-b .gt tbody tr:last-child td{border-bottom:0;}
+    .v-b .cellbox.cls .c{font-size:13.5px;} .v-b .cellbox.cls .s{font-size:11px;}
+    .v-b .cellbox.wait{font-size:12.5px;} .v-b .cellbox.empty{font-size:21px;}
+
+    /* ===== ج — الأكبر: كل يوم شريط مستقل ===== */
+    .v-c .gt{border-spacing:0 8px;background:transparent;}
+    .v-c .gwrap{background:transparent;box-shadow:none;border-radius:0;}
+    .v-c .gt thead th{padding:12px 6px;font-size:13px;min-width:100px;}
+    .v-c .gt thead th .pt{font-size:11px;margin-top:2px;}
+    .v-c .gt thead th:first-child{border-radius:0 13px 13px 0;}
+    .v-c .gt thead th:last-child{border-radius:13px 0 0 13px;}
+    .v-c .gt tbody tr{background:#fff;box-shadow:0 3px 9px rgba(16,24,40,.08);}
+    .v-c .gt tbody td:first-child{border-radius:0 13px 13px 0;}
+    .v-c .gt tbody td:last-child{border-radius:13px 0 0 13px;}
+    .v-c .gt td.dc{font-size:14px;min-width:62px;}
+    .v-c .gt td.cell{border-left:1px solid var(--border);height:76px;padding:8px;}
+    .v-c .cellbox.cls .c{font-size:14px;} .v-c .cellbox.cls .s{font-size:11px;}
+    .v-c .cellbox.wait{font-size:12.5px;} .v-c .cellbox.empty{font-size:21px;}
+    .v-c .gt tbody tr.today{outline:2px solid var(--gold);outline-offset:0;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const TODAY=2;
+const PT=['07:00','07:55','08:50','09:45','10:50','11:45'];
+const W={
+ 0:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'السادس/ب',s:'علوم'},3:'wait',4:{c:'الرابع/أ',s:'رياضيات'},5:{c:'الخامس/ج',s:'لغتي'}},
+ 1:{1:{c:'السادس/ب',s:'علوم'},2:{c:'الرابع/أ',s:'رياضيات'},4:{c:'الخامس/ج',s:'لغتي'},5:'wait'},
+ 2:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'السادس/ب',s:'علوم'},3:{c:'الرابع/أ',s:'رياضيات'},4:'wait',5:{c:'الخامس/ج',s:'لغتي'},6:{c:'السادس/ب',s:'علوم'}},
+ 3:{1:{c:'الخامس/ج',s:'لغتي'},2:{c:'الرابع/أ',s:'رياضيات'},3:{c:'السادس/ب',s:'علوم'}},
+ 4:{1:{c:'الرابع/أ',s:'رياضيات'},2:{c:'الخامس/ج',s:'لغتي'},5:{c:'السادس/ب',s:'علوم'}},
+};
+const NP=6;
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+
+function grid(){
+  let head='<th class="corner">اليوم</th>';
+  for(let p=1;p<=NP;p++)head+=`<th>ح${AR(p)}<span class="pt num">${PT[p-1]}</span></th>`;
+  let body='';
+  DAYS.forEach((d,i)=>{
+    let tds=`<td class="dc">${d}</td>`;
+    for(let p=1;p<=NP;p++){const cell=W[i][p];
+      if(!cell)tds+=`<td class="cell"><div class="cellbox empty">+</div></td>`;
+      else if(cell==='wait')tds+=`<td class="cell"><div class="cellbox wait">انتظار</div></td>`;
+      else tds+=`<td class="cell"><div class="cellbox cls"><span class="c">${cell.c}</span><span class="s">${cell.s}</span></div></td>`;
+    }
+    body+=`<tr class="${i===TODAY?'today':''}">${tds}</tr>`;
+  });
+  return `<div class="gwrap"><table class="gt"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+   <p class="hintline">← اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>`;
+}
+const page=(cls,name,desc)=>`<div class="pal-name">${name} · ${desc}</div>
+  <div class="${cls}">
+    <div class="headC"><h1>📅 الجدول الأسبوعي</h1><button class="timeSm">توقيت الحصص</button></div>
+    ${grid()}
+    <button class="clearLink">🗑️ مسح الجدول كاملاً</button>
+  </div>`;
+
+const D=[
+ ['أ — أكبر + فاصل واضح','خانات ٧٢px وخطوط أكبر، وفاصل بلون الخلفية ٥px بين كل يوم ويوم — الأيام تنفصل تماماً','v-a'],
+ ['ب — أكبر + خط ذهبي','نفس التكبير لكن الفاصل خط ذهبي رفيع بين الأيام','v-b'],
+ ['ج — كل يوم شريط','الأكبر: كل يوم شريط أبيض مستقل بحواف دائرية وظل ومسافة ٨px — أقصى فصل ممكن','v-c'],
+ ['الحالي','للمقارنة: الحجم المنشور حالياً','v-now'],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,cls],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=page(cls,name,desc);
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
