@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الشريط السفلي — تصاميم</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 16px 130px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:60;background:rgba(17,17,17,.9);backdrop-filter:blur(10px);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:99px;padding:8px 13px;font-family:inherit;font-size:12px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:#111;}
+    .pal-name{font-size:12.5px;font-weight:800;color:var(--muted);margin:6px 3px 14px;line-height:1.6;}
+    /* محتوى وهمي */
+    .fake{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:11px;box-shadow:0 2px 8px rgba(16,24,40,.05);}
+    .fake .l{height:11px;border-radius:6px;background:var(--gray);}
+    .fake .l.w1{width:60%;margin-bottom:9px;} .fake .l.w2{width:85%;margin-bottom:9px;} .fake .l.w3{width:40%;}
+    .hint{text-align:center;color:var(--muted);font-size:12px;margin-top:8px;}
+
+    /* ======= القاعدة المشتركة ======= */
+    .nav{position:fixed;bottom:44px;right:0;left:0;z-index:50;display:flex;}
+    .nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+        text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;min-height:60px;position:relative;}
+    .nav .i{font-size:21px;line-height:1;transition:transform .2s;}
+    .nav a.on{color:var(--royal);}
+
+    /* ===== أ — كلاسيكي نظيف (خط علوي للنشط) ===== */
+    .n-a{background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);
+        box-shadow:0 -3px 14px rgba(16,24,40,.06);}
+    .n-a a.on::before{content:"";position:absolute;top:0;right:22%;left:22%;height:3px;border-radius:0 0 4px 4px;background:var(--royal);}
+    .n-a a.on .i{transform:translateY(-1px);}
+    .n-a a.on{color:var(--royal);font-weight:800;}
+
+    /* ===== ب — حبّة نشطة (pill) ===== */
+    .n-b{background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -3px 14px rgba(16,24,40,.06);}
+    .n-b a{gap:0;}
+    .n-b a .wrap{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 15px;border-radius:16px;transition:background .2s;}
+    .n-b a.on .wrap{background:color-mix(in srgb,var(--royal) 8%,#fff);}
+    .n-b a.on{color:var(--royal);font-weight:800;}
+
+    /* ===== ج — عائم (floating) ===== */
+    .n-c{bottom:calc(44px + 12px);right:14px;left:14px;background:var(--royal);border-radius:22px;
+        padding-bottom:0;box-shadow:0 10px 26px rgba(15,44,92,.4),inset 0 1.5px 0 rgba(255,255,255,.15);}
+    .n-c a{color:rgba(255,255,255,.55);min-height:62px;}
+    .n-c a.on{color:#fff;}
+    .n-c a.on .i{transform:translateY(-1px);}
+    .n-c a.on::after{content:"";position:absolute;bottom:9px;width:5px;height:5px;border-radius:50%;background:var(--gold);}
+
+    /* ===== د — الرئيسية بارزة (center dome) ===== */
+    .n-d{background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -3px 14px rgba(16,24,40,.06);}
+    .n-d a.on{color:var(--royal);font-weight:800;}
+    .n-d a.center{}
+    .n-d a.center .i{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:24px;
+        background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;margin-top:-24px;
+        box-shadow:0 6px 16px rgba(15,44,92,.45),inset 0 1.5px 0 rgba(255,255,255,.3);border:3px solid var(--bg);}
+    .n-d a.center span:last-child{margin-top:1px;}
+
+    /* ===== هـ — رصاصي بحبّة نشطة كحلية ===== */
+    .n-e{background:linear-gradient(180deg,#fff 0%,var(--gray) 140%);border-top:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -4px 14px rgba(16,24,40,.07);}
+    .n-e a .wrap{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;border-radius:15px;transition:all .2s;}
+    .n-e a.on .wrap{background:var(--royal);box-shadow:0 4px 11px rgba(15,44,92,.32);}
+    .n-e a.on{color:#fff;font-weight:800;}
+    .n-e a.on .i{transform:scale(1.05);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const TABS=[
+ ['🏠','الرئيسية'],['📚','الفصول'],['📅','الجدول'],['⚡','اختصارات'],['⚙️','الإعدادات'],
+];
+const fake = `
+  <div class="fake"><div class="l w1"></div><div class="l w2"></div><div class="l w3"></div></div>
+  <div class="fake"><div class="l w2"></div><div class="l w1"></div></div>
+  <div class="fake"><div class="l w1"></div><div class="l w2"></div><div class="l w3"></div></div>
+  <div class="hint">↓ الشريط السفلي — «الرئيسية» نشطة</div>`;
+
+function navA(){return `<nav class="nav n-a">${TABS.map((t,i)=>`<a class="${i===0?'on':''}"><span class="i">${t[0]}</span><span>${t[1]}</span></a>`).join('')}</nav>`;}
+function navB(){return `<nav class="nav n-b">${TABS.map((t,i)=>`<a class="${i===0?'on':''}"><span class="wrap"><span class="i">${t[0]}</span><span>${t[1]}</span></span></a>`).join('')}</nav>`;}
+function navC(){return `<nav class="nav n-c">${TABS.map((t,i)=>`<a class="${i===0?'on':''}"><span class="i">${t[0]}</span><span>${t[1]}</span></a>`).join('')}</nav>`;}
+function navD(){return `<nav class="nav n-d">${TABS.map((t,i)=>`<a class="${i===0?'on center':''}"><span class="i">${t[0]}</span><span>${t[1]}</span></a>`).join('')}</nav>`;}
+function navE(){return `<nav class="nav n-e">${TABS.map((t,i)=>`<a class="${i===0?'on':''}"><span class="wrap"><span class="i">${t[0]}</span><span>${t[1]}</span></span></a>`).join('')}</nav>`;}
+
+const D=[
+ ['أ — كلاسيكي نظيف','خط كحلي علوي صغير فوق التبويب النشط — بسيط ومألوف عالمياً (iOS/Material)',navA],
+ ['ب — حبّة نشطة','التبويب النشط داخل حبّة كحلية فاتحة — يبيّن مكانك بوضوح دون ضجيج',navB],
+ ['ج — شريط عائم','شريط كحلي عائم بحواف دائرية بعيد عن الأطراف — عصري وفخم، النشط بنقطة ذهبية',navC],
+ ['د — الرئيسية بارزة','زر الرئيسية دائري بارز في المنتصف (نمط التطبيقات الكبرى) — وصول أسرع للأهم',navD],
+ ['هـ — رصاصي كحلي','خلفية رصاصية متدرّجة والنشط حبّة كحلية بارزة — منسجم تماماً مع هوية التطبيق الحالية',navE],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,fn],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>`+fake+fn();
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
