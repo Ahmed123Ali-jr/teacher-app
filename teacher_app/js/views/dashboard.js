@@ -351,31 +351,52 @@
             </div>`;
     }
 
-    /* مربع «حصتك الحالية/القادمة» الكحلي في أسفل الصفحة */
-    function heroHtml(info, hasClasses, hasSchedule, isWeekend) {
-        if (!hasClasses) {
-            return `
-                <div class="home-hero-alt dashed">
-                    <div class="ha-t">أضف فصلك الأول 🎒</div>
-                    <div class="ha-s">لتبدأ متابعة طلابك وحصصك من هنا</div>
-                    <button type="button" class="btn btn-primary" data-add-class style="min-height:48px;">+ إضافة فصل</button>
-                </div>`;
-        }
-        if (isWeekend) {
+    /* ---- حالات الإعداد الأولى (البدء) ---- */
+
+    /* أول فتح بلا فصول: البطاقة الرصاصية «أضف فصلك الأول» (البديل أ المعتمد) */
+    function startFirstClassHtml() {
+        return `
+            <div class="start-box">
+                <div class="start-halo"></div>
+                <div class="start-ring">🎒</div>
+                <div class="start-t">أضف فصلك الأول</div>
+                <div class="start-s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة طلابك خلال دقيقة</div>
+                <button type="button" class="start-cta" data-add-class>+ إضافة فصل</button>
+            </div>`;
+    }
+
+    /* فصول موجودة بلا جدول: صندوق «أضف الجدول الأسبوعي» + زر «إضافة فصل» تحته */
+    function startScheduleHtml() {
+        return `
+            <div class="start-box">
+                <div class="start-halo"></div>
+                <div class="start-ring">📅</div>
+                <div class="start-t">أضف الجدول الأسبوعي</div>
+                <div class="start-s">حدّد حصص فصولك في الجدول الأسبوعي<br>ليظهر يومك وحصتك القادمة هنا</div>
+                <a href="#/schedule" class="start-cta">+ أضف الجدول الأسبوعي</a>
+            </div>
+            <button type="button" class="start-add-class" data-add-class>+ إضافة فصل</button>`;
+    }
+
+    /* يوم بلا حصص / إجازة نهاية الأسبوع */
+    function restCardHtml(kind) {
+        if (kind === 'weekend') {
             return `
                 <div class="home-hero-alt">
                     <div class="ha-t">🌴 إجازة سعيدة</div>
                     <div class="ha-s">نلقاك الأحد بإذن الله</div>
                 </div>`;
         }
-        if (!hasSchedule) {
-            return `
-                <div class="home-hero-alt dashed">
-                    <div class="ha-t">📅 أضف جدولك الأسبوعي</div>
-                    <div class="ha-s">لتظهر حصتك الحالية هنا كل صباح</div>
-                    <a href="#/schedule" class="btn btn-primary" style="min-height:48px;">إعداد الجدول</a>
-                </div>`;
-        }
+        return `
+            <div class="home-hero-alt">
+                <div class="ha-t">🌤️ لا حصص لك اليوم</div>
+                <div class="ha-s">يومك خالٍ من الحصص — وقت مناسب لتجهيز الاختبارات وأوراق العمل</div>
+                <a href="#/schedule" class="home-alt-lk">📅 الجدول كاملاً ←</a>
+            </div>`;
+    }
+
+    /* مربع «حصتك الحالية/القادمة» الكحلي — يُستدعى فقط في يوم فيه حصص */
+    function heroHtml(info) {
         if (!info || info.state === 'done') {
             return `
                 <div class="home-hero-alt">
@@ -450,6 +471,31 @@
         // فصل التجهيز: فصل الحصة الحالية/القادمة وإلا أول فصل
         const prepClass = (nextClass && nextClass.cls) || classes[0] || null;
 
+        // حالة الإعداد تحدّد محتوى الرئيسية
+        const hasClasses     = classes.length > 0;
+        const hasSchedule    = scheduleRows.length > 0;
+        const isWeekend      = todayIdx === -1;
+        const hasPeriodsToday = todayRows.length > 0;
+
+        let body;
+        if (!hasClasses) {
+            // أول فتح: البطاقة الرصاصية «أضف فصلك الأول» فقط
+            body = startFirstClassHtml();
+        } else if (!hasSchedule) {
+            // فصول بلا جدول: صندوق الجدول + زر إضافة فصل — بلا تذكيرات ولا تجهيز
+            body = startScheduleHtml();
+        } else if (isWeekend) {
+            body = remindersCardHtml(remindersToday, classById) + restCardHtml('weekend');
+        } else if (!hasPeriodsToday) {
+            body = remindersCardHtml(remindersToday, classById) + restCardHtml('dayoff');
+        } else {
+            // يوم دراسي فيه حصص: الرئيسية الكاملة
+            body = remindersCardHtml(remindersToday, classById)
+                 + periodsBoxHtml(todayRows, classById, periodByN)
+                 + prepHtml(prepClass)
+                 + heroHtml(nextClass);
+        }
+
         container.innerHTML = `
             <div class="container home-v2">
                 <div class="home-hd">
@@ -459,11 +505,7 @@
                     </div>
                     <a href="#/profile" class="home-av" aria-label="بياناتي">${avatarHtml}</a>
                 </div>
-
-                ${remindersCardHtml(remindersToday, classById)}
-                ${periodsBoxHtml(todayRows, classById, periodByN)}
-                ${prepHtml(prepClass)}
-                ${heroHtml(nextClass, classes.length > 0, scheduleRows.length > 0, todayIdx === -1)}
+                ${body}
             </div>
         `;
 
