@@ -29,11 +29,11 @@
             matches: (p) => p === '/schedule'
         },
         {
-            key: 'portfolio', label: 'ملف الإنجاز', icon: '📁',
-            href: '#/portfolio',
-            // Highlight on the portfolio page and the other shortcut destinations
+            key: 'shortcuts', label: 'إنجاز', icon: '📁',
+            href: '#/shortcuts',
+            // Active on the shortcuts hub and any destination reachable from it
             matches: (p) =>
-                p === '/portfolio' || p === '/shortcuts' ||
+                p === '/shortcuts' || p === '/portfolio' ||
                 p === '/reports'   || p === '/help'
         },
         {
