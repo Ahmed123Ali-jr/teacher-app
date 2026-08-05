@@ -87,13 +87,17 @@
     .box-b{padding:0 15px 15px;}
     .box .chips-x{padding:2px 0 4px;}
 
-    /* أ — بيضاء بإطار ذهبي */
-    .box-a{background:#fff;border:1.5px solid rgba(201,169,97,.55);box-shadow:0 5px 14px rgba(16,24,40,.08);}
-    .box-a .box-h{border-bottom:1px solid rgba(201,169,97,.28);}
+    /* أ — رصاصي بنفس تدرّج بطاقات الفصول */
+    .box-a{color:var(--royal);
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff, 0 5px 11px rgba(16,24,40,.12);}
+    .box-a .box-h{border-bottom:1px solid color-mix(in srgb,var(--gray) 80%,#000);}
     .box-a .box-h b{color:var(--royal);}
-    .box-a .box-h .cnt{background:rgba(201,169,97,.14);color:#8C6D2F;}
+    .box-a .box-h .cnt{background:rgba(201,169,97,.16);color:#8C6D2F;}
     .box-a .box-h a{color:var(--royal);}
     .box-a .box-b{padding-top:11px;}
+    .box-a .pchip{border-color:transparent;box-shadow:0 2px 6px rgba(16,24,40,.08);}
 
     /* ب — كحلية فاخرة */
     .box-b2{background:linear-gradient(180deg,#1B3E75 0%,var(--royal) 55%,#0A2148 100%);
@@ -231,7 +235,7 @@ const prep = `
 const page = (box) => header + remCard + box + prep + '<div style="height:13px"></div>' + hero;
 
 const D=[
- ['أ — بيضاء بإطار ذهبي','التذكيرات مطويّة في الأعلى · صندوق أبيض بإطار ذهبي رفيع وحبّات الحصص داخله (تمرير أفقي)', page(boxA)],
+ ['أ — رصاصي كالفصول','التذكيرات مطويّة في الأعلى · صندوق الحصص بنفس تدرّج بطاقات الفصول الرصاصية، وحبّات الحصص بيضاء داخله', page(boxA)],
  ['ب — كحلية فاخرة','التذكيرات مطويّة في الأعلى · صندوق كحلي بارز، الحبّات داخله شفافة والجارية ذهبية — الأفخم', page(boxB)],
  ['ج — شبكة مرتبة','التذكيرات مطويّة في الأعلى · كل الحصص الست في شبكة ٣×٢ بلا تمرير — الأرتب', page(boxC)],
  ['د — صفوف مفصّلة','التذكيرات مطويّة في الأعلى · كل حصة سطر كامل بحالتها (تمت/الآن/انتظار/بعد ٢٥ د) — الأوضح', page(boxD)],
