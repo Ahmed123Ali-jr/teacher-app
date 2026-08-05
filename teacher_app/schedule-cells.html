@@ -85,6 +85,16 @@
         border-radius:99px;padding:3px 11px;box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(16,24,40,.1);}
     .c-c1 .cellbox.cls .s{font-size:9.5px;color:var(--muted);font-weight:700;}
 
+    /* ج٣ — نص فقط بلا حبّة: الفصل كحلي عريض والمادة رمادية تحته */
+    .c-c3 .cellbox.cls{background:transparent;border:0;box-shadow:none;gap:2px;}
+    .c-c3 .cellbox.cls .c{font-size:12.5px;font-weight:900;color:var(--royal);}
+    .c-c3 .cellbox.cls .s{font-size:10px;color:var(--muted);font-weight:700;}
+
+    /* ج٤ — نص فقط بخط أكبر للفصل */
+    .c-c4 .cellbox.cls{background:transparent;border:0;box-shadow:none;gap:2px;}
+    .c-c4 .cellbox.cls .c{font-size:14px;font-weight:900;color:var(--royal);}
+    .c-c4 .cellbox.cls .s{font-size:10px;color:var(--muted);font-weight:700;}
+
     /* ج٢ — حبّة رصاصية مصمتة (بلا تدرّج) */
     .c-c2 .cellbox.cls{background:transparent;border:0;gap:3px;}
     .c-c2 .cellbox.cls .c{font-size:11.5px;font-weight:900;color:var(--royal);background:var(--gray);
@@ -141,11 +151,10 @@ const page = `<div class="headC"><h1>📅 الجدول الأسبوعي</h1><but
   + grid() + `<button class="clearLink">🗑️ مسح الجدول كاملاً</button>`;
 
 const D=[
- ['ج١ — حبّة رصاصية متدرّجة','اسم الفصل داخل حبّة رصاصية بتدرّج وإطار (نفس بطاقات الفصول) والمادة تحتها','c-c1'],
- ['ج٢ — حبّة رصاصية مصمتة','نفسها لكن الرصاصي بلون واحد بلا تدرّج','c-c2'],
- ['ج — حبّة كحلية','الأصلي للمقارنة: الحبّة كحلية','c-c'],
- ['أ — كحلي مصمت','مربع الفصل كحلي كامل والمادة ذهبية','c-a'],
- ['الحالي','رصاصي متدرّج — للمقارنة','c-now'],
+ ['ج٣ — نص فقط','بلا حبّة ولا صندوق: اسم الفصل كحلي عريض والمادة رمادية تحته — كتابة فقط','c-c3'],
+ ['ج٤ — نص فقط بخط أكبر','نفسه لكن اسم الفصل أكبر (١٤) ليبرز أكثر','c-c4'],
+ ['ج١ — حبّة رصاصية','للمقارنة: الحبّة الرصاصية المتدرّجة','c-c1'],
+ ['الحالي','مربع رصاصي متدرّج — للمقارنة','c-now'],
 ];
 
 const root=document.getElementById('root'),sw=document.getElementById('switcher');
