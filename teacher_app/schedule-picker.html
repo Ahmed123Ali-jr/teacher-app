@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>لوحة اختيار الفصل في الجدول</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--amber:#F59E0B;--red:#DC2626;--green:#059669;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:80;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 13px;font-family:inherit;font-size:12px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal{position:fixed;top:0;right:0;left:0;z-index:70;background:rgba(17,17,17,.85);color:#fff;font-size:11.5px;font-weight:700;padding:8px 12px;line-height:1.6;}
+
+    /* خلفية: جدول مصغّر ثابت */
+    .bgpage{padding:52px 14px 0;filter:saturate(.9);}
+    .bgpage .hd{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+    .bgpage h1{flex:1;margin:0;font-size:19px;font-weight:900;color:var(--royal);}
+    .bgpage .tb{min-height:34px;border-radius:11px;padding:0 11px;display:inline-flex;align-items:center;font-size:12px;font-weight:800;color:var(--royal);
+        background:linear-gradient(150deg,#fff,var(--gray));border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);}
+    .minigrid{border-collapse:separate;border-spacing:0 7px;width:100%;}
+    .minigrid th{background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;font-size:11px;font-weight:800;padding:8px 4px;}
+    .minigrid th:first-child{border-radius:0 12px 12px 0;} .minigrid th:last-child{border-radius:12px 0 0 12px;}
+    .minigrid tr.b{background:#fff;box-shadow:0 3px 8px rgba(16,24,40,.07);}
+    .minigrid td:first-child{border-radius:0 12px 12px 0;} .minigrid td:last-child{border-radius:12px 0 0 12px;}
+    .minigrid td.d{background:var(--gray);color:var(--royal);font-weight:900;font-size:12px;text-align:center;width:54px;}
+    .minigrid td.c{height:58px;border-left:1px solid var(--border);text-align:center;color:#CBBE9E;font-size:18px;}
+    .minigrid td.c b{display:block;font-size:12.5px;color:var(--royal);}
+    .minigrid td.c span{display:block;font-size:10px;color:var(--muted);font-weight:700;}
+    .minigrid td.c.tgt{outline:2px solid var(--gold);border-radius:9px;}
+
+    /* ===== الورقة السفلية ===== */
+    .sheet{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;}
+    .card{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:17px 15px calc(90px + env(safe-area-inset-bottom));
+        box-shadow:0 -10px 30px rgba(0,0,0,.24);max-height:88vh;overflow-y:auto;}
+    .grab{width:38px;height:4px;border-radius:99px;background:#CFC9BA;margin:0 auto 14px;}
+    .shead{display:flex;align-items:center;gap:10px;margin-bottom:15px;}
+    .shead .slot{width:52px;height:52px;border-radius:15px;background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0;box-shadow:0 4px 11px rgba(15,44,92,.3);}
+    .shead .slot b{font-size:15px;font-weight:900;} .shead .slot span{font-size:9px;opacity:.75;}
+    .shead .tt h3{margin:0;font-size:17px;font-weight:900;color:var(--royal);}
+    .shead .tt div{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+    .lbl{font-size:12.5px;font-weight:800;color:var(--muted);margin:0 3px 8px;}
+
+    /* بطاقات الفصول */
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+    .ccard{border-radius:15px;padding:12px;text-align:right;position:relative;cursor:pointer;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.09);}
+    .ccard .g{font-size:14px;font-weight:900;color:var(--royal);}
+    .ccard .s{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;}
+    .ccard.on{background:linear-gradient(180deg,#24498A,var(--royal));border-color:var(--royal);box-shadow:0 6px 15px rgba(15,44,92,.33);}
+    .ccard.on .g{color:#fff;} .ccard.on .s{color:rgba(201,169,97,.95);}
+    .ccard.on::after{content:"✓";position:absolute;top:8px;left:10px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--royal);
+        font-size:12px;font-weight:900;display:grid;place-items:center;}
+    .ccard.wait{background:color-mix(in srgb,var(--amber) 10%,#fff);border-color:color-mix(in srgb,var(--amber) 35%,#fff);}
+    .ccard.wait .g{color:#B45309;}
+    .ccard.wait.on{background:linear-gradient(180deg,#D97706,#B45309);border-color:#B45309;}
+    .ccard.wait.on .g{color:#fff;} .ccard.wait.on .s{color:rgba(255,255,255,.8);}
+
+    /* قائمة صفوف (البديل ب) */
+    .clist{display:flex;flex-direction:column;gap:8px;}
+    .crow{display:flex;align-items:center;gap:11px;border-radius:14px;padding:11px 13px;cursor:pointer;
+        background:#fff;border:1.5px solid var(--border);box-shadow:0 2px 6px rgba(16,24,40,.06);}
+    .crow .av{width:40px;height:40px;border-radius:12px;background:var(--gray);color:var(--royal);display:grid;place-items:center;
+        font-weight:900;font-size:15px;flex-shrink:0;}
+    .crow .tx{flex:1;min-width:0;}
+    .crow .g{font-size:14.5px;font-weight:900;color:var(--royal);}
+    .crow .s{font-size:11.5px;color:var(--muted);font-weight:700;}
+    .crow .pick{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);}
+    .crow.on{border-color:var(--royal);background:color-mix(in srgb,var(--royal) 5%,#fff);}
+    .crow.on .pick{background:var(--royal);border-color:var(--royal);position:relative;}
+    .crow.on .pick::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:900;}
+    .crow.wait .av{background:color-mix(in srgb,var(--amber) 15%,#fff);color:#B45309;}
+
+    /* الحقول والأزرار */
+    .fld{margin-top:15px;}
+    .fld .inp{width:100%;min-height:48px;border-radius:13px;border:1.5px solid var(--border);background:#fff;
+        padding:0 13px;display:flex;align-items:center;font-size:13.5px;color:var(--muted);}
+    .acts{display:flex;gap:8px;margin-top:17px;}
+    .btnP{flex:1;min-height:52px;border-radius:14px;border:0;background:var(--royal);color:#fff;font-family:inherit;font-weight:900;font-size:15.5px;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.2),0 5px 13px rgba(15,44,92,.3);}
+    .btnD{min-height:52px;border-radius:14px;padding:0 16px;border:1.5px solid color-mix(in srgb,var(--red) 35%,#fff);
+        background:color-mix(in srgb,var(--red) 6%,#fff);color:var(--red);font-family:inherit;font-weight:800;font-size:14px;}
+    .btnG{min-height:52px;border-radius:14px;padding:0 16px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-family:inherit;font-weight:800;font-size:14px;}
+
+    /* بطاقة الحصة الحالية (شاشات التعديل) */
+    .cur{border-radius:19px;padding:16px;color:#fff;margin-bottom:15px;position:relative;overflow:hidden;
+        background:linear-gradient(180deg,#24498A 0%,var(--royal) 55%,#0A2148 100%);
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.22),0 8px 18px rgba(15,44,92,.38);}
+    .cur .k{font-size:11.5px;color:rgba(255,255,255,.62);font-weight:700;}
+    .cur .g{font-size:22px;font-weight:900;margin-top:3px;}
+    .cur .s{font-size:13px;color:rgba(201,169,97,.95);font-weight:700;margin-top:3px;}
+    .cur .tp{margin-top:11px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:11px;
+        padding:9px 12px;font-size:12.5px;color:rgba(255,255,255,.9);}
+    /* إجراءات سريعة */
+    .quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px;}
+    .qbtn{border-radius:14px;padding:13px 11px;text-align:center;cursor:pointer;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.09);}
+    .qbtn .em{font-size:20px;} .qbtn .t{font-size:12.5px;font-weight:800;color:var(--royal);margin-top:4px;}
+    .qbtn .h{font-size:10px;color:var(--muted);font-weight:700;margin-top:1px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const CLASSES=[
+ {g:'الرابع/أ',s:'رياضيات',a:'٤'},
+ {g:'السادس/ب',s:'علوم',a:'٦'},
+ {g:'الخامس/ج',s:'لغتي',a:'٥'},
+ {g:'الثالث/أ',s:'رياضيات',a:'٣'},
+];
+
+function bg(target){
+  const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+  let rows='';
+  DAYS.forEach((d,i)=>{
+    let tds=`<td class="d">${d}</td>`;
+    for(let p=1;p<=3;p++){
+      const filled=(i===0&&p<3)||(i===2&&p===1);
+      const tgt=(i===2&&p===3&&target==='empty')||(i===2&&p===1&&target==='filled');
+      tds+=`<td class="c ${tgt?'tgt':''}">${filled?'<b>الرابع/أ</b><span>رياضيات</span>':'+'}</td>`;
+    }
+    rows+=`<tr class="b">${tds}</tr>`;
+  });
+  return `<div class="bgpage">
+    <div class="hd"><h1>📅 الجدول الأسبوعي</h1><span class="tb">توقيت الحصص</span></div>
+    <table class="minigrid"><thead><tr><th>اليوم</th><th>ح١<br>07:00</th><th>ح٢<br>07:55</th><th>ح٣<br>08:50</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+const head = (t) => `<div class="grab"></div>
+  <div class="shead">
+    <div class="slot"><b class="num">ح٣</b><span>الحصة</span></div>
+    <div class="tt"><h3>${t}</h3><div class="num">الثلاثاء · ٠٨:٥٠ — ٠٩:٣٥</div></div>
+  </div>`;
+
+const cgrid = (sel) => `<div class="cgrid">
+  ${CLASSES.map((c,i)=>`<div class="ccard ${i===sel?'on':''}" data-pick="${i}">
+      <div class="g">${c.g}</div><div class="s">${c.s}</div></div>`).join('')}
+  <div class="ccard wait ${sel===9?'on':''}" data-pick="9" style="grid-column:1/-1">
+    <div class="g">⏳ حصة انتظار</div><div class="s">بلا فصل</div></div>
+</div>`;
+
+const clist = (sel) => `<div class="clist">
+  ${CLASSES.map((c,i)=>`<div class="crow ${i===sel?'on':''}" data-pick="${i}">
+      <div class="av">${c.a}</div><div class="tx"><div class="g">${c.g}</div><div class="s">${c.s}</div></div>
+      <span class="pick"></span></div>`).join('')}
+  <div class="crow wait ${sel===9?'on':''}" data-pick="9">
+      <div class="av">⏳</div><div class="tx"><div class="g">حصة انتظار</div><div class="s">بلا فصل</div></div>
+      <span class="pick"></span></div>
+</div>`;
+
+const S=[];
+
+/* ===== إضافة ===== */
+S.push(['إضافة أ — شبكة بطاقات','اضغط ＋ في خانة فارغة: بطاقات الفصول شبكة، الاختيار يُظهر ✓ ذهبية، وحصة الانتظار بطاقة كهرمانية بعرض كامل',
+ bg('empty')+`<div class="sheet"><div class="card">
+   ${head('اختر الفصل')}
+   ${cgrid(-1)}
+   <div class="fld"><div class="lbl">الموضوع / الدرس (اختياري)</div><div class="inp">مثلاً: جمع الأعداد</div></div>
+   <div class="acts"><button class="btnP">إضافة الحصة</button><button class="btnG">إلغاء</button></div>
+ </div></div>`]);
+
+S.push(['إضافة ب — قائمة صفوف','نفس الفكرة بصفوف: حرف الصف في مربع، ودائرة اختيار على اليسار — أوضح للأسماء الطويلة',
+ bg('empty')+`<div class="sheet"><div class="card">
+   ${head('اختر الفصل')}
+   ${clist(-1)}
+   <div class="fld"><div class="lbl">الموضوع / الدرس (اختياري)</div><div class="inp">مثلاً: جمع الأعداد</div></div>
+   <div class="acts"><button class="btnP">إضافة الحصة</button><button class="btnG">إلغاء</button></div>
+ </div></div>`]);
+
+S.push(['إضافة ج — لمسة واحدة','بلا أزرار: تضغط الفصل فيُحفظ وتُغلق اللوحة فوراً — أسرع طريقة لبناء جدول كامل',
+ bg('empty')+`<div class="sheet"><div class="card">
+   ${head('اختر الفصل')}
+   <div class="lbl">اضغط الفصل ليُضاف فوراً</div>
+   ${cgrid(-1)}
+   <div class="acts"><button class="btnG" style="flex:1">إلغاء</button></div>
+ </div></div>`]);
+
+/* ===== تعديل ===== */
+S.push(['تعديل أ — بطاقة + إجراءات','اضغط حصة معبّأة: بطاقة كحلية تعرضها، وتحتها إجراءات سريعة (تكرار على بقية الأيام، تبديل الفصل)',
+ bg('filled')+`<div class="sheet"><div class="card">
+   ${head('تعديل الحصة')}
+   <div class="cur">
+     <div class="k">الحصة الحالية</div>
+     <div class="g">الرابع الابتدائي / أ</div>
+     <div class="s">رياضيات</div>
+     <div class="tp">📖 الموضوع: جمع الأعداد</div>
+   </div>
+   <div class="quick">
+     <div class="qbtn"><div class="em">🔁</div><div class="t">تكرار على بقية الأيام</div><div class="h">نفس الحصة كل يوم</div></div>
+     <div class="qbtn"><div class="em">🔀</div><div class="t">تبديل الفصل</div><div class="h">اختر فصلاً آخر</div></div>
+   </div>
+   <div class="fld"><div class="lbl">الموضوع / الدرس</div><div class="inp" style="color:var(--text)">جمع الأعداد</div></div>
+   <div class="acts"><button class="btnP">حفظ</button><button class="btnD">🗑️ إزالة</button></div>
+ </div></div>`]);
+
+S.push(['تعديل ب — الشبكة مع المختار','نفس لوحة الاختيار لكن الفصل الحالي مميّز بـ✓، فتغيّره بضغطة — والإزالة أسفل',
+ bg('filled')+`<div class="sheet"><div class="card">
+   ${head('تعديل الحصة')}
+   <div class="lbl">الفصل</div>
+   ${cgrid(0)}
+   <div class="fld"><div class="lbl">الموضوع / الدرس</div><div class="inp" style="color:var(--text)">جمع الأعداد</div></div>
+   <div class="acts"><button class="btnP">حفظ</button><button class="btnD">🗑️ إزالة</button></div>
+ </div></div>`]);
+
+S.push(['تعديل ج — الأغنى','بطاقة الحصة + أربعة إجراءات: تكرار، تبديل، نسخ لحصة أخرى، إزالة — لوحة تحكّم كاملة للحصة',
+ bg('filled')+`<div class="sheet"><div class="card">
+   ${head('الحصة الثالثة')}
+   <div class="cur">
+     <div class="k">الثلاثاء · ٠٨:٥٠ — ٠٩:٣٥</div>
+     <div class="g">الرابع الابتدائي / أ</div>
+     <div class="s">رياضيات · جمع الأعداد</div>
+   </div>
+   <div class="quick">
+     <div class="qbtn"><div class="em">🔀</div><div class="t">تبديل الفصل</div></div>
+     <div class="qbtn"><div class="em">📝</div><div class="t">تعديل الموضوع</div></div>
+     <div class="qbtn"><div class="em">🔁</div><div class="t">تكرار على الأيام</div></div>
+     <div class="qbtn"><div class="em">📋</div><div class="t">نسخ لحصة أخرى</div></div>
+   </div>
+   <div class="acts"><button class="btnD" style="flex:1">🗑️ إزالة الحصة من الجدول</button></div>
+ </div></div>`]);
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+S.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+  sc.querySelectorAll('[data-pick]').forEach(el=>{
+    el.onclick=()=>{
+      const isRow=el.classList.contains('crow');
+      sc.querySelectorAll(isRow?'.crow':'.ccard').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on');
+    };
+  });
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
