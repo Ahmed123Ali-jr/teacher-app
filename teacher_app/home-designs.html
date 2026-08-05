@@ -66,7 +66,11 @@
     .rem-head .ic{width:34px;height:34px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:16px;}
     .rem-head b{font-size:15px;color:var(--royal);}
     .rem-head .bd{background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;min-width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
-    .rem-head a{margin-right:auto;font-size:13px;color:var(--royal);text-decoration:underline;}
+    .rem-head .tg-btn{margin-right:auto;width:30px;height:30px;border-radius:50%;border:0;background:var(--bg);
+        color:var(--royal);font-size:14px;display:grid;place-items:center;transition:transform .22s ease;}
+    .rem-card.open .rem-head .tg-btn{transform:rotate(180deg);}
+    .rem-body{display:none;}
+    .rem-card.open .rem-body{display:block;}
     .rem-it{display:flex;align-items:center;gap:10px;padding:11px 13px;border-top:1px solid var(--border);}
     .rem-it .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
     .rem-it .tx{flex:1;min-width:0;}
@@ -113,18 +117,25 @@ const chipsRow = `
   </div>`;
 
 /* التذكيرات واضحة: نص كل تذكير + نوعه + فصله/وقته */
+/* التذكيرات مطويّة — السهم يفتحها */
 const remCard = `
-  <div class="rem-card">
-    <div class="rem-head"><div class="ic">🔔</div><b>تذكيرات اليوم</b><span class="bd num">٢</span><a>الكل</a></div>
-    <div class="rem-it">
-      <span class="dot" style="background:#DC2626"></span>
-      <div class="tx"><div class="tt">تسليم أوراق اختبار الفترة الأولى</div><div class="ss">الرابع الابتدائي / أ · اليوم</div></div>
-      <span class="tg" style="background:rgba(220,38,38,.08);color:#DC2626">اختبار</span>
-    </div>
-    <div class="rem-it">
-      <span class="dot" style="background:#2563EB"></span>
-      <div class="tx"><div class="tt">اجتماع لجنة التوجيه الطلابي</div><div class="ss num">غرفة المعلمين · ٠١:٠٠ ظهراً</div></div>
-      <span class="tg" style="background:rgba(37,99,235,.08);color:#2563EB">اجتماع</span>
+  <div class="rem-card" data-rem>
+    <div class="rem-head"><div class="ic">🔔</div><b>تذكيرات اليوم</b><span class="bd num">٢</span>
+      <button class="tg-btn" data-rem-toggle aria-label="عرض التذكيرات">▾</button></div>
+    <div class="rem-body">
+      <div class="rem-it">
+        <span class="dot" style="background:#DC2626"></span>
+        <div class="tx"><div class="tt">تسليم أوراق اختبار الفترة الأولى</div><div class="ss">الرابع الابتدائي / أ · اليوم</div></div>
+        <span class="tg" style="background:rgba(220,38,38,.08);color:#DC2626">اختبار</span>
+      </div>
+      <div class="rem-it">
+        <span class="dot" style="background:#2563EB"></span>
+        <div class="tx"><div class="tt">اجتماع لجنة التوجيه الطلابي</div><div class="ss num">غرفة المعلمين · ٠١:٠٠ ظهراً</div></div>
+        <span class="tg" style="background:rgba(37,99,235,.08);color:#2563EB">اجتماع</span>
+      </div>
+      <div class="rem-it" style="justify-content:center">
+        <a style="font-size:12.5px;color:var(--royal);text-decoration:underline">كل التذكيرات ←</a>
+      </div>
     </div>
   </div>`;
 
@@ -133,8 +144,10 @@ const prep = `
   <div class="prep"><a>📝 الاختبارات</a><a>📄 أوراق العمل</a><a>📚 الواجبات</a></div>`;
 
 const D=[
- ['أ — المعتمد','ترتيب التصميم أ كما هو، ومربع «حصتك الحالية» نزل أسفل قسم «تجهيز الرابع الابتدائي» في آخر الصفحة — وزرّ سجل المتابعة صار في متناول الإبهام مباشرة',
+ ['١ — التذكيرات بعد الحصص','التذكيرات مطويّة بعد شريط حصص اليوم — اضغط السهم ▾ لتظهر، ومربع «حصتك الحالية» أسفل التجهيز',
   header + chipsRow + remCard + prep + '<div style="height:13px"></div>' + hero],
+ ['٢ — التذكيرات في الأعلى','التذكيرات المطويّة أول شيء بعد الترحيب، ثم حصص اليوم فالتجهيز فمربع «حصتك الحالية»',
+  header + remCard + chipsRow + prep + '<div style="height:13px"></div>' + hero],
 ];
 
 const root=document.getElementById('root'),sw=document.getElementById('switcher');
@@ -146,6 +159,12 @@ D.forEach(([name,desc,html],i)=>{
   b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
     sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
   sw.appendChild(b);
+});
+/* فتح/طي التذكيرات */
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-rem-toggle]');
+  if (!t) return;
+  t.closest('[data-rem]').classList.toggle('open');
 });
 </script>
 </body>
