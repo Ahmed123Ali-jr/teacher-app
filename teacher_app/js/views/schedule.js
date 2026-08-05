@@ -67,7 +67,11 @@
 
                 ${renderGrid(grid, periods, classes, todayIdx)}
 
-                <p class="sched-hint">← اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>
+                <div class="sched-dots" id="sched-dots">
+                    ${periods.map(() => '<i></i>').join('')}
+                </div>
+
+                <p class="sched-hint">اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>
 
                 <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
             </div>
@@ -163,6 +167,24 @@
                 );
             });
         });
+
+        /* مؤشر النقاط: يتبع موضع التمرير الأفقي (في RTL يكون scrollLeft سالباً) */
+        const wrap = container.querySelector('.sched-wrap');
+        const dots = container.querySelector('#sched-dots');
+        if (wrap && dots) {
+            const cells = dots.querySelectorAll('i');
+            const colW = () => {
+                const th = container.querySelector('.sched-table thead th:not(.sched-corner)');
+                const w = th ? th.getBoundingClientRect().width : 0;
+                return w > 10 ? w : 88;
+            };
+            const paintDots = () => {
+                const idx = Math.round(Math.abs(wrap.scrollLeft) / colW());
+                cells.forEach((d, k) => d.classList.toggle('on', k === Math.min(idx, cells.length - 1)));
+            };
+            wrap.addEventListener('scroll', paintDots, { passive: true });
+            paintDots();
+        }
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
 
