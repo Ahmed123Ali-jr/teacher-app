@@ -25,8 +25,12 @@
     .av{width:44px;height:44px;border-radius:50%;background:var(--royal);color:#fff;display:grid;place-items:center;
         font-weight:800;font-size:17px;border:1.5px solid var(--gold);flex-shrink:0;}
 
-    .hero{margin:0 21px;background:var(--royal);border-radius:21px;padding:21px;color:#fff;position:relative;overflow:hidden;
-        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.12), 0 8px 21px rgba(15,44,92,.35);}
+    /* مربع حصتك الحالية — بارز ثري دي بنفس أسلوب صندوق الحصص وشرائط المراحل */
+    .hero{margin:0 21px;border-radius:21px;padding:21px;color:#fff;position:relative;overflow:hidden;
+        background:linear-gradient(180deg,#24498A 0%,var(--royal) 55%,#0A2148 100%);
+        border:1px solid #1B3E75;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.3),
+                   0 8px 18px rgba(15,44,92,.42), 0 2px 5px rgba(15,44,92,.3);}
     .hero .badge{position:absolute;top:15px;left:15px;background:var(--gold);color:var(--royal);font-weight:800;font-size:12px;
         border-radius:8px;padding:3px 9px;display:flex;align-items:center;gap:5px;}
     .hero .badge i{width:6px;height:6px;border-radius:50%;background:var(--royal);animation:pulse 2s infinite;font-style:normal;}
@@ -39,7 +43,10 @@
     .hero .prog .bar i{display:block;height:100%;width:60%;background:var(--gold);border-radius:99px;}
     .hero .prog span{font-size:12px;color:rgba(255,255,255,.7);}
     .hero .cta{display:flex;align-items:center;justify-content:center;margin-top:15px;min-height:55px;border-radius:13px;
-        background:var(--gold);color:var(--royal);font-weight:800;font-size:17px;}
+        background:linear-gradient(180deg,#E0C486 0%,var(--gold) 55%,#A98944 100%);
+        border:1px solid #B99A55;color:var(--royal);font-weight:800;font-size:17px;
+        box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5), inset 0 -2px 4px rgba(0,0,0,.16),
+                   0 4px 10px rgba(0,0,0,.22);}
 
     .sec-h{display:flex;align-items:center;gap:8px;padding:0 21px;margin:21px 0 9px;}
     .sec-h b{font-size:15px;color:var(--royal);}
