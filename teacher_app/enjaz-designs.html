@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>صفحة إنجاز — التصاميم المقترحة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--amber:#F59E0B;--red:#DC2626;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;padding:14px 14px 130px;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:60;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 13px;font-family:inherit;font-size:12px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal-name{font-size:12.5px;font-weight:800;color:var(--muted);margin:4px 3px 14px;line-height:1.6;}
+
+    .hd{display:flex;align-items:center;margin-bottom:13px;}
+    .hd h1{flex:1;margin:0;font-size:20px;font-weight:900;color:var(--royal);}
+
+    /* المواد المشتركة: بطاقة رصاصية كبطاقات الفصول، وشريط كحلي كشريط المرحلة */
+    .gcard{background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);
+        box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.09);border-radius:16px;}
+    .navyband{background:linear-gradient(150deg,#24498A 0%,var(--royal) 60%,#0B2148 100%);
+        border-radius:18px;box-shadow:0 6px 16px rgba(15,44,92,.32),inset 0 1.5px 0 rgba(255,255,255,.18);color:#fff;}
+
+    /* ═══ أ — شريط كحلي ملخّص + شبكة أقسام رصاصية ═══ */
+    .a-band{padding:16px 18px;margin-bottom:13px;display:flex;align-items:center;gap:13px;}
+    .a-band .em{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:22px;}
+    .a-band .tx{flex:1;}
+    .a-band .t{font-size:16.5px;font-weight:900;}
+    .a-band .h{font-size:11.5px;color:rgba(255,255,255,.75);font-weight:700;margin-top:2px;}
+    .a-band .n{text-align:center;background:rgba(255,255,255,.12);border-radius:12px;padding:7px 13px;}
+    .a-band .n b{display:block;font-size:19px;font-weight:900;color:var(--gold);}
+    .a-band .n span{font-size:9.5px;color:rgba(255,255,255,.75);font-weight:700;}
+    .a-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .a-tile{padding:15px 13px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+    .a-tile .ic{font-size:26px;}
+    .a-tile .t{font-size:13.5px;font-weight:900;color:var(--royal);}
+    .a-tile .h{font-size:10.5px;color:var(--muted);font-weight:700;}
+    .a-row{margin-top:10px;padding:13px 16px;display:flex;align-items:center;gap:11px;}
+    .a-row .ic{font-size:20px;}
+    .a-row .t{flex:1;font-size:13.5px;font-weight:900;color:var(--royal);}
+    .a-row .b{font-size:11px;font-weight:800;color:#fff;background:var(--royal);border-radius:99px;padding:3px 10px;}
+    .a-row .chev{color:var(--muted);font-size:16px;font-weight:900;transform:scaleX(-1);}
+
+    /* ═══ ب — بطاقة تقدّم بحلقة + صفوف ═══ */
+    .b-hero{padding:18px;margin-bottom:13px;display:flex;align-items:center;gap:16px;}
+    .b-ring{width:86px;height:86px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+        background:conic-gradient(var(--gold) 0 234deg,#E3DFD2 234deg 360deg);}
+    .b-ring .in{width:66px;height:66px;border-radius:50%;background:#fff;display:grid;place-items:center;flex-direction:column;text-align:center;}
+    .b-ring b{font-size:17px;font-weight:900;color:var(--royal);display:block;}
+    .b-ring span{font-size:8.5px;color:var(--muted);font-weight:800;display:block;}
+    .b-hero .tx{flex:1;}
+    .b-hero .t{font-size:16px;font-weight:900;color:var(--royal);}
+    .b-hero .h{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.7;}
+    .b-row{padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+    .b-row .ic{width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--border);display:grid;place-items:center;font-size:19px;}
+    .b-row .tx{flex:1;}
+    .b-row .t{font-size:13.5px;font-weight:900;color:var(--royal);}
+    .b-row .h{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:1px;}
+    .b-row .chev{color:var(--muted);font-size:16px;font-weight:900;transform:scaleX(-1);}
+
+    /* ═══ ج — عدّادات أعلى + أقسام الملف قائمة كحليّة الرأس ═══ */
+    .c-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:13px;}
+    .c-stat{padding:13px 6px;text-align:center;}
+    .c-stat b{display:block;font-size:20px;font-weight:900;color:var(--royal);}
+    .c-stat span{font-size:10px;color:var(--muted);font-weight:800;}
+    .c-list{border-radius:16px;overflow:hidden;border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:0 3px 8px rgba(16,24,40,.09);}
+    .c-head{background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;padding:11px 16px;font-size:13.5px;font-weight:900;display:flex;align-items:center;gap:8px;}
+    .c-item{background:#fff;padding:13px 16px;display:flex;align-items:center;gap:11px;border-top:1px solid var(--border);}
+    .c-item .ic{font-size:18px;}
+    .c-item .t{flex:1;font-size:13px;font-weight:800;color:var(--text);}
+    .c-item .n{font-size:11.5px;font-weight:900;color:var(--royal);background:var(--gray);border-radius:99px;padding:3px 10px;}
+    .c-item .chev{color:var(--muted);font-size:15px;font-weight:900;transform:scaleX(-1);}
+    .c-gap{height:13px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const hd='<div class="hd"><h1>📁 إنجاز</h1></div>';
+
+/* أ */
+const A=`${hd}
+<div class="navyband a-band">
+  <span class="em">📁</span>
+  <span class="tx"><span class="t">ملف إنجازك</span><br><span class="h">آخر إضافة: قبل يومين</span></span>
+  <span class="n"><b class="num">١٢</b><span>شاهداً</span></span>
+</div>
+<div class="a-grid">
+  <button class="gcard a-tile"><span class="ic">📁</span><span class="t">ملف الإنجاز</span><span class="h">٦ أقسام · ١٢ شاهداً</span></button>
+  <button class="gcard a-tile"><span class="ic">📊</span><span class="t">التقارير</span><span class="h">الحضور والتقييمات</span></button>
+</div>
+<button class="gcard a-row" style="width:100%"><span class="ic">🔔</span><span class="t">تذكيراتي</span><span class="b num">٣</span><span class="chev">›</span></button>
+<button class="gcard a-row" style="width:100%"><span class="ic">🖨️</span><span class="t">طباعة ملف الإنجاز</span><span class="chev">›</span></button>`;
+
+/* ب */
+const B=`${hd}
+<div class="gcard b-hero">
+  <div class="b-ring"><div class="in"><div><b class="num">٦٥٪</b><span>اكتمال الملف</span></div></div></div>
+  <div class="tx"><div class="t">ملف إنجازك يتقدّم</div>
+  <div class="h">١٢ شاهداً في ٤ أقسام<br>أقرب نقص: قسم الشهادات</div></div>
+</div>
+<button class="gcard b-row" style="width:100%"><span class="ic">📁</span><span class="tx"><span class="t">ملف الإنجاز</span><br><span class="h">فتح الأقسام والشواهد</span></span><span class="chev">›</span></button>
+<button class="gcard b-row" style="width:100%"><span class="ic">📊</span><span class="tx"><span class="t">التقارير</span><br><span class="h">الحضور · التقييمات · المشاركة</span></span><span class="chev">›</span></button>
+<button class="gcard b-row" style="width:100%"><span class="ic">🔔</span><span class="tx"><span class="t">تذكيراتي</span><br><span class="h">٣ تذكيرات قادمة</span></span><span class="chev">›</span></button>
+<button class="gcard b-row" style="width:100%"><span class="ic">🖨️</span><span class="tx"><span class="t">طباعة الملف</span><br><span class="h">PDF جاهز للاعتماد</span></span><span class="chev">›</span></button>`;
+
+/* ج */
+const C=`${hd}
+<div class="c-stats">
+  <div class="gcard c-stat"><b class="num">١٢</b><span>شاهداً</span></div>
+  <div class="gcard c-stat"><b class="num">٤</b><span>أقسام معبّأة</span></div>
+  <div class="gcard c-stat"><b class="num">٣</b><span>تذكيرات</span></div>
+</div>
+<div class="c-list">
+  <div class="c-head">📁 ملف الإنجاز</div>
+  <button class="c-item" style="width:100%"><span class="ic">🪪</span><span class="t">السيرة الذاتية</span><span class="n num">٢</span><span class="chev">›</span></button>
+  <button class="c-item" style="width:100%"><span class="ic">🏅</span><span class="t">الشهادات والدورات</span><span class="n num">٥</span><span class="chev">›</span></button>
+  <button class="c-item" style="width:100%"><span class="ic">📷</span><span class="t">شواهد الأداء</span><span class="n num">٤</span><span class="chev">›</span></button>
+  <button class="c-item" style="width:100%"><span class="ic">🖨️</span><span class="t">طباعة الملف كاملاً</span><span class="chev">›</span></button>
+</div>
+<div class="c-gap"></div>
+<div class="c-list">
+  <div class="c-head">⚡ أدواتك</div>
+  <button class="c-item" style="width:100%"><span class="ic">📊</span><span class="t">التقارير</span><span class="chev">›</span></button>
+  <button class="c-item" style="width:100%"><span class="ic">🔔</span><span class="t">تذكيراتي</span><span class="n num">٣</span><span class="chev">›</span></button>
+</div>`;
+
+const D=[
+ ['أ · شريط كحلي + مربعات','ملخّص كحلي كبطاقة «سجل المتابعة»، تحته مربعان رصاصيان وصفّا تذكيرات وطباعة',A],
+ ['ب · حلقة تقدّم','بطاقة رصاصية بحلقة اكتمال ذهبية، تحتها صفوف رصاصية لكل وجهة',B],
+ ['ج · عدّادات + قوائم','ثلاثة عدّادات رصاصية، ثم قائمتان برأس كحلي: أقسام الملف وأدواتك',C],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher');
+D.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal-name">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
