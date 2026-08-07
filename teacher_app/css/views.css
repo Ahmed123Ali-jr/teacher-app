@@ -3361,6 +3361,81 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* Period times editor */
+/* ==========================================================================
+   شاشة «إنجاز» — ملخّص كحليّ ثم مربّعان رصاصيان وصفّ التذكيرات
+   ========================================================================== */
+.enjaz-hd { margin: var(--space-5) 0 var(--space-3); }
+.enjaz-hd h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+}
+
+/* الملخّص الكحليّ — نفس مادة بطاقة «سجل متابعة الطلاب» داخل الفصل. */
+.enjaz-band {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 16px 18px;
+    margin-bottom: 13px;
+    border-radius: 18px;
+    text-decoration: none;
+    color: #fff;
+    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
+    box-shadow: 0 6px 16px rgba(15, 44, 92, .32), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+}
+.enjaz-band:active { transform: scale(.99); }
+.enjaz-band .em {
+    width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+    background: rgba(255, 255, 255, .14);
+    display: grid; place-items: center; font-size: 22px;
+}
+.enjaz-band .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.enjaz-band .t { font-size: 16.5px; font-weight: var(--fw-black); }
+.enjaz-band .h {
+    font-size: 11.5px; font-weight: var(--fw-bold);
+    color: rgba(255, 255, 255, .75); margin-top: 2px;
+}
+.enjaz-band .n {
+    flex-shrink: 0; text-align: center;
+    background: rgba(255, 255, 255, .12); border-radius: 12px; padding: 7px 13px;
+}
+.enjaz-band .n b { display: block; font-size: 19px; font-weight: var(--fw-black); color: var(--gold, #C9A961); }
+.enjaz-band .n span { font-size: 9.5px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .75); }
+
+/* المربّعان والصفّ — نفس مادة بطاقات الفصول الرصاصية. */
+.enjaz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.enjaz-tile,
+.enjaz-row {
+    text-decoration: none;
+    border-radius: 16px;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.enjaz-tile:active,
+.enjaz-row:active { transform: scale(.985); }
+.enjaz-tile {
+    padding: 15px 13px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+}
+.enjaz-tile .ic { font-size: 26px; }
+.enjaz-tile .t { font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
+.enjaz-tile .h { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); }
+.enjaz-row {
+    margin-top: 10px;
+    padding: 13px 16px;
+    display: flex; align-items: center; gap: 11px;
+}
+.enjaz-row .ic { font-size: 20px; }
+.enjaz-row .t { flex: 1; font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
+.enjaz-row .b {
+    font-size: 11px; font-weight: var(--fw-black); color: #fff;
+    background: var(--primary); border-radius: 99px; padding: 3px 10px;
+}
+.enjaz-row .chev { color: var(--text-muted); font-size: 16px; font-weight: var(--fw-black); transform: scaleX(-1); }
+
 /* زر «+ إضافة فصل» الرصاصي أعلى صفحة الفصول — نفس مادة بطاقات الفصول. */
 .btn-add-gray {
     display: inline-flex;
