@@ -41,12 +41,46 @@
         await global.TeacherDB.Settings.set('period_times', rows);
     }
 
+    /* ---------- حصص الانتظار ----------
+       wait_kind: 'perm'  → انتظار دائم يبقى كل أسبوع
+                  'today' → لهذا اليوم فقط، يُحذف تلقائياً بعده
+       sub_class: نص الفصل المُسند للانتظار اليوم (قد يكون فصلاً لا يدرّسه
+                  المعلم، لذا يُخزَّن نصاً لا معرّفاً)، مع sub_date ليُمسح غداً. */
+    function todayKey() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    /** تنظيف يومي: حصص «لهذا اليوم فقط» المنتهية، وإسنادات انتظار الأمس. */
+    async function cleanupExpired(rows) {
+        const today = todayKey();
+        const survivors = [];
+        for (const r of rows) {
+            if (!r.class_id && r.wait_kind === 'today' && r.wait_date && r.wait_date !== today) {
+                await global.TeacherDB.remove('schedule', r.id);
+                continue;
+            }
+            if (!r.class_id && r.sub_class && r.sub_date !== today) {
+                const clean = { ...r, sub_class: null, sub_date: null,
+                                updated_at: new Date().toISOString() };
+                await global.TeacherDB.put('schedule', clean);
+                survivors.push(clean);
+                continue;
+            }
+            survivors.push(r);
+        }
+        return survivors;
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const classes  = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        const schedule = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+        const rawSched = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+        const schedule = await cleanupExpired(rawSched);
         const periods  = await getPeriodTimes();
 
         const grid = buildGrid(schedule, periods.length);
@@ -135,8 +169,14 @@
                                     }
                                     const cls = classById[cell.class_id];
                                     if (!cls) {
+                                        // انتظار: يعرض الفصل المُسند اليوم إن وُجد
                                         return `<td class="sched-cell" ${attrs}>
-                                            <div class="sched-box wait">انتظار</div>
+                                            <div class="sched-box wait">
+                                                ${cell.sub_class
+                                                    ? `<span class="sb-sub">${escapeHtml(cell.sub_class)}</span>
+                                                       <span class="sb-w">انتظار · اليوم</span>`
+                                                    : 'انتظار'}
+                                            </div>
                                         </td>`;
                                     }
                                     return `<td class="sched-cell" ${attrs}>
@@ -207,85 +247,237 @@
     }
 
 
+    /* ==========================================================================
+       لوحة اختيار الفصل / تعديل الحصة — باللمس فقط بلا زر حفظ
+       ========================================================================== */
+
+    const GRADE_NAMES = {
+        primary:      ['الأول','الثاني','الثالث','الرابع','الخامس','السادس'],
+        intermediate: ['الأول','الثاني','الثالث'],
+        secondary:    ['الأول','الثاني','الثالث']
+    };
+    const STAGE_SUFFIX = { primary: 'الابتدائي', intermediate: 'المتوسط', secondary: 'الثانوي' };
+    const STAGE_LABEL  = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
+    const SECTIONS = ['أ','ب','ج','د','هـ','و','ز','ح'];
+
+    function sheetHead(day, period, ctx, opts = {}) {
+        const p = ctx.periods.find((x) => x.n === period);
+        const time = p ? `${escapeHtml(p.start)} — ${escapeHtml(p.end)}` : '';
+        return `
+            <div class="sch-head">
+                ${opts.back ? '<button type="button" class="sch-back" data-back>›</button>' : ''}
+                <div class="sch-slot ${opts.amber ? 'amber' : ''}">
+                    <b class="num">ح${period}</b><span>${opts.amber ? 'انتظار' : 'الحصة'}</span>
+                </div>
+                <div class="sch-tt">
+                    <h3>${escapeHtml(opts.title)}</h3>
+                    <div class="num">${DAYS[day].label}${time ? ' · ' + time : ''}</div>
+                </div>
+            </div>`;
+    }
+
+    /** عنوان نافذة النظام (شريط الإغلاق) حسب حالة الخانة. */
+    function sheetTitle(existing, isWait) {
+        if (isWait) return 'حصة انتظار';
+        return existing ? 'تعديل الحصة' : 'إضافة حصة';
+    }
+
+    function classCardsHtml(ctx, selectedId) {
+        return `
+            <div class="sch-grid">
+                ${ctx.classes.map((c) => `
+                    <button type="button" class="sch-card ${selectedId === c.id ? 'on' : ''}" data-cls="${c.id}">
+                        <span class="g">${escapeHtml(shortCell(c))}</span>
+                        <span class="s">${escapeHtml(c.subject)}</span>
+                    </button>
+                `).join('')}
+                <button type="button" class="sch-card wait ${selectedId === '__wait__' ? 'on' : ''}" data-wait>
+                    <span class="g">⏳ حصة انتظار</span>
+                    <span class="s">اضغط لاختيار نوعها</span>
+                    <span class="chev">›</span>
+                </button>
+            </div>`;
+    }
+
+    /** الخطوة الثانية: نوع حصة الانتظار (دائم / لهذا اليوم فقط) */
+    function waitKindHtml(current) {
+        return `
+            <div class="sch-lbl">هل تتكرر أسبوعياً أم لهذا اليوم فقط؟</div>
+            <div class="sch-wopt">
+                <button type="button" class="sch-wbox ${current === 'perm' ? 'on' : ''}" data-kind="perm">
+                    <span class="em">🔁</span>
+                    <span class="tx"><span class="t">انتظار دائم</span>
+                        <span class="h">يبقى في الجدول كل أسبوع حتى تحذفه بنفسك</span></span>
+                    <span class="pick"></span>
+                </button>
+                <button type="button" class="sch-wbox ${current === 'today' ? 'on' : ''}" data-kind="today">
+                    <span class="em">📅</span>
+                    <span class="tx"><span class="t">لهذا اليوم فقط</span>
+                        <span class="h">يختفي تلقائياً نهاية اليوم ويعود مكانه فارغاً</span></span>
+                    <span class="pick"></span>
+                </button>
+            </div>`;
+    }
+
+    /** اختيار الفصل المُسند للانتظار: مرحلة ← صف ← شعبة (كل فصول المدرسة) */
+    function substituteHtml(state) {
+        return `
+            <div class="sch-note"><span class="em">📅</span>
+                <span class="t">الإسناد لهذا اليوم فقط — يُمسح تلقائياً نهاية اليوم وتعود الخانة «انتظار» فارغة.</span>
+            </div>
+            <div class="sch-lbl">المرحلة</div>
+            <div class="sch-chips">
+                ${Object.keys(STAGE_LABEL).map((k) => `
+                    <button type="button" class="sch-chip ${state.stage === k ? 'on' : ''}" data-stage="${k}">${STAGE_LABEL[k]}</button>
+                `).join('')}
+            </div>
+            <div class="sch-lbl">الصف</div>
+            <div class="sch-g3">
+                ${GRADE_NAMES[state.stage].map((g, i) => `
+                    <button type="button" class="sch-gcell ${state.grade === i ? 'on' : ''}" data-grade="${i}">${g}</button>
+                `).join('')}
+            </div>
+            <div class="sch-lbl" style="margin-top:13px">الشعبة</div>
+            <div class="sch-secs">
+                ${SECTIONS.map((s) => `
+                    <button type="button" class="sch-sec" data-sec="${escapeAttr(s)}"
+                            ${state.grade === null ? 'disabled' : ''}>${s}</button>
+                `).join('')}
+            </div>`;
+    }
+
     function openCellEditor(day, period, ctx, container) {
         const existing = ctx.schedule.find((r) => r.day === day && r.period === period);
+        const isWait   = !!existing && !existing.class_id;
 
-        const form = document.createElement('form');
-        form.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                ${DAYS[day].label} — الحصة ${period}
-            </p>
+        const body = document.createElement('div');
+        body.className = 'sch-sheet';
+        // 'pick' اختيار الفصل · 'kind' نوع الانتظار · 'sub' إسناد فصل للانتظار
+        let view = 'pick';
+        const subState = { stage: 'primary', grade: null };
 
-            <div class="field">
-                <label class="label">الفصل *</label>
-                <select class="select" id="cell-class" required>
-                    <option value="">— اختر فصلاً —</option>
-                    <option value="__waiting__" ${(existing && !existing.class_id) ? 'selected' : ''}>
-                        ⏳ حصة انتظار
-                    </option>
-                    ${ctx.classes.map((c) => `
-                        <option value="${c.id}" ${existing?.class_id === c.id ? 'selected' : ''}>
-                            ${escapeHtml(c.grade)} / ${escapeHtml(c.section)} — ${escapeHtml(c.subject)}
-                        </option>
-                    `).join('')}
-                </select>
-            </div>
-
-            <div class="field">
-                <label class="label">الموضوع / الدرس (اختياري)</label>
-                <input class="input" id="cell-topic" type="text"
-                       placeholder="مثلاً: جمع الأعداد"
-                       value="${existing ? escapeAttr(existing.topic || '') : ''}">
-            </div>
-
-            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">${existing ? 'حفظ' : 'إضافة'}</button>
-                ${existing ? '<button type="button" class="btn btn-danger" id="cell-clear">🗑️ إزالة الحصة</button>' : ''}
-                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-            </div>
-        `;
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const rawClass = form.querySelector('#cell-class').value;
-            const topic    = form.querySelector('#cell-topic').value.trim();
-            if (!rawClass) return global.TeacherApp.toast('اختر فصلاً أو حصة انتظار.', 'warning');
-
-            const isWaiting = rawClass === '__waiting__';
-            const row = {
+        async function saveRow(patch) {
+            const row = Object.assign({
                 teacher_id: ctx.teacher.id,
                 day, period,
-                class_id: isWaiting ? null : rawClass,
-                topic,
                 updated_at: new Date().toISOString()
-            };
-
+            }, existing || {}, patch, { day, period });
             if (existing) {
-                row.id = existing.id;
-                row.created_at = existing.created_at;
                 await global.TeacherDB.put('schedule', row);
             } else {
                 row.created_at = new Date().toISOString();
                 await global.TeacherDB.add('schedule', row);
             }
+        }
 
+        async function pickClass(id) {
+            await saveRow({ class_id: id, wait_kind: null, wait_date: null,
+                            sub_class: null, sub_date: null });
             global.Modal.close();
-            global.TeacherApp.toast('تم الحفظ ✅', 'success', 1500);
+            global.TeacherApp.toast('تم الحفظ ✅', 'success', 1200);
             await render(container);
-        });
+        }
 
-        form.querySelector('#cell-clear')?.addEventListener('click', async () => {
-            if (!global.confirm('إزالة هذه الحصة من الجدول؟')) return;
-            await global.TeacherDB.remove('schedule', existing.id);
+        async function pickWaitKind(kind) {
+            await saveRow({ class_id: null, wait_kind: kind,
+                            wait_date: kind === 'today' ? todayKey() : null });
             global.Modal.close();
-            global.TeacherApp.toast('تمت الإزالة.', 'info');
+            global.TeacherApp.toast(kind === 'perm' ? 'انتظار دائم ✅' : 'انتظار لهذا اليوم ✅', 'success', 1400);
             await render(container);
+        }
+
+        async function pickSubstitute(label) {
+            await saveRow({ class_id: null, sub_class: label, sub_date: todayKey() });
+            global.Modal.close();
+            global.TeacherApp.toast('تنتظر عند ' + label + ' اليوم ✅', 'success', 1600);
+            await render(container);
+        }
+
+        function paint() {
+            if (view === 'kind') {
+                body.innerHTML = sheetHead(day, period, ctx,
+                    { title: 'حصة انتظار', amber: true, back: true })
+                    + waitKindHtml(existing ? existing.wait_kind : null);
+            } else if (view === 'sub') {
+                body.innerHTML = sheetHead(day, period, ctx,
+                    { title: 'عند أي فصل تنتظر؟', amber: true, back: true })
+                    + substituteHtml(subState);
+            } else if (isWait) {
+                const kindTxt = existing.wait_kind === 'today' ? 'لهذا اليوم فقط' : 'تتكرر كل أسبوع';
+                body.innerHTML = sheetHead(day, period, ctx, { title: 'حصة انتظار', amber: true })
+                    + `<div class="sch-cur">
+                           <span class="em">⏳</span>
+                           <span class="tx">
+                               <span class="t">${existing.sub_class
+                                    ? 'تنتظر عند: ' + escapeHtml(existing.sub_class)
+                                    : 'حصة انتظار — ' + (existing.wait_kind === 'today' ? 'لهذا اليوم' : 'دائمة')}</span>
+                               <span class="h">${existing.sub_class
+                                    ? 'لهذا اليوم فقط · يُمسح نهاية اليوم'
+                                    : kindTxt}</span>
+                           </span>
+                           ${existing.sub_class ? '<button type="button" class="x" data-unsub>✕</button>' : ''}
+                       </div>
+                       <button type="button" class="sch-subbtn" data-open-sub>
+                           ${existing.sub_class ? '🔀 تغيير الفصل الذي تنتظر عنده' : '➕ حدّد الفصل الذي تنتظر عنده اليوم'}
+                       </button>
+                       <div class="sch-lbl" style="margin-top:15px">استبدلها بفصل — اضغط ليتغيّر فوراً</div>`
+                    + classCardsHtml(ctx, '__wait__')
+                    + `<button type="button" class="sch-del" data-del>🗑️ إزالة الحصة من الجدول</button>
+                       <div class="sch-hint">اضغط خارج اللوحة للإغلاق</div>`;
+            } else {
+                const title = existing ? 'تعديل الحصة' : 'اختر الفصل';
+                body.innerHTML = sheetHead(day, period, ctx, { title })
+                    + `<div class="sch-lbl">${existing ? 'الفصل — اضغط لتغييره فوراً' : 'اضغط الفصل ليُضاف فوراً'}</div>`
+                    + classCardsHtml(ctx, existing ? existing.class_id : null)
+                    + (existing
+                        ? `<button type="button" class="sch-del" data-del>🗑️ إزالة الحصة من الجدول</button>
+                           <div class="sch-hint">اضغط خارج اللوحة للإغلاق</div>`
+                        : '');
+            }
+        }
+
+        body.addEventListener('click', async (e) => {
+            const t = e.target;
+            const card = t.closest('[data-cls]');
+            if (card) return pickClass(card.dataset.cls);
+
+            if (t.closest('[data-wait]'))     { view = 'kind'; return paint(); }
+            if (t.closest('[data-open-sub]')) { view = 'sub';  return paint(); }
+            if (t.closest('[data-back]'))     { view = 'pick'; return paint(); }
+
+            const kindBtn = t.closest('[data-kind]');
+            if (kindBtn) return pickWaitKind(kindBtn.dataset.kind);
+
+            const stage = t.closest('[data-stage]');
+            if (stage) { subState.stage = stage.dataset.stage; subState.grade = null; return paint(); }
+
+            const grade = t.closest('[data-grade]');
+            if (grade) { subState.grade = Number(grade.dataset.grade); return paint(); }
+
+            const sec = t.closest('[data-sec]');
+            if (sec && subState.grade !== null) {
+                const g = GRADE_NAMES[subState.stage][subState.grade];
+                return pickSubstitute(`${g} ${STAGE_SUFFIX[subState.stage]}/${sec.dataset.sec}`);
+            }
+
+            if (t.closest('[data-unsub]')) {
+                await saveRow({ sub_class: null, sub_date: null });
+                global.Modal.close();
+                global.TeacherApp.toast('تم إلغاء الإسناد.', 'info', 1400);
+                return render(container);
+            }
+
+            if (t.closest('[data-del]')) {
+                if (!global.confirm('إزالة هذه الحصة من الجدول؟')) return;
+                await global.TeacherDB.remove('schedule', existing.id);
+                global.Modal.close();
+                global.TeacherApp.toast('تمت الإزالة.', 'info');
+                return render(container);
+            }
         });
 
-        global.Modal.open({
-            title: existing ? 'تعديل حصة' : 'إضافة حصة',
-            body: form
-        });
+        paint();
+        global.Modal.open({ title: sheetTitle(existing, isWait), body });
     }
 
     function openTimesEditor(ctx, container) {
