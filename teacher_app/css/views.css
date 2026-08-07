@@ -2999,20 +2999,15 @@ body.drawer-open { overflow: hidden; }
 }
 .sched-time-btn:active { transform: scale(.98); }
 
-/* كل يوم شريط أبيض مستقل بمسافة بينه وبين اليوم التالي (البديل ج)
-   مع التقاط الأعمدة عند السحب (scroll-snap) */
-.sched-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-}
-.sched-wrap::-webkit-scrollbar { height: 0; }
+/* الحصص صفوفٌ على اليمين والأيام أعمدة أعلى (البديل ب) —
+   الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وكل حصة شريط مستقل. */
+.sched-wrap { overflow-x: visible; }
 
 .sched-table {
     border-collapse: separate;
     border-spacing: 0 7px;
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
+    table-layout: fixed;
     background: transparent;
 }
 .sched-table th,
@@ -3021,29 +3016,19 @@ body.drawer-open { overflow: hidden; }
 .sched-table thead th {
     background: linear-gradient(180deg, #24498A, var(--primary));
     color: #fff;
-    padding: 9px 5px;
+    padding: 9px 2px;
     font-size: 11.5px;
     font-weight: var(--fw-black);
-    min-width: 84px;
     text-align: center;
-    scroll-snap-align: end;
 }
 .sched-table thead th:first-child { border-radius: 0 12px 12px 0; }
 .sched-table thead th:last-child  { border-radius: 12px 0 0 12px; }
-.sched-pt {
-    display: block;
-    margin-top: 1px;
-    font-size: 9.5px;
-    font-weight: var(--fw-bold);
-    color: rgba(255, 255, 255, .72);
+/* عمود اليوم الحالي */
+.sched-table thead th.is-today {
+    background: linear-gradient(180deg, #D6B96F, #C9A961);
+    color: var(--primary);
 }
-.sched-table thead th.sched-corner {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-    min-width: 54px;
-    scroll-snap-align: none;
-}
+.sched-table thead th.sched-corner { width: 46px; }
 
 .sched-table tbody tr {
     background: var(--surface);
@@ -3051,32 +3036,28 @@ body.drawer-open { overflow: hidden; }
 }
 .sched-table tbody td:first-child { border-radius: 0 12px 12px 0; }
 .sched-table tbody td:last-child  { border-radius: 12px 0 0 12px; }
-.sched-table tbody tr.is-today { outline: 2px solid #C9A961; }
 
-.sched-table td.sched-day {
+/* عمود الحصة الثابت على اليمين */
+.sched-table td.sched-per {
     background: #ECEAE3;
     color: var(--primary);
-    font-weight: var(--fw-black);
-    font-size: 12.5px;
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    min-width: 54px;
+    width: 46px;
     text-align: center;
     border-left: 1.5px solid color-mix(in srgb, #ECEAE3 82%, #000);
 }
-.sched-table tr.is-today td.sched-day {
-    background: #C9A961;
-    color: var(--primary);
+.sched-table td.sched-per b { display: block; font-size: 12px; font-weight: var(--fw-black); }
+.sched-table td.sched-per span {
+    display: block; margin-top: 1px;
+    font-size: 9px; font-weight: var(--fw-bold); color: var(--text-muted);
 }
 
 .sched-cell {
     border-left: 1px solid var(--border);
-    height: 62px;
-    padding: 6px;
+    height: 60px;
+    padding: 5px;
     cursor: pointer;
-    scroll-snap-align: end;
 }
+.sched-cell.is-today { background: color-mix(in srgb, #C9A961 9%, #fff); }
 .sched-box {
     height: 100%;
     border-radius: 10px;
@@ -3095,25 +3076,27 @@ body.drawer-open { overflow: hidden; }
     box-shadow: none;
 }
 .sched-box.filled .sb-c {
-    font-size: 12.5px;
+    font-size: 11px;
     font-weight: var(--fw-black);
     color: var(--primary);
+    line-height: 1.25;
 }
 .sched-box.filled .sb-s {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: var(--fw-bold);
     color: var(--text-muted);
+    line-height: 1.25;
 }
 .sched-box.wait {
     background: color-mix(in srgb, #F59E0B 12%, #fff);
     border: 1px solid color-mix(in srgb, #F59E0B 32%, #fff);
     color: #B45309;
-    font-size: 11.5px;
+    font-size: 9.5px;
     font-weight: var(--fw-black);
 }
 /* انتظار مُسند له فصل اليوم */
-.sched-box.wait .sb-sub { font-size: 12px; font-weight: var(--fw-black); }
-.sched-box.wait .sb-w   { font-size: 9px; font-weight: var(--fw-bold); opacity: .8; }
+.sched-box.wait .sb-sub { font-size: 10px; font-weight: var(--fw-black); line-height: 1.2; }
+.sched-box.wait .sb-w   { font-size: 8px; font-weight: var(--fw-bold); opacity: .8; }
 .sched-box.empty { color: #CBBE9E; font-size: 19px; }
 
 /* مؤشر نقاط التمرير الأفقي */

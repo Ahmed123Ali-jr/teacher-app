@@ -101,9 +101,7 @@
 
                 ${renderGrid(grid, periods, classes, todayIdx)}
 
-                <div class="sched-dots" id="sched-dots"></div>
-
-                <p class="sched-hint">اسحب لعرض بقية الحصص · اضغط أي خانة للتعديل</p>
+                <p class="sched-hint">اضغط أي خانة لإضافة حصة أو تعديلها</p>
 
                 <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
             </div>
@@ -140,8 +138,8 @@
         return `${g}/${cls.section}`;
     }
 
-    /* الشبكة المعتمدة (تصميم ج١): أيام يمين ثابتة، حصص أعلى بترويسة كحلية،
-       اليوم الحالي بشريط ذهبي، والخانات مربّعات رصاصية بارزة. */
+    /* الشبكة المعتمدة (البديل ب): الحصص صفوفٌ على اليمين والأيام أعمدة أعلى،
+       الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وعمود اليوم الحالي ذهبي. */
     function renderGrid(grid, periods, classes, todayIdx) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
         return `
@@ -149,37 +147,41 @@
                 <table class="sched-table">
                     <thead>
                         <tr>
-                            <th class="sched-corner">اليوم</th>
-                            ${periods.map((p) => `
-                                <th>ح${p.n}<span class="sched-pt num">${escapeHtml(p.start)}</span></th>
+                            <th class="sched-corner">الحصة</th>
+                            ${DAYS.map((d) => `
+                                <th class="${d.index === todayIdx ? 'is-today' : ''}">${d.label}</th>
                             `).join('')}
                         </tr>
                     </thead>
                     <tbody>
-                        ${DAYS.map((d) => `
-                            <tr class="${d.index === todayIdx ? 'is-today' : ''}">
-                                <td class="sched-day">${d.label}</td>
-                                ${periods.map((p) => {
+                        ${periods.map((p) => `
+                            <tr>
+                                <td class="sched-per">
+                                    <b class="num">ح${p.n}</b>
+                                    <span class="num">${escapeHtml(p.start)}</span>
+                                </td>
+                                ${DAYS.map((d) => {
                                     const cell = grid[d.index]?.[p.n];
+                                    const tc = d.index === todayIdx ? ' is-today' : '';
                                     const attrs = `data-day="${d.index}" data-period="${p.n}"`;
                                     if (!cell) {
-                                        return `<td class="sched-cell" ${attrs}>
+                                        return `<td class="sched-cell${tc}" ${attrs}>
                                             <div class="sched-box empty">+</div>
                                         </td>`;
                                     }
                                     const cls = classById[cell.class_id];
                                     if (!cls) {
                                         // انتظار: يعرض الفصل المُسند اليوم إن وُجد
-                                        return `<td class="sched-cell" ${attrs}>
+                                        return `<td class="sched-cell${tc}" ${attrs}>
                                             <div class="sched-box wait">
                                                 ${cell.sub_class
                                                     ? `<span class="sb-sub">${escapeHtml(cell.sub_class)}</span>
-                                                       <span class="sb-w">انتظار · اليوم</span>`
+                                                       <span class="sb-w">انتظار</span>`
                                                     : 'انتظار'}
                                             </div>
                                         </td>`;
                                     }
-                                    return `<td class="sched-cell" ${attrs}>
+                                    return `<td class="sched-cell${tc}" ${attrs}>
                                         <div class="sched-box filled">
                                             <span class="sb-c">${escapeHtml(shortCell(cls))}</span>
                                             <span class="sb-s">${escapeHtml(cls.subject)}</span>
@@ -205,36 +207,6 @@
                 );
             });
         });
-
-        /* مؤشر النقاط: عددها = عدد مواضع التمرير الفعلية (لا عدد الحصص)،
-           لأن آخر شاشة تعرض عدة حصص دفعة واحدة. (في RTL يكون scrollLeft سالباً) */
-        const wrap = container.querySelector('.sched-wrap');
-        const dots = container.querySelector('#sched-dots');
-        if (wrap && dots) {
-            const colW = () => {
-                const th = container.querySelector('.sched-table thead th:not(.sched-corner)');
-                const w = th ? th.getBoundingClientRect().width : 0;
-                return w > 10 ? w : 88;
-            };
-            const maxScroll = () => Math.max(0, wrap.scrollWidth - wrap.clientWidth);
-
-            const buildDots = () => {
-                // نفس تقريب المؤشر: أقصى موضع يصله السحب هو round(maxScroll/colW)
-                const n = maxScroll() < 4 ? 0 : Math.round(maxScroll() / colW()) + 1;
-                dots.innerHTML = n > 1 ? Array.from({ length: n }, () => '<i></i>').join('') : '';
-                paintDots();
-            };
-            const paintDots = () => {
-                const cells = dots.querySelectorAll('i');
-                if (!cells.length) return;
-                const idx = Math.round(Math.abs(wrap.scrollLeft) / colW());
-                cells.forEach((d, k) => d.classList.toggle('on', k === Math.min(idx, cells.length - 1)));
-            };
-
-            wrap.addEventListener('scroll', paintDots, { passive: true });
-            global.addEventListener('resize', buildDots);
-            buildDots();
-        }
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
 
