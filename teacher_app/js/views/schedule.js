@@ -516,25 +516,37 @@
                                value="${cfg.breakDur}" aria-label="مدة أخرى للفسحة">
                     </div>
 
-                    <button type="button" class="tf-go" id="tf-apply">عبّئ أوقات الحصص الـ${rows.length}</button>
                 </div>`;
+        }
+
+        function rowsHtml() {
+            return rows.map((r, i) => `
+                <div class="times-row">
+                    <span class="times-label">ح${r.n}</span>
+                    <input type="time" class="input input-sm" data-t="${i}" data-k="start" value="${r.start}">
+                    <span>إلى</span>
+                    <input type="time" class="input input-sm" data-t="${i}" data-k="end" value="${r.end}">
+                </div>
+            `).join('');
+        }
+
+        /* التعبئة فورية بلا زر: أي تغيير في البداية أو المدة أو الفسحة يعيد
+           حساب الأوقات ويُحدّث القائمة وحدها — لا الصفحة كلها — حتى لا يفقد
+           الحقل الذي يكتب فيه المعلم تركيزه. */
+        function recalc() {
+            rows.splice(0, rows.length, ...autofillRows(rows.length, cfg));
+            const list = form.querySelector('#times-list');
+            if (!list) return;
+            list.innerHTML = rowsHtml();
+            bindRows();
         }
 
         function paint() {
             form.innerHTML = autofillHtml() + `
                 <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                    أو عدّل كل حصة يدوياً:
+                    تُحسب فوراً — وتقدر تعدّل أي حصة يدوياً:
                 </p>
-                <div class="times-list">
-                    ${rows.map((r, i) => `
-                        <div class="times-row">
-                            <span class="times-label">ح${r.n}</span>
-                            <input type="time" class="input input-sm" data-t="${i}" data-k="start" value="${r.start}">
-                            <span>إلى</span>
-                            <input type="time" class="input input-sm" data-t="${i}" data-k="end" value="${r.end}">
-                        </div>
-                    `).join('')}
-                </div>
+                <div class="times-list" id="times-list">${rowsHtml()}</div>
 
                 <div class="flex gap-2" style="margin-top: var(--space-3);">
                     <button type="button" class="btn btn-ghost btn-sm" id="reset-defaults">⟲ القيم الافتراضية</button>
@@ -548,22 +560,45 @@
             bindInner();
         }
 
+        function bindRows() {
+            form.querySelectorAll('[data-t]').forEach((inp) => {
+                inp.addEventListener('input', () => {
+                    rows[Number(inp.dataset.t)][inp.dataset.k] = inp.value;
+                });
+            });
+        }
+
         function bindInner() {
-            form.querySelector('#tf-start')?.addEventListener('input', (e) => { cfg.start = e.target.value; });
-            form.querySelector('#tf-after')?.addEventListener('change', (e) => { cfg.breakAfter = Number(e.target.value); });
+            form.querySelector('#tf-start')?.addEventListener('input', (e) => {
+                if (!e.target.value) return;
+                cfg.start = e.target.value;
+                recalc();
+            });
+            form.querySelector('#tf-after')?.addEventListener('change', (e) => {
+                cfg.breakAfter = Number(e.target.value);
+                recalc();
+            });
+            /* أثناء الكتابة يمرّ رقم ناقص («٤» قبل «٤٥») فنتجاهله حتى يصير ضمن المدى. */
             form.querySelector('#tf-dur')?.addEventListener('input', (e) => {
-                cfg.dur = Number(e.target.value) || cfg.dur;
-                form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', Number(b.dataset.dur) === cfg.dur));
+                const v = Number(e.target.value);
+                if (!(v >= 20 && v <= 90)) return;
+                cfg.dur = v;
+                form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', Number(b.dataset.dur) === v));
+                recalc();
             });
             form.querySelector('#tf-brk')?.addEventListener('input', (e) => {
-                cfg.breakDur = Number(e.target.value) || cfg.breakDur;
-                form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', Number(b.dataset.brk) === cfg.breakDur));
+                const v = Number(e.target.value);
+                if (!(v >= 5 && v <= 90)) return;
+                cfg.breakDur = v;
+                form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', Number(b.dataset.brk) === v));
+                recalc();
             });
             form.querySelectorAll('[data-dur]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     cfg.dur = Number(btn.dataset.dur);
                     form.querySelector('#tf-dur').value = cfg.dur;
                     form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', b === btn));
+                    recalc();
                 });
             });
             form.querySelectorAll('[data-brk]').forEach((btn) => {
@@ -571,20 +606,13 @@
                     cfg.breakDur = Number(btn.dataset.brk);
                     form.querySelector('#tf-brk').value = cfg.breakDur;
                     form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', b === btn));
+                    recalc();
                 });
-            });
-            form.querySelector('#tf-apply')?.addEventListener('click', () => {
-                rows.splice(0, rows.length, ...autofillRows(rows.length, cfg));
-                paint();
-                global.TeacherApp.toast('تمّت تعبئة الأوقات — راجعها ثم احفظ.', 'success', 2200);
             });
 
-            form.querySelectorAll('[data-t]').forEach((inp) => {
-                inp.addEventListener('input', () => {
-                    rows[Number(inp.dataset.t)][inp.dataset.k] = inp.value;
-                });
-            });
+            bindRows();
             form.querySelector('#reset-defaults')?.addEventListener('click', () => {
+                Object.assign(cfg, AUTOFILL_DEFAULT);
                 rows.splice(0, rows.length, ...DEFAULT_PERIODS.map((p) => ({ ...p })));
                 paint();
             });

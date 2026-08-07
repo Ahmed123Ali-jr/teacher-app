@@ -3399,21 +3399,6 @@ body.drawer-open { overflow: hidden; }
     color: #fff;
 }
 .tf-num { width: 70px; min-height: 38px; text-align: center; font-feature-settings: "tnum" 1; }
-.tf-go {
-    display: block;
-    width: 100%;
-    margin-top: var(--space-4);
-    min-height: 44px;
-    border: 0;
-    border-radius: 12px;
-    background: var(--primary);
-    color: #fff;
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: var(--fw-black);
-    cursor: pointer;
-}
-.tf-go:active { transform: scale(.985); }
 
 .times-list {
     display: flex;
