@@ -182,7 +182,7 @@
                         ${periods.map((p) => `
                             <tr>
                                 <td class="sched-per">
-                                    <b class="num">ح${p.n}</b>
+                                    <b class="num">${p.n}</b>
                                     <span class="num">${escapeHtml(p.start)}</span>
                                 </td>
                                 ${DAYS.map((d) => {
