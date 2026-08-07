@@ -342,27 +342,38 @@
             }
         }
 
-        async function pickClass(id) {
-            await saveRow({ class_id: id, wait_kind: null, wait_date: null,
-                            sub_class: null, sub_date: null });
+        /* أي فشل في الحفظ كان يمرّ بصمت فيبدو أن الضغط «لم يفعل شيئاً» —
+           الآن يُعرض سببه للمعلم وتبقى اللوحة مفتوحة ليعيد المحاولة. */
+        async function commit(patch, okMsg) {
+            try {
+                await saveRow(patch);
+            } catch (e) {
+                global.TeacherApp.toast(
+                    'تعذّر الحفظ: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
+                    'error', 6000
+                );
+                return false;
+            }
             global.Modal.close();
-            global.TeacherApp.toast('تم الحفظ ✅', 'success', 1200);
+            global.TeacherApp.toast(okMsg, 'success', 1400);
             await render(container);
+            return true;
         }
 
-        async function pickWaitKind(kind) {
-            await saveRow({ class_id: null, wait_kind: kind,
-                            wait_date: kind === 'today' ? todayKey() : null });
-            global.Modal.close();
-            global.TeacherApp.toast(kind === 'perm' ? 'انتظار دائم ✅' : 'انتظار لهذا اليوم ✅', 'success', 1400);
-            await render(container);
+        function pickClass(id) {
+            return commit({ class_id: id, wait_kind: null, wait_date: null,
+                            sub_class: null, sub_date: null }, 'تم الحفظ ✅');
         }
 
-        async function pickSubstitute(label) {
-            await saveRow({ class_id: null, sub_class: label, sub_date: todayKey() });
-            global.Modal.close();
-            global.TeacherApp.toast('تنتظر عند ' + label + ' اليوم ✅', 'success', 1600);
-            await render(container);
+        function pickWaitKind(kind) {
+            return commit({ class_id: null, wait_kind: kind,
+                            wait_date: kind === 'today' ? todayKey() : null },
+                          kind === 'perm' ? 'انتظار دائم ✅' : 'انتظار لهذا اليوم ✅');
+        }
+
+        function pickSubstitute(label) {
+            return commit({ class_id: null, sub_class: label, sub_date: todayKey() },
+                          'تنتظر عند ' + label + ' اليوم ✅');
         }
 
         function paint() {
@@ -433,15 +444,19 @@
             }
 
             if (t.closest('[data-unsub]')) {
-                await saveRow({ sub_class: null, sub_date: null });
-                global.Modal.close();
-                global.TeacherApp.toast('تم إلغاء الإسناد.', 'info', 1400);
-                return render(container);
+                return commit({ sub_class: null, sub_date: null }, 'تم إلغاء الإسناد.');
             }
 
             if (t.closest('[data-del]')) {
                 if (!global.confirm('إزالة هذه الحصة من الجدول؟')) return;
-                await global.TeacherDB.remove('schedule', existing.id);
+                try {
+                    await global.TeacherDB.remove('schedule', existing.id);
+                } catch (e) {
+                    return global.TeacherApp.toast(
+                        'تعذّر الحذف: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
+                        'error', 6000
+                    );
+                }
                 global.Modal.close();
                 global.TeacherApp.toast('تمت الإزالة.', 'info');
                 return render(container);
