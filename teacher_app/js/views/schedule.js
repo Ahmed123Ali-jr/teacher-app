@@ -58,8 +58,13 @@
         const today = todayKey();
         const survivors = [];
         for (const r of rows) {
-            if (!r.class_id && r.wait_kind === 'today' && r.wait_date && r.wait_date !== today) {
-                await global.TeacherDB.remove('schedule', r.id);
+            /* «انتظار لهذا اليوم» أُلغي كمفهوم — الصفوف القديمة تُحوَّل لانتظار
+               عادي بدل حذفها حتى لا يفقد المعلم حصصاً أضافها سابقاً. */
+            if (!r.class_id && r.wait_kind === 'today') {
+                const norm = { ...r, wait_kind: 'perm', wait_date: null,
+                               updated_at: new Date().toISOString() };
+                await global.TeacherDB.put('schedule', norm);
+                survivors.push(norm);
                 continue;
             }
             if (!r.class_id && r.sub_class && r.sub_date !== today) {
@@ -265,28 +270,7 @@
                 `).join('')}
                 <button type="button" class="sch-card wait ${selectedId === '__wait__' ? 'on' : ''}" data-wait>
                     <span class="g">⏳ حصة انتظار</span>
-                    <span class="s">اضغط لاختيار نوعها</span>
-                    <span class="chev">›</span>
-                </button>
-            </div>`;
-    }
-
-    /** الخطوة الثانية: نوع حصة الانتظار (دائم / لهذا اليوم فقط) */
-    function waitKindHtml(current) {
-        return `
-            <div class="sch-lbl">هل تتكرر أسبوعياً أم لهذا اليوم فقط؟</div>
-            <div class="sch-wopt">
-                <button type="button" class="sch-wbox ${current === 'perm' ? 'on' : ''}" data-kind="perm">
-                    <span class="em">🔁</span>
-                    <span class="tx"><span class="t">انتظار دائم</span>
-                        <span class="h">يبقى في الجدول كل أسبوع حتى تحذفه بنفسك</span></span>
-                    <span class="pick"></span>
-                </button>
-                <button type="button" class="sch-wbox ${current === 'today' ? 'on' : ''}" data-kind="today">
-                    <span class="em">📅</span>
-                    <span class="tx"><span class="t">لهذا اليوم فقط</span>
-                        <span class="h">يختفي تلقائياً نهاية اليوم ويعود مكانه فارغاً</span></span>
-                    <span class="pick"></span>
+                    <span class="s">اضغط لتُضاف فوراً</span>
                 </button>
             </div>`;
     }
@@ -294,9 +278,6 @@
     /** اختيار الفصل المُسند للانتظار: مرحلة ← صف ← شعبة (كل فصول المدرسة) */
     function substituteHtml(state) {
         return `
-            <div class="sch-note"><span class="em">📅</span>
-                <span class="t">الإسناد لهذا اليوم فقط — يُمسح تلقائياً نهاية اليوم وتعود الخانة «انتظار» فارغة.</span>
-            </div>
             <div class="sch-lbl">المرحلة</div>
             <div class="sch-chips">
                 ${Object.keys(STAGE_LABEL).map((k) => `
@@ -324,8 +305,6 @@
 
         const body = document.createElement('div');
         body.className = 'sch-sheet';
-        // 'pick' اختيار الفصل · 'kind' نوع الانتظار · 'sub' إسناد فصل للانتظار
-        let view = 'pick';
         const subState = { stage: 'primary', grade: null };
 
         async function saveRow(patch) {
@@ -365,10 +344,10 @@
                             sub_class: null, sub_date: null }, 'تم الحفظ ✅');
         }
 
-        function pickWaitKind(kind) {
-            return commit({ class_id: null, wait_kind: kind,
-                            wait_date: kind === 'today' ? todayKey() : null },
-                          kind === 'perm' ? 'انتظار دائم ✅' : 'انتظار لهذا اليوم ✅');
+        /* حصة الانتظار بلا أنواع: تبقى في الجدول حتى يزيلها المعلم بنفسه. */
+        function pickWait() {
+            return commit({ class_id: null, wait_kind: 'perm', wait_date: null,
+                            sub_class: null, sub_date: null }, 'تمت إضافة حصة انتظار ✅');
         }
 
         function pickSubstitute(label) {
@@ -377,34 +356,24 @@
         }
 
         function paint() {
-            if (view === 'kind') {
+            /* الضغطة الثانية على حصة انتظار تفتح مباشرةً اختيار فصول المدرسة
+               كاملةً — بلا وصول سريع لفصول المعلم، فهو ينتظر عند فصل لا يدرّسه. */
+            if (isWait) {
                 body.innerHTML = sheetHead(day, period, ctx,
-                    { title: 'حصة انتظار', amber: true, back: true })
-                    + waitKindHtml(existing ? existing.wait_kind : null);
-            } else if (view === 'sub') {
-                body.innerHTML = sheetHead(day, period, ctx,
-                    { title: 'عند أي فصل تنتظر؟', amber: true, back: true })
-                    + substituteHtml(subState);
-            } else if (isWait) {
-                const kindTxt = existing.wait_kind === 'today' ? 'لهذا اليوم فقط' : 'تتكرر كل أسبوع';
-                body.innerHTML = sheetHead(day, period, ctx, { title: 'حصة انتظار', amber: true })
-                    + `<div class="sch-cur">
-                           <span class="em">⏳</span>
-                           <span class="tx">
-                               <span class="t">${existing.sub_class
-                                    ? 'تنتظر عند: ' + escapeHtml(existing.sub_class)
-                                    : 'حصة انتظار — ' + (existing.wait_kind === 'today' ? 'لهذا اليوم' : 'دائمة')}</span>
-                               <span class="h">${existing.sub_class
-                                    ? 'لهذا اليوم فقط · يُمسح نهاية اليوم'
-                                    : kindTxt}</span>
-                           </span>
-                           ${existing.sub_class ? '<button type="button" class="x" data-unsub>✕</button>' : ''}
-                       </div>
-                       <button type="button" class="sch-subbtn" data-open-sub>
-                           ${existing.sub_class ? '🔀 تغيير الفصل الذي تنتظر عنده' : '➕ حدّد الفصل الذي تنتظر عنده اليوم'}
-                       </button>
-                       <div class="sch-lbl" style="margin-top:15px">استبدلها بفصل — اضغط ليتغيّر فوراً</div>`
-                    + classCardsHtml(ctx, '__wait__')
+                    { title: existing.sub_class ? 'تنتظر عند: ' + existing.sub_class : 'عند أي فصل تنتظر؟',
+                      amber: true })
+                    + (existing.sub_class
+                        ? `<div class="sch-cur">
+                               <span class="em">⏳</span>
+                               <span class="tx">
+                                   <span class="t">${escapeHtml(existing.sub_class)}</span>
+                                   <span class="h">لهذا اليوم فقط · يُمسح نهاية اليوم</span>
+                               </span>
+                               <button type="button" class="x" data-unsub>✕</button>
+                           </div>
+                           <div class="sch-lbl">اختر فصلاً آخر لتغييره</div>`
+                        : '')
+                    + substituteHtml(subState)
                     + `<button type="button" class="sch-del" data-del>🗑️ إزالة الحصة من الجدول</button>
                        <div class="sch-hint">اضغط خارج اللوحة للإغلاق</div>`;
             } else {
@@ -424,12 +393,7 @@
             const card = t.closest('[data-cls]');
             if (card) return pickClass(card.dataset.cls);
 
-            if (t.closest('[data-wait]'))     { view = 'kind'; return paint(); }
-            if (t.closest('[data-open-sub]')) { view = 'sub';  return paint(); }
-            if (t.closest('[data-back]'))     { view = 'pick'; return paint(); }
-
-            const kindBtn = t.closest('[data-kind]');
-            if (kindBtn) return pickWaitKind(kindBtn.dataset.kind);
+            if (t.closest('[data-wait]')) return pickWait();
 
             const stage = t.closest('[data-stage]');
             if (stage) { subState.stage = stage.dataset.stage; subState.grade = null; return paint(); }
