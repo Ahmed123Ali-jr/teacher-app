@@ -643,8 +643,24 @@
 
     /* لوحة إضافة الفصل باللمس — نفس أسلوب لوحة الجدول: مرحلة ← صف ← شعبة ←
        مادة، بلا قوائم منسدلة ولا زر حفظ؛ اختيار المادة هو الحفظ. */
-    function openAddClassModal(teacher) {
+    /* المواد التي يكتبها المعلم بنفسه تُحفظ فتظهر له جاهزة في كل مرة تالية. */
+    async function loadCustomSubjects() {
+        const v = await global.TeacherDB.Settings.get('custom_subjects');
+        return Array.isArray(v) ? v : [];
+    }
+
+    async function rememberSubject(name) {
+        const known = SUBJECTS.concat(await loadCustomSubjects());
+        if (known.includes(name)) return;
+        await global.TeacherDB.Settings.set('custom_subjects',
+            (await loadCustomSubjects()).concat(name));
+    }
+
+    async function openAddClassModal(teacher) {
         const pick = { stage: 'primary', grade: null, section: null };
+        /* «أخرى» تفتح حقل كتابة بدل أن تكون قيمة تُحفظ كما هي. */
+        const other = { sec: false, subj: false };
+        let custom = await loadCustomSubjects();
         let saving = false;
 
         const body = document.createElement('div');
@@ -652,12 +668,24 @@
         paint();
 
         function subjectChips() {
-            const mine  = teacherSubjects(teacher);
-            const other = SUBJECTS.filter((s) => !mine.includes(s));
-            const chip  = (s) => `<button type="button" class="sch-chip" data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
+            const mine = teacherSubjects(teacher).concat(custom)
+                .filter((s, i, a) => s && a.indexOf(s) === i);
+            const rest = SUBJECTS.filter((s) => s !== 'أخرى' && !mine.includes(s));
+            const chip = (s) => `<button type="button" class="sch-chip ${pick.subject === s ? 'on' : ''}"
+                                         data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
             return (mine.length ? `<div class="sch-lbl">موادك</div><div class="sch-chips">${mine.map(chip).join('')}</div>` : '')
                 + `<div class="sch-lbl">${mine.length ? 'مواد أخرى' : 'المادة'}</div>`
-                + `<div class="sch-chips">${other.map(chip).join('')}</div>`;
+                + `<div class="sch-chips">
+                       ${rest.map(chip).join('')}
+                       <button type="button" class="sch-chip ${other.subj ? 'on' : ''}" data-subj-other>✎ أخرى</button>
+                   </div>`
+                + (other.subj
+                    ? `<div class="sch-other">
+                           <input type="text" class="input" id="subj-other" maxlength="40"
+                                  placeholder="اكتب اسم المادة" value="${escapeAttr(pick.subject || '')}">
+                           <button type="button" class="sch-other-go" data-subj-save>حفظ الفصل</button>
+                       </div>`
+                    : '');
         }
 
         function paint() {
@@ -682,16 +710,38 @@
                 <div class="sch-lbl" style="margin-top:13px">الشعبة</div>
                 <div class="sch-secs">
                     ${SECTIONS.map((s) => `
-                        <button type="button" class="sch-sec ${pick.section === s ? 'on' : ''}" data-sec="${escapeAttr(s)}"
-                                ${pick.grade === null ? 'disabled' : ''}>${s}</button>
+                        <button type="button" class="sch-sec ${!other.sec && pick.section === s ? 'on' : ''}"
+                                data-sec="${escapeAttr(s)}" ${pick.grade === null ? 'disabled' : ''}>${s}</button>
                     `).join('')}
+                    <button type="button" class="sch-sec wide ${other.sec ? 'on' : ''}" data-sec-other
+                            ${pick.grade === null ? 'disabled' : ''}>✎ أخرى</button>
                 </div>
+                ${other.sec ? `
+                    <div class="sch-other">
+                        <input type="text" class="input" id="sec-other" maxlength="12"
+                               placeholder="اكتب اسم الشعبة" value="${escapeAttr(pick.section || '')}">
+                    </div>` : ''}
 
-                <div style="margin-top:15px; ${ready ? '' : 'opacity:.45; pointer-events:none;'}">
-                    ${ready ? '' : '<div class="sch-hint" style="margin:0 0 9px">اختر الصف والشعبة أولاً</div>'}
+                <div id="subj-wrap" style="margin-top:15px; ${ready ? '' : 'opacity:.45; pointer-events:none;'}">
+                    <div class="sch-hint" id="subj-lock"
+                         style="margin:0 0 9px; ${ready ? 'display:none' : ''}">اختر الصف والشعبة أولاً</div>
                     ${subjectChips()}
                 </div>
             `;
+            /* الكتابة تُحدّث الاختيار مباشرةً بلا إعادة رسم كي لا يقفز المؤشر. */
+            body.querySelector('#sec-other')?.addEventListener('input', (e) => {
+                const v = e.target.value.trim();
+                pick.section = v || null;
+                const wrap = body.querySelector('#subj-wrap');
+                const lock = body.querySelector('#subj-lock');
+                if (wrap) wrap.style.cssText = 'margin-top:15px;' + (v ? '' : 'opacity:.45; pointer-events:none;');
+                if (lock) lock.style.display = v ? 'none' : '';
+            });
+            body.querySelector('#subj-other')?.addEventListener('input', (e) => {
+                pick.subject = e.target.value.trim();
+            });
+            if (other.sec)  body.querySelector('#sec-other')?.focus();
+            if (other.subj) body.querySelector('#subj-other')?.focus();
         }
 
         body.addEventListener('click', async (e) => {
@@ -703,12 +753,26 @@
             const grade = t.closest('[data-grade]');
             if (grade) { pick.grade = Number(grade.dataset.grade); return paint(); }
 
+            if (t.closest('[data-sec-other]')) {
+                other.sec = true; pick.section = null; return paint();
+            }
             const sec = t.closest('[data-sec]');
-            if (sec) { pick.section = sec.dataset.sec; return paint(); }
+            if (sec) { other.sec = false; pick.section = sec.dataset.sec; return paint(); }
 
-            const subj = t.closest('[data-subj]');
-            if (!subj || saving) return;
+            if (t.closest('[data-subj-other]')) {
+                other.subj = true; pick.subject = ''; return paint();
+            }
+
+            /* المادة المكتوبة تحتاج ضغطة حفظ صريحة؛ المادة الجاهزة تُحفظ بلمستها. */
+            const typed = t.closest('[data-subj-save]');
+            const subj  = t.closest('[data-subj]');
+            if ((!subj && !typed) || saving) return;
             if (pick.grade === null || !pick.section) return;
+
+            const subject = typed ? String(pick.subject || '').trim() : subj.dataset.subj;
+            if (!subject) {
+                return global.TeacherApp.toast('اكتب اسم المادة أولاً.', 'error', 3000);
+            }
 
             saving = true;
             try {
@@ -717,12 +781,13 @@
                     stage:      pick.stage,
                     grade:      GRADES[pick.stage][pick.grade],
                     section:    pick.section,
-                    subject:    subj.dataset.subj,
+                    subject,
                     // كل الفصول بلون واحد معتمد — لا اختيار للون.
                     color:      DEFAULT_CLASS_COLOR,
                     student_count: 0,
                     created_at: new Date().toISOString()
                 });
+                if (typed) await rememberSubject(subject);
             } catch (err) {
                 saving = false;
                 return global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error', 6000);

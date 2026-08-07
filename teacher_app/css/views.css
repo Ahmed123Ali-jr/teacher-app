@@ -3312,6 +3312,18 @@ body.drawer-open { overflow: hidden; }
     color: #fff;
 }
 
+/* «أخرى» — حقل يكتب فيه المعلم شعبةً أو مادةً ليست في القائمة */
+.sch-sec.wide { width: auto; padding: 0 14px; font-size: 13px; }
+.sch-other { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.sch-other .input { flex: 1; min-height: 46px; }
+.sch-other-go {
+    flex-shrink: 0; min-height: 46px; padding: 0 16px; border: 0; border-radius: 13px;
+    cursor: pointer; font-family: inherit; font-size: 13px; font-weight: var(--fw-black);
+    background: linear-gradient(180deg, #24498A, var(--primary)); color: #fff;
+    box-shadow: 0 4px 11px rgba(15, 44, 92, .3);
+}
+.sch-other-go:active { transform: scale(.97); }
+
 /* حالة الانتظار الحالية */
 .sch-cur {
     border-radius: 16px; padding: 13px 15px; margin-bottom: 11px;
