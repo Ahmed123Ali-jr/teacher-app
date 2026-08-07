@@ -3003,9 +3003,11 @@ body.drawer-open { overflow: hidden; }
    الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وكل حصة شريط مستقل. */
 .sched-wrap { overflow-x: visible; }
 
+/* الفراغ أفقي لا رأسي: كل يوم يُقرأ كعمود مستقل من الرأس حتى آخر حصة،
+   والحصص داخل العمود يفصلها خط رفيع فقط. */
 .sched-table {
     border-collapse: separate;
-    border-spacing: 0 7px;
+    border-spacing: 7px 0;
     width: 100%;
     table-layout: fixed;
     background: transparent;
@@ -3021,8 +3023,7 @@ body.drawer-open { overflow: hidden; }
     font-weight: var(--fw-black);
     text-align: center;
 }
-.sched-table thead th:first-child { border-radius: 0 12px 12px 0; }
-.sched-table thead th:last-child  { border-radius: 12px 0 0 12px; }
+.sched-table thead th { border-radius: 12px 12px 0 0; }
 /* عمود اليوم الحالي */
 .sched-table thead th.is-today {
     background: linear-gradient(180deg, #D6B96F, #C9A961);
@@ -3030,12 +3031,17 @@ body.drawer-open { overflow: hidden; }
 }
 .sched-table thead th.sched-corner { width: 46px; }
 
-.sched-table tbody tr {
-    background: var(--surface);
-    box-shadow: 0 3px 8px rgba(16, 24, 40, .07);
+/* الظل صار على الخلايا لا على الصف: الصف ممتد أفقياً بينما العمود هو
+   الوحدة البصرية الآن، والجداول لا تسمح بتنسيق الأعمدة مباشرة. */
+.sched-table tbody td {
+    box-shadow: 2px 0 6px -5px rgba(16, 24, 40, .35),
+               -2px 0 6px -5px rgba(16, 24, 40, .35);
 }
-.sched-table tbody td:first-child { border-radius: 0 12px 12px 0; }
-.sched-table tbody td:last-child  { border-radius: 12px 0 0 12px; }
+.sched-table tbody tr:last-child td {
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 4px 8px -3px rgba(16, 24, 40, .16);
+}
+.sched-table tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
 
 /* عمود الحصة الثابت على اليمين */
 .sched-table td.sched-per {
@@ -3043,7 +3049,9 @@ body.drawer-open { overflow: hidden; }
     color: var(--primary);
     width: 46px;
     text-align: center;
-    border-left: 1.5px solid color-mix(in srgb, #ECEAE3 82%, #000);
+}
+.sched-table tbody tr:not(:last-child) td.sched-per {
+    border-bottom: 1px solid color-mix(in srgb, #ECEAE3 84%, #000);
 }
 .sched-table td.sched-per b { display: block; font-size: 12px; font-weight: var(--fw-black); }
 .sched-table td.sched-per span {
@@ -3052,7 +3060,7 @@ body.drawer-open { overflow: hidden; }
 }
 
 .sched-cell {
-    border-left: 1px solid var(--border);
+    background: var(--surface);
     height: 60px;
     padding: 5px;
     cursor: pointer;
