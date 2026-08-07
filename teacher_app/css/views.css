@@ -3043,12 +3043,8 @@ body.drawer-open { overflow: hidden; }
     color: var(--primary);
     border-bottom-color: color-mix(in srgb, #C9A961 70%, #000);
 }
-.sched-table thead th.sched-corner {
-    width: 40px;
-    background: linear-gradient(180deg, #24498A, var(--primary));
-    color: #fff;
-    border-bottom-color: rgba(255, 255, 255, .22);
-}
+/* رأس «الحصة» رصاصي كرؤوس الأيام؛ الكحليّ لخلايا الأرقام تحته فقط. */
+.sched-table thead th.sched-corner { width: 40px; }
 
 /* الظل صار على الخلايا لا على الصف: الصف ممتد أفقياً بينما العمود هو
    الوحدة البصرية الآن، والجداول لا تسمح بتنسيق الأعمدة مباشرة. */
