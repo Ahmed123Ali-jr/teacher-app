@@ -143,13 +143,18 @@
         return `${g}/${cls.section}`;
     }
 
+    /** «الرابع الابتدائي/أ» → «الرابع/أ» — اسم فصل الانتظار داخل الخانة الضيقة. */
+    function shortSub(label) {
+        return String(label || '').replace(/\s+(الابتدائي|المتوسط|الثانوي)\s*/, '');
+    }
+
     /* الشبكة المعتمدة (البديل ب): الحصص صفوفٌ على اليمين والأيام أعمدة أعلى،
        الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وعمود اليوم الحالي ذهبي. */
     function renderGrid(grid, periods, classes, todayIdx) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
         return `
             <div class="sched-wrap">
-                <table class="sched-table">
+                <table class="sched-table" style="--rows:${periods.length}">
                     <thead>
                         <tr>
                             <th class="sched-corner">الحصة</th>
@@ -180,7 +185,7 @@
                                         return `<td class="sched-cell${tc}" ${attrs}>
                                             <div class="sched-box wait">
                                                 ${cell.sub_class
-                                                    ? `<span class="sb-sub">${escapeHtml(cell.sub_class)}</span>
+                                                    ? `<span class="sb-sub">${escapeHtml(shortSub(cell.sub_class))}</span>
                                                        <span class="sb-w">انتظار</span>`
                                                     : 'انتظار'}
                                             </div>
