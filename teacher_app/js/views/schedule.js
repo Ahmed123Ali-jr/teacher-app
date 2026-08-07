@@ -32,9 +32,16 @@
     }
     function escapeAttr(s) { return escapeHtml(s); }
 
+    /* عدد الحصص ثابت ٧: المعلم يضبط أوقاتها فقط، فلا إضافة ولا حذف.
+       أي بيانات قديمة بعدد مختلف تُقصّ أو تُكمَّل من القيم الافتراضية. */
+    const PERIOD_COUNT = 7;
+
     async function getPeriodTimes() {
         const stored = await global.TeacherDB.Settings.get('period_times');
-        return Array.isArray(stored) && stored.length ? stored : DEFAULT_PERIODS;
+        const rows = Array.isArray(stored) && stored.length ? stored : DEFAULT_PERIODS;
+        return Array.from({ length: PERIOD_COUNT }, (_, i) => ({
+            ...(rows[i] || DEFAULT_PERIODS[i]), n: i + 1
+        }));
     }
 
     async function savePeriodTimes(rows) {
@@ -525,13 +532,11 @@
                             <input type="time" class="input input-sm" data-t="${i}" data-k="start" value="${r.start}">
                             <span>إلى</span>
                             <input type="time" class="input input-sm" data-t="${i}" data-k="end" value="${r.end}">
-                            <button type="button" class="btn btn-ghost btn-sm" data-remove="${i}">🗑️</button>
                         </div>
                     `).join('')}
                 </div>
 
                 <div class="flex gap-2" style="margin-top: var(--space-3);">
-                    <button type="button" class="btn btn-ghost btn-sm" id="add-period">+ إضافة حصة</button>
                     <button type="button" class="btn btn-ghost btn-sm" id="reset-defaults">⟲ القيم الافتراضية</button>
                 </div>
 
@@ -578,22 +583,6 @@
                 inp.addEventListener('input', () => {
                     rows[Number(inp.dataset.t)][inp.dataset.k] = inp.value;
                 });
-            });
-            form.querySelectorAll('[data-remove]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    rows.splice(Number(btn.dataset.remove), 1);
-                    rows.forEach((r, i) => { r.n = i + 1; });
-                    paint();
-                });
-            });
-            form.querySelector('#add-period')?.addEventListener('click', () => {
-                const last = rows[rows.length - 1];
-                rows.push({
-                    n: rows.length + 1,
-                    start: last?.end || '08:00',
-                    end:   '09:00'
-                });
-                paint();
             });
             form.querySelector('#reset-defaults')?.addEventListener('click', () => {
                 rows.splice(0, rows.length, ...DEFAULT_PERIODS.map((p) => ({ ...p })));
