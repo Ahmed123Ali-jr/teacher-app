@@ -21,7 +21,7 @@
             <div class="container">
                 <div class="section-header" style="margin-top: var(--space-6);">
                     <h2 class="section-title">📚 فصولي</h2>
-                    <button class="btn btn-add-dashed" id="btn-add-class">+ إضافة فصل</button>
+                    <button class="btn-add-gray" id="btn-add-class">+ إضافة فصل</button>
                 </div>
                 ${classes.length === 0
                     ? global.DashboardView.emptyClassesState()
@@ -48,16 +48,7 @@
             sections.push(sectionHtml('أخرى', '📚', buckets.other));
         }
 
-        // Always show the "+ add" tile at the very end
-        sections.push(`
-            <div class="classes-add-tile-wrap">
-                <button class="class-card class-card-add" data-add-class>
-                    <span class="plus">+</span>
-                    <span>إضافة فصل جديد</span>
-                </button>
-            </div>
-        `);
-
+        /* زر الإضافة أعلى الصفحة وحده — تكراره أسفل البطاقات كان يشتّت. */
         return sections.join('');
     }
 

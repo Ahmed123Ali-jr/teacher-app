@@ -164,22 +164,12 @@
         return teacher.subject ? [teacher.subject] : [];
     }
 
-    function subjectOptionsFor(teacher) {
-        const mine  = teacherSubjects(teacher);
-        const other = SUBJECTS.filter((s) => !mine.includes(s));
-        const opts  = [`<option value="">— اختر المادة —</option>`];
-        if (mine.length) {
-            opts.push(`<optgroup label="المواد التي تدرّسها">`);
-            mine.forEach((s) => opts.push(`<option value="${s}" ${s === mine[0] ? 'selected' : ''}>${s}</option>`));
-            opts.push(`</optgroup>`);
-        }
-        if (other.length) {
-            opts.push(`<optgroup label="مواد أخرى">`);
-            other.forEach((s) => opts.push(`<option value="${s}">${s}</option>`));
-            opts.push(`</optgroup>`);
-        }
-        return opts.join('');
+    function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, (m) => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[m]));
     }
+    function escapeAttr(s) { return escapeHtml(s); }
 
     function greet() {
         const h = new Date().getHours();
@@ -649,92 +639,106 @@
     }
 
     /* ---------- Add class modal ---------- */
+    const SECTIONS = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+
+    /* لوحة إضافة الفصل باللمس — نفس أسلوب لوحة الجدول: مرحلة ← صف ← شعبة ←
+       مادة، بلا قوائم منسدلة ولا زر حفظ؛ اختيار المادة هو الحفظ. */
     function openAddClassModal(teacher) {
-        let stage = 'primary';
+        const pick = { stage: 'primary', grade: null, section: null };
+        let saving = false;
 
-        const form = document.createElement('form');
-        form.id = 'form-add-class';
-        form.innerHTML = `
-            <div class="field">
-                <label class="label" for="c-stage">المرحلة *</label>
-                <select class="select" id="c-stage" required>
-                    <option value="primary">ابتدائي</option>
-                    <option value="intermediate">متوسط</option>
-                    <option value="secondary">ثانوي</option>
-                </select>
-            </div>
+        const body = document.createElement('div');
+        body.className = 'sch-sheet';
+        paint();
 
-            <div class="field">
-                <label class="label" for="c-grade">الصف *</label>
-                <select class="select" id="c-grade" required></select>
-            </div>
-
-            <div class="field">
-                <label class="label" for="c-section">الشعبة *</label>
-                <input class="input" id="c-section" type="text" required
-                       placeholder="أ" maxlength="8">
-            </div>
-
-            <div class="field">
-                <label class="label" for="c-subject">المادة *</label>
-                <select class="select" id="c-subject" required>
-                    ${subjectOptionsFor(teacher)}
-                </select>
-            </div>
-
-            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">حفظ الفصل</button>
-                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-            </div>
-        `;
-
-        const gradeSel = form.querySelector('#c-grade');
-        function refreshGrades() {
-            gradeSel.innerHTML = GRADES[stage]
-                .map((g) => `<option value="${g}">${g}</option>`).join('');
+        function subjectChips() {
+            const mine  = teacherSubjects(teacher);
+            const other = SUBJECTS.filter((s) => !mine.includes(s));
+            const chip  = (s) => `<button type="button" class="sch-chip" data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
+            return (mine.length ? `<div class="sch-lbl">موادك</div><div class="sch-chips">${mine.map(chip).join('')}</div>` : '')
+                + `<div class="sch-lbl">${mine.length ? 'مواد أخرى' : 'المادة'}</div>`
+                + `<div class="sch-chips">${other.map(chip).join('')}</div>`;
         }
-        refreshGrades();
 
-        form.querySelector('#c-stage').addEventListener('change', (e) => {
-            stage = e.target.value; refreshGrades();
-        });
+        function paint() {
+            const ready = pick.grade !== null && pick.section;
+            body.innerHTML = `
+                <div class="sch-lbl">المرحلة</div>
+                <div class="sch-chips">
+                    ${Object.keys(STAGE_LABELS).map((k) => `
+                        <button type="button" class="sch-chip ${pick.stage === k ? 'on' : ''}" data-stage="${k}">${STAGE_LABELS[k]}</button>
+                    `).join('')}
+                </div>
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
+                <div class="sch-lbl">الصف</div>
+                <div class="sch-g3">
+                    ${GRADES[pick.stage].map((g, i) => `
+                        <button type="button" class="sch-gcell ${pick.grade === i ? 'on' : ''}" data-grade="${i}">
+                            ${escapeHtml(g.replace(/^\s*الصف\s+/, '').split(/\s+/)[0])}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div class="sch-lbl" style="margin-top:13px">الشعبة</div>
+                <div class="sch-secs">
+                    ${SECTIONS.map((s) => `
+                        <button type="button" class="sch-sec ${pick.section === s ? 'on' : ''}" data-sec="${escapeAttr(s)}"
+                                ${pick.grade === null ? 'disabled' : ''}>${s}</button>
+                    `).join('')}
+                </div>
+
+                <div style="margin-top:15px; ${ready ? '' : 'opacity:.45; pointer-events:none;'}">
+                    ${ready ? '' : '<div class="sch-hint" style="margin:0 0 9px">اختر الصف والشعبة أولاً</div>'}
+                    ${subjectChips()}
+                </div>
+            `;
+        }
+
+        body.addEventListener('click', async (e) => {
+            const t = e.target;
+
+            const stage = t.closest('[data-stage]');
+            if (stage) { pick.stage = stage.dataset.stage; pick.grade = null; return paint(); }
+
+            const grade = t.closest('[data-grade]');
+            if (grade) { pick.grade = Number(grade.dataset.grade); return paint(); }
+
+            const sec = t.closest('[data-sec]');
+            if (sec) { pick.section = sec.dataset.sec; return paint(); }
+
+            const subj = t.closest('[data-subj]');
+            if (!subj || saving) return;
+            if (pick.grade === null || !pick.section) return;
+
+            saving = true;
             try {
-                const chosenStage = form.querySelector('#c-stage').value;
-                // كل الفصول بلون واحد معتمد — لا اختيار للون.
-                const color = DEFAULT_CLASS_COLOR;
                 await global.TeacherDB.add('classes', {
                     teacher_id: teacher.id,
-                    stage:      chosenStage,
-                    grade:      form.querySelector('#c-grade').value,
-                    section:    form.querySelector('#c-section').value.trim(),
-                    subject:    form.querySelector('#c-subject').value,
-                    color,
+                    stage:      pick.stage,
+                    grade:      GRADES[pick.stage][pick.grade],
+                    section:    pick.section,
+                    subject:    subj.dataset.subj,
+                    // كل الفصول بلون واحد معتمد — لا اختيار للون.
+                    color:      DEFAULT_CLASS_COLOR,
                     student_count: 0,
                     created_at: new Date().toISOString()
                 });
-                global.Modal.close();
-                global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success');
-                // Refresh whichever screen is currently in front so the new
-                // class shows up without a manual navigation.
-                const hash = (global.location.hash || '').replace(/^#/, '');
-                if (hash.startsWith('/classes') && global.ClassesView) {
-                    await global.ClassesView.render(document.getElementById('view-classes'));
-                } else {
-                    await render(document.getElementById('view-dashboard'));
-                }
             } catch (err) {
-                global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
+                saving = false;
+                return global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error', 6000);
+            }
+            global.Modal.close();
+            global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success');
+            // نُحدّث الشاشة الظاهرة أمام المعلم ليرى فصله فوراً.
+            const hash = (global.location.hash || '').replace(/^#/, '');
+            if (hash.startsWith('/classes') && global.ClassesView) {
+                await global.ClassesView.render(document.getElementById('view-classes'));
+            } else {
+                await render(document.getElementById('view-dashboard'));
             }
         });
 
-        global.Modal.open({ title: 'إضافة فصل جديد', body: form });
+        global.Modal.open({ title: 'إضافة فصل جديد', body });
     }
 
     global.DashboardView = {

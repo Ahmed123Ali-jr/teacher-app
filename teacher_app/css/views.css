@@ -3305,6 +3305,12 @@ body.drawer-open { overflow: hidden; }
 }
 .sch-sec:active { transform: scale(.95); }
 .sch-sec[disabled] { opacity: .4; cursor: default; }
+/* الشعبة المختارة — تلزم في لوحة إضافة الفصل حيث لا يُحفظ فور اللمس. */
+.sch-sec.on {
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    border-color: var(--primary);
+    color: #fff;
+}
 
 /* حالة الانتظار الحالية */
 .sch-cur {
@@ -3355,6 +3361,25 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* Period times editor */
+/* زر «+ إضافة فصل» الرصاصي أعلى صفحة الفصول — نفس مادة بطاقات الفصول. */
+.btn-add-gray {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+    white-space: nowrap;
+    cursor: pointer;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .1);
+}
+.btn-add-gray:active { transform: scale(.98); }
+
 /* ‫التعبئة التلقائية لأوقات الحصص: بداية + مدة + فسحة → الباقي يُحسب. */
 .tf-box {
     background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
@@ -3655,7 +3680,8 @@ body.drawer-open { overflow: hidden; }
 
     /* Section headers stack */
     .section-header { flex-direction: column; align-items: stretch; }
-    .section-header > .btn { align-self: flex-start; }
+    .section-header > .btn,
+    .section-header > .btn-add-gray { align-self: flex-start; }
 
     /* Class screen compact */
     .class-topbar { gap: var(--space-2); }
