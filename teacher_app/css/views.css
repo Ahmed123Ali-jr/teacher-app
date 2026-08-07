@@ -3351,6 +3351,70 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* Period times editor */
+/* ‫التعبئة التلقائية لأوقات الحصص: بداية + مدة + فسحة → الباقي يُحسب. */
+.tf-box {
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .08);
+    border-radius: 14px;
+    padding: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+.tf-title {
+    font-size: 14px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+    margin-bottom: var(--space-3);
+}
+.tf-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+.tf-lbl  { flex: 1; font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text); }
+.tf-lbl2 {
+    font-size: 11.5px;
+    font-weight: var(--fw-black);
+    color: var(--text-muted);
+    margin: var(--space-3) 0 var(--space-2);
+}
+.tf-time, .tf-sel { min-height: 38px; width: auto; font-feature-settings: "tnum" 1; }
+.tf-chips { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.tf-chip {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 11px;
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 88%, #000);
+    background: #fff;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+    cursor: pointer;
+}
+.tf-chip.on {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+.tf-num { width: 70px; min-height: 38px; text-align: center; font-feature-settings: "tnum" 1; }
+.tf-go {
+    display: block;
+    width: 100%;
+    margin-top: var(--space-4);
+    min-height: 44px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--primary);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: var(--fw-black);
+    cursor: pointer;
+}
+.tf-go:active { transform: scale(.985); }
+
 .times-list {
     display: flex;
     flex-direction: column;
@@ -3665,8 +3729,10 @@ body.drawer-open { overflow: hidden; }
     /* Very small screens: hide non-essential */
     .students-meta .text-muted { display: none; }
     .class-actions .btn span { display: none; }
-    .times-row { grid-template-columns: 60px 1fr 1fr auto; font-size: var(--fs-xs); }
-    .times-row > span { display: none; }
+    /* ‫«إلى» وحدها تُخفى؛ رقم الحصة يبقى وإلا بقي عمود فارغ يضغط حقلي الوقت. */
+    .times-row { grid-template-columns: 44px 1fr 1fr auto; font-size: var(--fs-xs); }
+    .times-row > span:not(.times-label) { display: none; }
+    .times-label { font-size: 11.5px; font-weight: var(--fw-black); }
 }
 
 /* ==========================================================================

@@ -87,6 +87,7 @@
         const rawSched = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
         const schedule = await cleanupExpired(rawSched);
         const periods  = await getPeriodTimes();
+        const autofill = await global.TeacherDB.Settings.get('period_autofill');
 
         const grid = buildGrid(schedule, periods.length);
 
@@ -112,7 +113,7 @@
             </div>
         `;
 
-        bind(container, { teacher, classes, schedule, periods, grid });
+        bind(container, { teacher, classes, schedule, periods, grid, autofill });
     }
 
     function classesEmptyHint() {
@@ -443,21 +444,84 @@
         global.Modal.open({ title: sheetTitle(existing, isWait), body });
     }
 
+    const DURATIONS = [40, 45, 50];
+    const BREAK_LENGTHS = [15, 20, 30];
+    const AUTOFILL_DEFAULT = { start: '07:00', dur: 45, breakAfter: 3, breakDur: 30 };
+
+    /** يبني أوقات كل الحصص من وقت البداية ومدة الحصة، ويزيح ما بعد الفسحة. */
+    function autofillRows(count, cfg) {
+        const out = [];
+        let cursor = timeToMin(cfg.start);
+        for (let i = 1; i <= count; i++) {
+            const end = cursor + cfg.dur;
+            out.push({ n: i, start: minToTime(cursor), end: minToTime(end) });
+            cursor = end;
+            if (cfg.breakAfter && i === cfg.breakAfter) cursor += cfg.breakDur;
+        }
+        return out;
+    }
+
     function openTimesEditor(ctx, container) {
         const rows = ctx.periods.map((p) => ({ ...p }));
+        const cfg  = { ...AUTOFILL_DEFAULT, ...(ctx.autofill || {}) };
 
         const form = document.createElement('div');
         paint();
 
+        function autofillHtml() {
+            return `
+                <div class="tf-box">
+                    <div class="tf-title">⚡ تعبئة تلقائية</div>
+
+                    <div class="tf-row">
+                        <span class="tf-lbl">بداية الحصة الأولى</span>
+                        <input type="time" class="input input-sm tf-time" id="tf-start" value="${cfg.start}">
+                    </div>
+
+                    <div class="tf-lbl2">مدة الحصة</div>
+                    <div class="tf-chips">
+                        ${DURATIONS.map((d) => `
+                            <button type="button" class="tf-chip ${cfg.dur === d ? 'on' : ''}" data-dur="${d}">
+                                ${d} د
+                            </button>
+                        `).join('')}
+                        <input type="number" class="input input-sm tf-num" id="tf-dur" min="20" max="90"
+                               value="${cfg.dur}" aria-label="مدة أخرى">
+                    </div>
+
+                    <div class="tf-lbl2">الفسحة</div>
+                    <div class="tf-row">
+                        <span class="tf-lbl">بعد الحصة</span>
+                        <select class="input input-sm tf-sel" id="tf-after">
+                            <option value="0" ${cfg.breakAfter === 0 ? 'selected' : ''}>بلا فسحة</option>
+                            ${rows.map((r) => `
+                                <option value="${r.n}" ${cfg.breakAfter === r.n ? 'selected' : ''}>الحصة ${r.n}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="tf-chips">
+                        ${BREAK_LENGTHS.map((d) => `
+                            <button type="button" class="tf-chip ${cfg.breakDur === d ? 'on' : ''}" data-brk="${d}">
+                                ${d} د
+                            </button>
+                        `).join('')}
+                        <input type="number" class="input input-sm tf-num" id="tf-brk" min="5" max="90"
+                               value="${cfg.breakDur}" aria-label="مدة أخرى للفسحة">
+                    </div>
+
+                    <button type="button" class="tf-go" id="tf-apply">عبّئ أوقات الحصص الـ${rows.length}</button>
+                </div>`;
+        }
+
         function paint() {
-            form.innerHTML = `
+            form.innerHTML = autofillHtml() + `
                 <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                    عدّل أوقات الحصص كما في جدول مدرستك.
+                    أو عدّل كل حصة يدوياً:
                 </p>
                 <div class="times-list">
                     ${rows.map((r, i) => `
                         <div class="times-row">
-                            <span class="times-label">الحصة ${r.n}</span>
+                            <span class="times-label">ح${r.n}</span>
                             <input type="time" class="input input-sm" data-t="${i}" data-k="start" value="${r.start}">
                             <span>إلى</span>
                             <input type="time" class="input input-sm" data-t="${i}" data-k="end" value="${r.end}">
@@ -480,6 +544,36 @@
         }
 
         function bindInner() {
+            form.querySelector('#tf-start')?.addEventListener('input', (e) => { cfg.start = e.target.value; });
+            form.querySelector('#tf-after')?.addEventListener('change', (e) => { cfg.breakAfter = Number(e.target.value); });
+            form.querySelector('#tf-dur')?.addEventListener('input', (e) => {
+                cfg.dur = Number(e.target.value) || cfg.dur;
+                form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', Number(b.dataset.dur) === cfg.dur));
+            });
+            form.querySelector('#tf-brk')?.addEventListener('input', (e) => {
+                cfg.breakDur = Number(e.target.value) || cfg.breakDur;
+                form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', Number(b.dataset.brk) === cfg.breakDur));
+            });
+            form.querySelectorAll('[data-dur]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    cfg.dur = Number(btn.dataset.dur);
+                    form.querySelector('#tf-dur').value = cfg.dur;
+                    form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', b === btn));
+                });
+            });
+            form.querySelectorAll('[data-brk]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    cfg.breakDur = Number(btn.dataset.brk);
+                    form.querySelector('#tf-brk').value = cfg.breakDur;
+                    form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', b === btn));
+                });
+            });
+            form.querySelector('#tf-apply')?.addEventListener('click', () => {
+                rows.splice(0, rows.length, ...autofillRows(rows.length, cfg));
+                paint();
+                global.TeacherApp.toast('تمّت تعبئة الأوقات — راجعها ثم احفظ.', 'success', 2200);
+            });
+
             form.querySelectorAll('[data-t]').forEach((inp) => {
                 inp.addEventListener('input', () => {
                     rows[Number(inp.dataset.t)][inp.dataset.k] = inp.value;
@@ -507,6 +601,8 @@
             });
             form.querySelector('#save-times')?.addEventListener('click', async () => {
                 await savePeriodTimes(rows);
+                /* نحفظ إعدادات التعبئة أيضاً ليجدها المعلم كما تركها في المرة القادمة. */
+                await global.TeacherDB.Settings.set('period_autofill', cfg);
                 global.Modal.close();
                 global.TeacherApp.toast('تم حفظ الأوقات ✅', 'success');
                 await render(container);
@@ -577,6 +673,11 @@
     function timeToMin(hhmm) {
         const [h, m] = String(hhmm || '00:00').split(':').map(Number);
         return h * 60 + m;
+    }
+
+    function minToTime(mins) {
+        const m = ((mins % 1440) + 1440) % 1440;
+        return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
     }
 
     global.ScheduleView = { render, nextClassInfo };
