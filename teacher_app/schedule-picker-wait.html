@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الإضافة والتعديل وحصة الانتظار</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root{--bg:#F4F1EA;--text:#101828;--muted:#8A8578;--border:#E7E3D8;--royal:#0F2C5C;--gold:#C9A961;--gray:#ECEAE3;--amber:#F59E0B;--red:#DC2626;--green:#059669;}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;font-family:Tajawal,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+    .screen{display:none;min-height:100vh;}
+    .screen.active{display:block;}
+    .num{font-variant-numeric:tabular-nums;}
+    .switcher{position:fixed;bottom:0;right:0;left:0;z-index:80;background:rgba(15,44,92,.96);backdrop-filter:blur(10px);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;}
+    .switcher button{flex-shrink:0;background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:99px;padding:9px 13px;font-family:inherit;font-size:12px;font-weight:800;white-space:nowrap;}
+    .switcher button.on{background:#fff;color:var(--royal);}
+    .pal{position:fixed;top:0;right:0;left:0;z-index:70;background:rgba(17,17,17,.85);color:#fff;font-size:11.5px;font-weight:700;padding:8px 12px;line-height:1.6;}
+
+    .bgpage{padding:52px 14px 0;filter:saturate(.9);}
+    .bgpage .hd{display:flex;align-items:center;gap:9px;margin-bottom:12px;}
+    .bgpage h1{flex:1;margin:0;font-size:19px;font-weight:900;color:var(--royal);}
+    .bgpage .tb{min-height:34px;border-radius:11px;padding:0 11px;display:inline-flex;align-items:center;font-size:12px;font-weight:800;color:var(--royal);
+        background:linear-gradient(150deg,#fff,var(--gray));border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);}
+    .minigrid{border-collapse:separate;border-spacing:0 7px;width:100%;}
+    .minigrid th{background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;font-size:11px;font-weight:800;padding:8px 4px;}
+    .minigrid th:first-child{border-radius:0 12px 12px 0;} .minigrid th:last-child{border-radius:12px 0 0 12px;}
+    .minigrid tr.b{background:#fff;box-shadow:0 3px 8px rgba(16,24,40,.07);}
+    .minigrid td:first-child{border-radius:0 12px 12px 0;} .minigrid td:last-child{border-radius:12px 0 0 12px;}
+    .minigrid td.d{background:var(--gray);color:var(--royal);font-weight:900;font-size:12px;text-align:center;width:54px;}
+    .minigrid td.c{height:58px;border-left:1px solid var(--border);text-align:center;color:#CBBE9E;font-size:18px;}
+    .minigrid td.c b{display:block;font-size:12.5px;color:var(--royal);}
+    .minigrid td.c span{display:block;font-size:10px;color:var(--muted);font-weight:700;}
+    .minigrid td.c.w{color:#B45309;font-size:11px;font-weight:800;}
+    .minigrid td.c.tgt{outline:2px solid var(--gold);border-radius:9px;}
+
+    .sheet{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;}
+    .card{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:17px 15px calc(90px + env(safe-area-inset-bottom));
+        box-shadow:0 -10px 30px rgba(0,0,0,.24);max-height:88vh;overflow-y:auto;}
+    .grab{width:38px;height:4px;border-radius:99px;background:#CFC9BA;margin:0 auto 14px;}
+    .shead{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
+    .shead .slot{width:52px;height:52px;border-radius:15px;background:linear-gradient(180deg,#24498A,var(--royal));color:#fff;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0;box-shadow:0 4px 11px rgba(15,44,92,.3);}
+    .shead .slot.amber{background:linear-gradient(180deg,#D97706,#B45309);box-shadow:0 4px 11px rgba(180,83,9,.32);}
+    .shead .slot b{font-size:15px;font-weight:900;} .shead .slot span{font-size:9px;opacity:.78;}
+    .shead .tt{flex:1;min-width:0;}
+    .shead .tt h3{margin:0;font-size:17px;font-weight:900;color:var(--royal);}
+    .shead .tt div{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+    .backb{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:17px;color:var(--royal);flex-shrink:0;
+        background:#fff;border:1.5px solid var(--border);box-shadow:0 2px 6px rgba(16,24,40,.07);}
+    .lbl{font-size:12px;font-weight:800;color:var(--muted);margin:0 3px 9px;}
+
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+    .ccard{border-radius:15px;padding:12px;text-align:right;position:relative;cursor:pointer;transition:transform .12s;
+        background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--gray) 42%,#fff) 50%,var(--gray) 100%);
+        border:1.5px solid color-mix(in srgb,var(--gray) 85%,#000);box-shadow:inset 0 1.5px 0 #fff,0 3px 8px rgba(16,24,40,.09);}
+    .ccard:active{transform:scale(.97);}
+    .ccard .g{font-size:14px;font-weight:900;color:var(--royal);}
+    .ccard .s{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;}
+    .ccard.on{background:linear-gradient(180deg,#24498A,var(--royal));border-color:var(--royal);box-shadow:0 6px 15px rgba(15,44,92,.33);}
+    .ccard.on .g{color:#fff;} .ccard.on .s{color:rgba(201,169,97,.95);}
+    .ccard.on::after{content:"✓";position:absolute;top:8px;left:10px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--royal);
+        font-size:12px;font-weight:900;display:grid;place-items:center;}
+    .ccard.wait{background:color-mix(in srgb,var(--amber) 10%,#fff);border-color:color-mix(in srgb,var(--amber) 35%,#fff);}
+    .ccard.wait .g{color:#B45309;}
+    .ccard.wait .s{color:#B45309;opacity:.75;}
+    .ccard.wait .chev{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#B45309;font-size:16px;}
+    .ccard.wait.on{background:linear-gradient(180deg,#D97706,#B45309);border-color:#B45309;}
+    .ccard.wait.on .g,.ccard.wait.on .s,.ccard.wait.on .chev{color:#fff;}
+
+    /* خيارات نوع الانتظار */
+    .wopt{display:flex;flex-direction:column;gap:10px;}
+    .wbox{border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;
+        background:#fff;border:1.5px solid var(--border);box-shadow:0 3px 9px rgba(16,24,40,.07);}
+    .wbox .em{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-size:20px;flex-shrink:0;
+        background:color-mix(in srgb,var(--amber) 13%,#fff);}
+    .wbox .tx{flex:1;min-width:0;}
+    .wbox .t{font-size:14.5px;font-weight:900;color:var(--royal);}
+    .wbox .h{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px;line-height:1.5;}
+    .wbox .pick{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;}
+    .wbox.on{border-color:#B45309;background:color-mix(in srgb,var(--amber) 7%,#fff);}
+    .wbox.on .pick{background:#B45309;border-color:#B45309;position:relative;}
+    .wbox.on .pick::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:900;}
+
+    .btnD{width:100%;min-height:52px;border-radius:14px;margin-top:15px;border:1.5px solid color-mix(in srgb,var(--red) 35%,#fff);
+        background:color-mix(in srgb,var(--red) 6%,#fff);color:var(--red);font-family:inherit;font-weight:800;font-size:14.5px;}
+    .btnG{width:100%;min-height:50px;border-radius:14px;margin-top:9px;border:1.5px solid var(--border);background:#fff;
+        color:var(--muted);font-family:inherit;font-weight:800;font-size:14px;}
+    .hintTap{text-align:center;font-size:11.5px;color:var(--muted);font-weight:700;margin-top:11px;}
+    .curwait{border-radius:16px;padding:13px 15px;margin-bottom:13px;display:flex;align-items:center;gap:11px;
+        background:color-mix(in srgb,var(--amber) 10%,#fff);border:1.5px solid color-mix(in srgb,var(--amber) 35%,#fff);}
+    .curwait .em{font-size:20px;}
+    .curwait .t{font-size:14.5px;font-weight:900;color:#B45309;}
+    .curwait .h{font-size:11.5px;color:#B45309;opacity:.8;font-weight:700;margin-top:1px;}
+    .toast{position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%);z-index:90;
+        background:var(--green);color:#fff;border-radius:99px;padding:9px 18px;font-size:13px;font-weight:800;
+        box-shadow:0 6px 18px rgba(5,150,105,.4);opacity:0;transition:opacity .25s;}
+    .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toast" id="toast">✓ تم الحفظ</div>
+<div class="switcher" id="switcher"></div>
+
+<script>
+const CLASSES=[{g:'الرابع/أ',s:'رياضيات'},{g:'السادس/ب',s:'علوم'},{g:'الخامس/ج',s:'لغتي'},{g:'الثالث/أ',s:'رياضيات'}];
+
+function bg(target){
+  const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+  let rows='';
+  DAYS.forEach((d,i)=>{
+    let tds=`<td class="d">${d}</td>`;
+    for(let p=1;p<=3;p++){
+      const filled=(i===0&&p<3);
+      const isWait=(i===2&&p===1);
+      const tgt=(i===2&&p===3&&target==='empty')||(i===2&&p===1&&target==='wait')||(i===0&&p===1&&target==='filled');
+      tds+=`<td class="c ${isWait?'w':''} ${tgt?'tgt':''}">${
+        isWait?'انتظار':(filled?'<b>الرابع/أ</b><span>رياضيات</span>':'+')}</td>`;
+    }
+    rows+=`<tr class="b">${tds}</tr>`;
+  });
+  return `<div class="bgpage">
+    <div class="hd"><h1>📅 الجدول الأسبوعي</h1><span class="tb">توقيت الحصص</span></div>
+    <table class="minigrid"><thead><tr><th>اليوم</th><th>ح١<br>07:00</th><th>ح٢<br>07:55</th><th>ح٣<br>08:50</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+const head=(t,sub,opts={})=>`<div class="grab"></div>
+  <div class="shead">
+    ${opts.back?'<div class="backb">›</div>':''}
+    <div class="slot ${opts.amber?'amber':''}"><b class="num">${opts.slot||'ح٣'}</b><span>الحصة</span></div>
+    <div class="tt"><h3>${t}</h3><div class="num">${sub}</div></div>
+  </div>`;
+
+const cgrid=(sel,waitLabel)=>`<div class="cgrid">
+  ${CLASSES.map((c,i)=>`<div class="ccard ${i===sel?'on':''}" data-pick="${i}">
+      <div class="g">${c.g}</div><div class="s">${c.s}</div></div>`).join('')}
+  <div class="ccard wait ${sel===9?'on':''}" data-wait="1" style="grid-column:1/-1">
+    <div class="g">⏳ حصة انتظار</div><div class="s">${waitLabel||'اضغط لاختيار نوعها'}</div>
+    <span class="chev">›</span></div>
+</div>`;
+
+const waitOpts=(sel)=>`<div class="wopt">
+  <div class="wbox ${sel===0?'on':''}" data-w="0">
+    <div class="em">🔁</div>
+    <div class="tx"><div class="t">انتظار دائم</div>
+      <div class="h">يبقى في الجدول كل أسبوع حتى تحذفه بنفسك</div></div>
+    <span class="pick"></span></div>
+  <div class="wbox ${sel===1?'on':''}" data-w="1">
+    <div class="em">📅</div>
+    <div class="tx"><div class="t">لهذا اليوم فقط</div>
+      <div class="h">يختفي تلقائياً نهاية اليوم ويعود مكانه فارغاً</div></div>
+    <span class="pick"></span></div>
+</div>`;
+
+const S=[
+ ['١ · إضافة (نموذج ج)','خانة فارغة: تضغط الفصل فيُضاف فوراً · وحصة الانتظار فيها سهم لأنها تفتح خطوة اختيار النوع — بلا موضوع درس',
+  bg('empty')+`<div class="sheet"><div class="card" data-card="add">
+    ${head('اختر الفصل','الثلاثاء · ٠٨:٥٠ — ٠٩:٣٥')}
+    <div class="lbl">اضغط الفصل ليُضاف فوراً</div>
+    ${cgrid(-1)}
+    <button class="btnG">إلغاء</button>
+  </div></div>`],
+
+ ['٢ · نوع حصة الانتظار','بعد ضغط «حصة انتظار»: خطوة ثانية باختيارين — دائم أو لهذا اليوم فقط، والضغط يحفظ ويغلق',
+  bg('empty')+`<div class="sheet"><div class="card">
+    ${head('حصة انتظار','الثلاثاء · ٠٨:٥٠ — ٠٩:٣٥',{back:1,amber:1})}
+    <div class="lbl">هل تتكرر أسبوعياً أم لهذا اليوم فقط؟</div>
+    ${waitOpts(-1)}
+    <button class="btnG">رجوع</button>
+  </div></div>`],
+
+ ['٣ · تعديل حصة فصل (ب١)','حصة معبّأة: الفصل الحالي بـ✓، تضغط فصلاً آخر فيتغيّر فوراً — بلا موضوع ولا زر حفظ',
+  bg('filled')+`<div class="sheet"><div class="card">
+    ${head('الحصة الأولى','الأحد · ٠٧:٠٠ — ٠٧:٤٥',{slot:'ح١'})}
+    <div class="lbl">الفصل — اضغط لتغييره فوراً</div>
+    ${cgrid(0)}
+    <button class="btnD">🗑️ إزالة الحصة من الجدول</button>
+    <div class="hintTap">اضغط خارج اللوحة للإغلاق</div>
+  </div></div>`],
+
+ ['٤ · تعديل حصة انتظار','تضغط خانة انتظار: تظهر حالتها أعلى، وتحتها الفصول لتستبدلها بضغطة، وخيار تغيير نوعها، والإزالة',
+  bg('wait')+`<div class="sheet"><div class="card">
+    ${head('الحصة الأولى','الثلاثاء · ٠٧:٠٠ — ٠٧:٤٥',{slot:'ح١',amber:1})}
+    <div class="curwait"><span class="em">⏳</span>
+      <div><div class="t">حصة انتظار — دائمة</div><div class="h">تتكرر كل أسبوع</div></div></div>
+    <div class="lbl">استبدلها بفصل — اضغط ليتغيّر فوراً</div>
+    ${cgrid(9,'دائمة · اضغط لتغيير النوع')}
+    <button class="btnD">🗑️ إزالة الحصة من الجدول</button>
+    <div class="hintTap">اضغط خارج اللوحة للإغلاق</div>
+  </div></div>`],
+
+ ['٥ · تغيير نوع انتظار قائم','عند ضغط حبّة الانتظار في الشاشة السابقة: نفس الخيارين والنوع الحالي مميّز',
+  bg('wait')+`<div class="sheet"><div class="card">
+    ${head('حصة انتظار','الثلاثاء · ٠٧:٠٠ — ٠٧:٤٥',{back:1,slot:'ح١',amber:1})}
+    <div class="lbl">نوع الانتظار</div>
+    ${waitOpts(0)}
+    <button class="btnG">رجوع</button>
+  </div></div>`],
+];
+
+const root=document.getElementById('root'),sw=document.getElementById('switcher'),toast=document.getElementById('toast');
+function ping(t){toast.textContent=t||'✓ تم الحفظ';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1200);}
+S.forEach(([name,desc,html],i)=>{
+  const sc=document.createElement('div');sc.className='screen'+(i===0?' active':'');
+  sc.innerHTML=`<div class="pal">${name} · ${desc}</div>`+html;
+  root.appendChild(sc);
+  sc.querySelectorAll('[data-pick]').forEach(el=>{
+    el.onclick=()=>{sc.querySelectorAll('.ccard').forEach(x=>x.classList.remove('on'));el.classList.add('on');ping();};
+  });
+  sc.querySelectorAll('[data-wait]').forEach(el=>{
+    el.onclick=()=>{                       // يفتح خطوة النوع
+      const idx=(i===0)?1:4;
+      document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===idx));
+      sw.querySelectorAll('button').forEach((x,j)=>x.classList.toggle('on',j===idx));
+      window.scrollTo(0,0);
+    };
+  });
+  sc.querySelectorAll('[data-w]').forEach(el=>{
+    el.onclick=()=>{sc.querySelectorAll('.wbox').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+      ping(el.dataset.w==='0'?'✓ انتظار دائم':'✓ انتظار لهذا اليوم');};
+  });
+  const b=document.createElement('button');b.textContent=name;if(i===0)b.className='on';
+  b.onclick=()=>{document.querySelectorAll('.screen').forEach((s,j)=>s.classList.toggle('active',j===i));
+    sw.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));window.scrollTo(0,0);};
+  sw.appendChild(b);
+});
+</script>
+</body>
+</html>
