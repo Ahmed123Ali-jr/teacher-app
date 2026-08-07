@@ -276,7 +276,7 @@
             case 'invite':
                 title = '👥 ادعُ معلماً'; body = inviteBody(); bindFn = bindInvite; break;
             case 'about':
-                title = 'ℹ️ عن التطبيق'; body = aboutBody(); break;
+                title = 'ℹ️ عن التطبيق'; body = aboutBody(); bindFn = bindAbout; break;
             case 'legal':
                 title = '📜 الخصوصية والقانون'; body = legalBody(await computeQuickStats(teacher)); break;
             case 'support':
@@ -756,6 +756,51 @@
         });
     }
 
+    /* يقارن نسخة الملفات المحمّلة فعلاً في هذه الجلسة بأحدث نسخة على الخادم،
+       فيكشف ما إذا كان التطبيق المثبَّت يعمل على نسخة قديمة من الذاكرة المؤقتة.
+       زر التحديث يمسح كل الـcaches ويلغي تسجيل الـservice worker ثم يعيد
+       التحميل — بيانات IndexedDB لا تُمس. */
+    const VER_RE = /js\/views\/schedule\.js\?v=([A-Za-z0-9]+)/;
+
+    function bindAbout(container) {
+        const slot = container.querySelector('#build-id');
+        if (slot) {
+            const runningEl = [...global.document.scripts].find((s) => VER_RE.test(s.src));
+            const running = runningEl ? runningEl.src.match(VER_RE)[1] : '؟';
+            slot.textContent = running;
+            fetch('index.html?nocache=' + Number(new Date()), { cache: 'no-store' })
+                .then((r) => r.text())
+                .then((txt) => {
+                    const m = txt.match(VER_RE);
+                    if (!m) return;
+                    slot.textContent = m[1] === running
+                        ? running + ' (أحدث نسخة ✅)'
+                        : running + ' ← يتوفر تحديث: ' + m[1];
+                })
+                .catch(() => {});
+        }
+
+        container.querySelector('#force-update')?.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ التحديث…';
+            try {
+                if (global.navigator.serviceWorker) {
+                    const regs = await global.navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map((r) => r.unregister()));
+                }
+                if (global.caches) {
+                    const keys = await global.caches.keys();
+                    await Promise.all(keys.map((k) => global.caches.delete(k)));
+                }
+            } catch (err) {
+                global.TeacherApp.toast('تعذّر المسح: ' + (err && err.message), 'error', 5000);
+            }
+            const base = global.location.href.split('#')[0].split('?')[0];
+            global.location.replace(base + '?u=' + Number(new Date()));
+        });
+    }
+
     function aboutBody() {
         return `
             <table class="info-table-compact" style="margin-bottom: var(--space-4);">
@@ -764,8 +809,14 @@
                     <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
                     <tr><th>الاسم</th><td>تطبيق إنجاز المعلم</td></tr>
                     <tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>
+                    <tr><th>رقم البناء</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                 </tbody>
             </table>
+            <button type="button" class="btn btn-secondary btn-block" id="force-update"
+                    style="margin-bottom: var(--space-4);">🔄 تحديث التطبيق الآن</button>
+            <p class="text-muted" style="font-size: var(--fs-sm); margin: calc(-1 * var(--space-3)) 0 var(--space-4);">
+                يمسح النسخة المخزّنة ويعيد تحميل أحدث إصدار. بياناتك لا تتأثر.
+            </p>
             <h4 style="margin-bottom: var(--space-2);">📝 سجل التحديثات</h4>
             ${CHANGELOG.map((log) => `
                 <div style="margin-bottom: var(--space-3);">
