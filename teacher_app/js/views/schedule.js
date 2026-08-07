@@ -148,6 +148,13 @@
         return String(label || '').replace(/\s+(الابتدائي|المتوسط|الثانوي)\s*/, '');
     }
 
+    /** المرحلة من نص الصف: «الصف الأول الثانوي» → «ثانوي».
+        بدونها لا يميّز المعلم «الأول ابتدائي» عن «الأول ثانوي» في الخانة. */
+    function stageOf(text) {
+        const m = String(text || '').match(/(ابتدائي|متوسط|ثانوي)/);
+        return m ? m[1] : '';
+    }
+
     /* الشبكة المعتمدة (البديل ب): الحصص صفوفٌ على اليمين والأيام أعمدة أعلى،
        الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وعمود اليوم الحالي ذهبي. */
     function renderGrid(grid, periods, classes, todayIdx) {
@@ -186,7 +193,7 @@
                                             <div class="sched-box wait">
                                                 ${cell.sub_class
                                                     ? `<span class="sb-sub">${escapeHtml(shortSub(cell.sub_class))}</span>
-                                                       <span class="sb-w">انتظار</span>`
+                                                       <span class="sb-w">⏳ ${escapeHtml(stageOf(cell.sub_class))}</span>`
                                                     : 'انتظار'}
                                             </div>
                                         </td>`;
@@ -194,7 +201,7 @@
                                     return `<td class="sched-cell${tc}" ${attrs}>
                                         <div class="sched-box filled">
                                             <span class="sb-c">${escapeHtml(shortCell(cls))}</span>
-                                            <span class="sb-s">${escapeHtml(cls.subject)}</span>
+                                            <span class="sb-s">${escapeHtml(stageOf(cls.grade))}</span>
                                         </div>
                                     </td>`;
                                 }).join('')}
