@@ -60,30 +60,57 @@
                String(d.getDate()).padStart(2, '0');
     }
 
-    /** تنظيف يومي: حصص «لهذا اليوم فقط» المنتهية، وإسنادات انتظار الأمس. */
-    async function cleanupExpired(rows) {
+    /* التنظيف اليومي لا يوقف الرسم: الصفوف تُصحَّح في الذاكرة فوراً وتُكتب في
+       قاعدة البيانات في الخلفية — الكتابة تستغرق مئات الأجزاء من الثانية. */
+    function cleanupExpired(rows) {
         const today = todayKey();
-        const survivors = [];
-        for (const r of rows) {
+        return rows.map((r) => {
             /* «انتظار لهذا اليوم» أُلغي كمفهوم — الصفوف القديمة تُحوَّل لانتظار
                عادي بدل حذفها حتى لا يفقد المعلم حصصاً أضافها سابقاً. */
             if (!r.class_id && r.wait_kind === 'today') {
                 const norm = { ...r, wait_kind: 'perm', wait_date: null,
                                updated_at: new Date().toISOString() };
-                await global.TeacherDB.put('schedule', norm);
-                survivors.push(norm);
-                continue;
+                bgSave(() => global.TeacherDB.put('schedule', norm));
+                return norm;
             }
             if (!r.class_id && r.sub_class && r.sub_date !== today) {
                 const clean = { ...r, sub_class: null, sub_date: null,
                                 updated_at: new Date().toISOString() };
-                await global.TeacherDB.put('schedule', clean);
-                survivors.push(clean);
-                continue;
+                bgSave(() => global.TeacherDB.put('schedule', clean));
+                return clean;
             }
-            survivors.push(r);
-        }
-        return survivors;
+            return r;
+        });
+    }
+
+    /* كل كتابة تمرّ من هنا: تنطلق في الخلفية، وإن فشلت أُبلغ المعلم بدل أن
+       يمرّ الفشل بصمت. onFail يُستخدم لإرجاع الشاشة إلى حقيقة القاعدة. */
+    function bgSave(fn, onFail) {
+        return Promise.resolve().then(fn).catch((e) => {
+            global.TeacherApp.toast(
+                'تعذّر الحفظ: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
+                'error', 6000
+            );
+            if (onFail) onFail();
+        });
+    }
+
+    /* كتابات الخانة الواحدة تتسلسل: لو بدّل المعلم الفصل قبل أن تعود إضافته
+       الأولى، تنتظر الثانية معرّفها بدل أن تُنشئ صفاً مكرراً. */
+    const cellWrites = new Map();
+
+    function queueWrite(day, period, fn, onFail) {
+        const key  = day + ':' + period;
+        const prev = cellWrites.get(key) || Promise.resolve();
+        const next = prev.then(fn, fn);
+        cellWrites.set(key, next.catch(() => {}));
+        return next.catch((e) => {
+            global.TeacherApp.toast(
+                'تعذّر الحفظ: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
+                'error', 6000
+            );
+            if (onFail) onFail();
+        });
     }
 
     async function render(container) {
@@ -92,12 +119,17 @@
 
         const classes  = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         const rawSched = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-        const schedule = await cleanupExpired(rawSched);
+        const schedule = cleanupExpired(rawSched);
         const periods  = await getPeriodTimes();
         const autofill = await global.TeacherDB.Settings.get('period_autofill');
 
-        const grid = buildGrid(schedule, periods.length);
+        paintView(container, { teacher, classes, schedule, periods, autofill });
+    }
 
+    /* الرسم من الحالة المحفوظة في الذاكرة وحدها — بلا أي نداء للقاعدة، فيعود
+       الجدول فوراً بعد كل تعديل بدل انتظار الشبكة. */
+    function paintView(container, ctx) {
+        const grid = buildGrid(ctx.schedule, ctx.periods.length);
         const todayIdx = (() => {
             const d = new Date().getDay();
             return (d >= 0 && d <= 4) ? d : -1;
@@ -110,9 +142,9 @@
                     <button type="button" class="sched-time-btn" id="btn-times">توقيت الحصص</button>
                 </div>
 
-                ${classes.length === 0 ? classesEmptyHint() : ''}
+                ${ctx.classes.length === 0 ? classesEmptyHint() : ''}
 
-                ${renderGrid(grid, periods, classes, todayIdx)}
+                ${renderGrid(grid, ctx.periods, ctx.classes, todayIdx)}
 
                 <p class="sched-hint">اضغط أي خانة لإضافة حصة أو تعديلها</p>
 
@@ -120,7 +152,8 @@
             </div>
         `;
 
-        bind(container, { teacher, classes, schedule, periods, grid, autofill });
+        ctx.grid = grid;
+        bind(container, ctx);
     }
 
     function classesEmptyHint() {
@@ -235,11 +268,19 @@
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
 
-        container.querySelector('#btn-clear-all')?.addEventListener('click', async () => {
+        container.querySelector('#btn-clear-all')?.addEventListener('click', () => {
             if (!global.confirm('مسح الجدول كاملاً؟')) return;
-            for (const row of ctx.schedule) await global.TeacherDB.remove('schedule', row.id);
-            global.TeacherApp.toast('تم المسح.', 'info');
-            await render(container);
+            const doomed = ctx.schedule.slice();
+            ctx.schedule = [];
+            paintView(container, ctx);
+            global.TeacherApp.toast('تم المسح.', 'info', 1200);
+            /* الحذف بالتوازي لا واحداً تلو الآخر — عشر حصص كانت تعني عشر
+               رحلات متتابعة للخادم. */
+            bgSave(
+                () => Promise.all(doomed.filter((r) => r.id)
+                    .map((r) => global.TeacherDB.remove('schedule', r.id))),
+                () => render(container)
+            );
         });
     }
 
@@ -327,35 +368,29 @@
         body.className = 'sch-sheet';
         const subState = { stage: 'primary', grade: null };
 
-        async function saveRow(patch) {
+        /* الضغطة تُغلق اللوحة وترسم الخانة فوراً من الذاكرة، والكتابة في
+           القاعدة تمضي في الخلفية — كانت تُبقي المعلم ينتظر ربع ثانية أو أكثر
+           على الشبكة قبل أن يرى شيئاً. وإن فشلت الكتابة يُبلَّغ وتُستعاد
+           الحقيقة من القاعدة. */
+        function commit(patch, okMsg) {
             const row = Object.assign({
                 teacher_id: ctx.teacher.id,
-                day, period,
-                updated_at: new Date().toISOString()
-            }, existing || {}, patch, { day, period });
-            if (existing) {
-                await global.TeacherDB.put('schedule', row);
-            } else {
-                row.created_at = new Date().toISOString();
-                await global.TeacherDB.add('schedule', row);
-            }
-        }
+                created_at: existing ? existing.created_at : new Date().toISOString()
+            }, existing || {}, patch, { day, period, updated_at: new Date().toISOString() });
 
-        /* أي فشل في الحفظ كان يمرّ بصمت فيبدو أن الضغط «لم يفعل شيئاً» —
-           الآن يُعرض سببه للمعلم وتبقى اللوحة مفتوحة ليعيد المحاولة. */
-        async function commit(patch, okMsg) {
-            try {
-                await saveRow(patch);
-            } catch (e) {
-                global.TeacherApp.toast(
-                    'تعذّر الحفظ: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
-                    'error', 6000
-                );
-                return false;
-            }
+            const idx = ctx.schedule.findIndex((r) => r.day === day && r.period === period);
+            if (idx >= 0) ctx.schedule[idx] = row; else ctx.schedule.push(row);
+
             global.Modal.close();
-            global.TeacherApp.toast(okMsg, 'success', 1400);
-            await render(container);
+            paintView(container, ctx);
+            if (okMsg) global.TeacherApp.toast(okMsg, 'success', 1100);
+
+            queueWrite(day, period, async () => {
+                /* المعرّف قد يكون وصل للصف السابق أثناء انتظار الدور. */
+                if (!row.id && existing && existing.id) row.id = existing.id;
+                if (row.id) await global.TeacherDB.put('schedule', row);
+                else row.id = await global.TeacherDB.add('schedule', row);
+            }, () => render(container));
             return true;
         }
 
@@ -433,17 +468,17 @@
 
             if (t.closest('[data-del]')) {
                 if (!global.confirm('إزالة هذه الحصة من الجدول؟')) return;
-                try {
-                    await global.TeacherDB.remove('schedule', existing.id);
-                } catch (e) {
-                    return global.TeacherApp.toast(
-                        'تعذّر الحذف: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
-                        'error', 6000
-                    );
-                }
+                const idx = ctx.schedule.findIndex((r) => r.day === day && r.period === period);
+                if (idx >= 0) ctx.schedule.splice(idx, 1);
                 global.Modal.close();
-                global.TeacherApp.toast('تمت الإزالة.', 'info');
-                return render(container);
+                paintView(container, ctx);
+                global.TeacherApp.toast('تمت الإزالة.', 'info', 1100);
+                queueWrite(day, period, () => {
+                    /* صف أُضيف قبل لحظة قد يكون معرّفه وصل أثناء انتظار الدور. */
+                    if (!existing.id) return;
+                    return global.TeacherDB.remove('schedule', existing.id);
+                }, () => render(container));
+                return;
             }
         });
 
@@ -616,13 +651,19 @@
                 rows.splice(0, rows.length, ...DEFAULT_PERIODS.map((p) => ({ ...p })));
                 paint();
             });
-            form.querySelector('#save-times')?.addEventListener('click', async () => {
-                await savePeriodTimes(rows);
-                /* نحفظ إعدادات التعبئة أيضاً ليجدها المعلم كما تركها في المرة القادمة. */
-                await global.TeacherDB.Settings.set('period_autofill', cfg);
+            form.querySelector('#save-times')?.addEventListener('click', () => {
+                const saved = rows.map((r) => ({ ...r }));
+                ctx.periods  = saved;
+                ctx.autofill = { ...cfg };
                 global.Modal.close();
-                global.TeacherApp.toast('تم حفظ الأوقات ✅', 'success');
-                await render(container);
+                paintView(container, ctx);
+                global.TeacherApp.toast('تم حفظ الأوقات ✅', 'success', 1100);
+                /* الإعدادات تُكتب في الخلفية؛ الجدول أمام المعلم بالأوقات
+                   الجديدة قبل أن تصل الشبكة. */
+                bgSave(async () => {
+                    await savePeriodTimes(saved);
+                    await global.TeacherDB.Settings.set('period_autofill', { ...cfg });
+                }, () => render(container));
             });
         }
 
