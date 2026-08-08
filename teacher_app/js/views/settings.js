@@ -380,9 +380,11 @@
     function schoolBody(teacher, prefs) {
         const rows = [
             { k: 'school_name',    label: 'اسم المدرسة',   value: teacher.school_name,   req: true },
+            /* الإدارة تُنتقى من قائمة لا تُكتب — pick: true يفتح المنتقي بدل
+               حقل الكتابة، والمنطقة تُشتقّ منها فلا يكتبها المعلم أصلاً. */
             { k: 'education_dept', label: 'إدارة التعليم', value: prefs.education_dept,  req: true,
-              ph: 'إدارة تعليم …' },
-            { k: 'region',         label: 'المنطقة',       value: teacher.region,        ph: 'المدينة أو المحافظة' }
+              pick: true },
+            { k: 'region',         label: 'المنطقة',       value: teacher.region,        readonly: true }
         ];
         const yearRows = [
             { k: 'academic_year',  label: 'العام الدراسي', value: prefs.academic_year,  ph: '١٤٤٧/١٤٤٨' },
@@ -441,7 +443,8 @@
     function fieldRow(f) {
         const empty = !f.value;
         return `
-            <button type="button" class="frow" data-field="${f.k}"
+            <button type="button" class="frow${f.readonly ? ' is-readonly' : ''}" data-field="${f.k}"
+                    ${f.pick ? 'data-pick="1"' : ''}${f.readonly ? ' data-readonly="1"' : ''}
                     data-ph="${escapeAttr(f.ph || '')}">
                 <span class="lb">${f.label}</span>
                 <span class="vl ${empty ? 'is-empty' : ''}">${escapeHtml(f.value || 'لم يُضف')}</span>
@@ -454,6 +457,24 @@
     function bindFieldRows(scope) {
         scope.querySelectorAll('.frow[data-field]').forEach((row) => {
             row.addEventListener('click', () => {
+                if (row.dataset.readonly) return;
+                if (row.dataset.pick) {
+                    const cur = row.querySelector('.vl');
+                    const now = cur.classList.contains('is-empty') ? '' : cur.textContent.trim();
+                    global.DeptPicker.open(now, (full) => {
+                        cur.textContent = full;
+                        cur.classList.remove('is-empty');
+                        row.querySelector('.dot')?.remove();
+                        /* المنطقة تتبع الإدارة فوراً أمام عين المعلم. */
+                        const rg = scope.querySelector('.frow[data-field="region"] .vl');
+                        const derived = global.EduDepts.regionOf(full) || '';
+                        if (rg) {
+                            rg.textContent = derived || 'لم يُضف';
+                            rg.classList.toggle('is-empty', !derived);
+                        }
+                    });
+                    return;
+                }
                 if (row.querySelector('input')) return;
                 const val  = row.querySelector('.vl');
                 const cur  = val.classList.contains('is-empty') ? '' : val.textContent.trim();

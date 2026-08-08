@@ -14,10 +14,10 @@
         { k: 'boys',  icon: '👦', label: 'بنين' },
         { k: 'girls', icon: '👧', label: 'بنات' }
     ];
+    /* فصلان لا ثلاثة — عادت الوزارة للفصلين. */
     const TERMS = [
-        { k: 1, label: 'الأول' },
-        { k: 2, label: 'الثاني' },
-        { k: 3, label: 'الثالث' }
+        { k: 1, label: 'الفصل الأول' },
+        { k: 2, label: 'الفصل الثاني' }
     ];
 
     function escapeHtml(s) {
@@ -47,7 +47,6 @@
 
         const pick = {
             school: teacher.school_name || '',
-            region: teacher.region || '',
             dept:   (await global.TeacherDB.Settings.get('education_dept')) || '',
             gender: (await global.TeacherDB.Settings.get('school_gender')) || '',
             term:   (await global.TeacherDB.Settings.get('academic_term')) || 1
@@ -76,12 +75,10 @@
                 </div>
 
                 <div class="fgrp-t">إدارة التعليم *</div>
-                <input class="setup-fld" id="su-dept" type="text" maxlength="60"
-                       placeholder="إدارة تعليم عسير" value="${escapeAttr(pick.dept)}">
-
-                <div class="fgrp-t">المنطقة</div>
-                <input class="setup-fld" id="su-region" type="text" maxlength="40"
-                       placeholder="أبها" value="${escapeAttr(pick.region)}">
+                <button type="button" class="dept-pick" id="su-dept-btn">
+                    <span class="v" id="su-dept-v">${pick.dept ? escapeHtml(pick.dept) : 'اختر إدارة التعليم'}</span>
+                    <span class="chev">❯</span>
+                </button>
 
                 <div class="fgrp-t">الفصل الدراسي *</div>
                 <div class="fchips" id="su-term">
@@ -108,15 +105,25 @@
         chips('#su-gender', 'data-gender', (v) => { pick.gender = v; });
         chips('#su-term',   'data-term',   (v) => { pick.term = Number(v); });
 
+        container.querySelector('#su-dept-btn').addEventListener('click', () => {
+            global.DeptPicker.open(pick.dept, (full) => {
+                pick.dept = full;
+                container.querySelector('#su-dept-v').textContent = full;
+                container.querySelector('#su-dept-v').classList.remove('is-empty');
+            });
+        });
+
         container.querySelector('#su-go').addEventListener('click', async () => {
             if (saving) return;
             const school = container.querySelector('#su-school').value.trim();
-            const dept   = container.querySelector('#su-dept').value.trim();
-            const region = container.querySelector('#su-region').value.trim();
+            const dept   = pick.dept;
+            /* المنطقة تُشتقّ من الإدارة لا يكتبها المعلم: «إدارة تعليم جدة»
+               تعني منطقة مكة المكرمة — فلا حقل ثالث ولا خطأ إملائي. */
+            const region = (global.EduDepts.regionOf(dept) || '');
 
             if (!school) return global.TeacherApp.toast('اكتب اسم المدرسة.', 'warning', 3000);
             if (!pick.gender) return global.TeacherApp.toast('اختر نوع المدرسة.', 'warning', 3000);
-            if (!dept)   return global.TeacherApp.toast('اكتب إدارة التعليم.', 'warning', 3000);
+            if (!dept)   return global.TeacherApp.toast('اختر إدارة التعليم.', 'warning', 3000);
 
             saving = true;
             const btn = container.querySelector('#su-go');
