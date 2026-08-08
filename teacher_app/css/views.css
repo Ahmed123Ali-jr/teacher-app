@@ -3374,6 +3374,131 @@ body.drawer-open { overflow: hidden; }
 
 /* Period times editor */
 /* ==========================================================================
+   حقول البيانات (النموذج أ) — بطاقة هوية كحلية ثم صفوف تُلمس فتفتح للكتابة.
+   مشتركة بين «بياناتي» و«معلومات المدرسة».
+   ========================================================================== */
+.idc {
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+    color: #fff;
+    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
+    box-shadow: 0 6px 16px rgba(15, 44, 92, .3), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+}
+.idc-top { display: flex; align-items: center; gap: 12px; padding: 15px 17px; }
+.idc-top .ph {
+    width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0; overflow: hidden;
+    display: grid; place-items: center;
+    background: rgba(255, 255, 255, .13);
+    border: 1.5px solid rgba(201, 169, 97, .5);
+    font-size: 18px; font-weight: var(--fw-black); color: #D6B96F;
+}
+.idc-top .ph img { width: 100%; height: 100%; object-fit: cover; }
+.idc-top .ph span { font-size: 18px; font-weight: var(--fw-black); color: #D6B96F; }
+.idc-top .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.idc-top .nm {
+    font-size: 16px; font-weight: var(--fw-black);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.idc-top .rl {
+    font-size: 11.5px; font-weight: var(--fw-bold); margin-top: 2px;
+    color: rgba(255, 255, 255, .72);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* الخيط الذهبي يفصل الهوية عن أرقامها — نفس لمسة غلاف ملف الإنجاز. */
+.idc-rule { height: 3px; background: linear-gradient(90deg, transparent, #C9A961, transparent); }
+.idc-strip { display: flex; }
+.idc-strip .cell { flex: 1; padding: 9px 6px; text-align: center; min-width: 0; }
+.idc-strip .cell + .cell { border-right: 1px solid rgba(255, 255, 255, .14); }
+.idc-strip .cell b {
+    display: block; font-size: 13.5px; font-weight: var(--fw-black); color: #D6B96F;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.idc-strip .cell span { display: block; font-size: 9.5px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .68); }
+
+.fgrp-t {
+    font-size: 12px; font-weight: var(--fw-black); color: var(--text-muted);
+    margin: 0 var(--space-1) var(--space-2);
+}
+.flist {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: 0 3px 8px rgba(16, 24, 40, .08);
+    margin-bottom: var(--space-4);
+}
+.frow {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 12px 15px;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 28%, #fff) 100%);
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, #ECEAE3 88%, #000);
+    font-family: inherit; text-align: right; cursor: pointer;
+}
+.frow:first-child { border-top: 0; }
+.frow .lb { font-size: 12.5px; font-weight: var(--fw-black); color: var(--text-muted); width: 96px; flex-shrink: 0; }
+.frow .vl {
+    flex: 1; min-width: 0; font-size: 13.5px; font-weight: var(--fw-bold); color: var(--primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.frow .vl.is-empty { color: #C0BAA8; font-weight: var(--fw-medium); }
+/* النقطة الذهبية = حقل مطلوب ما زال فارغاً */
+.frow .dot { width: 7px; height: 7px; border-radius: 50%; background: #C9A961; flex-shrink: 0; }
+.frow-input {
+    flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
+    font-family: inherit; font-size: 13.5px; font-weight: var(--fw-bold); color: var(--primary);
+    padding: 0; text-align: right;
+}
+
+/* بطاقة الصورة أو الشعار */
+.flogo {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 14px; margin-bottom: var(--space-4);
+    border-radius: 14px;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.flogo .box {
+    width: 50px; height: 50px; border-radius: 13px; flex-shrink: 0; overflow: hidden;
+    display: grid; place-items: center; font-size: 21px;
+    background: #fff; border: 1.5px dashed #C9A961;
+}
+.flogo .box img { width: 100%; height: 100%; object-fit: cover; }
+.flogo .box span { font-size: 16px; font-weight: var(--fw-black); color: var(--primary); }
+.flogo .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.flogo .t { font-size: 13px; font-weight: var(--fw-black); color: var(--primary); }
+.flogo .h { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); }
+
+.fchip {
+    border-radius: 11px; padding: 7px 12px; cursor: pointer; font-family: inherit;
+    font-size: 12px; font-weight: var(--fw-black); color: var(--primary);
+    background: var(--surface); border: 1.5px solid var(--border); flex-shrink: 0;
+}
+.fchip.on {
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    border-color: var(--primary); color: #fff;
+}
+.fchips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fsubj {
+    padding: 12px 13px; margin-bottom: var(--space-4);
+    border-radius: 14px;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+
+.fsave {
+    display: block; width: 100%; margin: var(--space-2) 0 var(--space-6);
+    min-height: 48px; border: 0; border-radius: 13px;
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    color: #fff; font-family: inherit; font-size: 14px; font-weight: var(--fw-black);
+    cursor: pointer; box-shadow: 0 4px 12px rgba(15, 44, 92, .28);
+}
+.fsave:active { transform: scale(.99); }
+.fsave:disabled { opacity: .6; }
+
+/* ==========================================================================
    شاشة الإعدادات — بطاقة الحساب الكحلية فوق ثلاث مجموعات مختصرة
    ========================================================================== */
 .set-v2 { max-width: 720px; }

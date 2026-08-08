@@ -147,7 +147,8 @@
             theme:            await getPref('theme',            'light'),
             font_size:        await getPref('font_size',        'medium'),
             last_backup:      await getPref('last_backup',      null),
-            plan:             await getPref('plan',             'basic')
+            plan:             await getPref('plan',             'basic'),
+            education_dept:   await getPref('education_dept',   '')
         };
     }
 
@@ -271,12 +272,15 @@
         let title = '';
         let body  = '';
         let bindFn = null;
+        /* صفحة تحمل بطاقاتها بنفسها لا تُلفّ ببطاقة أخرى — إطاران متداخلان. */
+        let bare = false;
 
         switch (page) {
             case 'password':
                 title = '🔐 تغيير كلمة المرور'; body = passwordBody(); bindFn = bindPassword; break;
             case 'school':
-                title = '🏫 معلومات المدرسة'; body = schoolBody(teacher, prefs); bindFn = bindSchool; break;
+                title = '🏫 معلومات المدرسة';
+                body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
             case 'reminders':
                 title = '🔔 التذكيرات'; body = remindersBody(prefs); bindFn = bindReminders; break;
             case 'appearance':
@@ -319,9 +323,9 @@
                     <h2 class="section-title" style="margin: 0 var(--space-3);">${title}</h2>
                 </div>
 
-                <div class="card" style="margin-bottom: var(--space-8);">
-                    ${body}
-                </div>
+                ${bare
+                    ? body
+                    : `<div class="card" style="margin-bottom: var(--space-8);">${body}</div>`}
             </div>
         `;
 
@@ -394,51 +398,121 @@
         });
     }
 
+    /* بطاقة رسمية كحلية أعلى الشاشة (النموذج أ) ثم صفوف تُلمس فتفتح للكتابة —
+       نفس أسلوب «بياناتي». «إدارة التعليم» و«المنطقة» تعيشان هنا لأنهما بيانا
+       مدرسة لا بيانا معلّم. */
     function schoolBody(teacher, prefs) {
+        const rows = [
+            { k: 'school_name',    label: 'اسم المدرسة',   value: teacher.school_name,   req: true },
+            { k: 'education_dept', label: 'إدارة التعليم', value: prefs.education_dept,  req: true,
+              ph: 'إدارة تعليم …' },
+            { k: 'region',         label: 'المنطقة',       value: teacher.region,        ph: 'المدينة أو المحافظة' }
+        ];
+        const yearRows = [
+            { k: 'academic_year',  label: 'العام الدراسي', value: prefs.academic_year,  ph: '١٤٤٧/١٤٤٨' },
+            { k: 'principal_name', label: 'مدير المدرسة',  value: prefs.principal_name, ph: 'للخطابات الرسمية' }
+        ];
+
         return `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                هذه البيانات تظهر في ترويسة جميع المطبوعات.
-            </p>
-
-            <div class="field">
-                <label class="label">اسم المدرسة</label>
-                <input class="input" id="pref-school-name" type="text"
-                       value="${escapeAttr(teacher.school_name || '')}">
-            </div>
-
-            <div class="grid grid-2">
-                <div class="field">
-                    <label class="label">العام الدراسي</label>
-                    <input class="input" id="pref-academic-year" type="text"
-                           placeholder="١٤٤٧/١٤٤٨"
-                           value="${escapeAttr(prefs.academic_year || '')}">
+            <div class="idc">
+                <div class="idc-top">
+                    <span class="ph">${prefs.school_logo instanceof Blob
+                        ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
+                        : '🏫'}</span>
+                    <span class="tx">
+                        <span class="nm">${escapeHtml(teacher.school_name || 'اسم مدرستك')}</span>
+                        <span class="rl">${escapeHtml(schoolLine(teacher, prefs))}</span>
+                    </span>
                 </div>
-                <div class="field">
-                    <label class="label">اسم مدير المدرسة</label>
-                    <input class="input" id="pref-principal-name" type="text"
-                           placeholder="للخطابات الرسمية"
-                           value="${escapeAttr(prefs.principal_name || '')}">
+                <div class="idc-rule"></div>
+                <div class="idc-strip">
+                    <div class="cell"><b class="num">${escapeHtml(prefs.academic_year || '—')}</b><span>العام الدراسي</span></div>
+                    <div class="cell"><b>${escapeHtml(teacher.region || '—')}</b><span>المنطقة</span></div>
                 </div>
             </div>
 
-            <div class="field">
-                <label class="label">شعار المدرسة (اختياري)</label>
-                <div class="flex gap-3" style="align-items: center; flex-wrap: wrap;">
-                    <div class="school-logo-preview">
-                        ${prefs.school_logo instanceof Blob
-                            ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
-                            : '<span>🏫</span>'}
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-logo">
-                        📷 ${prefs.school_logo ? 'تغيير الشعار' : 'رفع شعار'}
-                    </button>
-                    ${prefs.school_logo ? '<button class="btn btn-ghost btn-sm" id="btn-remove-logo">🗑️</button>' : ''}
-                    <input type="file" id="logo-input" accept="image/*" hidden>
-                </div>
+            <div class="fgrp-t">التعريف</div>
+            <div class="flist">${rows.map(fieldRow).join('')}</div>
+
+            <div class="fgrp-t">العام الدراسي</div>
+            <div class="flist">${yearRows.map(fieldRow).join('')}</div>
+
+            <div class="flogo">
+                <span class="box">${prefs.school_logo instanceof Blob
+                    ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
+                    : '🏫'}</span>
+                <span class="tx">
+                    <span class="t">شعار المدرسة</span>
+                    <span class="h">يظهر في ترويسة المطبوعات</span>
+                </span>
+                <button type="button" class="fchip" id="btn-upload-logo">📷 ${prefs.school_logo ? 'تغيير' : 'رفع'}</button>
+                ${prefs.school_logo ? '<button type="button" class="fchip" id="btn-remove-logo">🗑️</button>' : ''}
+                <input type="file" id="logo-input" accept="image/*" hidden>
             </div>
 
-            <button class="btn btn-primary btn-block" id="btn-save-school">💾 حفظ</button>
+            <button type="button" class="fsave" id="btn-save-school">💾 حفظ بيانات المدرسة</button>
         `;
+    }
+
+    /** سطر تحت اسم المدرسة: إدارة التعليم والمنطقة، وما توفّر منهما فقط. */
+    function schoolLine(teacher, prefs) {
+        const bits = [prefs.education_dept, teacher.region].filter(Boolean);
+        return bits.length ? bits.join(' · ') : 'أكمل بيانات مدرستك';
+    }
+
+    /* الصف يعرض القيمة، وضغطه يحوّله إلى حقل كتابة — فتبقى الشاشة قصيرة
+       ومقروءة بدل عشرة حقول مفتوحة دفعةً واحدة. */
+    function fieldRow(f) {
+        const empty = !f.value;
+        return `
+            <button type="button" class="frow" data-field="${f.k}"
+                    data-ph="${escapeAttr(f.ph || '')}">
+                <span class="lb">${f.label}</span>
+                <span class="vl ${empty ? 'is-empty' : ''}">${escapeHtml(f.value || 'لم يُضف')}</span>
+                ${f.req && empty ? '<span class="dot"></span>' : ''}
+            </button>
+        `;
+    }
+
+    /* تحويل الصف إلى حقل كتابة والعكس — مشترك بين شاشتي المدرسة والملف. */
+    function bindFieldRows(scope) {
+        scope.querySelectorAll('.frow[data-field]').forEach((row) => {
+            row.addEventListener('click', () => {
+                if (row.querySelector('input')) return;
+                const val  = row.querySelector('.vl');
+                const cur  = val.classList.contains('is-empty') ? '' : val.textContent.trim();
+                const inp  = document.createElement('input');
+                inp.type   = row.dataset.field === 'phone' ? 'tel'
+                           : row.dataset.field === 'email' ? 'email'
+                           : row.dataset.field === 'experience_years' ? 'number' : 'text';
+                inp.className   = 'frow-input';
+                inp.value       = cur;
+                inp.placeholder = row.dataset.ph || '';
+                val.replaceWith(inp);
+                row.querySelector('.dot')?.remove();
+                inp.focus();
+
+                const close = () => {
+                    const v = inp.value.trim();
+                    const span = document.createElement('span');
+                    span.className = 'vl' + (v ? '' : ' is-empty');
+                    span.textContent = v || 'لم يُضف';
+                    inp.replaceWith(span);
+                };
+                inp.addEventListener('blur', close);
+                inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+            });
+        });
+    }
+
+    /** قراءة قيمة صف — سواء كان مفتوحاً للكتابة أو مغلقاً. */
+    function readField(scope, key) {
+        const row = scope.querySelector(`.frow[data-field="${key}"]`);
+        if (!row) return '';
+        const inp = row.querySelector('input');
+        if (inp) return inp.value.trim();
+        const val = row.querySelector('.vl');
+        return val.classList.contains('is-empty') ? '' : val.textContent.trim();
     }
 
     function bindSchool(container, teacher) {
@@ -462,14 +536,21 @@
             global.TeacherApp.toast('تم الحذف.', 'info');
             await render(container);
         });
+        bindFieldRows(container);
+
         container.querySelector('#btn-save-school')?.addEventListener('click', async () => {
-            teacher.school_name = container.querySelector('#pref-school-name').value.trim();
-            teacher.updated_at = new Date().toISOString();
+            /* الحقل المفتوح للكتابة قد لا يكون فقد التركيز بعد، فنقرأ من الحقل
+               نفسه لا من الصف المعروض وإلا ضاعت آخر كلمة كتبها المعلم. */
+            teacher.school_name = readField(container, 'school_name');
+            teacher.region      = readField(container, 'region');
+            teacher.updated_at  = new Date().toISOString();
             await global.TeacherDB.put('teachers', teacher);
-            await setPref('academic_year',  container.querySelector('#pref-academic-year').value.trim());
-            await setPref('principal_name', container.querySelector('#pref-principal-name').value.trim());
+            await setPref('education_dept', readField(container, 'education_dept'));
+            await setPref('academic_year',  readField(container, 'academic_year'));
+            await setPref('principal_name', readField(container, 'principal_name'));
             await refreshPrintCache();
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
+            await render(container);
         });
     }
 
@@ -848,9 +929,10 @@
     async function refreshPrintCache() {
         const logo = await getPref('school_logo', null);
         global.PrintPrefs = {
-            academicYear: await getPref('academic_year', ''),
-            principal:    await getPref('principal_name', ''),
-            logoDataUrl:  logo instanceof Blob ? await blobToDataUrl(logo) : null
+            academicYear:  await getPref('academic_year', ''),
+            principal:     await getPref('principal_name', ''),
+            educationDept: await getPref('education_dept', ''),
+            logoDataUrl:   logo instanceof Blob ? await blobToDataUrl(logo) : null
         };
     }
     function blobToDataUrl(blob) {
