@@ -3374,6 +3374,147 @@ body.drawer-open { overflow: hidden; }
 
 /* Period times editor */
 /* ==========================================================================
+   شاشة الإعدادات — بطاقة الحساب الكحلية فوق ثلاث مجموعات مختصرة
+   ========================================================================== */
+.set-v2 { max-width: 720px; }
+
+.set-title {
+    margin: var(--space-4) 0 var(--space-3);
+    font-size: 20px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+}
+
+/* بطاقة الحساب — نفس مادة الشريط الكحلي في «إنجاز» وسجل المتابعة. */
+.set-acct {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: var(--space-4);
+    border-radius: 18px;
+    text-decoration: none;
+    color: #fff;
+    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
+    box-shadow: 0 6px 16px rgba(15, 44, 92, .3), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+}
+.set-acct:active { transform: scale(.99); }
+.set-acct .av {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center;
+    background: rgba(255, 255, 255, .14);
+    font-size: 16px; font-weight: var(--fw-black); color: #D6B96F;
+}
+.set-acct .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.set-acct .t {
+    font-size: 15.5px; font-weight: var(--fw-black);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.set-acct .h {
+    font-size: 11.5px; font-weight: var(--fw-bold); margin-top: 2px;
+    color: rgba(255, 255, 255, .72);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.set-acct .chev { color: rgba(255, 255, 255, .5); font-weight: var(--fw-black); font-size: 13px; }
+
+.set-group { margin-bottom: var(--space-3); }
+.set-group-t {
+    font-size: 12px;
+    font-weight: var(--fw-black);
+    color: var(--text-muted);
+    margin: 0 var(--space-1) var(--space-2);
+}
+
+/* الصفوف تُبنى كمجموعة واحدة بحواف مدوّرة، يفصلها خط رفيع كخلايا الجدول. */
+.set-list {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: 0 3px 8px rgba(16, 24, 40, .08);
+}
+.set-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 12px 15px;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 30%, #fff) 100%);
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, #ECEAE3 88%, #000);
+    font-family: inherit;
+    text-align: right;
+    text-decoration: none;
+    cursor: pointer;
+}
+.set-row:first-child { border-top: 0; }
+.set-row:active { background: color-mix(in srgb, #ECEAE3 55%, #fff); }
+.set-row .ic { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+.set-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.set-row .t { font-size: 14px; font-weight: var(--fw-black); color: var(--primary); }
+.set-row .h {
+    font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.set-row .chev { color: var(--text-muted); font-weight: var(--fw-black); font-size: 12px; flex-shrink: 0; }
+.set-row.is-danger .t { color: #DC2626; }
+
+/* صفّ منفرد خارج مجموعة — «تغيير كلمة المرور» في الملف التعريفي. */
+.set-row-solo {
+    border-radius: 14px;
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: 0 3px 8px rgba(16, 24, 40, .08);
+}
+
+.set-logout {
+    display: block;
+    width: 100%;
+    margin-top: 0;
+    padding: 10px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: var(--fw-black);
+    color: #DC2626;
+    cursor: pointer;
+}
+/* لا سطر إصدار هنا: رقمه ورقم البناء داخل «عن التطبيق»، وتكراره كان يدفع
+   آخر صفّ خلف الشريط السفلي. */
+
+/* الأقسام المدموجة داخل صفحة فرعية */
+.set-sub-h {
+    margin: var(--space-6) 0 var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+}
+.set-fold {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+.set-fold > summary {
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: var(--fw-black);
+    color: var(--primary);
+    list-style: none;
+}
+.set-fold > summary::-webkit-details-marker { display: none; }
+.set-fold > summary::after {
+    content: " ❯";
+    display: inline-block;
+    font-size: 11px;
+    color: var(--text-muted);
+    transform: rotate(90deg);
+    margin-inline-start: var(--space-2);
+}
+.set-fold[open] > summary::after { transform: rotate(-90deg); }
+
+/* ==========================================================================
    شاشة «إنجاز» — ملخّص كحليّ ثم مربّعان رصاصيان وصفّ التذكيرات
    ========================================================================== */
 .enjaz-hd { margin: var(--space-5) 0 var(--space-3); }

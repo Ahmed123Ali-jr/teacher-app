@@ -40,49 +40,31 @@
      * Menu items. `page` is the detail-screen key; if it's a direct hash,
      * tapping navigates there instead of opening a subsection.
      */
+    /* الشاشة كانت ١٤ بنداً في ٦ مجموعات فصارت ٧ في ٣: بطاقة الحساب أعلى تفتح
+       الملف التعريفي، وكلمة المرور انتقلت إليه، و«إحصائياتي» إلى التقارير حيث
+       كانت أرقامها مكرّرة أصلاً، والخصوصية والدعم داخل «عن التطبيق»، و«ادعُ
+       معلماً» داخل «الاشتراك». وحُذف «استهلاك الذكاء الاصطناعي». */
     const MENU_GROUPS = [
         {
-            title: 'الحساب',
+            title: 'المدرسة والتنبيهات',
             items: [
-                { page: 'profile-link', icon: '👤', label: 'ملفي التعريفي',     sub: 'الاسم، البريد، التخصص...', href: '#/profile' },
-                { page: 'password',      icon: '🔐', label: 'كلمة المرور',       sub: 'تغيير كلمة المرور' },
-                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة',   sub: 'الشعار، العام الدراسي، المدير' },
-                { page: 'reminders',     icon: '🔔', label: 'التذكيرات والإشعارات', sub: 'تذكيري بالحضور والنسخ الاحتياطي' }
+                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، المدير، العام الدراسي' },
+                { page: 'reminders',     icon: '🔔', label: 'التذكيرات',       sub: 'تنبيه الحضور والنسخ الاحتياطي' }
             ]
         },
         {
-            title: 'المظهر والعرض',
+            title: 'التطبيق',
             items: [
-                { page: 'appearance',    icon: '🎨', label: 'مظهر التطبيق',      sub: 'الوضع الليلي وحجم الخط' }
-            ]
-        },
-        {
-            title: 'البيانات',
-            items: [
-                { page: 'stats',         icon: '📊', label: 'إحصائياتي',        sub: 'الفصول، الطلاب، الملفات' },
-                { page: 'usage',         icon: '🤖', label: 'استهلاك الذكاء الاصطناعي', sub: 'التوكنز والتكلفة التقديرية' },
-                { page: 'backup',        icon: '💾', label: 'النسخ الاحتياطي',    sub: 'تصدير واستيراد بياناتك' }
-            ]
-        },
-        {
-            title: 'الاشتراك',
-            items: [
-                { page: 'subscription',  icon: '💳', label: 'الاشتراك',          sub: 'الخطة الحالية وتاريخ التجديد' },
-                { page: 'invite',        icon: '👥', label: 'ادعُ معلماً',        sub: 'احصل على شهر مجاني' }
+                { page: 'appearance',    icon: '🎨', label: 'المظهر',          sub: 'الوضع الليلي وحجم الخط' },
+                { page: 'backup',        icon: '💾', label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
+                { page: 'subscription',  icon: '💳', label: 'الاشتراك',        sub: 'خطتك ودعوة معلّم' }
             ]
         },
         {
             title: 'معلومات',
             items: [
-                { page: 'about',         icon: 'ℹ️', label: 'عن التطبيق',         sub: 'الإصدار وسجل التحديثات' },
-                { page: 'legal',         icon: '📜', label: 'الخصوصية والقانون',  sub: 'ما نحفظه وما نرسله' },
-                { page: 'support',       icon: '💬', label: 'الدعم الفني',         sub: 'تواصل معنا' }
-            ]
-        },
-        {
-            title: 'خطر',
-            items: [
-                { page: 'danger',        icon: '🔥', label: 'حذف جميع البيانات',   sub: 'لا يمكن التراجع', danger: true }
+                { page: 'about',         icon: 'ℹ️', label: 'عن التطبيق',       sub: 'الإصدار، التحديث، الخصوصية، الدعم' },
+                { page: 'danger',        icon: '🔥', label: 'حذف جميع البيانات', sub: 'لا يمكن التراجع', danger: true }
             ]
         }
     ];
@@ -190,18 +172,48 @@
        MAIN MENU (list)
        ========================================================================== */
 
+    /** الحرفان الأولان من اسم المعلم — بديل الصورة في بطاقة الحساب. */
+    function initials(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return '؟';
+        return parts.length === 1
+            ? parts[0].slice(0, 2)
+            : parts[0][0] + ' ' + parts[1][0];
+    }
+
+    /** سطر تحت الاسم: المدرسة والتخصص، وما توفّر منهما فقط. */
+    function accountSub(teacher) {
+        const bits = [];
+        if (teacher.school_name) bits.push(teacher.school_name);
+        const subjects = teacherSubjectsLabel(teacher);
+        if (subjects) bits.push(subjects);
+        return bits.length ? bits.join(' · ') : 'أكمل ملفك التعريفي';
+    }
+
+    function teacherSubjectsLabel(teacher) {
+        if (Array.isArray(teacher.subjects) && teacher.subjects.length) {
+            return 'معلّم ' + teacher.subjects[0];
+        }
+        return teacher.subject ? 'معلّم ' + teacher.subject : '';
+    }
+
     function renderMenu(container, teacher) {
         container.innerHTML = `
-            <div class="container" style="max-width: 720px;">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <h2 class="section-title">⚙️ الإعدادات</h2>
-                </div>
+            <div class="container set-v2">
+                <h2 class="set-title">⚙️ الإعدادات</h2>
+
+                <a href="#/profile" class="set-acct">
+                    <span class="av">${escapeHtml(initials(teacher.name))}</span>
+                    <span class="tx">
+                        <span class="t">${escapeHtml(teacher.name || 'معلّم')}</span>
+                        <span class="h">${escapeHtml(accountSub(teacher))}</span>
+                    </span>
+                    <span class="chev">❯</span>
+                </a>
 
                 ${MENU_GROUPS.map(groupHtml).join('')}
 
-                <div style="text-align: center; color: var(--text-muted); font-size: var(--fs-sm); margin: var(--space-6) 0 var(--space-10);">
-                    الإصدار ${APP_VERSION}
-                </div>
+                <button type="button" class="set-logout" id="btn-logout-settings">🚪 تسجيل الخروج</button>
             </div>
         `;
 
@@ -214,13 +226,19 @@
                 render(container);
             });
         });
+
+        container.querySelector('#btn-logout-settings')?.addEventListener('click', async () => {
+            if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
+            await global.Auth.logout();
+            global.location.hash = '#/login';
+        });
     }
 
     function groupHtml(group) {
         return `
-            <div class="settings-group">
-                <div class="settings-group-title">${group.title}</div>
-                <div class="settings-list">
+            <div class="set-group">
+                <div class="set-group-t">${group.title}</div>
+                <div class="set-list">
                     ${group.items.map((it) => itemHtml(it)).join('')}
                 </div>
             </div>
@@ -231,11 +249,14 @@
         const tag = it.href ? 'a' : 'button';
         const hrefAttr = it.href ? ` href="${it.href}"` : ' type="button"';
         return `
-            <${tag} class="settings-item ${it.danger ? 'is-danger' : ''}"
+            <${tag} class="set-row ${it.danger ? 'is-danger' : ''}"
                     data-settings-page="${it.page}"${hrefAttr}>
-                <span class="settings-item-icon">${it.icon}</span>
-                <span class="settings-item-label">${it.label}</span>
-                <span class="settings-item-chev">❯</span>
+                <span class="ic">${it.icon}</span>
+                <span class="tx">
+                    <span class="t">${it.label}</span>
+                    <span class="h">${it.sub || ''}</span>
+                </span>
+                <span class="chev">❯</span>
             </${tag}>
         `;
     }
@@ -260,27 +281,31 @@
                 title = '🔔 التذكيرات'; body = remindersBody(prefs); bindFn = bindReminders; break;
             case 'appearance':
                 title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
-            case 'stats':
-                title = '📊 إحصائياتي';
-                body = await statsBody(teacher);
-                break;
-            case 'usage':
-                title = '🤖 استهلاك الذكاء الاصطناعي';
-                body = await usageBodyAsync();
-                bindFn = bindUsage;
-                break;
             case 'backup':
-                title = '💾 النسخ الاحتياطي'; body = backupBody(prefs); bindFn = bindBackup; break;
+                title = '💾 النسخ الاحتياطي';
+                body = backupBody(prefs) + storageNote(await computeQuickStats(teacher));
+                bindFn = bindBackup;
+                break;
+            /* «ادعُ معلماً» صارت قسماً داخل الاشتراك بدل صفحة مستقلة. */
             case 'subscription':
-                title = '💳 الاشتراك'; body = subscriptionBody(prefs); break;
-            case 'invite':
-                title = '👥 ادعُ معلماً'; body = inviteBody(); bindFn = bindInvite; break;
+                title = '💳 الاشتراك';
+                body = subscriptionBody(prefs)
+                     + '<h4 class="set-sub-h">👥 ادعُ معلماً</h4>'
+                     + inviteBody();
+                bindFn = bindInvite;
+                break;
+            /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
             case 'about':
-                title = 'ℹ️ عن التطبيق'; body = aboutBody(); bindFn = bindAbout; break;
-            case 'legal':
-                title = '📜 الخصوصية والقانون'; body = legalBody(await computeQuickStats(teacher)); break;
-            case 'support':
-                title = '💬 الدعم الفني'; body = supportBody(); break;
+                title = 'ℹ️ عن التطبيق';
+                body = aboutBody()
+                     + `<details class="set-fold"><summary>📜 الخصوصية والقانون</summary>
+                            ${legalBody(await computeQuickStats(teacher))}
+                        </details>
+                        <details class="set-fold"><summary>💬 الدعم الفني</summary>
+                            ${supportBody()}
+                        </details>`;
+                bindFn = bindAbout;
+                break;
             case 'danger':
                 title = '🔥 حذف جميع البيانات'; body = dangerBody(); bindFn = bindDanger; break;
             default:
@@ -541,121 +566,17 @@
         });
     }
 
-    async function statsBody(teacher) {
-        const stats = await computeQuickStats(teacher);
+    /* «إحصائياتي» حُذفت — أرقامها كانت مكرّرة حرفياً في شاشة التقارير. الرقم
+       الوحيد الذي انفردت به هو حجم الملفات المرفوعة، ومكانه الطبيعي هنا مع
+       النسخ الاحتياطي لأنه عن بياناتك لا عن إنتاجك. */
+    function storageNote(stats) {
         return `
-            <div class="grid grid-2">
-                ${miniStat('📚', stats.classes,    'فصول')}
-                ${miniStat('👥', stats.students,   'طلاب')}
-                ${miniStat('📝', stats.exams,      'اختبارات')}
-                ${miniStat('📄', stats.worksheets, 'أوراق عمل')}
-                ${miniStat('📚', stats.homework,   'واجبات')}
-                ${miniStat('🎯', stats.strategies, 'استراتيجيات')}
-                ${miniStat('🌟', stats.initiatives,'مبادرات')}
-                ${miniStat('💾', fmtBytes(stats.storageBytes), 'ملفات مرفوعة')}
-            </div>
+            <p class="text-muted" style="font-size: var(--fs-sm); margin: var(--space-5) 0 0;">
+                💾 ملفاتك المرفوعة تشغل <strong>${fmtBytes(stats.storageBytes)}</strong>
+                — و<strong>${stats.classes}</strong> فصلاً و<strong>${stats.students}</strong> طالباً
+                محفوظة في حسابك. التفاصيل الكاملة في شاشة التقارير.
+            </p>
         `;
-    }
-    function miniStat(icon, value, label) {
-        return `
-            <div style="padding: var(--space-4); background: var(--surface-alt); border-radius: var(--radius-md);">
-                <div style="font-size: 22px; line-height: 1;">${icon}</div>
-                <div style="font-size: var(--fs-display); font-weight: var(--fw-black); color: var(--primary); line-height: 1; margin-top: var(--space-2);">${value}</div>
-                <div class="text-muted" style="font-size: var(--fs-sm); margin-top: 2px;">${label}</div>
-            </div>
-        `;
-    }
-
-    async function usageBodyAsync() {
-        const usage  = await global.AI.getUsage();
-        const cost   = global.AI.estimateCost(usage);
-        const apiKey = (await global.AI.getApiKey()) || '';
-        const masked = apiKey
-            ? apiKey.slice(0, 14) + '…' + apiKey.slice(-6)
-            : '';
-
-        const keyCard = `
-            <div class="card" style="background: var(--surface-alt); margin-bottom: var(--space-5);">
-                <h3 style="margin:0 0 var(--space-3); font-size: var(--fs-lg);">🔑 مفتاح Anthropic API</h3>
-                <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
-                    لازم تضع المفتاح هنا قبل ما تستخدم ميزات الذكاء الاصطناعي (توليد الاختبارات، استيراد الجدول، إلخ).
-                </p>
-                ${apiKey ? `
-                    <div style="font-family: ui-monospace, monospace; padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-3);">
-                        ${masked}
-                    </div>
-                ` : ''}
-                <div class="field">
-                    <label class="label">${apiKey ? 'استبدال المفتاح' : 'لصق المفتاح'}</label>
-                    <input class="input" id="ai-api-key" type="password"
-                           placeholder="sk-ant-api03-..." autocomplete="off">
-                </div>
-                <div class="flex gap-2">
-                    <button class="btn btn-primary" id="btn-save-api-key">💾 حفظ المفتاح</button>
-                    ${apiKey ? '<button class="btn btn-ghost" id="btn-remove-api-key">🗑️ حذف</button>' : ''}
-                </div>
-            </div>
-        `;
-
-        if (usage.calls === 0) {
-            return keyCard + '<p class="text-muted" style="margin:0;">لم يتم استخدام الذكاء الاصطناعي بعد.</p>';
-        }
-        const entries = Object.entries(usage.byKind || {});
-        return keyCard + `
-            <div class="grid grid-2" style="margin-bottom: var(--space-4);">
-                ${miniStat('🔢', usage.calls, 'طلبات')}
-                ${miniStat('💵', '$' + cost.usd.toFixed(3), '~' + cost.sar.toFixed(2) + ' ر.س')}
-                ${miniStat('⬇️', fmtNum(usage.totalInput),  'توكنز مُدخَلة')}
-                ${miniStat('⬆️', fmtNum(usage.totalOutput), 'توكنز مُخرَجة')}
-            </div>
-            ${entries.length ? `
-                <div class="table-wrapper">
-                    <table class="students-table">
-                        <thead><tr><th>النوع</th><th>الطلبات</th><th>مُدخَل</th><th>مُخرَج</th></tr></thead>
-                        <tbody>
-                            ${entries.map(([k, s]) => `
-                                <tr><td>${KIND_LABELS[k] || k}</td><td class="num">${s.calls}</td><td class="num">${fmtNum(s.in)}</td><td class="num">${fmtNum(s.out)}</td></tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            ` : ''}
-            <div class="flex gap-3" style="margin-top: var(--space-4); flex-wrap: wrap;">
-                <a href="https://console.anthropic.com/settings/usage" target="_blank"
-                   class="btn btn-secondary btn-sm">🔗 لوحة Anthropic (الدقيقة)</a>
-                <button class="btn btn-ghost btn-sm" id="btn-reset-usage">↺ تصفير العدّاد</button>
-            </div>
-        `;
-    }
-    function bindUsage(container) {
-        container.querySelector('#btn-save-api-key')?.addEventListener('click', async () => {
-            const inp = container.querySelector('#ai-api-key');
-            const val = (inp?.value || '').trim();
-            if (!val) return global.TeacherApp.toast('الصق المفتاح أولاً.', 'warning');
-            if (!/^sk-ant-/.test(val)) {
-                if (!global.confirm('المفتاح لا يبدأ بـ "sk-ant-". هل أنت متأكد من حفظه؟')) return;
-            }
-            try {
-                await global.AI.setApiKey(val);
-                global.TeacherApp.toast('تم حفظ المفتاح ✅', 'success');
-                await render(container);
-            } catch (err) {
-                global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error');
-            }
-        });
-        container.querySelector('#btn-remove-api-key')?.addEventListener('click', async () => {
-            if (!global.confirm('حذف مفتاح Anthropic API؟ ميزات الذكاء الاصطناعي ستتوقف.')) return;
-            await global.AI.setApiKey(null);
-            global.TeacherApp.toast('تم الحذف.', 'info');
-            await render(container);
-        });
-
-        container.querySelector('#btn-reset-usage')?.addEventListener('click', async () => {
-            if (!global.confirm('تصفير عدّاد استهلاك الذكاء الاصطناعي؟')) return;
-            await global.AI.clearUsage();
-            global.TeacherApp.toast('تم التصفير.', 'info');
-            await render(container);
-        });
     }
 
     function backupBody(prefs) {
@@ -941,11 +862,26 @@
         });
     }
 
+    /* صفحة يُطلب فتحها من خارج الإعدادات. الموجّه يستدعي resetState عند كل
+       دخول لـ/settings، فلا يكفي ضبط state.page قبل التنقّل — نمرّرها هنا
+       لتُحترم مرة واحدة ثم تُمسح. */
+    let pendingPage = null;
+
     /** Reset to the menu when re-entering /settings from elsewhere. */
-    function resetState() { state.page = null; }
+    function resetState() {
+        state.page = pendingPage;
+        pendingPage = null;
+    }
+
+    /* تُستدعى من شاشة الملف التعريفي: كلمة المرور صارت تُفتح من هناك بعد أن
+       خرجت من قائمة الإعدادات المختصرة. */
+    function openPage(page) {
+        pendingPage = page;
+        global.location.hash = '#/settings';
+    }
 
     global.SettingsView = {
         render, applyStoredPrefs, applyTheme, applyFontSize,
-        refreshPrintCache, resetState
+        refreshPrintCache, resetState, openPage
     };
 })(window);

@@ -118,10 +118,20 @@
                     ${FIELDS.map((f) => rowHtml(f, teacher)).join('')}
                 </form>
 
-                <div class="profile-save-bar" style="display:flex; gap: var(--space-3); justify-content:flex-end; margin-top: var(--space-4); margin-bottom: var(--space-6);">
+                <div class="profile-save-bar" style="display:flex; gap: var(--space-3); justify-content:flex-end; margin-top: var(--space-4);">
                     <button type="button" class="btn btn-ghost" id="btn-profile-reset">تراجع</button>
                     <button type="button" class="btn btn-primary" id="btn-profile-save">💾 حفظ</button>
                 </div>
+
+                <button type="button" class="set-row set-row-solo" id="btn-change-pass"
+                        style="margin: var(--space-5) 0 var(--space-8);">
+                    <span class="ic">🔐</span>
+                    <span class="tx">
+                        <span class="t">تغيير كلمة المرور</span>
+                        <span class="h">كلمة المرور الحالية ثم الجديدة</span>
+                    </span>
+                    <span class="chev">❯</span>
+                </button>
             </div>
         `;
 
@@ -169,6 +179,10 @@
     }
 
     function bind(container, teacher) {
+        container.querySelector('#btn-change-pass')?.addEventListener('click', () => {
+            global.SettingsView.openPage('password');
+        });
+
         // «أخرى» toggle → reveal the custom-subject text box.
         const otherToggle = container.querySelector('#subj-other-toggle');
         const otherInput  = container.querySelector('#subj-other-input');
