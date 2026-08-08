@@ -8,13 +8,6 @@
 (function (global) {
     'use strict';
 
-    const SUBJECTS = [
-        'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
-        'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
-        'الاجتماعيات', 'التاريخ', 'الجغرافيا',
-        'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية', 'أخرى'
-    ];
-
     /* «اسم المدرسة» و«المنطقة» خرجتا من هنا إلى شاشة «معلومات المدرسة» —
        بيانا مدرسة لا بيانا معلّم، وكان اسم المدرسة يُحرَّر من مكانين. */
     const GROUPS = [
@@ -32,7 +25,11 @@
             fields: [
                 { key: 'specialization',   label: 'التخصص',       type: 'text',   ph: 'رياضيات' },
                 { key: 'qualification',    label: 'المؤهل',       type: 'text',   ph: 'بكالوريوس' },
-                { key: 'experience_years', label: 'سنوات الخبرة', type: 'number', ph: '٠' }
+                { key: 'experience_years', label: 'سنوات الخبرة', type: 'number', ph: '٠' },
+                /* المواد يكتبها المعلّم بنفسه — قائمة الاختيار كانت تطول الشاشة
+                   ولا تسع ما يدرّسه فعلاً. تُفصل بفاصلة وتُخزَّن مصفوفةً كما كانت. */
+                { key: 'subjects', label: 'المواد', type: 'text', list: true, required: true,
+                  ph: 'الرياضيات، العلوم' }
             ]
         }
     ];
@@ -141,8 +138,6 @@
                         <div class="flist">${g.fields.map((f) => fieldRowHtml(f, teacher)).join('')}</div>
                     `).join('')}
 
-                    <div class="fgrp-t">المواد التي تدرّسها</div>
-                    <div class="fsubj">${subjectChipsHtml(teacher)}</div>
                 </form>
 
                 <button type="button" class="fsave" id="btn-profile-save">💾 حفظ بياناتي</button>
@@ -180,7 +175,7 @@
     /* صف يعرض قيمته، وضغطه يحوّله إلى حقل كتابة — والنقطة الذهبية تعني حقلاً
        مطلوباً ما زال فارغاً. */
     function fieldRowHtml(f, teacher) {
-        const raw   = teacher[f.key];
+        const raw   = f.list ? subjectsOf(teacher).join('، ') : teacher[f.key];
         const value = (raw === null || raw === undefined || raw === '') ? '' : String(raw);
         return `
             <button type="button" class="frow" data-field="${f.key}" data-type="${f.type}"
@@ -189,25 +184,6 @@
                 <span class="vl ${value ? '' : 'is-empty'}">${escapeHtml(value || 'لم يُضف')}</span>
                 ${f.required && !value ? '<span class="dot"></span>' : ''}
             </button>
-        `;
-    }
-
-    function subjectChipsHtml(teacher) {
-        const selected = new Set(subjectsOf(teacher));
-        const STD    = SUBJECTS.filter((s) => s !== 'أخرى');
-        const custom = subjectsOf(teacher).filter((s) => !STD.includes(s));
-        const chip = (s) => `
-            <button type="button" class="fchip subj ${selected.has(s) ? 'on' : ''}"
-                    data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
-        return `
-            <div class="fchips">
-                ${STD.map(chip).join('')}
-                ${custom.map(chip).join('')}
-                <button type="button" class="fchip subj-other" id="subj-other-toggle">✎ أخرى</button>
-            </div>
-            <input type="text" class="input" id="subj-other-input"
-                   placeholder="اكتب اسم المادة ثم احفظ" hidden
-                   style="margin-top: var(--space-3);">
         `;
     }
 
@@ -260,22 +236,6 @@
         });
 
         bindFieldRows(container, () => saveAll(container, teacher));
-
-        container.querySelectorAll('.fchip.subj').forEach((chip) => {
-            chip.addEventListener('click', () => chip.classList.toggle('on'));
-        });
-
-        // «أخرى» → إظهار حقل كتابة مادة ليست في القائمة.
-        const otherToggle = container.querySelector('#subj-other-toggle');
-        const otherInput  = container.querySelector('#subj-other-input');
-        if (otherToggle && otherInput) {
-            otherToggle.addEventListener('click', () => {
-                const show = otherInput.hidden;
-                otherInput.hidden = !show;
-                otherToggle.classList.toggle('on', show);
-                if (show) otherInput.focus(); else otherInput.value = '';
-            });
-        }
 
         container.querySelector('#btn-profile-back')?.addEventListener('click', () => {
             if (global.history.length > 1) global.history.back();
@@ -334,6 +294,16 @@
             const raw = readRow(container, field.key);
             let v;
 
+            if (field.list) {
+                v = raw.split(/[,،]/).map((s) => s.trim()).filter(Boolean);
+                v = Array.from(new Set(v));
+                if (field.required && !v.length) {
+                    return global.TeacherApp.toast(field.label + ' مطلوبة.', 'warning');
+                }
+                draft[field.key] = v;
+                continue;
+            }
+
             if (field.type === 'number') {
                 if (raw === '') { v = null; }
                 else {
@@ -358,15 +328,6 @@
             draft[field.key] = v;
         }
 
-        // المواد: الرقائق المحدَّدة + ما كُتب تحت «أخرى»
-        const picked = Array.from(container.querySelectorAll('.fchip.subj.on'))
-            .map((c) => c.dataset.subj);
-        const typed = (container.querySelector('#subj-other-input')?.value || '').trim();
-        if (typed) picked.push(typed);
-        draft.subjects = Array.from(new Set(picked.filter((s) => s && s !== 'أخرى')));
-        if (!draft.subjects.length) {
-            return global.TeacherApp.toast('اختر مادة واحدة على الأقل.', 'warning');
-        }
 
         // Email uniqueness — best-effort
         if (draft.email) {
