@@ -162,6 +162,29 @@
         'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية', 'أخرى'
     ];
 
+    /* مواد كل مرحلة: معلّم الابتدائي لا يعنيه أن يرى الفيزياء والكيمياء،
+       ومعلّم الثانوي لا يبحث عن المهارات الحياتية بين ست عشرة مادة. */
+    const STAGE_SUBJECTS = {
+        primary: [
+            'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'الرياضيات',
+            'العلوم', 'الاجتماعيات', 'اللغة الإنجليزية',
+            'المهارات الرقمية', 'المهارات الحياتية والأسرية',
+            'التربية الفنية', 'التربية البدنية'
+        ],
+        intermediate: [
+            'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'الرياضيات',
+            'العلوم', 'الاجتماعيات', 'اللغة الإنجليزية',
+            'المهارات الرقمية', 'المهارات الحياتية والأسرية',
+            'التربية الفنية', 'التربية البدنية'
+        ],
+        secondary: [
+            'التربية الإسلامية', 'اللغة العربية', 'الرياضيات',
+            'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة الإنجليزية',
+            'التاريخ', 'الجغرافيا', 'الحاسب وتقنية المعلومات',
+            'التفكير الناقد', 'التربية البدنية'
+        ]
+    };
+
     function teacherSubjects(teacher) {
         if (Array.isArray(teacher.subjects) && teacher.subjects.length) return teacher.subjects;
         return teacher.subject ? [teacher.subject] : [];
@@ -366,7 +389,7 @@
                 <div class="start-halo"></div>
                 <div class="start-ring">🎒</div>
                 <div class="start-t">أضف فصلك الأول</div>
-                <div class="start-s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة طلابك خلال دقيقة</div>
+                <div class="start-s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة ${global.Words.students()} خلال دقيقة</div>
                 <button type="button" class="start-cta" data-add-class>+ إضافة فصل</button>
             </div>`;
     }
@@ -523,7 +546,7 @@
             <div class="empty-state" style="grid-column: 1 / -1;">
                 <div class="icon">🏫</div>
                 <h3>لا توجد فصول بعد</h3>
-                <p>ابدأ بإضافة فصلك الأول لتنظيم طلابك ومتابعتهم.</p>
+                <p>ابدأ بإضافة فصلك الأول لتنظيم ${global.Words.students()} ومتابعتهم.</p>
                 <button class="btn btn-primary" data-empty-add>+ إضافة فصلي الأول</button>
             </div>
         `;
@@ -543,7 +566,7 @@
                     <div class="class-card-subject">${c.subject}</div>
                 </div>
                 <div class="class-card-meta">
-                    <span>${c.student_count || 0} طالب</span>
+                    <span>${global.Words.count(c.student_count || 0)}</span>
                     <span class="class-card-count">📖</span>
                 </div>
             </button>
@@ -691,11 +714,14 @@
         function subjectChips() {
             const mine = teacherSubjects(teacher).concat(custom)
                 .filter((s, i, a) => s && a.indexOf(s) === i);
-            const rest = SUBJECTS.filter((s) => s !== 'أخرى' && !mine.includes(s));
+            /* مواد المرحلة المختارة وحدها. «موادك» تظهر دائماً مهما كانت
+               المرحلة — المعلم قد يدرّس مادة خارج القائمة الرسمية. */
+            const stageList = STAGE_SUBJECTS[pick.stage] || SUBJECTS;
+            const rest = stageList.filter((s) => s !== 'أخرى' && !mine.includes(s));
             const chip = (s) => `<button type="button" class="sch-chip ${pick.subject === s ? 'on' : ''}"
                                          data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
             return (mine.length ? `<div class="sch-lbl">موادك</div><div class="sch-chips">${mine.map(chip).join('')}</div>` : '')
-                + `<div class="sch-lbl">${mine.length ? 'مواد أخرى' : 'المادة'}</div>`
+                + `<div class="sch-lbl">${mine.length ? 'مواد ' + (STAGE_LABELS[pick.stage] || '') : 'مواد ' + (STAGE_LABELS[pick.stage] || '')}</div>`
                 + `<div class="sch-chips">
                        ${rest.map(chip).join('')}
                        <button type="button" class="sch-chip ${other.subj ? 'on' : ''}" data-subj-other>✎ أخرى</button>

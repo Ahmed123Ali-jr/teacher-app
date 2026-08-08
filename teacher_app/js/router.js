@@ -13,6 +13,7 @@
 
     const routes = [
         { pattern: /^\/login$/,                    view: 'login',     auth: false, chrome: false },
+        { pattern: /^\/setup$/,                    view: 'setup',     auth: true,  chrome: false },
         { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true  },
         { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true  },
         { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true },
@@ -57,6 +58,14 @@
         if (hit.route.auth) {
             const me = await global.Auth.currentTeacher();
             if (!me) { global.location.hash = '#/login'; return; }
+            /* التهيئة إلزامية: أي شاشة قبل إكمالها تُحوّل إليها — وإلا رأى
+               المعلم تطبيقاً لا يعرف مدرسته ولا نوعها. */
+            if (path !== '/setup' && global.SetupView) {
+                if (!(await global.SetupView.isDone(me))) {
+                    global.location.hash = '#/setup';
+                    return;
+                }
+            }
         } else {
             const me = await global.Auth.currentTeacher();
             if (me && path === '/login') { global.location.hash = '#/dashboard'; return; }
@@ -88,6 +97,12 @@
                 const el = document.getElementById('view-login');
                 el.hidden = false;
                 global.LoginView.render(el);
+                break;
+            }
+            case 'setup': {
+                const el = document.getElementById('view-setup');
+                el.hidden = false;
+                await global.SetupView.render(el);
                 break;
             }
             case 'dashboard': {

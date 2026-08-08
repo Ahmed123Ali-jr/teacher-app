@@ -91,7 +91,7 @@
                     <div class="class-card-subject">${escapeHtml(c.subject)}</div>
                 </div>
                 <div class="class-card-meta">
-                    <span>${c.student_count || 0} طالب</span>
+                    <span>${global.Words.count(c.student_count || 0)}</span>
                     <span class="class-card-edit" role="button" tabindex="0"
                           data-edit-class="${c.id}">تعديل</span>
                 </div>

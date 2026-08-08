@@ -63,6 +63,9 @@
             if (global.SettingsView && global.SettingsView.applyStoredPrefs) {
                 await global.SettingsView.applyStoredPrefs();
             }
+            /* الكلمات تُقرأ قبل الرسم: نوع المدرسة يقلب «طالب/طالبة» في كل
+               الشاشات، وقراءتها بعد الرسم تعني وميض الكلمة الخطأ. */
+            if (global.Words) await global.Words.reload();
             if (global.Drawer)     global.Drawer.init();
             if (global.BottomNav)  global.BottomNav.init();
             /* المنبّه لا يوقف الإقلاع: يقرأ تفضيله ويبدأ مؤقّته في الخلفية. */

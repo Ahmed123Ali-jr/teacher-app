@@ -79,10 +79,14 @@
         });
     }
 
-    /** Show/hide based on auth: visible only when teacher logged in. */
+    /** Show/hide based on auth: visible only when teacher logged in.
+     *  وتُخفى في شاشة التهيئة: هي حاجز إلزامي، وشريط تنقّل فيها يوهم
+     *  المعلم أن بإمكانه تخطّيها. */
     async function syncVisibility() {
         const el = rootEl();
         if (!el) return;
+        const path = (global.location.hash || '').replace(/^#/, '').split('?')[0];
+        if (path === '/setup') { el.hidden = true; return; }
         try {
             const me = await global.Auth.currentTeacher();
             el.hidden = !me;

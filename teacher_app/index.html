@@ -26,7 +26,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D16">
     <link rel="stylesheet" href="css/components.css?v=5">
-    <link rel="stylesheet" href="css/views.css?v=D93">
+    <link rel="stylesheet" href="css/views.css?v=D94">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
     <link rel="stylesheet" href="css/print.css?v=D21" media="print">
 </head>
@@ -93,6 +93,7 @@
         <main class="app-main" id="app-main">
             <!-- View: Login / Register -->
             <section class="view view-auth" id="view-login" hidden></section>
+            <section class="view" id="view-setup" hidden></section>
 
             <!-- View: Dashboard -->
             <section class="view" id="view-dashboard" hidden></section>
@@ -194,6 +195,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-client.js?v=S3"></script>
     <script src="js/database.js?v=S11"></script>
+    <script src="js/words.js?v=1"></script>
     <script src="js/bell.js?v=2"></script>
     <script src="js/auth.js?v=S8"></script>
     <script src="js/ai-service.js?v=D9"></script>
@@ -202,10 +204,11 @@
     <script src="js/print-students.js?v=D16"></script>
     <script src="js/components/modal.js?v=6"></script>
     <script src="js/components/drawer.js?v=C3"></script>
-    <script src="js/components/bottom-nav.js?v=C3"></script>
+    <script src="js/components/bottom-nav.js?v=C4"></script>
     <script src="js/views/login.js?v=6"></script>
-    <script src="js/views/dashboard.js?v=C18"></script>
-    <script src="js/views/classes.js?v=S11"></script>
+    <script src="js/views/setup.js?v=1"></script>
+    <script src="js/views/dashboard.js?v=C19"></script>
+    <script src="js/views/classes.js?v=S12"></script>
     <script src="js/views/shortcuts.js?v=C2"></script>
     <script src="js/views/profile.js?v=D22"></script>
     <script src="js/views/reminders.js?v=S4"></script>
@@ -215,7 +218,7 @@
     <script src="js/views/class-exams.js?v=S3"></script>
     <script src="js/views/class-worksheets.js?v=5"></script>
     <script src="js/views/class-homework.js?v=S2"></script>
-    <script src="js/views/class.js?v=S61"></script>
+    <script src="js/views/class.js?v=S62"></script>
     <script src="js/views/student.js?v=9"></script>
     <script src="js/views/portfolio-strategies.js?v=S2"></script>
     <script src="js/views/portfolio-initiatives.js?v=S2"></script>
@@ -223,8 +226,8 @@
     <script src="js/views/schedule.js?v=S26"></script>
     <script src="js/views/help.js?v=10"></script>
     <script src="js/views/reports.js?v=C17"></script>
-    <script src="js/router.js?v=S5"></script>
-    <script src="js/app.js?v=S7"></script>
+    <script src="js/router.js?v=S6"></script>
+    <script src="js/app.js?v=S8"></script>
 
     <!-- Service Worker: enables offline + auto-update banner on every deploy. -->
     <script>

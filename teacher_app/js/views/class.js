@@ -9,7 +9,7 @@
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
 
     const TABS = [
-        { key: 'students',   label: 'سجل متابعة الطلاب', icon: '👥' },
+        { key: 'students',   label: null, icon: '👥' },   // النص يُحسب عند الرسم
         { key: 'books',      label: 'الكتب',        icon: '📖' },
         { key: 'curriculum', label: 'توزيع المنهج', icon: '🗓️' },
         { key: 'exams',      label: 'الاختبارات',   icon: '📝' },
@@ -209,7 +209,7 @@
                         <h2 class="chs-name">${escapeHtml(cls.grade)}</h2>
                         <div class="chs-chips">
                             <span class="chs-chip tinted">📘 ${escapeHtml(cls.subject)}</span>
-                            <span class="chs-chip">👥 <span class="num">${students.length}</span> طالباً</span>
+                            <span class="chs-chip">👥 ${global.Words.count(students.length)}</span>
                         </div>
                     </div>
                 </div>
@@ -220,13 +220,13 @@
                     <div class="hub-featured-head">
                         <div class="hub-featured-icon">👥</div>
                         <div class="hub-featured-titles">
-                            <div class="hub-featured-title">سجل متابعة الطلاب</div>
+                            <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                             <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
                         </div>
                         <div class="hub-featured-chev">‹</div>
                     </div>
                     <div class="hub-featured-stats">
-                        <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">طالب</div></div>
+                        <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">${global.Words.student()}</div></div>
                         <div class="hf-stat"><div class="hf-num num">${marked ? present : '—'}</div><div class="hf-lbl">حاضر</div></div>
                         <div class="hf-stat"><div class="hf-num num">${marked ? absent : '—'}</div><div class="hf-lbl">غائب</div></div>
                         <div class="hf-stat"><div class="hf-num num">${pct !== null ? pct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
@@ -269,7 +269,7 @@
                     ${state.activeTab === 'students' ? '' : `
                     <div class="section-page-title">
                         <span class="section-page-icon">${tab.icon}</span>
-                        <span>${tab.label}</span>
+                        <span>${tab.label || ('سجل متابعة ' + global.Words.students())}</span>
                     </div>`}
                 </div>
                 <div class="tab-panel" id="tab-panel"></div>
@@ -418,13 +418,13 @@
                 <div class="hub-featured-head">
                     <div class="hub-featured-icon">👥</div>
                     <div class="hub-featured-titles">
-                        <div class="hub-featured-title">سجل متابعة الطلاب</div>
+                        <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                         <div class="hub-featured-sub">📅 ${todayHuman()}</div>
                     </div>
                     <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">🖨️</button>
                 </div>
                 <div class="hub-featured-stats">
-                    <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">طالب</div></div>
+                    <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">${global.Words.student()}</div></div>
                     <button class="hf-stat hf-tap ${activeFilter === 'present' ? 'active' : ''}" data-att-filter="present"><div class="hf-num num" data-hf="present">${stats.present}</div><div class="hf-lbl">حاضر</div></button>
                     <button class="hf-stat hf-tap ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent"><div class="hf-num num" data-hf="absent">${stats.absent}</div><div class="hf-lbl">غائب</div></button>
                     <div class="hf-stat"><div class="hf-num num" data-hf="pct">${attPct !== null ? attPct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
@@ -433,8 +433,8 @@
 
             <div class="reg-toolrow">
                 <input type="search" class="input search-input" id="student-search"
-                       placeholder="🔍 بحث باسم الطالب...">
-                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة طلاب</button>
+                       placeholder="🔍 بحث باسم ${global.Words.theStudent()}...">
+                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.studentsBare()}</button>
             </div>
 
             ${students.length > 0 ? `
@@ -720,7 +720,7 @@
                 confirmDeleteStudent(name, async () => {
                     await deleteStudent(sid);
                     await updateClassStudentCount(cls.id);
-                    global.TeacherApp.toast('تم حذف الطالب.', 'info');
+                    global.TeacherApp.toast('تم حذف ' + global.Words.theStudent() + '.', 'info');
                     await renderStudents(panel, cls);
                 });
             });
@@ -772,16 +772,16 @@
         return `
             <div class="empty-state">
                 <div class="icon">🎒</div>
-                <h3>لا يوجد طلاب بعد</h3>
-                <p>ألصق قائمة أسماء الطلاب، أو ارفع ملفاً أو صورة للقائمة.</p>
-                <button class="btn btn-primary" data-empty-add>+ إضافة طلاب</button>
+                <h3>لا يوجد ${global.Words.studentsBare()} بعد</h3>
+                <p>ألصق قائمة أسماء ${global.Words.students()}، أو ارفع ملفاً أو صورة للقائمة.</p>
+                <button class="btn btn-primary" data-empty-add>+ إضافة ${global.Words.studentsBare()}</button>
             </div>
         `;
     }
 
     const TABLE_HINT = `
             <p class="text-muted" style="margin-top: var(--space-3); font-size: var(--fs-sm);">
-                اضغط أيقونة الحضور للتبديل. اضغط على اسم الطالب لعرض تفاصيله.
+                اضغط أيقونة الحضور للتبديل. اضغط على اسم ${global.Words.theStudent()} لعرض التفاصيل.
                 يمكنك كتابة الأرقام بالعربية (٠-٩) أو الإنجليزية.
             </p>`;
 
@@ -1061,7 +1061,7 @@
         const body = document.createElement('div');
         body.innerHTML = `
             <p style="margin-top:0">
-                سيتم حذف الطالب <strong>"${escapeHtml(name)}"</strong> مع كل
+                سيتم حذف ${global.Words.theStudent()} <strong>"${escapeHtml(name)}"</strong> مع كل
                 سجلات الحضور والتقييمات والملاحظات.
                 <br>لا يمكن التراجع.
             </p>
@@ -1075,7 +1075,7 @@
             try { await onConfirm(); }
             catch (err) { global.TeacherApp.toast('فشل الحذف: ' + err.message, 'error'); }
         });
-        global.Modal.open({ title: 'تأكيد حذف الطالب', body });
+        global.Modal.open({ title: 'تأكيد حذف ' + global.Words.theStudent(), body });
     }
 
     /* ---------- Data ops ----------
@@ -1374,19 +1374,19 @@
 
         function pasteForm() { return `
             <div class="field">
-                <label class="label">ألصق أسماء الطلاب — اسم في كل سطر</label>
+                <label class="label">ألصق أسماء ${global.Words.students()} — اسم في كل سطر</label>
                 <textarea class="textarea" id="paste-names" rows="10"
                           placeholder="أحمد بن محمد&#10;سارة بنت عبدالله&#10;خالد بن فيصل"></textarea>
                 <div class="field-hint">يُتجاهل الفراغ والأسطر الفارغة.</div>
             </div>
-            ${footer('إضافة الطلاب')}`; }
+            ${footer('إضافة ' + global.Words.students())}`; }
         function uploadForm() { return `
             <div class="field">
                 <label class="label">ارفع ملف الأسماء أو صورة القائمة</label>
                 <input class="input" id="upload-file" type="file" accept=".csv,.txt,.pdf,image/*">
-                <div class="field-hint">ملف CSV أو نصي (يُقرأ مباشرة)، أو صورة/PDF لقائمة الطلاب (يستخرجها الذكاء الاصطناعي تلقائياً).</div>
+                <div class="field-hint">ملف CSV أو نصي (يُقرأ مباشرة)، أو صورة/PDF لقائمة ${global.Words.students()} (يستخرجها الذكاء الاصطناعي تلقائياً).</div>
             </div>
-            ${footer('إضافة الطلاب')}`; }
+            ${footer('إضافة ' + global.Words.students())}`; }
         function footer(primary) { return `
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-primary" data-submit>${primary}</button>
@@ -1433,7 +1433,7 @@
                     }));
                     await updateClassStudentCount(cls.id);
                     global.Modal.close();
-                    global.TeacherApp.toast(`تمت إضافة ${names.length} طالب ✅`, 'success');
+                    global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅', 'success');
                     const panel = document.querySelector('#tab-panel');
                     if (panel) await renderStudents(panel, cls);
                 } catch (err) {
@@ -1445,7 +1445,7 @@
             });
         }
 
-        global.Modal.open({ title: 'إضافة طلاب', body: form });
+        global.Modal.open({ title: 'إضافة ' + global.Words.studentsBare(), body: form });
     }
 
     let _pdfJsPromise = null;
@@ -1576,7 +1576,7 @@
     async function deleteClass(cls, onDone) {
         const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
         const msg = students.length > 0
-            ? `سيتم حذف الفصل و ${students.length} طالب وجميع سجلاتهم. متأكد؟`
+            ? `سيتم حذف الفصل و${global.Words.count(students.length)} وجميع سجلاتهم. متأكد؟`
             : 'حذف الفصل؟';
         if (!global.confirm(msg)) return;
         /* ثلاثة طلاب في وقت واحد لا أكثر: كل طالب يفتح بنفسه ثماني كتابات
