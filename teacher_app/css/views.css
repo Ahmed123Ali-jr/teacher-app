@@ -3565,17 +3565,6 @@ body.drawer-open { overflow: hidden; }
 /* ==========================================================================
    منتقي إدارة التعليم — منطقة ثم إدارة
    ========================================================================== */
-.dp-regions { display: flex; flex-wrap: wrap; gap: 7px; }
-.dp-region {
-    border-radius: 11px; padding: 8px 13px; cursor: pointer; font-family: inherit;
-    font-size: 12.5px; font-weight: var(--fw-black); color: var(--primary);
-    background: var(--surface); border: 1.5px solid var(--border);
-}
-.dp-region.on {
-    background: linear-gradient(180deg, #24498A, var(--primary));
-    border-color: var(--primary); color: #fff;
-    box-shadow: 0 3px 9px rgba(15, 44, 92, .28);
-}
 .dp-list {
     border-radius: 14px; overflow: hidden;
     border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
@@ -3591,11 +3580,13 @@ body.drawer-open { overflow: hidden; }
 .dp-item:first-child { border-top: 0; }
 .dp-item:active { background: color-mix(in srgb, #ECEAE3 55%, #fff); }
 .dp-item .n { flex: 1; min-width: 0; font-size: 13.5px; font-weight: var(--fw-bold); color: var(--primary); }
+/* المنطقة تظهر فقط حين تختلف عن اسم الإدارة — جدة/مكة المكرمة مثلاً. */
+.dp-item .rg { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); flex-shrink: 0; }
 .dp-item .mk { color: #C9A961; font-weight: var(--fw-black); font-size: 14px; }
 .dp-item.on { background: color-mix(in srgb, #C9A961 10%, #fff); }
 .dp-item.on .n { font-weight: var(--fw-black); }
 .dp-hint {
-    margin: var(--space-4) 0 0; text-align: center;
+    margin: 0 0 var(--space-3); text-align: center;
     font-size: 12px; font-weight: var(--fw-bold); color: var(--text-muted);
 }
 

@@ -1,8 +1,8 @@
 /* ==========================================================================
-   components/dept-picker.js — منتقي إدارة التعليم: منطقة ← إدارة.
+   components/dept-picker.js — منتقي إدارة التعليم.
 
-   ضغطتان بلا كتابة حرف واحد، فيبقى اسم الإدارة موحّداً في كل المطبوعات ولا
-   يختلف إملاؤه بين معلّم وآخر. مشترك بين شاشة التهيئة وبيانات المدرسة.
+   ضغطة واحدة بلا كتابة حرف: الإدارات العامة ستّ عشرة، فقائمة واحدة أوضح من
+   خطوتين. مشترك بين شاشة التهيئة وبيانات المدرسة.
    ========================================================================== */
 
 (function (global) {
@@ -21,49 +21,34 @@
     function open(current, onPick) {
         const E = global.EduDepts;
         const bare = E.bareName(current);
-        /* نفتح على منطقة اختياره السابق مباشرةً بدل أن يبحث عنها من جديد. */
-        let region = E.regionOf(current) || null;
 
         const body = document.createElement('div');
-        body.className = 'sch-sheet dept-sheet';
-        paint();
-
-        function paint() {
-            body.innerHTML = `
-                <div class="sch-lbl">المنطقة</div>
-                <div class="dp-regions">
-                    ${E.regions().map((r) => `
-                        <button type="button" class="dp-region ${region === r ? 'on' : ''}"
-                                data-region="${esc(r)}">${esc(r)}</button>
-                    `).join('')}
-                </div>
-
-                ${region ? `
-                    <div class="sch-lbl" style="margin-top:15px">إدارة التعليم</div>
-                    <div class="dp-list">
-                        ${E.of(region).map((d) => `
-                            <button type="button" class="dp-item ${bare === d ? 'on' : ''}"
-                                    data-dept="${esc(d)}">
-                                <span class="n">${esc(E.fullName(d))}</span>
-                                <span class="mk">${bare === d ? '✓' : ''}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                ` : `<p class="dp-hint">اختر منطقتك أولاً لتظهر إداراتها.</p>`}
-            `;
-        }
+        body.className = 'sch-sheet';
+        body.innerHTML = `
+            <p class="dp-hint">اختر إدارتك — تُملأ المنطقة تلقائياً.</p>
+            <div class="dp-list">
+                ${E.all().map((d) => `
+                    <button type="button" class="dp-item ${bare === d.name ? 'on' : ''}"
+                            data-dept="${esc(d.name)}">
+                        <span class="n">${esc(E.fullName(d.name))}</span>
+                        <span class="rg">${d.region === d.name ? '' : esc(d.region)}</span>
+                        <span class="mk">${bare === d.name ? '✓' : ''}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
 
         body.addEventListener('click', (e) => {
-            const r = e.target.closest('[data-region]');
-            if (r) { region = r.dataset.region; return paint(); }
-
             const d = e.target.closest('[data-dept]');
             if (!d) return;
             global.Modal.close();
             if (onPick) onPick(E.fullName(d.dataset.dept));
         });
 
+        /* يُفتح المنتقي على اختياره السابق لا على أوّل القائمة. */
         global.Modal.open({ title: '🏛️ إدارة التعليم', body });
+        const on = body.querySelector('.dp-item.on');
+        if (on && on.scrollIntoView) on.scrollIntoView({ block: 'center' });
     }
 
     global.DeptPicker = { open };
