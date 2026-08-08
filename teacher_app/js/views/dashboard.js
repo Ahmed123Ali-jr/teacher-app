@@ -267,8 +267,20 @@
     }
 
     /* بطاقة التذكيرات المطويّة — تُخفى كلياً عند صفر تذكيرات */
+    /* البطاقة كانت تختفي تماماً بلا تذكيرات، فلا يجد المعلم من أين يضيف
+       واحداً. صارت تظهر دائماً ومعها زرّ الإضافة. */
     function remindersCardHtml(reminders, classById) {
-        if (!reminders.length) return '';
+        if (!reminders.length) {
+            return `
+                <div class="rem-card is-empty" id="rem-card">
+                    <div class="rem-head">
+                        <div class="rem-ic">🔔</div>
+                        <b>تذكيرات اليوم</b>
+                        <span class="rem-empty-tx">لا شيء اليوم</span>
+                        <button type="button" class="rem-add" id="rem-add" aria-label="إضافة تذكير">+</button>
+                    </div>
+                </div>`;
+        }
         const rows = reminders.map((r) => {
             const meta = REM_TYPES[r.type] || REM_TYPES.other;
             const cls = r.class_id ? classById[r.class_id] : null;
@@ -289,6 +301,7 @@
                     <div class="rem-ic">🔔</div>
                     <b>تذكيرات اليوم</b>
                     <span class="rem-bd num">${reminders.length}</span>
+                    <button type="button" class="rem-add" id="rem-add" aria-label="إضافة تذكير">+</button>
                     <button type="button" class="rem-toggle" id="rem-toggle" aria-label="عرض التذكيرات">▾</button>
                 </div>
                 <div class="rem-body">
@@ -564,6 +577,11 @@
         // طي/فتح بطاقة تذكيرات اليوم
         container.querySelector('#rem-toggle')?.addEventListener('click', () => {
             container.querySelector('#rem-card')?.classList.toggle('open');
+        });
+
+        container.querySelector('#rem-add')?.addEventListener('click', (e) => {
+            e.stopPropagation();   // لا يطوي البطاقة معه
+            global.RemindersView.openSheet(teacher, null, () => render(container));
         });
     }
 

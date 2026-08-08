@@ -1810,6 +1810,26 @@ body.drawer-open { overflow: hidden; }
     min-width: 22px; height: 22px; border-radius: 50%;
     display: grid; place-items: center;
 }
+/* زرّ إضافة تذكير — يسبق زرّ الطيّ ويأخذ المسافة الفاصلة، فيبقى الطيّ آخر
+   عنصر في الرأس كما كان. */
+.rem-add {
+    margin-right: auto;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 0;
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    color: #fff; font-size: 17px; font-weight: var(--fw-black); line-height: 1;
+    display: grid; place-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(15, 44, 92, .28);
+}
+.rem-add:active { transform: scale(.94); }
+.rem-add + .rem-toggle { margin-right: 7px; }
+.rem-empty-tx {
+    margin-right: auto;
+    font-size: 11.5px; font-weight: var(--fw-bold); color: var(--text-muted);
+}
+.rem-empty-tx + .rem-add { margin-right: 9px; }
+
 .rem-toggle {
     margin-right: auto;
     width: 30px; height: 30px; border-radius: 50%;

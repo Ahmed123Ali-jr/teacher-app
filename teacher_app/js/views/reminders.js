@@ -157,7 +157,7 @@
 
         function bind(all, classById) {
             container.querySelector('#btn-add-reminder')
-                ?.addEventListener('click', () => openForm());
+                ?.addEventListener('click', () => openSheet(teacher, null, paint));
 
             container.querySelectorAll('[data-filter]').forEach((el) => {
                 el.addEventListener('click', () => { filter = el.dataset.filter; paint(); });
@@ -175,7 +175,7 @@
                   });
 
                 el.querySelector('[data-action="edit"]')
-                  ?.addEventListener('click', () => openForm(row));
+                  ?.addEventListener('click', () => openSheet(teacher, row, paint));
 
                 el.querySelector('[data-action="delete"]')
                   ?.addEventListener('click', async () => {
@@ -184,95 +184,6 @@
                       global.TeacherApp.toast('تم حذف التذكير.', 'info');
                       paint();
                   });
-            });
-        }
-
-        async function openForm(existing) {
-            const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-
-            const form = document.createElement('form');
-            form.innerHTML = `
-                <div class="field">
-                    <label class="label" for="r-title">العنوان *</label>
-                    <input class="input" id="r-title" type="text" required maxlength="120"
-                           placeholder="اختبار الوحدة الأولى" value="${existing ? escapeAttr(existing.title) : ''}">
-                </div>
-
-                <div class="grid grid-2">
-                    <div class="field">
-                        <label class="label" for="r-date">التاريخ *</label>
-                        <input class="input" id="r-date" type="date" required
-                               value="${existing ? existing.date : todayISO()}">
-                    </div>
-                    <div class="field">
-                        <label class="label" for="r-type">النوع *</label>
-                        <select class="select" id="r-type" required>
-                            ${Object.entries(TYPE_META).map(([k, v]) => `
-                                <option value="${k}" ${existing && existing.type === k ? 'selected' : ''}>
-                                    ${v.icon} ${v.label}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label" for="r-class">الفصل (اختياري)</label>
-                    <select class="select" id="r-class">
-                        <option value="">— بدون تحديد —</option>
-                        ${classes.map((c) => `
-                            <option value="${c.id}" ${existing && existing.class_id === c.id ? 'selected' : ''}>
-                                ${c.grade} / ${c.section} — ${c.subject}
-                            </option>
-                        `).join('')}
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label class="label" for="r-notes">ملاحظات (اختياري)</label>
-                    <textarea class="textarea" id="r-notes" rows="3"
-                              placeholder="أي تفاصيل إضافية...">${existing ? escapeHtml(existing.notes || '') : ''}</textarea>
-                </div>
-
-                <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                    <button type="submit" class="btn btn-primary">${existing ? 'حفظ التعديل' : 'إضافة'}</button>
-                    <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-                </div>
-            `;
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = form.querySelector('button[type="submit"]');
-                btn.disabled = true;
-                try {
-                    const classIdRaw = form.querySelector('#r-class').value;
-                    const row = {
-                        teacher_id: teacher.id,
-                        title:      form.querySelector('#r-title').value.trim(),
-                        date:       form.querySelector('#r-date').value,
-                        type:       form.querySelector('#r-type').value,
-                        class_id:   classIdRaw || null,
-                        notes:      form.querySelector('#r-notes').value.trim(),
-                        done:       existing ? !!existing.done : false,
-                        created_at: existing ? existing.created_at : new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    };
-                    if (existing) row.id = existing.id;
-
-                    await global.TeacherDB.put('reminders', row);
-                    global.Modal.close();
-                    global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تمت إضافة التذكير ✅', 'success');
-                    paint();
-                } catch (err) {
-                    global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error');
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-
-            global.Modal.open({
-                title: existing ? 'تعديل التذكير' : 'إضافة تذكير جديد',
-                body: form
             });
         }
 
@@ -286,5 +197,144 @@
         paint();
     }
 
-    global.RemindersView = { render, todayCount };
+    /* ==========================================================================
+       لوحة التذكير باللمس — نفس أسلوب لوحة إضافة الفصل: أزرار لا قوائم
+       منسدلة. العنوان وحده حقل كتابة لأنه لا يمكن اختياره من قائمة.
+       تُستدعى من الرئيسية ومن شاشة «تذكيراتي» معاً فلا يبقى نموذجان.
+       ========================================================================== */
+
+    function esc(s) {
+        return String(s || '').replace(/[&<>"']/g, (m) => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[m]));
+    }
+
+    function isoPlus(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    async function openSheet(teacher, existing, onSaved) {
+        const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
+        const QUICK = [
+            { d: isoPlus(0), label: 'اليوم' },
+            { d: isoPlus(1), label: 'غداً' },
+            { d: isoPlus(2), label: 'بعد غد' }
+        ];
+
+        const pick = {
+            title:    existing ? existing.title : '',
+            date:     existing ? existing.date : isoPlus(0),
+            type:     existing ? existing.type : 'other',
+            class_id: existing ? (existing.class_id || '') : ''
+        };
+        /* تاريخ خارج الأزرار السريعة يفتح منتقي التاريخ مباشرةً. */
+        let customDate = !QUICK.some((q) => q.d === pick.date);
+        let saving = false;
+
+        const body = document.createElement('div');
+        body.className = 'sch-sheet';
+        paint();
+
+        function paint() {
+            body.innerHTML = `
+                <div class="sch-lbl">التذكير</div>
+                <input type="text" class="input" id="rm-title" maxlength="120"
+                       placeholder="اختبار الوحدة الأولى" value="${esc(pick.title)}">
+
+                <div class="sch-lbl" style="margin-top:15px">متى؟</div>
+                <div class="sch-chips">
+                    ${QUICK.map((q) => `
+                        <button type="button" class="sch-chip ${!customDate && pick.date === q.d ? 'on' : ''}"
+                                data-quick="${q.d}">${q.label}</button>
+                    `).join('')}
+                    <button type="button" class="sch-chip ${customDate ? 'on' : ''}" data-date-other>✎ تاريخ آخر</button>
+                </div>
+                ${customDate ? `
+                    <input type="date" class="input" id="rm-date" value="${esc(pick.date)}"
+                           style="margin-bottom:13px">` : ''}
+
+                <div class="sch-lbl">النوع</div>
+                <div class="sch-chips">
+                    ${Object.entries(TYPE_META).map(([k, v]) => `
+                        <button type="button" class="sch-chip ${pick.type === k ? 'on' : ''}"
+                                data-type="${k}">${v.icon} ${v.label}</button>
+                    `).join('')}
+                </div>
+
+                <div class="sch-lbl">الفصل</div>
+                <div class="sch-chips">
+                    <button type="button" class="sch-chip ${!pick.class_id ? 'on' : ''}" data-cls="">عام</button>
+                    ${classes.map((c) => `
+                        <button type="button" class="sch-chip ${pick.class_id === c.id ? 'on' : ''}"
+                                data-cls="${esc(c.id)}">${esc(shortGrade(c.grade))}/${esc(c.section)}</button>
+                    `).join('')}
+                </div>
+
+                <button type="button" class="fsave" id="rm-save">
+                    ${existing ? '💾 حفظ التعديل' : '💾 حفظ التذكير'}
+                </button>
+            `;
+            body.querySelector('#rm-title').addEventListener('input', (e) => { pick.title = e.target.value; });
+            body.querySelector('#rm-date')?.addEventListener('input', (e) => {
+                if (e.target.value) pick.date = e.target.value;
+            });
+            if (customDate) body.querySelector('#rm-date')?.focus();
+        }
+
+        body.addEventListener('click', async (e) => {
+            const q = e.target.closest('[data-quick]');
+            if (q) { pick.date = q.dataset.quick; customDate = false; return paint(); }
+
+            if (e.target.closest('[data-date-other]')) { customDate = true; return paint(); }
+
+            const ty = e.target.closest('[data-type]');
+            if (ty) { pick.type = ty.dataset.type; return paint(); }
+
+            const cl = e.target.closest('[data-cls]');
+            if (cl) { pick.class_id = cl.dataset.cls; return paint(); }
+
+            if (!e.target.closest('#rm-save') || saving) return;
+
+            const title = String(pick.title || '').trim();
+            if (!title) return global.TeacherApp.toast('اكتب التذكير أولاً.', 'warning', 3000);
+            if (!pick.date) return global.TeacherApp.toast('اختر التاريخ.', 'warning', 3000);
+
+            saving = true;
+            const row = {
+                teacher_id: teacher.id,
+                title,
+                date:       pick.date,
+                type:       pick.type,
+                class_id:   pick.class_id || null,
+                notes:      existing ? (existing.notes || '') : '',
+                done:       existing ? !!existing.done : false,
+                created_at: existing ? existing.created_at : new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            if (existing) row.id = existing.id;
+
+            /* اللوحة تُغلق قبل الكتابة — الكتابة رحلة شبكة تقارب ربع ثانية. */
+            global.Modal.close();
+            global.TeacherApp.toast(existing ? 'تم حفظ التعديل ✅' : 'تمت إضافة التذكير ✅', 'success', 1200);
+            try {
+                await global.TeacherDB.put('reminders', row);
+            } catch (err) {
+                saving = false;
+                return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
+            }
+            if (onSaved) await onSaved();
+        });
+
+        global.Modal.open({ title: existing ? '🔔 تعديل التذكير' : '🔔 تذكير جديد', body });
+    }
+
+    function shortGrade(grade) {
+        return String(grade || '').replace(/^\s*الصف\s+/, '').split(/\s+/)[0];
+    }
+
+    global.RemindersView = { render, todayCount, openSheet };
 })(window);
