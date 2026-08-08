@@ -40,17 +40,18 @@
      * Menu items. `page` is the detail-screen key; if it's a direct hash,
      * tapping navigates there instead of opening a subsection.
      */
-    /* الشاشة كانت ١٤ بنداً في ٦ مجموعات فصارت ٨ في ٣: بطاقة الحساب أعلى تفتح
+    /* الشاشة كانت ١٤ بنداً في ٦ مجموعات فصارت ٧ في ٣: بطاقة الحساب أعلى تفتح
        الملف التعريفي، و«إحصائياتي» انتقلت إلى التقارير حيث كانت أرقامها مكرّرة
        أصلاً، والخصوصية والدعم داخل «عن التطبيق»، و«ادعُ معلماً» داخل
-       «الاشتراك». وحُذف «استهلاك الذكاء الاصطناعي». */
+       «الاشتراك». وحُذف «استهلاك الذكاء الاصطناعي»، وحُذفت صفحة «التذكيرات»
+       ومعها تفضيلاتها الخمسة — لم يكن أي كود يقرأها، فكانت أزرارها تُحفظ
+       ولا تفعل شيئاً. */
     const MENU_GROUPS = [
         {
             title: 'الحساب والمدرسة',
             items: [
                 { page: 'password',      icon: '🔐', label: 'كلمة المرور',     sub: 'الحالية ثم الجديدة' },
-                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، إدارة التعليم، العام' },
-                { page: 'reminders',     icon: '🔔', label: 'التذكيرات',       sub: 'تنبيه الحضور والنسخ الاحتياطي' }
+                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، إدارة التعليم، العام' }
             ]
         },
         {
@@ -140,11 +141,6 @@
             academic_year:    await getPref('academic_year',    ''),
             principal_name:   await getPref('principal_name',   ''),
             school_logo:      await getPref('school_logo',      null),
-            remind_attendance:await getPref('remind_attendance',false),
-            attendance_time:  await getPref('attendance_time',  '08:00'),
-            remind_backup:    await getPref('remind_backup',    true),
-            backup_days:      await getPref('backup_days',      7),
-            remind_next_class:await getPref('remind_next_class',true),
             theme:            await getPref('theme',            'light'),
             font_size:        await getPref('font_size',        'medium'),
             last_backup:      await getPref('last_backup',      null),
@@ -282,8 +278,6 @@
             case 'school':
                 title = '🏫 معلومات المدرسة';
                 body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
-            case 'reminders':
-                title = '🔔 التذكيرات'; body = remindersBody(prefs); bindFn = bindReminders; break;
             case 'appearance':
                 title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
             case 'backup':
@@ -552,50 +546,6 @@
             await refreshPrintCache();
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
             await render(container);
-        });
-    }
-
-    function remindersBody(prefs) {
-        return `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                سيظهر تنبيه في الرئيسية عند فتح التطبيق إذا حان موعد التذكير.
-            </p>
-
-            <label class="cb-row">
-                <input type="checkbox" id="pref-remind-attendance" ${prefs.remind_attendance ? 'checked' : ''}>
-                <span>ذكّرني بأخذ الحضور يومياً في
-                    <input class="input input-sm" id="pref-attendance-time" type="time"
-                           style="max-width: 120px; display: inline-block;"
-                           value="${prefs.attendance_time || '08:00'}">
-                </span>
-            </label>
-            <label class="cb-row">
-                <input type="checkbox" id="pref-remind-backup" ${prefs.remind_backup ? 'checked' : ''}>
-                <span>ذكّرني بعمل نسخة احتياطية كل
-                    <select class="select select-sm" id="pref-backup-days" style="max-width: 110px; display: inline-block;">
-                        <option value="7"  ${prefs.backup_days === 7  ? 'selected' : ''}>٧ أيام</option>
-                        <option value="14" ${prefs.backup_days === 14 ? 'selected' : ''}>أسبوعين</option>
-                        <option value="30" ${prefs.backup_days === 30 ? 'selected' : ''}>شهر</option>
-                    </select>
-                </span>
-            </label>
-            <label class="cb-row">
-                <input type="checkbox" id="pref-remind-class" ${prefs.remind_next_class !== false ? 'checked' : ''}>
-                <span>أظهر تنبيه "الحصة القادمة" في الرئيسية</span>
-            </label>
-
-            <button class="btn btn-primary btn-block" id="btn-save-reminders"
-                    style="margin-top: var(--space-3);">💾 حفظ</button>
-        `;
-    }
-    function bindReminders(container) {
-        container.querySelector('#btn-save-reminders')?.addEventListener('click', async () => {
-            await setPref('remind_attendance', container.querySelector('#pref-remind-attendance').checked);
-            await setPref('attendance_time',   container.querySelector('#pref-attendance-time').value);
-            await setPref('remind_backup',     container.querySelector('#pref-remind-backup').checked);
-            await setPref('backup_days',       Number(container.querySelector('#pref-backup-days').value));
-            await setPref('remind_next_class', container.querySelector('#pref-remind-class').checked);
-            global.TeacherApp.toast('تم حفظ التفضيلات ✅', 'success');
         });
     }
 
