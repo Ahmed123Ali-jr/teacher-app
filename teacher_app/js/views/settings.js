@@ -40,15 +40,16 @@
      * Menu items. `page` is the detail-screen key; if it's a direct hash,
      * tapping navigates there instead of opening a subsection.
      */
-    /* الشاشة كانت ١٤ بنداً في ٦ مجموعات فصارت ٧ في ٣: بطاقة الحساب أعلى تفتح
-       الملف التعريفي، وكلمة المرور انتقلت إليه، و«إحصائياتي» إلى التقارير حيث
-       كانت أرقامها مكرّرة أصلاً، والخصوصية والدعم داخل «عن التطبيق»، و«ادعُ
-       معلماً» داخل «الاشتراك». وحُذف «استهلاك الذكاء الاصطناعي». */
+    /* الشاشة كانت ١٤ بنداً في ٦ مجموعات فصارت ٨ في ٣: بطاقة الحساب أعلى تفتح
+       الملف التعريفي، و«إحصائياتي» انتقلت إلى التقارير حيث كانت أرقامها مكرّرة
+       أصلاً، والخصوصية والدعم داخل «عن التطبيق»، و«ادعُ معلماً» داخل
+       «الاشتراك». وحُذف «استهلاك الذكاء الاصطناعي». */
     const MENU_GROUPS = [
         {
-            title: 'المدرسة والتنبيهات',
+            title: 'الحساب والمدرسة',
             items: [
-                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، المدير، العام الدراسي' },
+                { page: 'password',      icon: '🔐', label: 'كلمة المرور',     sub: 'الحالية ثم الجديدة' },
+                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، إدارة التعليم، العام' },
                 { page: 'reminders',     icon: '🔔', label: 'التذكيرات',       sub: 'تنبيه الحضور والنسخ الاحتياطي' }
             ]
         },
@@ -944,26 +945,11 @@
         });
     }
 
-    /* صفحة يُطلب فتحها من خارج الإعدادات. الموجّه يستدعي resetState عند كل
-       دخول لـ/settings، فلا يكفي ضبط state.page قبل التنقّل — نمرّرها هنا
-       لتُحترم مرة واحدة ثم تُمسح. */
-    let pendingPage = null;
-
     /** Reset to the menu when re-entering /settings from elsewhere. */
-    function resetState() {
-        state.page = pendingPage;
-        pendingPage = null;
-    }
-
-    /* تُستدعى من شاشة الملف التعريفي: كلمة المرور صارت تُفتح من هناك بعد أن
-       خرجت من قائمة الإعدادات المختصرة. */
-    function openPage(page) {
-        pendingPage = page;
-        global.location.hash = '#/settings';
-    }
+    function resetState() { state.page = null; }
 
     global.SettingsView = {
         render, applyStoredPrefs, applyTheme, applyFontSize,
-        refreshPrintCache, resetState, openPage
+        refreshPrintCache, resetState
     };
 })(window);

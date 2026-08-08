@@ -141,16 +141,6 @@
                 </form>
 
                 <button type="button" class="fsave" id="btn-profile-save">💾 حفظ بياناتي</button>
-
-                <button type="button" class="set-row set-row-solo" id="btn-change-pass"
-                        style="margin: var(--space-5) 0 var(--space-8);">
-                    <span class="ic">🔐</span>
-                    <span class="tx">
-                        <span class="t">تغيير كلمة المرور</span>
-                        <span class="h">كلمة المرور الحالية ثم الجديدة</span>
-                    </span>
-                    <span class="chev">❯</span>
-                </button>
             </div>
         `;
 
@@ -231,10 +221,6 @@
     }
 
     function bind(container, teacher) {
-        container.querySelector('#btn-change-pass')?.addEventListener('click', () => {
-            global.SettingsView.openPage('password');
-        });
-
         bindFieldRows(container, () => saveAll(container, teacher));
 
         container.querySelector('#btn-profile-back')?.addEventListener('click', () => {
