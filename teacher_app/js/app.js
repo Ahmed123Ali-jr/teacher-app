@@ -65,6 +65,8 @@
             }
             if (global.Drawer)     global.Drawer.init();
             if (global.BottomNav)  global.BottomNav.init();
+            /* المنبّه لا يوقف الإقلاع: يقرأ تفضيله ويبدأ مؤقّته في الخلفية. */
+            if (global.Bell) global.Bell.start().catch(() => {});
             global.Router.start();
         },
 

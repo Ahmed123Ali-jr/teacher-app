@@ -3519,6 +3519,58 @@ body.drawer-open { overflow: hidden; }
 .fsave:disabled { opacity: .6; }
 
 /* ==========================================================================
+   منبّه الحصص
+   ========================================================================== */
+.bell-main {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; margin-bottom: var(--space-4);
+    border-radius: 16px; cursor: pointer;
+    color: #fff;
+    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
+    box-shadow: 0 6px 16px rgba(15, 44, 92, .3), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+}
+.bell-main .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bell-main .t { font-size: 15px; font-weight: var(--fw-black); }
+.bell-main .h { font-size: 11.5px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .72); margin-top: 2px; }
+.bell-main input { position: absolute; opacity: 0; pointer-events: none; }
+/* مفتاح منزلق: أوضح من مربّع اختيار للفعل الرئيسي في الشاشة */
+.bell-main .sw {
+    width: 48px; height: 28px; border-radius: 99px; flex-shrink: 0;
+    background: rgba(255, 255, 255, .22);
+    position: relative; transition: background var(--dur-fast) var(--ease);
+}
+.bell-main .sw::after {
+    content: ""; position: absolute; top: 3px; right: 3px;
+    width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    transition: transform var(--dur-fast) var(--ease);
+}
+.bell-main input:checked + .sw { background: #C9A961; }
+.bell-main input:checked + .sw::after { transform: translateX(-20px); }
+.bell-main input:focus-visible + .sw { outline: 2px solid #fff; outline-offset: 2px; }
+
+.bell-row {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 14px; margin-bottom: var(--space-2);
+    border-radius: 14px; cursor: pointer;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.bell-row input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--primary); }
+.bell-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bell-row .t { font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
+.bell-row .h { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 1px; }
+
+.bell-note {
+    margin: var(--space-5) 0 0;
+    padding: 11px 13px;
+    border-radius: 12px;
+    background: color-mix(in srgb, #F59E0B 10%, #fff);
+    border: 1px solid color-mix(in srgb, #F59E0B 32%, #fff);
+    font-size: 11.5px; line-height: 1.8; font-weight: var(--fw-bold); color: #8A5A08;
+}
+
+/* ==========================================================================
    شاشة الإعدادات — بطاقة الحساب الكحلية فوق ثلاث مجموعات مختصرة
    ========================================================================== */
 .set-v2 { max-width: 720px; }

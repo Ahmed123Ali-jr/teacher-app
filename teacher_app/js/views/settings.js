@@ -59,6 +59,7 @@
             title: 'التطبيق',
             items: [
                 { page: 'appearance',    icon: '🎨', label: 'المظهر',          sub: 'الوضع الفاتح والداكن' },
+                { page: 'bell',          icon: '🔔', label: 'منبّه الحصص',      sub: 'جرس المدرسة وتنبيه حصتك' },
                 { page: 'backup',        icon: '💾', label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
                 { page: 'invite',        icon: '👥', label: 'دعوة معلم',       sub: 'شارك التطبيق مع زميلك' }
             ]
@@ -261,6 +262,11 @@
                 body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
             case 'appearance':
                 title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
+            case 'bell':
+                title = '🔔 منبّه الحصص';
+                body = bellBody(await global.Bell.loadPrefs());
+                bindFn = bindBell;
+                break;
             case 'backup':
                 title = '💾 النسخ الاحتياطي';
                 body = backupBody(prefs) + storageNote(await computeQuickStats(teacher));
@@ -574,6 +580,100 @@
             </div>
         `;
     }
+    /* المنبّه: مفتاح عام ثم خياران وصوتان للتجربة. القيد مكتوب في الأعلى
+       صراحةً — التطبيق بلا خادم إشعارات فلا يرنّ وهو مغلق. */
+    function bellBody(b) {
+        const on = !!b.enabled;
+        return `
+            <label class="bell-main">
+                <span class="tx">
+                    <span class="t">تشغيل المنبّه</span>
+                    <span class="h">يرنّ على أوقات الحصص المحفوظة عندك</span>
+                </span>
+                <input type="checkbox" id="bell-enabled" ${on ? 'checked' : ''}>
+                <span class="sw"></span>
+            </label>
+
+            <div id="bell-opts" style="${on ? '' : 'opacity:.45; pointer-events:none;'}">
+                <label class="bell-row">
+                    <input type="checkbox" id="bell-school" ${b.schoolBell ? 'checked' : ''}>
+                    <span class="tx">
+                        <span class="t">🔔 جرس المدرسة</span>
+                        <span class="h">عند بداية كل حصة ونهايتها</span>
+                    </span>
+                    <button type="button" class="fchip" data-try="bell">▶︎ جرّب</button>
+                </label>
+
+                <label class="bell-row">
+                    <input type="checkbox" id="bell-class" ${b.classAlert ? 'checked' : ''}>
+                    <span class="tx">
+                        <span class="t">⏰ تنبيه حصتك</span>
+                        <span class="h">قبل حصصك أنت فقط — لا كل الحصص</span>
+                    </span>
+                    <button type="button" class="fchip" data-try="alert">▶︎ جرّب</button>
+                </label>
+
+                <div class="fgrp-t" style="margin-top:var(--space-4)">التنبيه قبل الحصة بـ</div>
+                <div class="fchips">
+                    ${[3, 5, 10, 15].map((m) => `
+                        <button type="button" class="fchip ${b.preMinutes === m ? 'on' : ''}"
+                                data-pre="${m}">${m} دقائق</button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <p class="bell-note">
+                ⚠️ المنبّه يعمل <strong>والتطبيق مفتوح</strong> فقط. التطبيق صفحة ويب بلا خادم
+                إشعارات، فلا يرنّ وجوالك مقفل أو التطبيق مغلق.
+            </p>
+            <button type="button" class="fchip" id="bell-notif" style="width:100%; margin-top:var(--space-3)">
+                🔕 السماح بالإشعارات (يظهر تنبيه والتطبيق في الخلفية)
+            </button>
+        `;
+    }
+
+    function bindBell(container) {
+        const opts = container.querySelector('#bell-opts');
+        const sync = async (patch) => {
+            const next = await global.Bell.savePrefs(patch);
+            if (opts) opts.style.cssText = next.enabled ? '' : 'opacity:.45; pointer-events:none;';
+        };
+
+        container.querySelector('#bell-enabled')?.addEventListener('change', (e) => {
+            /* أول تشغيل: نُسمعه الجرس ليعرف الصوت ويفتح مسار الصوت في
+               المتصفح بلمسته هذه. */
+            if (e.target.checked) global.Bell.playBell();
+            sync({ enabled: e.target.checked });
+        });
+        container.querySelector('#bell-school')?.addEventListener('change', (e) =>
+            sync({ schoolBell: e.target.checked }));
+        container.querySelector('#bell-class')?.addEventListener('change', (e) =>
+            sync({ classAlert: e.target.checked }));
+
+        container.querySelectorAll('[data-pre]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('[data-pre]').forEach((b) => b.classList.toggle('on', b === btn));
+                sync({ preMinutes: Number(btn.dataset.pre) });
+            });
+        });
+
+        container.querySelectorAll('[data-try]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (btn.dataset.try === 'bell') global.Bell.playBell();
+                else global.Bell.playAlert();
+            });
+        });
+
+        container.querySelector('#bell-notif')?.addEventListener('click', async () => {
+            const r = await global.Bell.requestNotifications();
+            const msg = r === 'granted' ? 'تم السماح بالإشعارات ✅'
+                      : r === 'unsupported' ? 'متصفحك لا يدعم الإشعارات.'
+                      : 'لم يُسمح بالإشعارات.';
+            global.TeacherApp.toast(msg, r === 'granted' ? 'success' : 'info', 3000);
+        });
+    }
+
     function themeChip(value, icon, label, current) {
         const active = (current || 'light') === value;
         return `<button type="button" class="chip ${active ? 'active' : ''}" data-theme="${value}"
