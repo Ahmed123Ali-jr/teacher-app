@@ -50,8 +50,9 @@
         {
             title: 'الحساب والمدرسة',
             items: [
-                { page: 'password',      icon: '🔐', label: 'كلمة المرور',     sub: 'الحالية ثم الجديدة' },
-                { page: 'school',        icon: '🏫', label: 'معلومات المدرسة', sub: 'الاسم، إدارة التعليم، العام' }
+                { page: 'profile-link',  icon: '👤', label: 'بياناتي الشخصية',   sub: 'الاسم، التخصص، المواد', href: '#/profile' },
+                { page: 'school',        icon: '🏫', label: 'بيانات المدرسة',    sub: 'الاسم، إدارة التعليم، العام' },
+                { page: 'password',      icon: '🔐', label: 'تغيير كلمة المرور', sub: 'الحالية ثم الجديدة' }
             ]
         },
         {
@@ -160,7 +161,7 @@
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         if (!state.page) {
-            renderMenu(container, teacher);
+            renderMenu(container);
         } else {
             renderPage(container, teacher, state.page);
         }
@@ -170,44 +171,12 @@
        MAIN MENU (list)
        ========================================================================== */
 
-    /** الحرفان الأولان من اسم المعلم — بديل الصورة في بطاقة الحساب. */
-    function initials(name) {
-        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-        if (!parts.length) return '؟';
-        return parts.length === 1
-            ? parts[0].slice(0, 2)
-            : parts[0][0] + ' ' + parts[1][0];
-    }
-
-    /** سطر تحت الاسم: المدرسة والتخصص، وما توفّر منهما فقط. */
-    function accountSub(teacher) {
-        const bits = [];
-        if (teacher.school_name) bits.push(teacher.school_name);
-        const subjects = teacherSubjectsLabel(teacher);
-        if (subjects) bits.push(subjects);
-        return bits.length ? bits.join(' · ') : 'أكمل ملفك التعريفي';
-    }
-
-    function teacherSubjectsLabel(teacher) {
-        if (Array.isArray(teacher.subjects) && teacher.subjects.length) {
-            return 'معلّم ' + teacher.subjects[0];
-        }
-        return teacher.subject ? 'معلّم ' + teacher.subject : '';
-    }
-
-    function renderMenu(container, teacher) {
+    /* بلا بطاقة حساب كحلية أعلى الشاشة: كل البنود بمادة واحدة رصاصية،
+       و«بياناتي الشخصية» صف كبقية الصفوف يفتح شاشة الملف التعريفي. */
+    function renderMenu(container) {
         container.innerHTML = `
             <div class="container set-v2">
                 <h2 class="set-title">⚙️ الإعدادات</h2>
-
-                <a href="#/profile" class="set-acct">
-                    <span class="av">${escapeHtml(initials(teacher.name))}</span>
-                    <span class="tx">
-                        <span class="t">${escapeHtml(teacher.name || 'معلّم')}</span>
-                        <span class="h">${escapeHtml(accountSub(teacher))}</span>
-                    </span>
-                    <span class="chev">❯</span>
-                </a>
 
                 ${MENU_GROUPS.map(groupHtml).join('')}
 
@@ -276,7 +245,7 @@
             case 'password':
                 title = '🔐 تغيير كلمة المرور'; body = passwordBody(); bindFn = bindPassword; break;
             case 'school':
-                title = '🏫 معلومات المدرسة';
+                title = '🏫 بيانات المدرسة';
                 body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
             case 'appearance':
                 title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
