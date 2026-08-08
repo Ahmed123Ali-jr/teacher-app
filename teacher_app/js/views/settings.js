@@ -58,9 +58,9 @@
         {
             title: 'التطبيق',
             items: [
-                { page: 'appearance',    icon: '🎨', label: 'المظهر',          sub: 'الوضع الليلي وحجم الخط' },
+                { page: 'appearance',    icon: '🎨', label: 'المظهر',          sub: 'الوضع الفاتح والداكن' },
                 { page: 'backup',        icon: '💾', label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
-                { page: 'subscription',  icon: '💳', label: 'الاشتراك',        sub: 'خطتك ودعوة معلّم' }
+                { page: 'invite',        icon: '👥', label: 'دعوة معلم',       sub: 'شارك التطبيق مع زميلك' }
             ]
         },
         {
@@ -143,9 +143,7 @@
             principal_name:   await getPref('principal_name',   ''),
             school_logo:      await getPref('school_logo',      null),
             theme:            await getPref('theme',            'light'),
-            font_size:        await getPref('font_size',        'medium'),
             last_backup:      await getPref('last_backup',      null),
-            plan:             await getPref('plan',             'basic'),
             education_dept:   await getPref('education_dept',   '')
         };
     }
@@ -254,14 +252,8 @@
                 body = backupBody(prefs) + storageNote(await computeQuickStats(teacher));
                 bindFn = bindBackup;
                 break;
-            /* «ادعُ معلماً» صارت قسماً داخل الاشتراك بدل صفحة مستقلة. */
-            case 'subscription':
-                title = '💳 الاشتراك';
-                body = subscriptionBody(prefs)
-                     + '<h4 class="set-sub-h">👥 ادعُ معلماً</h4>'
-                     + inviteBody();
-                bindFn = bindInvite;
-                break;
+            case 'invite':
+                title = '👥 دعوة معلم'; body = inviteBody(); bindFn = bindInvite; break;
             /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
             case 'about':
                 title = 'ℹ️ عن التطبيق';
@@ -528,25 +520,12 @@
                     ${themeChip('auto',  '🌓', 'تلقائي',  prefs.theme)}
                 </div>
             </div>
-            <div class="field">
-                <label class="label">حجم الخط</label>
-                <div class="flex gap-2" style="flex-wrap: wrap;">
-                    ${fontChip('small',  '12px', 'صغير',   prefs.font_size)}
-                    ${fontChip('medium', '16px', 'متوسط',  prefs.font_size)}
-                    ${fontChip('large',  '20px', 'كبير',   prefs.font_size)}
-                </div>
-            </div>
         `;
     }
     function themeChip(value, icon, label, current) {
         const active = (current || 'light') === value;
         return `<button type="button" class="chip ${active ? 'active' : ''}" data-theme="${value}"
                         style="flex:1; min-width:100px;">${icon} ${label}</button>`;
-    }
-    function fontChip(value, size, label, current) {
-        const active = (current || 'medium') === value;
-        return `<button type="button" class="chip ${active ? 'active' : ''}" data-font="${value}"
-                        style="flex:1; min-width:100px;"><span style="font-size:${size}">أ</span> ${label}</button>`;
     }
     function bindAppearance(container) {
         container.querySelectorAll('[data-theme]').forEach((btn) => {
@@ -555,14 +534,6 @@
                 applyTheme(btn.dataset.theme);
                 container.querySelectorAll('[data-theme]').forEach((b) => b.classList.toggle('active', b === btn));
                 global.TeacherApp.toast('تم تغيير الوضع.', 'success', 1200);
-            });
-        });
-        container.querySelectorAll('[data-font]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                await setPref('font_size', btn.dataset.font);
-                applyFontSize(btn.dataset.font);
-                container.querySelectorAll('[data-font]').forEach((b) => b.classList.toggle('active', b === btn));
-                global.TeacherApp.toast('تم تغيير الحجم.', 'success', 1200);
             });
         });
     }
@@ -629,46 +600,42 @@
         });
     }
 
-    function subscriptionBody(prefs) {
-        return `
-            <div class="card" style="background: linear-gradient(135deg, rgba(30,64,175,0.06), rgba(59,130,246,0.03)); margin: 0;">
-                <div class="flex gap-3" style="align-items: center; flex-wrap: wrap;">
-                    <div style="flex:1; min-width: 200px;">
-                        <div style="font-weight: var(--fw-bold); font-size: var(--fs-lg);">
-                            ${prefs.plan === 'pro' ? '⭐ خطة محترف' : '✨ الخطة الأساسية'}
-                        </div>
-                        <div class="text-muted" style="font-size: var(--fs-sm);">
-                            ${prefs.plan === 'pro' ? '٨٩ ر.س / شهر · حدود أكبر + أولوية' : '٤٥ ر.س / شهر · ١٠٠ طلب AI'}
-                        </div>
-                    </div>
-                    <span class="badge badge-success">نشط</span>
-                </div>
-            </div>
-            <div class="text-muted" style="font-size: var(--fs-xs); margin-top: var(--space-3);">
-                💡 الاشتراكات غير مُفعّلة بعد في النموذج الأولي.
-            </div>
-        `;
-    }
-
+    /* النص كان يَعِد بشهر مجاني عند الاشتراك، والاشتراكات حُذفت من التطبيق —
+       فصار وعداً لا يقابله شيء. الرابط الآن رابط التطبيق نفسه بلا وسم إحالة
+       لأن لا شيء يقرأ ذلك الوسم. */
     function inviteBody() {
-        const link = `${global.location.origin}/?ref=${encodeURIComponent('teacher-' + Date.now())}`;
+        const link = `${global.location.origin}${global.location.pathname}`;
         return `
             <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0; margin-bottom: var(--space-3);">
-                شارك التطبيق مع زميلك — عند اشتراكه تحصل أنت وهو على شهر مجاني.
+                انسخ الرابط وأرسله لزميلك ليجرّب التطبيق.
             </p>
             <div class="field">
-                <label class="label">رابط الدعوة</label>
+                <label class="label">رابط التطبيق</label>
                 <div class="flex gap-2">
                     <input class="input" id="invite-link" readonly value="${link}">
                     <button class="btn btn-secondary" id="btn-copy-invite">📋 نسخ</button>
                 </div>
             </div>
-            <div class="text-muted" style="font-size: var(--fs-xs);">
-                💡 المكافآت غير مُفعّلة بعد.
-            </div>
+            <button type="button" class="btn btn-primary btn-block" id="btn-share-invite"
+                    style="margin-top: var(--space-3);">📤 مشاركة</button>
         `;
     }
     function bindInvite(container) {
+        /* مشاركة الجوال الأصلية إن توفّرت — أسرع من النسخ واللصق يدوياً. */
+        const shareBtn = container.querySelector('#btn-share-invite');
+        if (shareBtn) {
+            if (!navigator.share) shareBtn.hidden = true;
+            else shareBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.share({
+                        title: 'تطبيق إنجاز المعلم',
+                        text: 'جرّب تطبيق إنجاز المعلم',
+                        url: container.querySelector('#invite-link').value
+                    });
+                } catch { /* أغلق المعلم لوحة المشاركة — لا شيء نفعله */ }
+            });
+        }
+
         container.querySelector('#btn-copy-invite')?.addEventListener('click', async () => {
             const link = container.querySelector('#invite-link').value;
             try {
@@ -833,15 +800,9 @@
         body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
         body.classList.add('theme-' + (theme || 'light'));
     }
-    function applyFontSize(size) {
-        const body = document.body;
-        body.classList.remove('font-small', 'font-medium', 'font-large');
-        body.classList.add('font-' + (size || 'medium'));
-    }
     async function applyStoredPrefs() {
         try {
             applyTheme(await getPref('theme', 'light'));
-            applyFontSize(await getPref('font_size', 'medium'));
             await refreshPrintCache();
         } catch { /* ignore */ }
     }
@@ -868,7 +829,7 @@
     function resetState() { state.page = null; }
 
     global.SettingsView = {
-        render, applyStoredPrefs, applyTheme, applyFontSize,
+        render, applyStoredPrefs, applyTheme,
         refreshPrintCache, resetState
     };
 })(window);

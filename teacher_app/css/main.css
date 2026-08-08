@@ -186,14 +186,6 @@ small { font-size: var(--fs-sm); }
 #print-root { display: none; }
 
 /* ==========================================================================
-   Font size scales (Settings → Appearance)
-   Applied via body.font-small / .font-medium / .font-large
-   ========================================================================== */
-body.font-small  { font-size: 14px; }
-body.font-medium { font-size: 16px; }
-body.font-large  { font-size: 18px; }
-
-/* ==========================================================================
    Theme — auto (device preference) + manual overrides
    Basic dark-mode that flips surfaces, text and borders. Accents stay.
    ========================================================================== */
