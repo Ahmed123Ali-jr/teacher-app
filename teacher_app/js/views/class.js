@@ -1142,12 +1142,29 @@
      *  the cache so they don't see stale data. */
     function flushWrites() { return _writeQueue; }
 
+    /* كتابات مستقلة تُنفَّذ معاً بسقف متزامن: كل كتابة رحلة شبكة تقارب ربع
+       ثانية، فحذف طالب له ٤٠ حضوراً و٤٠ مشاركة كان ثمانين رحلة متتابعة —
+       أكثر من عشرين ثانية. والسقف يمنع إغراق المتصفح بمئات الطلبات دفعةً. */
+    async function runPooled(items, fn, limit = 8) {
+        const queue = items.slice();
+        const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+            while (queue.length) await fn(queue.shift());
+        });
+        await Promise.all(workers);
+    }
+
     async function deleteStudent(studentId) {
+        const [att, par] = await Promise.all([
+            global.TeacherDB.getAllByIndex('attendance',    'student_id', studentId),
+            global.TeacherDB.getAllByIndex('participation', 'student_id', studentId)
+        ]);
+        /* السجلات أولاً ثم الطالب: لو تعثّر شيء في المنتصف لا يبقى سجل
+           معلّق بلا طالب. */
+        await runPooled(
+            att.map((r) => ['attendance', r.id]).concat(par.map((r) => ['participation', r.id])),
+            ([store, id]) => global.TeacherDB.remove(store, id)
+        );
         await global.TeacherDB.remove('students', studentId);
-        const att = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
-        for (const r of att) await global.TeacherDB.remove('attendance', r.id);
-        const par = await global.TeacherDB.getAllByIndex('participation', 'student_id', studentId);
-        for (const r of par) await global.TeacherDB.remove('participation', r.id);
     }
 
     async function updateClassStudentCount(classId) {
@@ -1407,14 +1424,13 @@
                         }
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
-                    for (const name of names) {
-                        await global.TeacherDB.add('students', {
-                            teacher_id: cls.teacher_id,
-                            class_id:   cls.id,
-                            name,
-                            notes: ''
-                        });
-                    }
+                    btn.textContent = '⏳ جارٍ الإضافة...';
+                    await runPooled(names, (name) => global.TeacherDB.add('students', {
+                        teacher_id: cls.teacher_id,
+                        class_id:   cls.id,
+                        name,
+                        notes: ''
+                    }));
                     await updateClassStudentCount(cls.id);
                     global.Modal.close();
                     global.TeacherApp.toast(`تمت إضافة ${names.length} طالب ✅`, 'success');
@@ -1563,7 +1579,9 @@
             ? `سيتم حذف الفصل و ${students.length} طالب وجميع سجلاتهم. متأكد؟`
             : 'حذف الفصل؟';
         if (!global.confirm(msg)) return;
-        for (const s of students) await deleteStudent(s.id);
+        /* ثلاثة طلاب في وقت واحد لا أكثر: كل طالب يفتح بنفسه ثماني كتابات
+           متزامنة، فثلاثة معاً تعني أربعاً وعشرين — حدٌّ يحتمله المتصفح. */
+        await runPooled(students, (s) => deleteStudent(s.id), 3);
         await global.TeacherDB.remove('classes', cls.id);
         global.TeacherApp.toast('تم حذف الفصل.', 'info');
         if (onDone) onDone();

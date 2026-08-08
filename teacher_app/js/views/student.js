@@ -233,12 +233,26 @@
         global.Modal.open({ title: 'تعديل اسم الطالب', body: form });
     }
 
+    /* الحذف كان ثمانين رحلة شبكة متتابعة لطالب له سجلّ سنة كاملة — أكثر من
+       عشرين ثانية. الآن ثماني كتابات معاً بسقفٍ يمنع إغراق المتصفح. */
+    async function runPooled(items, fn, limit = 8) {
+        const queue = items.slice();
+        const workers = Array.from({ length: Math.min(limit, queue.length) }, async () => {
+            while (queue.length) await fn(queue.shift());
+        });
+        await Promise.all(workers);
+    }
+
     async function deleteStudent(studentId) {
+        const [att, par] = await Promise.all([
+            global.TeacherDB.getAllByIndex('attendance',    'student_id', studentId),
+            global.TeacherDB.getAllByIndex('participation', 'student_id', studentId)
+        ]);
+        await runPooled(
+            att.map((r) => ['attendance', r.id]).concat(par.map((r) => ['participation', r.id])),
+            ([store, id]) => global.TeacherDB.remove(store, id)
+        );
         await global.TeacherDB.remove('students', studentId);
-        const att = await global.TeacherDB.getAllByIndex('attendance', 'student_id', studentId);
-        for (const r of att) await global.TeacherDB.remove('attendance', r.id);
-        const par = await global.TeacherDB.getAllByIndex('participation', 'student_id', studentId);
-        for (const r of par) await global.TeacherDB.remove('participation', r.id);
     }
 
     async function updateClassCount(classId) {

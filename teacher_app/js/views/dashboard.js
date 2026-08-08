@@ -92,12 +92,15 @@
          *  القوائم وتتجاهل ما هو موحّد أصلاً (رخيصة وآمنة التكرار). */
         async normalizeAll(teacherId) {
             const all = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacherId);
-            for (const c of all) {
-                if (c.color !== DEFAULT_CLASS_COLOR) {
-                    c.color = DEFAULT_CLASS_COLOR;
-                    await global.TeacherDB.put('classes', c);
-                }
-            }
+            const stale = all.filter((c) => c.color !== DEFAULT_CLASS_COLOR);
+            if (!stale.length) return;   // الحالة المعتادة: لا كتابة ولا انتظار
+            /* كانت كتابةً متتابعة لكل فصل قديم اللون، وهذه الدالة تُنتظر قبل
+               رسم قائمة الفصول — فمعلّم بعشرة فصول ملوّنة كان ينتظر ثلاث
+               ثوانٍ عند أول فتح. الآن تمضي معاً. */
+            await Promise.all(stale.map((c) => {
+                c.color = DEFAULT_CLASS_COLOR;
+                return global.TeacherDB.put('classes', c);
+            }));
         },
         async get(stage) {
             const map = (await global.TeacherDB.Settings.get('stage_colors')) || {};
@@ -775,6 +778,13 @@
             }
 
             saving = true;
+            /* اللوحة تُغلق قبل الكتابة لا بعدها — الكتابة رحلة شبكة تقارب
+               ربع ثانية كان المعلم ينتظرها ينظر إلى لوحة جامدة. أما إعادة
+               رسم القائمة فتبقى بعد الكتابة، وإلا قرأت القائمة قبل وصول
+               الفصل الجديد فلم يظهر. */
+            global.Modal.close();
+            global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success', 1200);
+
             try {
                 await global.TeacherDB.add('classes', {
                     teacher_id: teacher.id,
@@ -787,14 +797,15 @@
                     student_count: 0,
                     created_at: new Date().toISOString()
                 });
-                if (typed) await rememberSubject(subject);
             } catch (err) {
                 saving = false;
                 return global.TeacherApp.toast('فشل الحفظ: ' + err.message, 'error', 6000);
             }
-            global.Modal.close();
-            global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success');
-            // نُحدّث الشاشة الظاهرة أمام المعلم ليرى فصله فوراً.
+            /* المادة المكتوبة تُحفظ للمرة القادمة — لا يُنتظر نجاحها لأن
+               الفصل حُفظ فعلاً، وفشلها لا يعني فشل الإضافة. */
+            if (typed) rememberSubject(subject).catch(() => {});
+
+            // نُحدّث الشاشة الظاهرة أمام المعلم ليرى فصله.
             const hash = (global.location.hash || '').replace(/^#/, '');
             if (hash.startsWith('/classes') && global.ClassesView) {
                 await global.ClassesView.render(document.getElementById('view-classes'));
