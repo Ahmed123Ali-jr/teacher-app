@@ -329,18 +329,17 @@
         teacher.subject = Array.isArray(draft.subjects) && draft.subjects.length ? draft.subjects[0] : '';
         teacher.updated_at = new Date().toISOString();
 
-        const saveBtn = container.querySelector('#btn-profile-save');
-        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '… جاري الحفظ'; }
+        /* الشاشة تُرسم فوراً من القيم التي بين أيدينا، والكتابة في القاعدة
+           تمضي في الخلفية — كانت تُبقي المعلم ينتظر ربع ثانية أو أكثر على
+           الشبكة بعد كل ضغطة حفظ. */
+        paint(container, teacher);
+        global.TeacherApp.toast('تم حفظ البيانات ✅', 'success', 1200);
 
-        try {
-            await global.TeacherDB.put('teachers', teacher);
-            global.TeacherApp.toast('تم حفظ البيانات ✅', 'success', 1500);
-            paint(container, teacher);
-        } catch (err) {
+        global.TeacherDB.put('teachers', teacher).catch((err) => {
             console.error('[Profile] save failed:', err);
-            global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error');
-            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 حفظ بياناتي'; }
-        }
+            global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
+            render(container);
+        });
     }
 
     global.ProfileView = { render, avatarInner, initials };

@@ -113,6 +113,20 @@
         await global.TeacherDB.Settings.set(key, value);
     }
 
+    /* كل كتابة في الإعدادات تمضي في الخلفية: الشاشة تستجيب فوراً والشبكة
+       تلحق. الكتابة الواحدة تستغرق نحو ربع ثانية، وحفظ المدرسة كان خمس
+       كتابات متتابعة — أي انتظاراً يقارب الثانية قبل أن يرى المعلم شيئاً.
+       وإن فشلت الكتابة يُبلَّغ وتُستعاد الحقيقة من القاعدة. */
+    function bgSave(fn, onFail) {
+        return Promise.resolve().then(fn).catch((e) => {
+            global.TeacherApp.toast(
+                'تعذّر الحفظ: ' + (e && e.message ? e.message : 'خطأ غير معروف'),
+                'error', 6000
+            );
+            if (onFail) onFail();
+        });
+    }
+
     async function computeQuickStats(teacher) {
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         let students = 0, exams = 0, worksheets = 0, homework = 0;
@@ -471,6 +485,17 @@
         return val.classList.contains('is-empty') ? '' : val.textContent.trim();
     }
 
+    /** يعرض الشعار (أو رمزه) في البطاقة العلوية ومربّع الشعار معاً. */
+    function showLogo(container, url) {
+        container.querySelectorAll('.idc-top .ph, .flogo .box').forEach((box) => {
+            box.innerHTML = url ? `<img src="${escapeAttr(url)}" alt="">` : '🏫';
+        });
+        const btn = container.querySelector('#btn-upload-logo');
+        if (btn) btn.textContent = url ? '📷 تغيير' : '📷 رفع';
+        const rm = container.querySelector('#btn-remove-logo');
+        if (rm) rm.hidden = !url;
+    }
+
     function bindSchool(container, teacher) {
         const logoInput = container.querySelector('#logo-input');
         container.querySelector('#btn-upload-logo')?.addEventListener('click', () => logoInput?.click());
@@ -480,33 +505,60 @@
             if (file.size > 3 * 1024 * 1024) {
                 return global.TeacherApp.toast('الصورة كبيرة (أقصى ٣ MB).', 'warning');
             }
-            await setPref('school_logo', file);
-            await refreshPrintCache();
-            global.TeacherApp.toast('تم رفع الشعار ✅', 'success');
-            await render(container);
+            /* الشعار يظهر فوراً من الملف المحلي، والرفع والترويسة في الخلفية. */
+            showLogo(container, URL.createObjectURL(file));
+            global.TeacherApp.toast('تم رفع الشعار ✅', 'success', 1200);
+            bgSave(async () => {
+                await setPref('school_logo', file);
+                await refreshPrintCache();
+            }, () => render(container));
         });
-        container.querySelector('#btn-remove-logo')?.addEventListener('click', async () => {
+        container.querySelector('#btn-remove-logo')?.addEventListener('click', () => {
             if (!global.confirm('حذف الشعار؟')) return;
-            await global.TeacherDB.Settings.unset('school_logo');
-            await refreshPrintCache();
-            global.TeacherApp.toast('تم الحذف.', 'info');
-            await render(container);
+            showLogo(container, null);
+            global.TeacherApp.toast('تم الحذف.', 'info', 1200);
+            bgSave(async () => {
+                await global.TeacherDB.Settings.unset('school_logo');
+                await refreshPrintCache();
+            }, () => render(container));
         });
         bindFieldRows(container);
 
-        container.querySelector('#btn-save-school')?.addEventListener('click', async () => {
+        container.querySelector('#btn-save-school')?.addEventListener('click', () => {
             /* الحقل المفتوح للكتابة قد لا يكون فقد التركيز بعد، فنقرأ من الحقل
                نفسه لا من الصف المعروض وإلا ضاعت آخر كلمة كتبها المعلم. */
+            const dept      = readField(container, 'education_dept');
+            const year      = readField(container, 'academic_year');
+            const principal = readField(container, 'principal_name');
             teacher.school_name = readField(container, 'school_name');
             teacher.region      = readField(container, 'region');
             teacher.updated_at  = new Date().toISOString();
-            await global.TeacherDB.put('teachers', teacher);
-            await setPref('education_dept', readField(container, 'education_dept'));
-            await setPref('academic_year',  readField(container, 'academic_year'));
-            await setPref('principal_name', readField(container, 'principal_name'));
-            await refreshPrintCache();
-            global.TeacherApp.toast('تم الحفظ ✅', 'success');
-            await render(container);
+
+            /* ترويسة المطبوعات تُحدَّث من القيم التي بين أيدينا لا بقراءة
+               القاعدة من جديد — فلا تسبق القراءةُ الكتابةَ الجارية. */
+            global.PrintPrefs = Object.assign({}, global.PrintPrefs, {
+                academicYear: year, principal, educationDept: dept
+            });
+
+            /* نُحدّث البطاقة في مكانها بدل إعادة رسم الصفحة: إعادة الرسم تقرأ
+               التفضيلات من القاعدة، وكتابتُها لم تصل بعد فتعود بالقيم القديمة. */
+            const idc = container.querySelector('.idc');
+            if (idc) {
+                idc.querySelector('.nm').textContent = teacher.school_name || 'اسم مدرستك';
+                idc.querySelector('.rl').textContent =
+                    schoolLine(teacher, { education_dept: dept });
+                const cells = idc.querySelectorAll('.idc-strip .cell b');
+                if (cells[0]) cells[0].textContent = year || '—';
+                if (cells[1]) cells[1].textContent = teacher.region || '—';
+            }
+            global.TeacherApp.toast('تم الحفظ ✅', 'success', 1200);
+
+            bgSave(() => Promise.all([
+                global.TeacherDB.put('teachers', teacher),
+                setPref('education_dept', dept),
+                setPref('academic_year',  year),
+                setPref('principal_name', principal)
+            ]), () => render(container));
         });
     }
 
@@ -529,11 +581,12 @@
     }
     function bindAppearance(container) {
         container.querySelectorAll('[data-theme]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                await setPref('theme', btn.dataset.theme);
+            btn.addEventListener('click', () => {
+                /* الوضع يتبدّل في اللحظة نفسها؛ حفظ التفضيل يمضي في الخلفية. */
                 applyTheme(btn.dataset.theme);
                 container.querySelectorAll('[data-theme]').forEach((b) => b.classList.toggle('active', b === btn));
                 global.TeacherApp.toast('تم تغيير الوضع.', 'success', 1200);
+                bgSave(() => setPref('theme', btn.dataset.theme));
             });
         });
     }
