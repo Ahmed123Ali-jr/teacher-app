@@ -68,7 +68,7 @@
             title: 'معلومات',
             items: [
                 { page: 'about',         icon: 'ℹ️', label: 'عن التطبيق',       sub: 'الإصدار، التحديث، الخصوصية، الدعم' },
-                { page: 'danger',        icon: '🔥', label: 'حذف جميع البيانات', sub: 'لا يمكن التراجع', danger: true }
+                { page: 'danger',        icon: '🔥', label: 'حذف البيانات أو الحساب', sub: 'لا يمكن التراجع', danger: true }
             ]
         }
     ];
@@ -287,7 +287,7 @@
                 bindFn = bindAbout;
                 break;
             case 'danger':
-                title = '🔥 حذف جميع البيانات'; body = dangerBody(); bindFn = bindDanger; break;
+                title = '🔥 حذف البيانات أو الحساب'; body = dangerBody(); bindFn = bindDanger; break;
             default:
                 state.page = null; render(container); return;
         }
@@ -937,30 +937,77 @@
         `;
     }
 
+    /* قسم واحد لفعلين خطرين مختلفين: مسح البيانات يُبقي الحساب ليبدأ المعلم
+       من جديد، وحذف الحساب يمحو كل شيء ولا رجعة. الفصل بينهما ضروري — من
+       يريد بداية نظيفة لا يريد فقدان حسابه. */
     function dangerBody() {
         return `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                سيتم حذف <strong>كل</strong> بياناتك (الفصول، الطلاب، الاختبارات، ملف الإنجاز...) ولا يمكن التراجع.
-                <br>يُنصح بـ<a href="#" id="link-backup-first">تصدير نسخة احتياطية</a> أولاً.
-            </p>
-            <button class="btn btn-danger btn-block" id="btn-wipe">🔥 حذف جميع البيانات</button>
+            <div class="dz">
+                <div class="dz-t">🧹 مسح البيانات</div>
+                <p class="dz-h">
+                    تُحذف فصولك و${global.Words.studentsBare()} واختباراتك وملف إنجازك،
+                    <strong>ويبقى حسابك</strong> فتبدأ من جديد بالبريد نفسه.
+                </p>
+                <p class="dz-h">يُنصح بـ<a href="#" id="link-backup-first">تصدير نسخة احتياطية</a> أولاً.</p>
+                <button type="button" class="dz-btn" id="btn-wipe">مسح جميع البيانات</button>
+            </div>
+
+            <div class="dz is-final">
+                <div class="dz-t">🗑️ حذف الحساب نهائياً</div>
+                <p class="dz-h">
+                    يُحذف حسابك وبريدك وكل بياناتك من الخوادم، ولن تستطيع الدخول بعدها.
+                    <strong>لا يمكن التراجع ولا استعادة شيء.</strong>
+                </p>
+                <label class="dz-ack">
+                    <input type="checkbox" id="del-ack">
+                    <span>أفهم أن حسابي وكل بياناتي ستُحذف نهائياً</span>
+                </label>
+                <button type="button" class="dz-btn is-final" id="btn-delete-account" disabled>
+                    حذف حسابي نهائياً
+                </button>
+            </div>
         `;
     }
+
     function bindDanger(container) {
         container.querySelector('#link-backup-first')?.addEventListener('click', (e) => {
             e.preventDefault();
             state.page = 'backup';
             render(container);
         });
+
         container.querySelector('#btn-wipe')?.addEventListener('click', async () => {
-            if (!global.confirm('حذف جميع البيانات نهائياً؟')) return;
+            if (!global.confirm('مسح جميع بياناتك؟ حسابك يبقى.')) return;
             if (!global.confirm('تأكيد أخير — لا يمكن التراجع.')) return;
             try {
                 for (const s of global.TeacherDB.STORES) await global.TeacherDB.clear(s);
-                global.TeacherApp.toast('تم الحذف.', 'info');
+                global.TeacherApp.toast('تم مسح البيانات.', 'info');
                 setTimeout(() => { location.hash = '#/login'; location.reload(); }, 600);
             } catch (err) {
                 global.TeacherApp.toast('فشل: ' + err.message, 'error');
+            }
+        });
+
+        /* الزرّ مقفول حتى يُقرّ المعلم بما سيحدث — الحذف لا رجعة فيه، فلا
+           يُترك خلف ضغطة واحدة عابرة. */
+        const ack = container.querySelector('#del-ack');
+        const del = container.querySelector('#btn-delete-account');
+        ack?.addEventListener('change', () => { del.disabled = !ack.checked; });
+
+        del?.addEventListener('click', async () => {
+            if (!ack.checked) return;
+            if (!global.confirm('حذف حسابك نهائياً؟ لن تستطيع الدخول بعدها.')) return;
+            if (!global.confirm('تأكيد أخير — سيُحذف الحساب وكل بياناته من الخوادم.')) return;
+            del.disabled = true;
+            del.textContent = '⏳ جارٍ الحذف…';
+            try {
+                await global.Auth.deleteAccount();
+                global.TeacherApp.toast('تم حذف حسابك.', 'info', 3000);
+                setTimeout(() => { location.hash = '#/login'; location.reload(); }, 900);
+            } catch (err) {
+                del.disabled = false;
+                del.textContent = 'حذف حسابي نهائياً';
+                global.TeacherApp.toast('تعذّر الحذف: ' + err.message, 'error', 6000);
             }
         });
     }

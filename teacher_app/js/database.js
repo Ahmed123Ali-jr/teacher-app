@@ -178,6 +178,11 @@
         return out;
     }
 
+    /* أعمدة عددية في القاعدة: السلسلة الفارغة تُرفض بـ«invalid input syntax
+       for type integer» وتُفشل الحفظ كله. نحوّلها إلى null عند حدّ الكتابة
+       فلا يستطيع أي مسار في التطبيق أن يُعيد الخطأ. */
+    const TEACHERS_NUMERIC = ['experience_years'];
+
     async function teachersOut(value) {
         const out = {};
         for (const k of Object.keys(value || {})) {
@@ -187,7 +192,10 @@
                 continue;
             }
             const mapped = TEACHERS_OUT_MAP[k];
-            if (mapped) out[mapped] = value[k];
+            if (!mapped) continue;
+            let v = value[k];
+            if (TEACHERS_NUMERIC.includes(mapped) && (v === '' || v === undefined)) v = null;
+            out[mapped] = v;
         }
         return out;
     }

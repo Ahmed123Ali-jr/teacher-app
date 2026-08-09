@@ -37,7 +37,11 @@
             phone: p.phone || '',
             specialization:   p.specialization   || '',
             qualification:    p.qualification    || '',
-            experience_years: p.experience_years ?? '',
+            /* null لا '' — العمود عدد صحيح في القاعدة، والسلسلة الفارغة
+               تُرفض بـ«invalid input syntax for type integer». كانت تمنع كل
+               معلّم لم يملأ سنوات خبرته من حفظ بياناته أو إكمال التهيئة. */
+            experience_years: (p.experience_years === undefined || p.experience_years === '')
+                ? null : p.experience_years,
             civil_id:         p.civil_id         || '',
             region:           p.region           || '',
             photo_url: p.photo_url || '',
@@ -170,6 +174,38 @@
         await sb.auth.signOut();
     }
 
+    /* حذف الحساب نهائياً — تشترطه آبل على كل تطبيق يُنشئ حسابات.
+       الترتيب مقصود: ملفات التخزين أولاً لأن حذف الحساب لا يتتالى إليها
+       (السطر في storage.objects ليس ابناً للمعلم في قاعدة البيانات)، فلو
+       حذفنا الحساب أولاً لبقيت كتبه على الخادم بلا صاحب ولا صلاحية تمسحها. */
+    async function deleteAccount() {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) throw new Error('لست مسجّل الدخول.');
+
+        try {
+            const { data: files } = await sb.storage.from('books').list(user.id);
+            if (files && files.length) {
+                await sb.storage.from('books')
+                    .remove(files.map((f) => user.id + '/' + f.name));
+            }
+        } catch (e) {
+            /* تعذّر مسح الملفات لا يمنع حذف الحساب — الحساب أولى بالحذف،
+               والملفات تبقى بلا صلاحية وصول لأحد. */
+            console.warn('[Auth] storage cleanup failed:', e);
+        }
+
+        const { error } = await sb.rpc('delete_own_account');
+        if (error) throw new Error(error.message || 'تعذّر حذف الحساب.');
+
+        invalidateTeacher();
+        if (global.TeacherDB) {
+            try { await global.TeacherDB.clearLocalCache(); } catch (e) {}
+            try { global.TeacherDB.resetHydration(); } catch (e) {}
+        }
+        /* الجلسة صارت لحساب محذوف — نُسقطها محلياً ولو رفض الخادم. */
+        try { await sb.auth.signOut(); } catch (e) { /* متوقّع */ }
+    }
+
     /* ذاكرة قصيرة لبيانات المعلم: التنقّل بين التبويبات يستدعي currentTeacher()
        مرّتين-ثلاثاً في كل مرة (حارس المصادقة + اسم الهيدر + رسم الصفحة)، وكل
        استدعاء كان يعيد getSession() + قراءة IndexedDB للملف — فيتباطأ التنقّل.
@@ -281,7 +317,7 @@
     }
 
     global.Auth = {
-        register, login, logout, currentTeacher, guestLogin,
+        register, login, logout, deleteAccount, currentTeacher, guestLogin,
         changePassword, updateProfile, onAuthChange
     };
 })(window);

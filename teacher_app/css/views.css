@@ -3676,6 +3676,43 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* ==========================================================================
+   منطقة الخطر — مسح البيانات وحذف الحساب في قسم واحد
+   ========================================================================== */
+.dz {
+    padding: 15px 16px;
+    margin-bottom: var(--space-4);
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+}
+.dz-t { font-size: 14.5px; font-weight: var(--fw-black); color: var(--primary); margin-bottom: var(--space-2); }
+.dz-h {
+    margin: 0 0 var(--space-3);
+    font-size: 12.5px; line-height: 1.85; color: var(--text-muted); font-weight: var(--fw-medium);
+}
+.dz-h strong { color: var(--text); font-weight: var(--fw-black); }
+.dz-btn {
+    display: block; width: 100%; min-height: 46px;
+    border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 13.5px; font-weight: var(--fw-black);
+    color: #B42318; background: #fff; border: 1.5px solid #F3B4AE;
+}
+.dz-btn:active { transform: scale(.99); }
+
+/* الحذف النهائي أشدّ نبرةً: أحمر مصمت وإطار أحمر حول القسم كله. */
+.dz.is-final { border-color: #E9A49C; background: color-mix(in srgb, #DC2626 4%, #fff); }
+.dz-btn.is-final { background: #B42318; border-color: #B42318; color: #fff; }
+.dz-btn.is-final:disabled {
+    background: #EADFDE; border-color: #EADFDE; color: #A79694; cursor: default; transform: none;
+}
+.dz-ack {
+    display: flex; align-items: flex-start; gap: 9px;
+    margin-bottom: var(--space-3); cursor: pointer;
+    font-size: 12.5px; line-height: 1.7; font-weight: var(--fw-bold); color: var(--text);
+}
+.dz-ack input { width: 19px; height: 19px; margin-top: 2px; flex-shrink: 0; accent-color: #B42318; }
+
+/* ==========================================================================
    منبّه الحصص
    ========================================================================== */
 .bell-main {
