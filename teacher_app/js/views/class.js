@@ -47,12 +47,45 @@
                String(d.getDate()).padStart(2, '0');
     }
 
-    function todayHuman() {
+    /* ---------- تاريخ السجل ----------
+       السجل كان مقفولاً على اليوم، فمن نسي التحضير أمس لا يملك طريقة. صار
+       له تاريخ مختار يُقرأ ويُكتب عليه، ويعود لليوم عند فتح فصل جديد. */
+    const AR_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const STRIP_DAYS = 30;   // ثلاثون يوم دراسة ≈ ستة أسابيع، وما قبلها من التقويم
+
+    let _regDate = null;
+
+    function isoOf(d) {
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    function regDate() { return _regDate || todayISO(); }
+
+    function dayLabel(iso) {
+        const d = new Date(iso + 'T00:00:00');
+        return { dow: AR_DAYS[d.getDay()], num: d.getDate() };
+    }
+
+    function humanDate(iso) {
         try {
             return new Intl.DateTimeFormat('ar-SA', {
                 weekday: 'long', day: 'numeric', month: 'long'
-            }).format(new Date());
-        } catch { return todayISO(); }
+            }).format(new Date(iso + 'T00:00:00'));
+        } catch { return iso; }
+    }
+
+    /** أيام الدراسة (الأحد–الخميس) من اليوم رجوعاً — الأحدث أولاً. */
+    function schoolDaysBack(count) {
+        const out = [];
+        const d = new Date();
+        let guard = 0;
+        while (out.length < count && guard++ < count * 3) {
+            if (d.getDay() <= 4) out.push(isoOf(d));
+            d.setDate(d.getDate() - 1);
+        }
+        return out;
     }
 
     function escapeHtml(s) {
@@ -122,6 +155,9 @@
        ========================================================================== */
 
     async function render(container, classId, tab) {
+        /* الدخول لفصل آخر يعيد السجل لليوم: لا يفتح المعلم فصلاً جديداً
+           فيجده على تاريخ ماضٍ اختاره في فصل قبله. */
+        if (state.classId !== classId) _regDate = null;
         state.classId = classId;
         state.activeTab = tab || null;
 
@@ -338,14 +374,60 @@
         else row.values[colId] = value;
     }
 
+    /* شريط الأيام: زرّ تقويم ثابت للقفز البعيد، ثم أيام الدراسة الأحدث
+       أولاً. والنقطة تحت اليوم تعني أن فيه تحضيراً محفوظاً. */
+    function dateStripHtml(date, markedDates) {
+        const today = todayISO();
+        const days  = schoolDaysBack(STRIP_DAYS);
+        /* يوم مختار خارج الشريط (اختير من التقويم) يُضاف في مكانه الزمني
+           وإلا اختفى المؤشّر ولم يعرف المعلم أين هو. */
+        if (!days.includes(date) && date < today) {
+            days.push(date);
+            days.sort((a, b) => b.localeCompare(a));
+        }
+        const marked = markedDates || new Set();
+
+        return `
+            <div class="rd-wrap">
+                <div class="rd-strip">
+                    <button type="button" class="rd-cal" id="rd-cal"
+                            aria-label="اختر أي يوم">📅</button>
+                    <input type="date" id="rd-input" max="${today}" value="${date}"
+                           class="rd-input" aria-hidden="true" tabindex="-1">
+                    <div class="rd-days" id="rd-days">
+                        ${days.map((d) => {
+                            const l = dayLabel(d);
+                            return `
+                                <button type="button" class="rd-day${d === date ? ' on' : ''}${d === today ? ' is-today' : ''}"
+                                        data-d="${d}">
+                                    <span class="dw">${l.dow}</span>
+                                    <span class="dn num">${l.num}</span>
+                                    <span class="dot${marked.has(d) ? '' : ' none'}"></span>
+                                </button>`;
+                        }).join('')}
+                    </div>
+                </div>
+                ${date === today ? '' : `
+                    <div class="rd-past">
+                        <span>⚠️ تعدّل سجل ${escapeHtml(humanDate(date))}</span>
+                        <button type="button" id="rd-back">ارجع لليوم</button>
+                    </div>`}
+            </div>
+        `;
+    }
+
     async function renderStudents(panel, cls, opts = {}) {
         const gen = ++_studentsRenderGen;
         const columns = ensureColumns(cls);
-        let students, attendanceToday, evalToday;
+        let students, attendanceToday, evalToday, markedDates;
 
-        const snapUsable = opts.reuseData && _snapshot && _snapshot.classId === cls.id;
+        /* التاريخ جزء من مفتاح اللقطة: بدونه يعرض السجل بيانات يوم على يوم
+           آخر عند التنقّل بين الأيام. */
+        const date = regDate();
+        const snapUsable = opts.reuseData && _snapshot
+                        && _snapshot.classId === cls.id && _snapshot.date === date;
         if (snapUsable) {
-            ({ students, attendanceToday, evalToday } = _snapshot);
+            ({ students, attendanceToday, evalToday, markedDates } = _snapshot);
         } else {
             // Wait for any in-flight saves to land in the cache before reading,
             // otherwise the table can paint with stale data.
@@ -353,7 +435,6 @@
             students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
             students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
 
-            const today0 = todayISO();
             // Two bulk reads by class (indexed) instead of 2×N per-student queries:
             // for 30+ students this is the single biggest speedup on this screen.
             const [attAll, parAll] = await Promise.all([
@@ -361,15 +442,23 @@
                 global.TeacherDB.getAllByIndex('participation', 'class_id', cls.id)
             ]);
             const attByStudent = new Map();
-            for (const r of attAll) if (r.date === today0) attByStudent.set(r.student_id, r);
+            /* نجمع تواريخ الأيام المحضَّرة في المرور نفسه — النقطة تحت اليوم
+               في الشريط تخبر المعلم أي يوم نسيه بلا أن يفتحه. */
+            markedDates = new Set();
+            for (const r of attAll) {
+                if (r.date) markedDates.add(r.date);
+                if (r.date === date) attByStudent.set(r.student_id, r);
+            }
             const parByStudent = new Map();
-            for (const r of parAll) if (r.date === today0) parByStudent.set(r.student_id, r);
+            for (const r of parAll) if (r.date === date) parByStudent.set(r.student_id, r);
             attendanceToday = students.map((s) => attByStudent.get(s.id) || null);
             evalToday = students.map((s) => parByStudent.get(s.id) || null);
-            _snapshot = { classId: cls.id, students, attendanceToday, evalToday };
+            _snapshot = { classId: cls.id, date, students, attendanceToday, evalToday, markedDates };
         }
 
-        const today = todayISO();
+        /* كل الكتابات تمضي على التاريخ المختار لا على اليوم. */
+        const today   = date;
+        const isToday = date === todayISO();
 
         // A newer render started while we were fetching — abort this one so
         // listeners never get attached twice to the same elements.
@@ -419,7 +508,7 @@
                     <div class="hub-featured-icon">👥</div>
                     <div class="hub-featured-titles">
                         <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
-                        <div class="hub-featured-sub">📅 ${todayHuman()}</div>
+                        <div class="hub-featured-sub">📅 ${humanDate(date)}${isToday ? '' : ' — سجل سابق'}</div>
                     </div>
                     <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">🖨️</button>
                 </div>
@@ -430,6 +519,8 @@
                     <div class="hf-stat"><div class="hf-num num" data-hf="pct">${attPct !== null ? attPct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
                 </div>
             </div>
+
+            ${students.length > 0 ? dateStripHtml(date, markedDates) : ''}
 
             <div class="reg-toolrow">
                 <input type="search" class="input search-input" id="student-search"
@@ -461,6 +552,34 @@
                     ? studentsNotesCards(students)
                     : studentsCards(students, attendanceToday, evalToday, visibleCols, showAtt))}
         `;
+
+        /* التنقّل بين الأيام: تغيير التاريخ يعيد القراءة كاملةً — لا
+           reuseData، فاللقطة تخصّ يوماً واحداً. */
+        const goToDate = (d) => {
+            if (!d || d > todayISO()) return;   // لا تحضير قبل وقته
+            _regDate = d;
+            renderStudents(panel, cls);
+        };
+        panel.querySelectorAll('.rd-day[data-d]').forEach((b) => {
+            b.addEventListener('click', () => goToDate(b.dataset.d));
+        });
+        panel.querySelector('#rd-back')?.addEventListener('click', () => goToDate(todayISO()));
+
+        const dateInput = panel.querySelector('#rd-input');
+        panel.querySelector('#rd-cal')?.addEventListener('click', () => {
+            if (!dateInput) return;
+            /* showPicker يفتح تقويم النظام مباشرةً؛ وإن لم يدعمه المتصفح
+               نضغط الحقل نفسه. */
+            if (dateInput.showPicker) { try { return dateInput.showPicker(); } catch (e) { /* نكمل */ } }
+            dateInput.click();
+        });
+        dateInput?.addEventListener('change', () => goToDate(dateInput.value));
+
+        /* اليوم المختار يظهر في مرمى النظر لا خارج الشريط. */
+        const onDay = panel.querySelector('.rd-day.on');
+        if (onDay && onDay.scrollIntoView) {
+            onDay.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('[data-empty-add]')?.addEventListener('click', () => openAddStudentsModal(cls));
