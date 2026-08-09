@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>سياسة الخصوصية — تطبيق إنجاز المعلم</title>
+<meta name="description" content="سياسة خصوصية تطبيق إنجاز المعلم: ما نجمعه، وأين يُحفظ، ومع من يُشارك، وكيف تحذفه.">
+<style>
+  :root{
+    --bg:#F4F1EA; --surface:#fff; --ink:#16233A; --head:#0F2C5C; --muted:#857F70;
+    --line:#E2DED0; --line-soft:#EDEAE0; --gold:#B8963F; --gold-fill:#C9A961; --warn:#B07013;
+    --shadow:0 1px 2px rgba(16,35,58,.05), 0 6px 16px rgba(16,35,58,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0C1626; --surface:#14243D; --ink:#DFDCD1; --head:#F1EEE5; --muted:#928E7E;
+      --line:#263954; --line-soft:#1D2E48; --gold:#D8BC73; --gold-fill:#C9A961; --warn:#E0A54A;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.28);
+    }
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg); color:var(--ink); direction:rtl; text-align:right;
+    font-family:"SF Arabic",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Naskh Arabic","Geeza Pro",Tahoma,sans-serif;
+    font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:44rem; margin:0 auto; padding:clamp(1.5rem,5vw,3rem) clamp(1rem,4vw,2rem) 4rem; }
+
+  .kicker{ font-size:.8125rem; font-weight:700; letter-spacing:.06em; color:var(--gold); margin:0 0 .375rem; }
+  h1{ margin:0 0 .35rem; font-size:clamp(1.6rem,6vw,2.1rem); font-weight:800; line-height:1.3;
+      color:var(--head); text-wrap:balance; }
+  .stamp{ margin:0 0 2rem; font-size:.875rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+  .lead{
+    padding:1.05rem 1.2rem; margin-bottom:2.25rem;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); font-size:.95rem; line-height:1.9;
+  }
+  .lead strong{ color:var(--head); }
+
+  h2{
+    margin:2.5rem 0 .25rem; padding-bottom:.5rem;
+    font-size:1.125rem; font-weight:800; color:var(--head);
+    border-bottom:2px solid var(--gold);
+  }
+  h3{ margin:1.5rem 0 .35rem; font-size:.95rem; font-weight:800; color:var(--head); }
+  p{ margin:.75rem 0; }
+  ul{ margin:.6rem 0; padding-inline-start:0; padding-inline-end:1.35rem; }
+  li{ margin:.3rem 0; }
+
+  .tbl-wrap{ overflow-x:auto; margin:1rem 0; }
+  table{ width:100%; border-collapse:collapse; font-size:.875rem; min-width:22rem; }
+  th,td{ text-align:right; padding:.65rem .8rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th{ background:var(--line-soft); font-weight:800; color:var(--head); white-space:nowrap; }
+  tbody th{ font-weight:700; color:var(--head); white-space:nowrap; }
+
+  .note{
+    margin:1.25rem 0; padding:.85rem 1rem; border-radius:12px;
+    background:color-mix(in srgb, var(--gold-fill) 12%, var(--surface));
+    border:1px solid color-mix(in srgb, var(--gold-fill) 38%, var(--surface));
+    font-size:.875rem; line-height:1.85;
+  }
+  .note b{ color:var(--warn); }
+
+  a{ color:var(--gold); text-decoration:underline; text-underline-offset:.2em; }
+  a:hover{ color:var(--head); }
+
+  .foot{
+    margin-top:3rem; padding-top:1.25rem; border-top:1px solid var(--line);
+    font-size:.8125rem; color:var(--muted); line-height:1.9;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <p class="kicker">تطبيق إنجاز المعلم</p>
+  <h1>سياسة الخصوصية</h1>
+  <p class="stamp">آخر تحديث: ٩ أغسطس ٢٠٢٦</p>
+
+  <div class="lead">
+    هذا التطبيق أداة يستخدمها <strong>المعلم</strong> لإدارة فصوله وسجلّ متابعة طلابه
+    وملف إنجازه المهني. البيانات التي تُدخلها — بما فيها <strong>أسماء طلابك</strong> —
+    تُحفظ في حسابك على خوادم الاستضافة، ولا يطّلع عليها معلّم آخر، ولا تُباع ولا تُستخدم
+    في إعلانات.
+  </div>
+
+  <h2>١ · ما الذي نجمعه</h2>
+
+  <h3>بياناتك أنت</h3>
+  <ul>
+    <li>الاسم، والبريد الإلكتروني، وكلمة المرور (مُشفَّرة، لا نراها).</li>
+    <li>رقم الجوال، ورقم السجل المدني، والتخصص، والمؤهل، وسنوات الخبرة — <strong>كلها اختيارية</strong> عدا الاسم.</li>
+    <li>صورتك الشخصية إن أضفتها.</li>
+    <li>بيانات مدرستك: الاسم، والنوع، وإدارة التعليم، والمنطقة، والعام والفصل الدراسي، واسم المدير، وشعار المدرسة.</li>
+  </ul>
+
+  <h3>بيانات طلابك</h3>
+  <ul>
+    <li>أسماء الطلاب، وسجلّ الحضور والغياب، والتقييمات والمشاركة، والملاحظات التي تكتبها.</li>
+    <li>رقم هوية الطالب ورقم جواله — حقلان اختياريان، ولا يطلبهما التطبيق منك.</li>
+  </ul>
+
+  <div class="note">
+    <b>⚠️ مسؤوليتك تجاه بيانات طلابك:</b> أنت من يُدخل هذه البيانات، وأنت المسؤول عن
+    التزامك بأنظمة وزارة التعليم ومدرستك في التعامل معها. ننصح بألّا تُدخل أرقام
+    هويات الطلاب أو أرقام جوالاتهم ما لم تكن مضطراً، فالتطبيق لا يحتاجها.
+  </div>
+
+  <h3>عملك المهني</h3>
+  <ul>
+    <li>الفصول والجدول الأسبوعي وأوقات الحصص والتذكيرات.</li>
+    <li>الاختبارات وأوراق العمل والواجبات وتوزيع المنهج.</li>
+    <li>ملف الإنجاز ومرفقاته، والكتب التي ترفعها بصيغة PDF.</li>
+  </ul>
+
+  <h3>ما لا نجمعه</h3>
+  <ul>
+    <li>لا نتتبّع موقعك الجغرافي.</li>
+    <li>لا نستخدم أدوات تتبّع إعلانية ولا تحليلات لطرف ثالث.</li>
+    <li>لا نقرأ جهات اتصالك ولا صورك ولا ملفاتك — إلا ما ترفعه أنت بنفسك.</li>
+  </ul>
+
+  <h2>٢ · أين تُحفظ بياناتك</h2>
+  <div class="tbl-wrap">
+    <table>
+      <tbody>
+        <tr><th>مزوّد الاستضافة</th><td>Supabase — قاعدة بيانات PostgreSQL وتخزين ملفات</td></tr>
+        <tr><th>موقع الخوادم</th><td>فرانكفورت، ألمانيا (الاتحاد الأوروبي)</td></tr>
+        <tr><th>نسخة على جهازك</th><td>نسخة محلية داخل التطبيق ليعمل بلا إنترنت وليفتح أسرع</td></tr>
+        <tr><th>العزل بين المعلمين</th><td>كل معلّم لا يصل إلا لبياناته هو — مفروضٌ على مستوى قاعدة البيانات لا التطبيق</td></tr>
+        <tr><th>التشفير</th><td>أثناء النقل عبر HTTPS، وأثناء التخزين لدى مزوّد الاستضافة</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>٣ · مع من تُشارَك</h2>
+  <p>لا نبيع بياناتك ولا نشاركها لأغراض تسويقية. تصل البيانات إلى طرفين فقط، وبالقدر اللازم للخدمة:</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>الطرف</th><th>ما يصله</th><th>لماذا</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Supabase</td>
+          <td>كل ما تُدخله في التطبيق</td>
+          <td>استضافة قاعدة البيانات والحساب والملفات</td>
+        </tr>
+        <tr>
+          <td>Anthropic</td>
+          <td>الصورة أو النص الذي تختار استيراده فقط</td>
+          <td>قراءة أسماء الطلاب أو الجدول من صورة ترفعها أنت</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    خدمة الاستيراد لا تعمل إلا حين تضغط أنت زرّ الاستيراد وتختار الصورة. لا تُرسَل بياناتك
+    تلقائياً في أي وقت آخر، ولا تُستخدم لتدريب نماذج الذكاء الاصطناعي.
+  </p>
+
+  <h2>٤ · لماذا نستخدم بياناتك</h2>
+  <ul>
+    <li>لتشغيل التطبيق: عرض فصولك وسجلّاتك ومطبوعاتك.</li>
+    <li>لمزامنة بياناتك بين أجهزتك عبر حسابك.</li>
+    <li>لإنتاج ملف الإنجاز والتقارير التي تطلبها.</li>
+  </ul>
+  <p>لا نستخدمها لأي غرض آخر — لا إعلانات، ولا تحليل سلوك، ولا بيع.</p>
+
+  <h2>٥ · مدة الحفظ وحذفها</h2>
+  <p>تبقى بياناتك ما دام حسابك قائماً. وتملك خيارين من داخل التطبيق:</p>
+  <ul>
+    <li><strong>حذف البيانات</strong> — يمسح فصولك وطلابك وسجلّاتك ويُبقي حسابك، من: الإعدادات ← حذف الحساب والبيانات.</li>
+    <li><strong>حذف الحساب نهائياً</strong> — يمسح حسابك وكل ما يتبعه، من الموضع نفسه.</li>
+  </ul>
+  <p>
+    الحذف <strong>فوري ولا يمكن التراجع عنه</strong>، ولا نحتفظ بنسخة بعده. وقد تبقى
+    البيانات في النسخ الاحتياطية التقنية لدى مزوّد الاستضافة مدة محدودة قبل أن تُمحى تلقائياً.
+  </p>
+  <p>
+    وإن تعذّر عليك الوصول للتطبيق، راسلنا على البريد أدناه من بريدك المسجَّل ونتولّى الحذف.
+  </p>
+
+  <h2>٦ · حقوقك</h2>
+  <ul>
+    <li>الاطّلاع على بياناتك — كلها ظاهرة داخل التطبيق.</li>
+    <li>تصحيحها في أي وقت من الشاشات نفسها.</li>
+    <li>تصديرها نسخةً كاملة من: الإعدادات ← النسخ الاحتياطي.</li>
+    <li>حذفها أو حذف حسابك كما في القسم السابق.</li>
+    <li>سحب موافقتك بالتوقّف عن الاستخدام وحذف حسابك.</li>
+  </ul>
+
+  <h2>٧ · حساب الزائر</h2>
+  <p>
+    يتيح التطبيق دخولاً كزائر لتجربته بلا بريد إلكتروني. بيانات الزائر تُحفظ كأي حساب،
+    لكنها مرتبطة بجهازك — وقد تفقدها إن مسحت بيانات التطبيق. لا تعتمد عليه لعملك الحقيقي.
+  </p>
+
+  <h2>٨ · الأطفال</h2>
+  <p>
+    التطبيق موجَّه <strong>للمعلمين</strong> لا للطلاب، ولا يُنشئ الطلاب حسابات فيه.
+    بيانات الطلاب يُدخلها المعلم لأغراض عمله التربوي، وهو المسؤول عن مشروعية إدخالها
+    وفق أنظمة جهته التعليمية.
+  </p>
+
+  <h2>٩ · تغييرات على هذه السياسة</h2>
+  <p>
+    قد نحدّث هذه الصفحة كلما تغيّرت الميزات. تاريخ آخر تحديث مكتوب أعلاها، وأي تغيير
+    جوهري سنشير إليه داخل التطبيق.
+  </p>
+
+  <h2>١٠ · تواصل معنا</h2>
+  <p>
+    لأي سؤال عن خصوصيتك أو طلب حذف بياناتك:
+    <a href="mailto:total6116@gmail.com">total6116@gmail.com</a>
+  </p>
+
+  <p class="foot">
+    تطبيق إنجاز المعلم — أداة لإدارة الفصول وملف الإنجاز المهني للمعلم في المملكة العربية السعودية.
+  </p>
+
+</div>
+</body>
+</html>

@@ -893,33 +893,30 @@
         `;
     }
 
+    /* النص القديم كان يقول إن البيانات «محفوظة محلياً في متصفحك» ولا تُرسل
+       لأي خادم — وهذا لم يعد صحيحاً منذ الانتقال إلى Supabase، وادّعاءٌ
+       خاطئ في صفحة خصوصية أخطر من غيابها. الملخّص هنا صار مطابقاً للواقع،
+       والتفصيل الكامل في الصفحة العامة التي يطلبها متجر آبل. */
+    const PRIVACY_URL = 'https://ahmed123ali-jr.github.io/teacher-app/privacy.html';
+
     function legalBody(stats) {
-        const dataSummary = `${stats.classes} فصل · ${stats.students} طالب · ${stats.exams + stats.worksheets + stats.homework} مستند تعليمي`;
+        const dataSummary = `${stats.classes} فصل · ${stats.students} ${global.Words.studentsBare()} · ${stats.exams + stats.worksheets + stats.homework} مستند تعليمي`;
         return `
             <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                جميع بياناتك محفوظة <strong>محلياً</strong> في متصفحك (IndexedDB).
-                لا نرسل بياناتك لأي خادم عدا طلبات AI التي تذهب لـ Anthropic.
+                بياناتك محفوظة في حسابك على خوادم Supabase بفرانكفورت، ومعها نسخة على
+                جهازك ليعمل التطبيق بلا إنترنت. لا يصل إليها معلّم آخر، ولا تُباع،
+                ولا تُستخدم في إعلانات.
             </p>
             <table class="info-table-compact" style="margin-bottom: var(--space-4);">
                 <tbody>
                     <tr><th>بياناتك المحفوظة</th><td>${dataSummary}</td></tr>
-                    <tr><th>مكان التخزين</th><td>متصفحك فقط</td></tr>
-                    <tr><th>البيانات المُرسَلة</th><td>نصوص الأسئلة فقط إلى Anthropic</td></tr>
+                    <tr><th>مكان التخزين</th><td>حسابك على Supabase (فرانكفورت) + نسخة على جهازك</td></tr>
+                    <tr><th>ما يخرج لطرف ثالث</th><td>الصورة التي تختار استيرادها فقط</td></tr>
+                    <tr><th>حذف بياناتك</th><td>الإعدادات ← حذف الحساب والبيانات</td></tr>
                 </tbody>
             </table>
-            <details>
-                <summary style="cursor: pointer; font-weight: var(--fw-medium);">📄 سياسة الخصوصية</summary>
-                <p style="margin-top: var(--space-3); font-size: var(--fs-sm); line-height: 1.8;">
-                    نحن نحترم خصوصيتك. لا نجمع أي بيانات عنك أو عن طلابك على خوادمنا.
-                    جميع المعلومات تبقى في متصفحك فقط.
-                </p>
-            </details>
-            <details style="margin-top: var(--space-2);">
-                <summary style="cursor: pointer; font-weight: var(--fw-medium);">📜 شروط الاستخدام</summary>
-                <p style="margin-top: var(--space-3); font-size: var(--fs-sm); line-height: 1.8;">
-                    هذا التطبيق نموذج أولي. المعلم مسؤول عن مراجعة المحتوى المُولَّد بالـ AI.
-                </p>
-            </details>
+            <a class="btn btn-secondary btn-block" href="${PRIVACY_URL}"
+               target="_blank" rel="noopener">📄 سياسة الخصوصية كاملة</a>
         `;
     }
 
