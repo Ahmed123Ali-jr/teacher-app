@@ -1961,7 +1961,7 @@ body.drawer-open { overflow: hidden; }
    رغم أنها العنوان الذي يقول ما هذه البطاقة أصلاً. */
 .hh-l {
     font-size: 15px; font-weight: var(--fw-black);
-    color: rgba(255, 255, 255, .92);
+    color: #fff;
 }
 .hh-t { font-size: 26px; font-weight: var(--fw-black); margin-top: 4px; }
 .hh-s { font-size: var(--fs-sm); color: rgba(201, 169, 97, .95); font-weight: var(--fw-bold); margin-top: 4px; }
