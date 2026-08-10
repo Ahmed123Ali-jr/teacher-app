@@ -19,12 +19,21 @@ const CACHE_NAME = 'teacher-app-' + BUILD_ID;
 /* مكتبات vendor مثبّتة الإصدار، فمحتواها لا يتغيّر أبداً. لها مخزنها
    المستقل الذي لا يُمسح مع كل نشر — وإلا أعاد المعلم تنزيل ١.٩ ميجا
    بعد كل تحديث. يُرفع رقمه يدوياً عند ترقية أي مكتبة فقط. */
-const VENDOR_CACHE = 'teacher-app-vendor-1';
+const VENDOR_CACHE = 'teacher-app-vendor-2';
 const VENDOR_FILES = [
     './vendor/html2canvas.min.js',
     './vendor/jspdf.umd.min.js',
     './vendor/pdf.min.js',
-    './vendor/pdf.worker.min.js'
+    './vendor/pdf.worker.min.js',
+    './vendor/supabase.js',
+    './vendor/fonts/tajawal-400-arabic.woff2',
+    './vendor/fonts/tajawal-400-latin.woff2',
+    './vendor/fonts/tajawal-500-arabic.woff2',
+    './vendor/fonts/tajawal-500-latin.woff2',
+    './vendor/fonts/tajawal-700-arabic.woff2',
+    './vendor/fonts/tajawal-700-latin.woff2',
+    './vendor/fonts/tajawal-900-arabic.woff2',
+    './vendor/fonts/tajawal-900-latin.woff2',
 ];
 
 /* Install: cache the shell so first-paint works offline. */
