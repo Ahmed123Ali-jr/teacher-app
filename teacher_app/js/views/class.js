@@ -252,7 +252,7 @@
                             <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                             <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
                         </div>
-                        <div class="hub-featured-chev">‹</div>
+                        <div class="hub-featured-chev" aria-hidden="true"></div>
                     </div>
                 </a>
 

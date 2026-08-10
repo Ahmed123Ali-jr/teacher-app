@@ -1406,7 +1406,22 @@ body.drawer-open { overflow: hidden; }
 .hub-featured-titles { flex: 1; min-width: 0; }
 .hub-featured-title { font-weight: var(--fw-black); font-size: var(--fs-lg); }
 .hub-featured-sub   { font-size: var(--fs-xs); opacity: .85; margin-top: 2px; }
-.hub-featured-chev  { font-size: 18px; opacity: .7; }
+/* السهم مرسوم بالحدود لا بحرف: حروف «‹›» تنعكس تلقائياً مع اتجاه
+   النص، فاتجاهها في صفحة عربية غير مضمون. الحدّان العلوي واليمين
+   بدوران ٤٥ درجة يشيران يميناً دائماً. */
+.hub-featured-chev {
+    flex: none; width: 9px; height: 9px; margin-inline-start: 2px;
+    border-top: 2.5px solid #fff;
+    border-right: 2.5px solid #fff;
+    transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .hub-featured-chev { animation: chev-blink 1.4s ease-in-out infinite; }
+}
+@keyframes chev-blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .3; }
+}
 .hub-featured-stats {
     display: flex;
     gap: var(--space-2);
