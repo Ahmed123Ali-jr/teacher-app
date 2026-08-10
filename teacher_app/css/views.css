@@ -1194,7 +1194,9 @@ body.drawer-open { overflow: hidden; }
     align-items: center;
     gap: var(--space-4);
     flex-wrap: wrap;
-    padding-block: var(--space-6) var(--space-4);
+    /* بلا حشو علوي: ‎.app-main تعطي الصفحة ٢١px أصلاً، فإضافته هنا
+       تُنزل الشريط ٤٢px عن الترويسة بلا داعٍ. */
+    padding-block: 0 var(--space-4);
 }
 /* Boxed back button — square card with a right-pointing back arrow.
    The arrow is drawn by ::before (CSS mask), so any <a>/<button> with this
