@@ -92,7 +92,13 @@ self.addEventListener('fetch', (event) => {
     // Updates still arrive: a new deploy changes sw.js (BUILD_ID) → the new
     // worker's install step pre-caches the fresh index.html → the update
     // banner asks the user to reload onto it.
-    if (req.mode === 'navigate') {
+    /* قصر اختطاف التنقّل على قشرة التطبيق وحدها. بدونه كان أي تنقّل —
+       بما فيه privacy.html وصفحات المعاينة — يُردّ عليه بـindex.html
+       المخزَّنة، فيرى الزائر التطبيق بدل الصفحة التي طلبها. وسياسة
+       الخصوصية شرط في مراجعة آبل، فكسرها ليس تفصيلاً. */
+    const isShell = /(^|\/)(index\.html)?$/.test(url.pathname);
+
+    if (req.mode === 'navigate' && isShell) {
         const networkPromise = (async () => {
             try {
                 const fresh = await fetch(req);
@@ -154,8 +160,9 @@ self.addEventListener('fetch', (event) => {
             const cache  = await caches.open(CACHE_NAME);
             const cached = await cache.match(req);
             if (cached) return cached;
-            // Last resort: navigation request → return cached index.html so the SPA still boots.
-            if (req.mode === 'navigate') {
+            // الملاذ الأخير: قشرة التطبيق للتنقّل إلى جذره وحده — لا لأي
+            // صفحة HTML أخرى، وإلا ظهر التطبيق مكان الصفحة المطلوبة.
+            if (req.mode === 'navigate' && isShell) {
                 const shell = await cache.match('./index.html');
                 if (shell) return shell;
             }
