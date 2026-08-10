@@ -275,27 +275,18 @@
         return m ? Number(m[1]) * 60 + Number(m[2]) : null;
     }
 
-    const REM_TYPES = {
-        exam:     { label: 'اختبار', color: '#EF4444' },
-        homework: { label: 'واجب',   color: '#F59E0B' },
-        meeting:  { label: 'اجتماع', color: '#8B5CF6' },
-        activity: { label: 'نشاط',   color: '#0EA5E9' },
-        other:    { label: 'أخرى',   color: '#64748B' }
-    };
-
     /** «الرابع الابتدائي / أ» بصيغة مختصرة للحبّات: «الرابع/أ» */
     function chipName(cls) {
         const g = String(cls.grade || '').replace(/^\s*الصف\s+/, '').split(/\s+/)[0];
         return `${g}/${cls.section}`;
     }
 
-    /* بطاقة التذكيرات المطويّة — تُخفى كلياً عند صفر تذكيرات */
-    /* البطاقة كانت تختفي تماماً بلا تذكيرات، فلا يجد المعلم من أين يضيف
-       واحداً. صارت تظهر دائماً ومعها زرّ الإضافة. */
-    function remindersCardHtml(reminders, classById) {
+    /* بطاقة التذكيرات: سطر واحد يفتح صفحة التذكيرات، ومعه زرّ إضافة.
+       تظهر دائماً — كانت تختفي بلا تذكيرات فلا يجد المعلم من أين يضيف. */
+    function remindersCardHtml(reminders) {
         if (!reminders.length) {
             return `
-                <div class="rem-card is-empty" id="rem-card">
+                <div class="rem-card is-empty" id="rem-card" role="link" tabindex="0">
                     <div class="rem-head">
                         <div class="rem-ic">🔔</div>
                         <b>تذكيرات اليوم</b>
@@ -304,32 +295,13 @@
                     </div>
                 </div>`;
         }
-        const rows = reminders.map((r) => {
-            const meta = REM_TYPES[r.type] || REM_TYPES.other;
-            const cls = r.class_id ? classById[r.class_id] : null;
-            const sub = cls ? `${esc(cls.grade)} / ${esc(cls.section)} · اليوم` : 'اليوم';
-            return `
-                <div class="rem-it">
-                    <span class="rem-dot" style="background:${meta.color}"></span>
-                    <div class="rem-tx">
-                        <div class="rem-tt">${esc(r.title)}</div>
-                        <div class="rem-ss">${sub}</div>
-                    </div>
-                    <span class="rem-tag" style="background:color-mix(in srgb,${meta.color} 8%,#fff);color:${meta.color}">${meta.label}</span>
-                </div>`;
-        }).join('');
         return `
-            <div class="rem-card" id="rem-card">
+            <div class="rem-card" id="rem-card" role="link" tabindex="0">
                 <div class="rem-head">
                     <div class="rem-ic">🔔</div>
                     <b>تذكيرات اليوم</b>
                     <span class="rem-bd num">${reminders.length}</span>
                     <button type="button" class="rem-add" id="rem-add" aria-label="إضافة تذكير">+</button>
-                    <button type="button" class="rem-toggle" id="rem-toggle" aria-label="عرض التذكيرات">▾</button>
-                </div>
-                <div class="rem-body">
-                    ${rows}
-                    <div class="rem-it rem-all"><a href="#/reminders">كل التذكيرات ←</a></div>
                 </div>
             </div>`;
     }
@@ -482,12 +454,12 @@
             // فصول بلا جدول: صندوق الجدول + زر إضافة فصل — بلا تذكيرات ولا تجهيز
             body = startScheduleHtml();
         } else if (isWeekend) {
-            body = remindersCardHtml(remindersToday, classById) + restCardHtml('weekend');
+            body = remindersCardHtml(remindersToday) + restCardHtml('weekend');
         } else if (!hasPeriodsToday) {
-            body = remindersCardHtml(remindersToday, classById) + restCardHtml('dayoff');
+            body = remindersCardHtml(remindersToday) + restCardHtml('dayoff');
         } else {
             // يوم دراسي فيه حصص: الرئيسية الكاملة
-            body = remindersCardHtml(remindersToday, classById)
+            body = remindersCardHtml(remindersToday)
                  + '<div class="home-sep"></div>'
                  + periodsBoxHtml(todayRows, classById, periodByN)
                  + '<div class="home-sep"></div>'
@@ -566,13 +538,19 @@
             });
         });
 
-        // طي/فتح بطاقة تذكيرات اليوم
-        container.querySelector('#rem-toggle')?.addEventListener('click', () => {
-            container.querySelector('#rem-card')?.classList.toggle('open');
-        });
+        /* البطاقة كلّها تفتح صفحة التذكيرات — كانت تطوي وتنشر قائمة
+           مصغّرة، والصفحة تعرضها كاملة ومعها ما ليس لليوم. */
+        const remCard = container.querySelector('#rem-card');
+        if (remCard) {
+            const openReminders = () => { global.location.hash = '#/reminders'; };
+            remCard.addEventListener('click', openReminders);
+            remCard.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openReminders(); }
+            });
+        }
 
         container.querySelector('#rem-add')?.addEventListener('click', (e) => {
-            e.stopPropagation();   // لا يطوي البطاقة معه
+            e.stopPropagation();   // لا يفتح الصفحة معه
             global.RemindersView.openSheet(teacher, null, () => render(container));
         });
     }
