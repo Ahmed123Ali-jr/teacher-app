@@ -238,7 +238,8 @@
             <div class="container">
                 <div class="class-topbar">
                     <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول"></button>
-                    <button type="button" id="btn-class-edit" class="cls-edit-btn">تعديل الفصل</button>
+                    <button type="button" id="btn-class-edit" class="cls-edit-btn"
+                            aria-label="إدارة الفصل">✏️</button>
                 </div>
 
                 <div class="class-hero-split" style="--cls-color:${heroColor(cls)}">
