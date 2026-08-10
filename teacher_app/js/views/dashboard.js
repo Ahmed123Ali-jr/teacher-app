@@ -488,6 +488,7 @@
         } else {
             // يوم دراسي فيه حصص: الرئيسية الكاملة
             body = remindersCardHtml(remindersToday, classById)
+                 + '<div class="home-sep"></div>'
                  + periodsBoxHtml(todayRows, classById, periodByN)
                  + '<div class="home-sep"></div>'
                  + heroHtml(nextClass);
