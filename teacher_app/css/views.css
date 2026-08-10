@@ -1956,10 +1956,6 @@ body.drawer-open { overflow: hidden; }
 /* اسم الصف أصغر من عنوان البطاقة بطلب المستخدم: كان ٢٦px فيلتفّ على
    سطرين ويطغى على ما حوله. */
 .hh-t { font-size: 14px; font-weight: var(--fw-black); margin-top: 4px; }
-.hh-prog { display: flex; align-items: center; gap: 9px; margin-top: 14px; }
-.hh-bar { flex: 1; height: 5px; border-radius: var(--radius-full); background: rgba(255, 255, 255, .15); overflow: hidden; }
-.hh-bar i { display: block; height: 100%; background: #C9A961; border-radius: var(--radius-full); }
-.hh-prog span { font-size: 12px; color: rgba(255, 255, 255, .7); }
 .hh-cta {
     display: flex; align-items: center; justify-content: center;
     margin-top: 15px;

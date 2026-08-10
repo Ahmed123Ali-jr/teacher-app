@@ -423,28 +423,12 @@
         const badge = isNow
             ? '<span class="hh-badge"><i></i> الآن</span>'
             : `<span class="hh-badge soft num">${info.minsUntil <= 5 ? 'بعد دقائق ⏰' : 'بعد ' + info.minsUntil + ' دقيقة'}</span>`;
-        let progress = '';
-        if (isNow) {
-            const s = toMins(info.period.start), e = toMins(info.period.end);
-            const now = new Date().getHours() * 60 + new Date().getMinutes();
-            const pct = (s !== null && e !== null && e > s)
-                ? Math.max(0, Math.min(100, Math.round(((now - s) / (e - s)) * 100)))
-                : 0;
-            progress = `
-                <div class="hh-prog">
-                    <div class="hh-bar"><i style="width:${pct}%"></i></div>
-                    <span class="num">تنتهي ${esc(info.period.end)}</span>
-                </div>`;
-        } else {
-            progress = `<div class="hh-prog"><span class="num">تبدأ ${esc(info.period.start)}</span></div>`;
-        }
         return `
             <div class="home-hero">
                 ${badge}
                 <a href="#/class/${info.cls.id}" class="hh-body">
                     <div class="hh-l">${isNow ? 'حصتك الحالية' : 'حصتك القادمة'}</div>
                     <div class="hh-t">${esc(shortGrade(info.cls.grade))} / ${esc(info.cls.section)}</div>
-                    ${progress}
                 </a>
                 <a href="#/class/${info.cls.id}/students" class="hh-cta">📋 سجل المتابعة</a>
             </div>`;
