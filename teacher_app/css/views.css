@@ -1788,6 +1788,11 @@ body.drawer-open { overflow: hidden; }
 .home-av img { width: 100%; height: 100%; object-fit: cover; }
 
 /* بطاقة التذكيرات المطويّة — تدرّج رصاصي كالفصول */
+/* تُنزَّل مجموعة (التذكيرات ← حصص اليوم ← الحصة الحالية) عن الترحيب:
+   كانت تلاصقه بمسافة صفر. الهامش على أوّلها وحده، فتبقى المسافات
+   بينها كما هي (٨px ثم ٢٧px). */
+.home-v2 .rem-card { margin-top: var(--space-5); }
+
 .rem-card {
     border-radius: 15px;
     overflow: hidden;
