@@ -1868,7 +1868,11 @@ body.drawer-open { overflow: hidden; }
     margin-bottom: var(--space-3);
 }
 .pday-head { display: flex; align-items: center; gap: 8px; padding: 13px 15px 11px; }
-.pday-head b { font-size: var(--fs-sm); font-weight: var(--fw-black); color: #fff; }
+/* عنوان القسم — كان بحجم النص العادي فيضيع بين ما حوله. */
+.pday-head b {
+    font-size: 17px; font-weight: var(--fw-black); color: #fff;
+    letter-spacing: -.2px;
+}
 .pday-cnt {
     background: #C9A961; color: var(--primary);
     font-weight: var(--fw-black); font-size: 13px;
@@ -1953,7 +1957,12 @@ body.drawer-open { overflow: hidden; }
 }
 @keyframes hh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 .hh-body { display: block; color: inherit; text-decoration: none; }
-.hh-l { font-size: 13px; color: rgba(255, 255, 255, .65); }
+/* «حصتك الحالية» — كانت ١٣px بشفافية ٦٥٪، أي أخفت عنصر في البطاقة
+   رغم أنها العنوان الذي يقول ما هذه البطاقة أصلاً. */
+.hh-l {
+    font-size: 15px; font-weight: var(--fw-black);
+    color: rgba(255, 255, 255, .92);
+}
 .hh-t { font-size: 26px; font-weight: var(--fw-black); margin-top: 4px; }
 .hh-s { font-size: var(--fs-sm); color: rgba(201, 169, 97, .95); font-weight: var(--fw-bold); margin-top: 4px; }
 .hh-prog { display: flex; align-items: center; gap: 9px; margin-top: 14px; }
