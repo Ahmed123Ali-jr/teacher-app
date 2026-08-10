@@ -506,6 +506,7 @@
             // يوم دراسي فيه حصص: الرئيسية الكاملة
             body = remindersCardHtml(remindersToday, classById)
                  + periodsBoxHtml(todayRows, classById, periodByN)
+                 + '<div class="home-sep"></div>'
                  + heroHtml(nextClass);
         }
 

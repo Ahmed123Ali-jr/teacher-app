@@ -1874,6 +1874,15 @@ body.drawer-open { overflow: hidden; }
     letter-spacing: -.2px;
 }
 .pday-head a { margin-right: auto; font-size: 12.5px; color: rgba(255,255,255,.8); text-decoration: underline; }
+/* فاصل بين صندوق حصص اليوم وبطاقة الحصة الحالية: كانا متلاصقين بعد
+   إزالة مربعات التجهيز، والخط يفصل «يومك كلّه» عن «أين أنت الآن». */
+.home-sep {
+    height: 1px;
+    margin: var(--space-4) 6px;
+    background: linear-gradient(90deg,
+        transparent 0%, var(--border) 18%, var(--border) 82%, transparent 100%);
+}
+
 .pday-chips {
     display: flex; gap: 8px;
     overflow-x: auto;
