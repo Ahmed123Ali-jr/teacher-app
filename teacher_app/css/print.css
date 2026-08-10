@@ -318,7 +318,10 @@
         border: 1pt solid #000000;
         max-width: 170mm;
         min-height: 250mm;
-        margin: 10mm auto;
+        /* ٤مم لا ١٠مم: المتاح في A4 بعد هوامش @page هو ٢٦١مم، و250mm+2×10mm
+           كان يترك أقل من مليمتر فسحة — فأي فرق في المتصفح أو الطابعة يُفيض
+           الكتلة فينزل جزء منها على الصفحة التالية (تداخل الأقسام). */
+        margin: 4mm auto;
         page-break-after: always;
     }
 
@@ -909,7 +912,7 @@
         border: 1pt solid #000000;
         max-width: 170mm;
         min-height: 250mm;
-        margin: 10mm auto;
+        margin: 4mm auto;
         page-break-after: always;
     }
 
@@ -1108,7 +1111,7 @@
         border: 1pt solid #C9A961;
         max-width: 170mm;
         min-height: 250mm;
-        margin: 10mm auto;
+        margin: 4mm auto;
         page-break-before: always;
         page-break-after:  always;
         page-break-inside: avoid;
@@ -1204,7 +1207,7 @@
         border: 1pt solid #000000;
         max-width: 170mm;
         min-height: 250mm;
-        margin: 10mm auto;
+        margin: 4mm auto;
         page-break-before: always;
         page-break-after:  always;
     }
