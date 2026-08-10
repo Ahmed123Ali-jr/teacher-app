@@ -197,12 +197,10 @@
        ========================================================================== */
 
     async function paintHub(container, cls) {
-        // Live stats for the featured students card
-        const today = todayISO();
-        // One bulk read per store (indexed by class) — no per-student loop.
-        const [students, attAll, books, exams, worksheets, homework] = await Promise.all([
+        /* قراءة واحدة مجمّعة لكل مخزن (مفهرسة بالفصل) بلا حلقة على الطلاب.
+           استعلام الحضور أُسقط مع إحصاءات البطاقة — لم يعد له مستهلك هنا. */
+        const [students, books, exams, worksheets, homework] = await Promise.all([
             global.TeacherDB.getAllByIndex('students',    'class_id', cls.id),
-            global.TeacherDB.getAllByIndex('attendance',  'class_id', cls.id),
             global.TeacherDB.getAllByIndex('books',       'class_id', cls.id),
             global.TeacherDB.getAllByIndex('exams',       'class_id', cls.id),
             global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
@@ -212,19 +210,6 @@
            الفصل — لا عدد مرات التطبيق، فالمهم التنوّع في ملف الإنجاز. */
         const stgLogs = await global.TeacherDB.getAllByIndex('strategy_logs', 'class_id', cls.id);
         const strategyCount = new Set(stgLogs.map((l) => l.strategy_key)).size;
-        const studentIds = new Set(students.map((s) => s.id));
-        let present = 0, absent = 0, late = 0, marked = 0;
-        const seen = new Set();
-        for (const t of attAll) {
-            if (t.date !== today || !studentIds.has(t.student_id) || seen.has(t.student_id)) continue;
-            seen.add(t.student_id);
-            marked++;
-            if (t.status === 'present') present++;
-            else if (t.status === 'absent') absent++;
-            else if (t.status === 'late') late++;
-        }
-        const pct = marked > 0 ? Math.round(((present + late) / marked) * 100) : null;
-
         const GRID = [
             { key: 'books',      icon: '📖', label: 'الكتب',        count: books.length,      tint: '#7C3AED', bg: '#F5F1FE' },
             { key: 'exams',      icon: '📝', label: 'الاختبارات',   count: exams.length,      tint: '#DC2626', bg: '#FEF1F1' },
@@ -268,12 +253,6 @@
                             <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
                         </div>
                         <div class="hub-featured-chev">‹</div>
-                    </div>
-                    <div class="hub-featured-stats">
-                        <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">${global.Words.student()}</div></div>
-                        <div class="hf-stat"><div class="hf-num num">${marked ? present : '—'}</div><div class="hf-lbl">حاضر</div></div>
-                        <div class="hf-stat"><div class="hf-num num">${marked ? absent : '—'}</div><div class="hf-lbl">غائب</div></div>
-                        <div class="hf-stat"><div class="hf-num num">${pct !== null ? pct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
                     </div>
                 </a>
 
