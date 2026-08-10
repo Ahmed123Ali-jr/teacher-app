@@ -71,8 +71,9 @@
         return String(grade || '').replace(/^\s*الصف\s+/, '');
     }
 
-    /* صفّ واحد لكل فصل، تحت بعضها. بلا عدد الطلاب بطلب المستخدم — و«تعديل»
-       باقٍ لأنه المدخل الوحيد لتعديل الفصل في التطبيق كلّه. */
+    /* صفّ واحد لكل فصل، تحت بعضها: اسم وفصل ومادة وحدها. التعديل انتقل
+       إلى صفحة الفصل — هدف ضغط واحد في الصف أدقّ على الجوال من هدفين
+       متجاورين. */
     function classRowHtml(c) {
         return `
             <button class="cls-row" data-class-id="${c.id}">
@@ -80,8 +81,6 @@
                     <span class="cls-t">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</span>
                     <span class="cls-s">${escapeHtml(c.subject)}</span>
                 </span>
-                <span class="cls-edit" role="button" tabindex="0"
-                      data-edit-class="${c.id}">تعديل</span>
             </button>
         `;
     }
@@ -102,41 +101,9 @@
         container.querySelectorAll('.cls-row[data-class-id]').forEach((el) => {
             el.addEventListener('click', (e) => {
                 // «تعديل» has its own handler — don't navigate into the class.
-                if (e.target.closest('.cls-edit')) return;
                 global.location.hash = '#/class/' + el.dataset.classId;
             });
         });
-        container.querySelectorAll('[data-edit-class]').forEach((el) => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const cls = classes.find((c) => c.id === el.dataset.editClass);
-                if (cls) openClassActions(cls, container);
-            });
-        });
-    }
-
-    /** Small actions menu: edit or delete the class (from the card's «تعديل»). */
-    function openClassActions(cls, container) {
-        const body = document.createElement('div');
-        body.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin: 0 0 var(--space-4);">
-                ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} — ${escapeHtml(cls.subject)}
-            </p>
-            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-                <button type="button" class="btn btn-secondary btn-block" id="ca-edit">✏️ تعديل الفصل</button>
-                <button type="button" class="btn btn-ghost btn-block" id="ca-delete"
-                        style="color: #DC2626;">🗑️ حذف الفصل</button>
-            </div>
-        `;
-        body.querySelector('#ca-edit').addEventListener('click', () => {
-            global.Modal.close();
-            global.ClassView.editClass(cls, () => render(container));
-        });
-        body.querySelector('#ca-delete').addEventListener('click', async () => {
-            global.Modal.close();
-            await global.ClassView.deleteClass(cls, () => render(container));
-        });
-        global.Modal.open({ title: 'إدارة الفصل', body });
     }
 
     global.ClassesView = { render };

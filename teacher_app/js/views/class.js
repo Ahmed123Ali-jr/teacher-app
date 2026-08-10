@@ -238,6 +238,7 @@
             <div class="container">
                 <div class="class-topbar">
                     <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول"></button>
+                    <button type="button" id="btn-class-edit" class="cls-edit-btn">تعديل الفصل</button>
                 </div>
 
                 <div class="class-hero-split" style="--cls-color:${heroColor(cls)}">
@@ -293,6 +294,13 @@
 
         container.querySelector('#btn-class-back')?.addEventListener('click', () => {
             global.location.hash = '#/classes';
+        });
+
+        /* إدارة الفصل: كانت لوحةً تُفتح من «تعديل» في صفحة الفصول، ونُقلت
+           هنا لأن الصفّ هناك صار للفتح وحده. تحمل الإجراءين معاً — التعديل
+           والحذف — فكلاهما لا مدخل له في التطبيق سواها. */
+        container.querySelector('#btn-class-edit')?.addEventListener('click', () => {
+            openClassActions(cls, () => render(container, classId, tab));
         });
     }
 
@@ -1640,6 +1648,32 @@
 
     /* Opened from the classes list («تعديل» on the class card).
        onSaved is called after a successful save so the caller can repaint. */
+    /** لوحة إدارة الفصل: تعديل أو حذف. */
+    function openClassActions(cls, onDone) {
+        const body = document.createElement('div');
+        body.innerHTML = `
+            <p class="text-muted" style="font-size: var(--fs-sm); margin: 0 0 var(--space-4);">
+                ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} — ${escapeHtml(cls.subject)}
+            </p>
+            <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <button type="button" class="btn btn-secondary btn-block" id="ca-edit">✏️ تعديل الفصل</button>
+                <button type="button" class="btn btn-ghost btn-block" id="ca-delete"
+                        style="color: #DC2626;">🗑️ حذف الفصل</button>
+            </div>
+        `;
+        body.querySelector('#ca-edit').addEventListener('click', () => {
+            global.Modal.close();
+            editClass(cls, onDone);
+        });
+        body.querySelector('#ca-delete').addEventListener('click', async () => {
+            global.Modal.close();
+            /* بلا onDone: الفصل اختفى، فإعادة رسم صفحته خطأ — deleteClass
+               ينقل إلى الرئيسية من تلقائه حين لا يُمرَّر رجوع. */
+            await deleteClass(cls);
+        });
+        global.Modal.open({ title: 'إدارة الفصل', body });
+    }
+
     async function editClass(cls, onSaved) {
         const SUBJECTS = [
             'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
