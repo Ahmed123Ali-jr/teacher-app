@@ -4662,3 +4662,20 @@ body.drawer-open { overflow: hidden; }
     width: 56px; height: 56px; object-fit: cover; border-radius: 9px;
     border: 1px solid var(--border, #ECEAE3); background: #ECEAE3;
 }
+
+/* ---------- شريط تقدّم تجهيز ملف PDF ---------- */
+.pf-prog { margin-top: 14px; }
+.pf-prog-txt {
+    font-size: 12px; font-weight: var(--fw-black); color: #0F2C5C;
+    text-align: center; margin-bottom: 7px;
+}
+.pf-prog-track {
+    height: 7px; border-radius: 999px; overflow: hidden;
+    background: color-mix(in srgb, #ECEAE3 70%, #fff);
+    border: 1px solid color-mix(in srgb, #ECEAE3 85%, #000);
+}
+.pf-prog-fill {
+    height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, #C9A961, #B8963F);
+    transition: width .25s ease;
+}

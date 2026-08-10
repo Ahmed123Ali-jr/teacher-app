@@ -82,6 +82,81 @@
         setTimeout(() => global.print(), 200);
     }
 
+    /* ======================================================================
+       savePdf — المسار المعتمد: يبني، يقيس، يرصّ، يلتقط، ثم يسلّم ملفاً.
+
+       لا يمرّ بـwindow.print() إطلاقاً — وهو خامد داخل WKWebView على iOS،
+       وحدثه afterprint لا يقع فيبقى is-printing وتتسرّب الروابط. التنظيف
+       هنا في finally لا في حدث قد لا يأتي.
+       ====================================================================== */
+    async function savePdf(ctx, opts) {
+        opts = opts || {};
+        const C = global.PdfCore;
+        if (!C) throw new Error('محرّك PDF غير محمَّل.');
+
+        const objectUrls = [];
+        for (const row of (ctx.initiatives || [])) {
+            if (Array.isArray(row.images)) {
+                row.imageUrls = row.images.map((b) => {
+                    const u = URL.createObjectURL(b);
+                    objectUrls.push(u);
+                    return u;
+                });
+            }
+        }
+        await signEvidence(ctx.strategies || []);
+
+        let stage = null;
+        try {
+            if (opts.onStatus) opts.onStatus('build');
+            const html = await buildHtml(ctx, { onlyFilled: !!opts.onlyFilled });
+
+            stage = await C.createStage();
+            const holder = document.createElement('div');
+            holder.innerHTML = html;
+            stage.el.appendChild(holder);
+
+            if (opts.onStatus) opts.onStatus('settle');
+            await C.settle(holder);
+
+            const docEl = holder.querySelector('.print-doc');
+            if (!docEl) throw new Error('تعذّر بناء المستند.');
+
+            const { pages, warnings, pageOf } = C.paginate(docEl, stage.el);
+            if (!pages.length) throw new Error('المستند فارغ.');
+            applyMeasuredToc(pages, pageOf);
+            if (warnings.length) console.warn('[PrintPortfolio] pagination:', warnings);
+
+            const blob = await C.renderPdf(pages, { onProgress: opts.onProgress });
+            return { blob, fileName: buildPdfName(ctx), pages: pages.length, warnings };
+        } finally {
+            if (stage) stage.destroy();
+            objectUrls.forEach((u) => URL.revokeObjectURL(u));
+            document.body.classList.remove('is-printing');
+        }
+    }
+
+    /* الفهرس صفحة مفردة، فإعادة كتابة أرقامه لا تزيح شيئاً — ولهذا
+       يصحّ التصحيح بمرور واحد بلا إعادة ترقيم. */
+    function applyMeasuredToc(pages, pageOf) {
+        const tocPage = pages.find((p) => p.querySelector('.toc-page'));
+        if (!tocPage) return;
+        tocPage.querySelectorAll('.toc-row').forEach((row) => {
+            const n = row.dataset.sec;
+            const real = pageOf.get('pf-sec-' + n);
+            const cell = row.querySelector('.toc-page-num');
+            if (cell) cell.textContent = real ? toArabicDigits(real) : '';
+        });
+    }
+
+    function buildPdfName(ctx) {
+        const name = (ctx.teacher && ctx.teacher.name) || '';
+        const year = (global.PrintPrefs && global.PrintPrefs.academicYear) || '';
+        const C = global.PdfCore;
+        return ['ملف_الإنجاز', C.sanitizeFileName(name), C.sanitizeFileName(year) || C.todayISO()]
+            .filter(Boolean).join('-');
+    }
+
     /* ---------- file embedding helpers ---------- */
 
     function blobToDataUrl(blob) {
@@ -309,9 +384,33 @@
         `;
     }
 
-    async function buildHtml(ctx) {
+    /* القسم «معبّأ» إذا كان فيه ما يعرضه. البيانات الشخصية والرسالة
+       والرؤية تُعدّ معبّأة دائماً — هي هوية الملف لا محتوى اختياري. */
+    function sectionFilled(n, ctx) {
+        const { portfolio, exams, worksheets, homework, strategies, initiatives } = ctx;
+        switch (n) {
+            case 1:  return true;
+            case 2:  return (portfolio.certificates || []).length > 0;
+            case 3:  return true;
+            case 4:  return (ctx.classes || []).length > 0
+                         || (portfolio.schedules || []).length > 0
+                         || (ctx.scheduleRows || []).length > 0;
+            case 5:  return exams.length > 0;
+            case 6:  return worksheets.length > 0;
+            case 7:  return homework.length > 0;
+            case 8:  return strategies.length > 0;
+            case 9:  return initiatives.length > 0;
+            case 10: return (portfolio.extras || []).length > 0;
+            default: return true;
+        }
+    }
+
+    async function buildHtml(ctx, opts) {
         const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives,
                 scheduleRows, periodTimes } = ctx;
+        const onlyFilled = !!(opts && opts.onlyFilled);
+        const want = (n) => !onlyFilled || sectionFilled(n, ctx);
+        const secId = (n) => 'pf-sec-' + n;
         const subjects = (teacher.subjects || [teacher.subject]).filter(Boolean).join('، ');
         const todayStr = formatDate(new Date().toISOString());
         const customSections = portfolio.custom_sections || [];
@@ -369,9 +468,12 @@
         `);
 
         // TOC
+        /* الأرقام هنا تقديرية: تُصحَّح بالقياس الفعلي في مسار PDF
+           (savePdf يعيد كتابة .toc-page-num من خريطة الصفحات). مسار
+           الطباعة القديم يبقى على التقدير كما كان. */
         const tocEntries = calculateTocEntries({
             portfolio, exams, worksheets, homework, strategies, initiatives, customSections
-        });
+        }).filter((e) => want(e.n));
         parts.push(`
             <div class="toc-page">
                 <div class="toc-page-inner">
@@ -381,7 +483,7 @@
                     </div>
                     <div class="toc-list">
                         ${tocEntries.map((e) => `
-                            <div class="toc-row">
+                            <div class="toc-row" data-sec="${e.n}">
                                 <div class="toc-num-tag">${escapeHtml(toArabicDigits(e.n))}</div>
                                 <div class="toc-title">${escapeHtml(e.title)}</div>
                                 <div class="toc-page-num">${escapeHtml(toArabicDigits(e.page))}</div>
@@ -393,86 +495,107 @@
         `);
 
         // 1. Personal
-        parts.push(sectionHeading(1, 'البيانات الشخصية'));
-        parts.push(await personalBlock(teacher, portfolio.personal || {}));
-        parts.push('<div class="page-break"></div>');
-
-        // 2. Certificates — one elegant full-page card per cert
-        parts.push(sectionDivider('الشهادات والرخص المهنية', 2));
-        parts.push(await fileHeroBlock(portfolio.certificates || [], {
-            counterLabel: 'شهادة',
-            emptyMsg:     'لا توجد شهادات.'
-        }));
-
-        // 3. Mission & vision
-        parts.push(sectionDivider('الرسالة والرؤية', 3));
-        parts.push(sectionHeading(3, 'الرسالة والرؤية'));
-        parts.push(missionBlock(portfolio));
-        parts.push('<div class="page-break"></div>');
-
-        // 4. Schedules — classes overview + auto weekly grid + per-file cards
-        parts.push(sectionDivider('الجداول وتوزيع المنهج', 4));
-        parts.push(sectionHeading(4, 'الجداول وتوزيع المنهج'));
-        parts.push(classesSummaryBlock(ctx.classes || []));
-
-        const weekly = weeklyScheduleBlock(scheduleRows, periodTimes, ctx.classes || []);
-        if (weekly) {
+        if (want(1)) {
+            parts.push(sectionHeading(1, 'البيانات الشخصية', secId(1)));
+            parts.push(await personalBlock(teacher, portfolio.personal || {}));
             parts.push('<div class="page-break"></div>');
-            parts.push(weekly);
         }
 
-        parts.push(await fileHeroBlock(portfolio.schedules || [], {
-            counterLabel: 'ملف',
-            emptyMsg:     ''
-        }));
+        // 2. Certificates — one elegant full-page card per cert
+        if (want(2)) {
+            parts.push(sectionDivider('الشهادات والرخص المهنية', 2, secId(2)));
+            parts.push(await fileHeroBlock(portfolio.certificates || [], {
+                counterLabel: 'شهادة',
+                emptyMsg:     'لا توجد شهادات.'
+            }));
+        }
+
+        // 3. Mission & vision
+        if (want(3)) {
+            parts.push(sectionDivider('الرسالة والرؤية', 3, secId(3)));
+            parts.push(sectionHeading(3, 'الرسالة والرؤية'));
+            parts.push(missionBlock(portfolio));
+            parts.push('<div class="page-break"></div>');
+        }
+
+        // 4. Schedules — classes overview + auto weekly grid + per-file cards
+        if (want(4)) {
+            parts.push(sectionDivider('الجداول وتوزيع المنهج', 4, secId(4)));
+            parts.push(sectionHeading(4, 'الجداول وتوزيع المنهج'));
+            parts.push(classesSummaryBlock(ctx.classes || []));
+
+            const weekly = weeklyScheduleBlock(scheduleRows, periodTimes, ctx.classes || []);
+            if (weekly) {
+                parts.push('<div class="page-break"></div>');
+                parts.push(weekly);
+            }
+
+            parts.push(await fileHeroBlock(portfolio.schedules || [], {
+                counterLabel: 'ملف',
+                emptyMsg:     ''
+            }));
+        }
 
         // 5-7. Auto sections
-        parts.push(sectionDivider('الاختبارات', 5));
-        parts.push(sectionHeading(5, 'الاختبارات'));
-        parts.push(autoListBlock(exams, 'exam'));
-        parts.push('<div class="page-break"></div>');
+        if (want(5)) {
+            parts.push(sectionDivider('الاختبارات', 5, secId(5)));
+            parts.push(sectionHeading(5, 'الاختبارات'));
+            parts.push(autoListBlock(exams, 'exam'));
+            parts.push('<div class="page-break"></div>');
+        }
 
-        parts.push(sectionDivider('أوراق العمل', 6));
-        parts.push(sectionHeading(6, 'أوراق العمل'));
-        parts.push(autoListBlock(worksheets, 'worksheet'));
-        parts.push('<div class="page-break"></div>');
+        if (want(6)) {
+            parts.push(sectionDivider('أوراق العمل', 6, secId(6)));
+            parts.push(sectionHeading(6, 'أوراق العمل'));
+            parts.push(autoListBlock(worksheets, 'worksheet'));
+            parts.push('<div class="page-break"></div>');
+        }
 
-        parts.push(sectionDivider('الواجبات', 7));
-        parts.push(sectionHeading(7, 'الواجبات'));
-        parts.push(autoListBlock(homework, 'homework'));
-        parts.push('<div class="page-break"></div>');
+        if (want(7)) {
+            parts.push(sectionDivider('الواجبات', 7, secId(7)));
+            parts.push(sectionHeading(7, 'الواجبات'));
+            parts.push(autoListBlock(homework, 'homework'));
+            parts.push('<div class="page-break"></div>');
+        }
 
-        // 8. Strategies (with reports)
-        parts.push(sectionDivider('استراتيجيات التدريس', 8));
-        parts.push(sectionHeading(8, 'استراتيجيات التدريس'));
-        if (strategies.length === 0) parts.push('<p class="text-muted">لا توجد استراتيجيات مسجَّلة. تُسجَّل من صفحة الفصل ← الاستراتيجيات.</p>');
-        else strategies.forEach((s, i) => {
-            parts.push(strategyBlock(s));
-            if (i < strategies.length - 1) parts.push('<div class="page-break"></div>');
-        });
-        parts.push('<div class="page-break"></div>');
+        // 8. Strategies — from the teacher's own logged evidence
+        if (want(8)) {
+            parts.push(sectionDivider('استراتيجيات التدريس', 8, secId(8)));
+            parts.push(sectionHeading(8, 'استراتيجيات التدريس'));
+            if (strategies.length === 0) parts.push('<p class="text-muted">لا توجد استراتيجيات مسجَّلة. تُسجَّل من صفحة الفصل ← الاستراتيجيات.</p>');
+            else strategies.forEach((s, i) => {
+                parts.push(strategyBlock(s));
+                if (i < strategies.length - 1) parts.push('<div class="page-break"></div>');
+            });
+            parts.push('<div class="page-break"></div>');
+        }
 
         // 9. Initiatives (with reports)
-        parts.push(sectionDivider('المبادرات', 9));
-        parts.push(sectionHeading(9, 'المبادرات'));
-        if (initiatives.length === 0) parts.push('<p class="text-muted">لا توجد مبادرات.</p>');
-        else initiatives.forEach((s, i) => {
-            parts.push(initiativeBlock(s));
-            if (i < initiatives.length - 1) parts.push('<div class="page-break"></div>');
-        });
-        parts.push('<div class="page-break"></div>');
+        if (want(9)) {
+            parts.push(sectionDivider('المبادرات', 9, secId(9)));
+            parts.push(sectionHeading(9, 'المبادرات'));
+            if (initiatives.length === 0) parts.push('<p class="text-muted">لا توجد مبادرات.</p>');
+            else initiatives.forEach((s, i) => {
+                parts.push(initiativeBlock(s));
+                if (i < initiatives.length - 1) parts.push('<div class="page-break"></div>');
+            });
+            parts.push('<div class="page-break"></div>');
+        }
 
         // 10. Extras
-        parts.push(sectionDivider('مرفقات إضافية', 10));
-        parts.push(sectionHeading(10, 'صور ومرفقات إضافية'));
-        parts.push(fileListBlock(portfolio.extras || []));
-        parts.push(await attachmentsBlock(portfolio.extras || []));
+        if (want(10)) {
+            parts.push(sectionDivider('مرفقات إضافية', 10, secId(10)));
+            parts.push(sectionHeading(10, 'صور ومرفقات إضافية'));
+            parts.push(fileListBlock(portfolio.extras || []));
+            parts.push(await attachmentsBlock(portfolio.extras || []));
+        }
 
         // Custom user-defined sections
         for (let i = 0; i < customSections.length; i++) {
             const cs = customSections[i];
+            if (onlyFilled && !(cs.items || []).length) continue;
             parts.push('<div class="page-break"></div>');
-            parts.push(sectionHeading(11 + i, (cs.icon ? cs.icon + ' ' : '') + cs.name));
+            parts.push(sectionHeading(11 + i, (cs.icon ? cs.icon + ' ' : '') + cs.name, secId(11 + i)));
             parts.push(fileListBlock(cs.items || []));
             parts.push(await attachmentsBlock(cs.items || []));
         }
@@ -546,9 +669,9 @@
         return parts.join('\n');
     }
 
-    function sectionHeading(n, title) {
+    function sectionHeading(n, title, id) {
         return `
-            <div class="portfolio-section-heading">
+            <div class="portfolio-section-heading"${id ? ` id="${id}"` : ''}>
                 <div class="section-number">${n}</div>
                 <h2>${title}</h2>
             </div>
@@ -601,11 +724,11 @@
     ];
 
     /** Build a full-page divider that introduces a section. */
-    function sectionDivider(sectionTitle, sectionNumber) {
+    function sectionDivider(sectionTitle, sectionNumber, id) {
         const order = SECTION_ORDER_AR[sectionNumber] || '';
         const num   = toArabicDigits(sectionNumber);
         return `
-            <div class="section-divider">
+            <div class="section-divider"${id ? ` id="${id}"` : ''}>
                 <div class="section-divider-inner">
                     <div class="section-divider-header">— ملف الإنجاز المهني —</div>
                     <div class="section-divider-body">
@@ -873,5 +996,5 @@
         `;
     }
 
-    global.PrintPortfolio = { print };
+    global.PrintPortfolio = { print, savePdf };
 })(window);

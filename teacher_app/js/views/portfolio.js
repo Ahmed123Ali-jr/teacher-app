@@ -148,7 +148,7 @@
                             📁 ملف الإنجاز
                         </h2>
                     </div>
-                    <button class="btn btn-primary" id="btn-print-portfolio">🖨️ طباعة الملف كاملاً</button>
+                    <button class="btn btn-primary" id="btn-print-portfolio">📄 حفظ وطباعة</button>
                 </div>
 
                 <div class="card portfolio-header">
@@ -215,14 +215,136 @@
         container.querySelector('#btn-add-custom-section')?.addEventListener('click',
             () => openCustomSectionForm(portfolio, () => render(container)));
 
-        container.querySelector('#btn-print-portfolio')?.addEventListener('click', async () => {
-            await global.PrintPortfolio.print({
+        container.querySelector('#btn-print-portfolio')?.addEventListener('click', () => {
+            openPdfModal({
                 teacher, portfolio,
                 exams: examsAll, worksheets: worksheetsAll, homework: homeworkAll,
                 strategies, initiatives, classes,
                 scheduleRows, periodTimes
             });
         });
+    }
+
+    /* ======================================================================
+       نافذة حفظ الملف — بمكوّنات نافذة طباعة السجل نفسها (.popt / .pseg).
+
+       الضغطة الأولى تبني والثانية تشارك: سفاري يشترط أن يأتي نداء
+       المشاركة من إيماءة حيّة، وإيماءة الضغطة الأولى تنتهي أثناء بناء
+       عشرات الصفحات — فتُرفض ورقة المشاركة ولا يظهر للمعلّم شيء.
+       ====================================================================== */
+    function openPdfModal(ctx) {
+        const filledCount = countFilled(ctx);
+        const TYPES = [
+            { k: 'all',    ic: '📘', t: 'الملف كامل',
+              d: 'كل الأقسام العشرة حتى الفارغ منها' },
+            { k: 'filled', ic: '✨', t: 'الأقسام المعبّأة فقط',
+              d: `يتخطّى الفارغة — ${filledCount.filled} من ${filledCount.total} أقسام فيها محتوى` }
+        ];
+
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <div class="popt-lbl" style="margin-top:0;">ماذا نُدرج في الملف؟</div>
+            ${TYPES.map((t, i) => `
+                <div class="popt ${i === 1 ? 'on' : ''}" data-k="${t.k}">
+                    <div class="popt-hd">
+                        <div class="popt-ic">${t.ic}</div>
+                        <div class="popt-tx">
+                            <div class="popt-tt">${t.t}</div>
+                            <div class="popt-dd">${t.d}</div>
+                        </div>
+                        <div class="popt-rd"></div>
+                    </div>
+                </div>
+            `).join('')}
+
+            <div class="pf-prog" id="pf-prog" hidden>
+                <div class="pf-prog-txt" id="pf-prog-txt">جارٍ التحضير…</div>
+                <div class="pf-prog-track"><div class="pf-prog-fill" id="pf-prog-fill"></div></div>
+            </div>
+
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="submit" class="btn btn-primary" id="pf-go">📄 جهّز الملف</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+
+        form.querySelectorAll('.popt .popt-hd').forEach((hd) => {
+            hd.addEventListener('click', () => {
+                form.querySelectorAll('.popt').forEach((o) => o.classList.remove('on'));
+                hd.closest('.popt').classList.add('on');
+            });
+        });
+
+        const go   = form.querySelector('#pf-go');
+        const prog = form.querySelector('#pf-prog');
+        const txt  = form.querySelector('#pf-prog-txt');
+        const fill = form.querySelector('#pf-prog-fill');
+        let built = null;          // {blob, fileName} بعد البناء
+
+        const setBar = (pct, label) => {
+            fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+            txt.textContent = label;
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            /* الضغطة الثانية: نشارك فوراً على الإيماءة الحيّة. */
+            if (built) {
+                const how = await global.PdfCore.deliverPdf(built.blob, built.fileName);
+                if (how === 'shared')     global.TeacherApp.toast('تمت المشاركة ✅', 'success');
+                if (how === 'downloaded') global.TeacherApp.toast('نُزِّل الملف ✅', 'success');
+                if (how !== 'cancelled')  global.Modal.close();
+                return;
+            }
+
+            const onlyFilled = form.querySelector('.popt.on')?.dataset.k === 'filled';
+            go.disabled = true;
+            prog.hidden = false;
+            setBar(4, 'جارٍ تجهيز المحتوى…');
+
+            try {
+                const out = await global.PrintPortfolio.savePdf(ctx, {
+                    onlyFilled,
+                    onStatus: (s) => setBar(s === 'settle' ? 12 : 6,
+                        s === 'settle' ? 'جارٍ تحميل الصور…' : 'جارٍ تجهيز المحتوى…'),
+                    onProgress: (done, total) =>
+                        setBar(12 + (done / total) * 88, `الصفحة ${done} من ${total}`)
+                });
+                built = out;
+                setBar(100, `جاهز — ${out.pages} صفحة`);
+                go.disabled = false;
+                go.textContent = '📤 مشاركة أو حفظ';
+            } catch (err) {
+                console.error('[portfolio pdf]', err);
+                prog.hidden = true;
+                go.disabled = false;
+                global.TeacherApp.toast(
+                    'تعذّر إنشاء الملف: ' + (err && err.message ? err.message : 'خطأ غير معروف'),
+                    'error', 6000);
+            }
+        });
+
+        /* يبدأ تحميل المحرّك مع فتح النافذة لا مع الضغط. */
+        global.PdfCore?.preloadPdfEngine().catch(() => {});
+        global.Modal.open({ title: '📄 حفظ ملف الإنجاز', body: form, autofocus: false });
+    }
+
+    function countFilled(ctx) {
+        const p = ctx.portfolio || {};
+        const has = [
+            true,
+            (p.certificates || []).length > 0,
+            true,
+            (ctx.classes || []).length > 0 || (p.schedules || []).length > 0 || (ctx.scheduleRows || []).length > 0,
+            ctx.exams.length > 0,
+            ctx.worksheets.length > 0,
+            ctx.homework.length > 0,
+            ctx.strategies.length > 0,
+            ctx.initiatives.length > 0,
+            (p.extras || []).length > 0
+        ];
+        return { filled: has.filter(Boolean).length, total: has.length };
     }
 
     function initials(name) {
