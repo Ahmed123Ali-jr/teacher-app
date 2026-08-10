@@ -183,10 +183,14 @@
         if (!user) throw new Error('لست مسجّل الدخول.');
 
         try {
-            const { data: files } = await sb.storage.from('books').list(user.id);
-            if (files && files.length) {
-                await sb.storage.from('books')
-                    .remove(files.map((f) => user.id + '/' + f.name));
+            /* كل مخزن يُمسح على حدة: شواهد الاستراتيجيات فيها صور طلاب،
+               وبقاؤها بعد حذف الحساب خرق للخصوصية لا مجرّد ملفات يتيمة. */
+            for (const bucket of ['books', 'evidence']) {
+                const { data: files } = await sb.storage.from(bucket).list(user.id);
+                if (files && files.length) {
+                    await sb.storage.from(bucket)
+                        .remove(files.map((f) => user.id + '/' + f.name));
+                }
             }
         } catch (e) {
             /* تعذّر مسح الملفات لا يمنع حذف الحساب — الحساب أولى بالحذف،

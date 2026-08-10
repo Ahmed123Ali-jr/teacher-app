@@ -4506,3 +4506,159 @@ body.drawer-open { overflow: hidden; }
     .modal-footer { flex-wrap: wrap; gap: var(--space-2); }
     .modal-footer > .btn { min-height: var(--touch-target-min); }
 }
+
+/* ==========================================================================
+   مكتبة استراتيجيات التدريس (النموذج ب) — البطاقة تُفتح بالشرح في مكانها
+   ========================================================================== */
+.stg-head { margin-bottom: var(--space-3); }
+.stg-sum {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 12px 14px; border-radius: 14px;
+    color: #fff;
+    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
+    box-shadow: 0 6px 16px rgba(15, 44, 92, .3), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+}
+.stg-sum b { font-size: 22px; font-weight: var(--fw-black); color: #D6B96F; }
+.stg-sum span { font-size: 11.5px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .78); line-height: 1.6; }
+
+.stg-fams { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; margin-bottom: var(--space-3); }
+.stg-fams::-webkit-scrollbar { height: 0; }
+.stg-fam {
+    flex: 0 0 auto; border-radius: 11px; padding: 7px 13px;
+    font-family: inherit; font-size: 12.5px; font-weight: var(--fw-black);
+    color: var(--primary); background: var(--surface);
+    border: 1.5px solid var(--border); cursor: pointer;
+}
+.stg-fam.on {
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    border-color: var(--primary); color: #fff;
+}
+
+.stg-list { display: flex; flex-direction: column; gap: 8px; }
+.stg-card {
+    border-radius: 14px; overflow: hidden;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.stg-card.open { border-color: var(--primary); box-shadow: 0 4px 14px rgba(15, 44, 92, .16); }
+.stg-top {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 11px 13px; border: 0; background: none;
+    font-family: inherit; text-align: right; cursor: pointer;
+}
+.stg-top .ic {
+    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 18px;
+    background: #fff; border: 1px solid var(--border);
+}
+.stg-top .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.stg-top .nm { font-size: 14px; font-weight: var(--fw-black); color: var(--primary); }
+.stg-top .sub {
+    font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.stg-top .badge {
+    flex-shrink: 0; font-size: 10.5px; font-weight: var(--fw-black);
+    border-radius: 99px; padding: 2px 8px;
+}
+.stg-top .badge.done {
+    background: color-mix(in srgb, #10B981 14%, #fff); color: #047857;
+    border: 1px solid color-mix(in srgb, #10B981 34%, #fff);
+}
+.stg-top .badge.none { background: #ECEAE3; color: var(--text-muted); }
+
+.stg-steps { margin: 0; padding: 0 30px 4px 13px; }
+.stg-steps li { font-size: 12.5px; line-height: 1.9; color: var(--text); opacity: .86; }
+.stg-act { display: flex; gap: 7px; padding: 9px 13px 12px; border-top: 1px solid var(--border); }
+.stg-btn {
+    min-height: 40px; border: 0; border-radius: 11px;
+    font-family: inherit; font-size: 12.5px; font-weight: var(--fw-black); cursor: pointer;
+}
+.stg-btn.main { flex: 1; background: linear-gradient(180deg, #24498A, var(--primary)); color: #fff; }
+.stg-btn.ghost { flex: 0 0 auto; padding: 0 14px; background: #fff; border: 1.5px solid var(--border); color: var(--primary); }
+.stg-btn:disabled { opacity: .45; cursor: default; }
+
+/* لوحة التسجيل */
+.stg-drop {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 46px; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; font-weight: var(--fw-black); color: #B8963F;
+    background: color-mix(in srgb, #C9A961 8%, #fff);
+    border: 1.5px dashed #C9A961;
+}
+.stg-warn {
+    margin: 8px 0 0; padding: 8px 10px; border-radius: 10px;
+    font-size: 11px; line-height: 1.75; color: #6B6455;
+    background: color-mix(in srgb, #ECEAE3 45%, #fff);
+    border-right: 2.5px solid #C9A961;
+}
+.stg-thumbs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.stg-thumb {
+    position: relative; width: 62px; height: 62px; border-radius: 10px; overflow: hidden;
+    background: #ECEAE3; border: 1px solid var(--border); display: block;
+}
+.stg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stg-thumb .x {
+    position: absolute; top: 2px; left: 2px;
+    width: 20px; height: 20px; border-radius: 50%; border: 0;
+    background: rgba(16, 24, 40, .72); color: #fff;
+    font-size: 11px; font-weight: var(--fw-black); cursor: pointer;
+    display: grid; place-items: center;
+}
+
+/* شواهدي */
+.stg-log {
+    padding: 11px 13px; margin-bottom: 9px; border-radius: 13px;
+    background: var(--surface); border: 1.5px solid var(--border);
+}
+.stg-log-h { display: flex; align-items: center; gap: 8px; }
+.stg-log-h b { flex: 1; font-size: 13px; font-weight: var(--fw-black); color: var(--primary); }
+.stg-log-h .x {
+    border: 0; background: none; font-size: 15px; cursor: pointer; padding: 2px 4px;
+}
+.stg-log-n { margin: 5px 0 0; font-size: 12px; line-height: 1.8; color: var(--text-muted); font-weight: var(--fw-bold); }
+
+/* ---------- ملف الإنجاز · استراتيجيات التدريس (مبنيّ من الشواهد) ---------- */
+.pstg-sum {
+    margin: 0 0 12px; padding: 10px 12px; border-radius: 12px;
+    font-size: 12.5px; color: var(--ink-2, #4A4438); text-align: center;
+    background: linear-gradient(150deg, #fff 0%,
+                color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.pstg-sum b { color: #0F2C5C; font-weight: var(--fw-black); }
+.pstg-list { display: flex; flex-direction: column; gap: 10px; }
+.pstg-card {
+    padding: 12px 13px; border-radius: 14px; background: #fff;
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: 0 2px 7px rgba(16, 24, 40, .06);
+}
+.pstg-head { display: flex; align-items: center; gap: 8px; }
+.pstg-head h4 {
+    margin: 0; flex: 1; font-size: 13.5px; font-weight: var(--fw-black); color: #0F2C5C;
+}
+.pstg-times {
+    flex: none; padding: 3px 9px; border-radius: 999px;
+    font-size: 10.5px; font-weight: var(--fw-black); color: #8A6D1F;
+    background: color-mix(in srgb, #C9A961 16%, #fff);
+    border: 1px solid color-mix(in srgb, #C9A961 42%, #fff);
+}
+.pstg-meta {
+    display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 7px;
+    font-size: 11px; color: #6B6455;
+}
+.pstg-notes { margin: 9px 0 0; padding: 0; list-style: none; }
+.pstg-notes li {
+    font-size: 11.5px; line-height: 1.9; color: #4A4438;
+    padding-right: 10px; border-right: 2px solid color-mix(in srgb, #C9A961 45%, #fff);
+    margin-bottom: 4px;
+}
+.pstg-notes li span { color: #9A9384; font-size: 10.5px; margin-left: 5px; }
+.pstg-notes li.more { border-right-color: transparent; color: #9A9384; }
+.pstg-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pstg-thumbs img {
+    width: 56px; height: 56px; object-fit: cover; border-radius: 9px;
+    border: 1px solid var(--border, #ECEAE3); background: #ECEAE3;
+}

@@ -39,7 +39,7 @@
         { key: 'exams',       title: 'الاختبارات',             icon: '📝', auto: true },
         { key: 'worksheets',  title: 'أوراق العمل',            icon: '📄', auto: true },
         { key: 'homework',    title: 'الواجبات',               icon: '📚', auto: true },
-        { key: 'strategies',  title: 'استراتيجيات التدريس',     icon: '🎯', auto: false, star: true },
+        { key: 'strategies',  title: 'استراتيجيات التدريس',     icon: '🎯', auto: true,  star: true },
         { key: 'initiatives', title: 'المبادرات',              icon: '🌟', auto: false, star: true },
         { key: 'extras',      title: 'صور ومرفقات إضافية',     icon: '📎', auto: false }
     ];
@@ -66,15 +66,54 @@
         await global.TeacherDB.put('portfolio', portfolio);
     }
 
+    /* شواهد متفرّقة → صفّ واحد لكل استراتيجية:
+       {key, name, family, times, dates[], classes[], notes[], evidence[]} */
+    function groupStrategyLogs(logs, classes) {
+        const clsName = (id) => {
+            const c = classes.find((x) => String(x.id) === String(id));
+            return c ? `${c.grade} / ${c.section}` : '';
+        };
+        const byKey = new Map();
+        for (const l of (logs || []).slice().sort((a, b) => String(a.date).localeCompare(b.date))) {
+            let g = byKey.get(l.strategy_key);
+            if (!g) {
+                const meta = global.Strategies ? global.Strategies.get(l.strategy_key) : null;
+                g = {
+                    key: l.strategy_key,
+                    name: meta ? meta.name : l.strategy_key,
+                    family: meta ? meta.family : '',
+                    brief: meta ? meta.brief : '',
+                    steps: meta ? meta.steps : [],
+                    times: 0, dates: [], classes: [], notes: [], evidence: []
+                };
+                byKey.set(l.strategy_key, g);
+            }
+            g.times++;
+            if (l.date) g.dates.push(l.date);
+            const cn = clsName(l.class_id);
+            if (cn && !g.classes.includes(cn)) g.classes.push(cn);
+            if (l.note) g.notes.push({ date: l.date, class: cn, text: l.note });
+            if (Array.isArray(l.evidence)) g.evidence.push(...l.evidence);
+        }
+        return Array.from(byKey.values()).sort((a, b) => b.times - a.times);
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const portfolio  = await loadPortfolio(teacher.id);
-        const strategies = await global.TeacherDB.getAllByIndex('strategies', 'teacher_id', teacher.id);
         const initiatives= await global.TeacherDB.getAllByIndex('initiatives', 'teacher_id', teacher.id);
 
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
+
+        /* الاستراتيجيات تُبنى من شواهد المعلّم المسجَّلة في صفحة الفصل
+           (strategy_logs)، لا من نصّ مولَّد. نجمعها هنا حسب الاستراتيجية
+           ليصير لكل واحدة سِجلّ واحد في الملف مهما تكرّر تطبيقها. */
+        const strategies = groupStrategyLogs(
+            await global.TeacherDB.getAllByIndex('strategy_logs', 'teacher_id', teacher.id),
+            classes
+        );
         const examsAll = [];
         const worksheetsAll = [];
         const homeworkAll = [];

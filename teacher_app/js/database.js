@@ -29,6 +29,7 @@
         worksheets:   'worksheets',
         books:        'books',
         strategies:   'strategies',
+        strategy_logs:'strategy_logs',
         initiatives:  'initiatives',
         schedule:     'schedule',
         reminders:    'reminders',
@@ -42,7 +43,7 @@
     /* ---------- IndexedDB cache layer ---------- */
 
     const CACHE_DB_NAME    = 'teacher_app_cache';
-    const CACHE_DB_VERSION = 2;   // bumped: added `book_files` store
+    const CACHE_DB_VERSION = 3;   // bumped: added `strategy_logs` store
 
     /** Cache store schema: keyPath + indexes for fast filtering. */
     const CACHE_STORES = [
@@ -61,6 +62,7 @@
         // availability.
         { name: 'book_files',    keyPath: 'id' },
         { name: 'strategies',    keyPath: 'id',          indexes: [['teacher_id']] },
+        { name: 'strategy_logs', keyPath: 'id',          indexes: [['teacher_id'], ['class_id']] },
         { name: 'initiatives',   keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'schedule',      keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'reminders',     keyPath: 'id',          indexes: [['teacher_id'], ['date']] },

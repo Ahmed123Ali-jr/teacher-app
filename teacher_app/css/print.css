@@ -489,6 +489,30 @@
         border: 1px solid #E8D9A8;
     }
 
+    /* سجلّ تطبيق الاستراتيجية: ثلاثة أعمدة، عمود «ما نُفِّذ» يأخذ الباقي. */
+    .mini-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+        margin-bottom: 6mm;
+    }
+    .mini-table th {
+        background: #F8F6F0;
+        color: #0F2C5C;
+        font-weight: 600;
+        text-align: right;
+        padding: 2mm 4mm;
+        border: 1px solid #E8D9A8;
+    }
+    .mini-table th:first-child { width: 22mm; }
+    .mini-table th:nth-child(2) { width: 32mm; }
+    .mini-table td {
+        padding: 2mm 4mm;
+        color: #2C2C2A;
+        border: 1px solid #E8D9A8;
+        vertical-align: top;
+    }
+
     .report-article {
         margin-bottom: 10mm;
     }

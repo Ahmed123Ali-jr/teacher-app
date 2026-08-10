@@ -21,6 +21,25 @@
         } catch { return iso; }
     }
 
+    /* شواهد الاستراتيجيات مسارات في مخزن خاص، لا ملفات محلية. نوقّعها دفعة
+       واحدة قبل بناء الصفحة لأن <img> في الطباعة لا ينتظر وعداً. فشل التوقيع
+       يطبع القسم بلا صور بدل أن يُسقط الملف كلّه. */
+    async function signEvidence(rows) {
+        const paths = (rows || []).flatMap((r) => r.evidence || []);
+        if (!paths.length || !window.SB) return;
+        try {
+            const { data, error } = await window.SB.storage
+                .from('evidence').createSignedUrls(paths, 3600);
+            if (error) throw error;
+            const urlOf = new Map((data || []).map((d) => [d.path, d.signedUrl]));
+            for (const r of rows) {
+                r.imageUrls = (r.evidence || []).map((p) => urlOf.get(p)).filter(Boolean);
+            }
+        } catch (e) {
+            console.warn('[PrintPortfolio] evidence signing failed:', e);
+        }
+    }
+
     async function print(ctx) {
         const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives,
                 classes, scheduleRows, periodTimes } = ctx;
@@ -38,8 +57,8 @@
                 }
             }
         };
-        collect(strategies);
         collect(initiatives);
+        await signEvidence(strategies);
 
         const root = ensurePrintRoot();
         root.innerHTML = '<p style="padding:20mm; text-align:center;">⏳ جارٍ تحضير ملف الطباعة (تحويل الملفات والصور)...</p>';
@@ -426,7 +445,7 @@
         // 8. Strategies (with reports)
         parts.push(sectionDivider('استراتيجيات التدريس', 8));
         parts.push(sectionHeading(8, 'استراتيجيات التدريس'));
-        if (strategies.length === 0) parts.push('<p class="text-muted">لا توجد استراتيجيات.</p>');
+        if (strategies.length === 0) parts.push('<p class="text-muted">لا توجد استراتيجيات مسجَّلة. تُسجَّل من صفحة الفصل ← الاستراتيجيات.</p>');
         else strategies.forEach((s, i) => {
             parts.push(strategyBlock(s));
             if (i < strategies.length - 1) parts.push('<div class="page-break"></div>');
@@ -779,29 +798,46 @@
         `;
     }
 
-    function strategyBlock(s) {
-        const r = s.report || {};
+    function strategyBlock(g) {
+        const FAM = { coop: 'التعلّم التعاوني', think: 'التفكير والاستقصاء',
+                      active: 'التعلّم النشط', tech: 'التقنية والتقويم' };
+        const first = (g.dates || [])[0];
+        const last  = (g.dates || [])[(g.dates || []).length - 1];
+        const span  = !first ? '' : (first === last ? formatDate(first)
+                                   : formatDate(first) + ' — ' + formatDate(last));
+        const times = g.times === 1 ? 'مرة واحدة'
+                    : g.times === 2 ? 'مرتان' : g.times + ' مرات';
         return `
             <article class="report-article avoid-break">
-                <h3>${escapeHtml(s.name)}</h3>
+                <h3>${escapeHtml(g.name)}</h3>
                 <div class="meta-line">
-                    📅 ${formatDate(s.date)}
-                    ${s.class_label ? ' · 📚 ' + escapeHtml(s.class_label) : ''}
-                    ${s.lesson ? ' · 📖 ' + escapeHtml(s.lesson) : ''}
+                    🔁 طُبِّقت ${escapeHtml(times)}
+                    ${span ? ' · 📅 ' + escapeHtml(span) : ''}
+                    ${g.classes && g.classes.length ? ' · 📚 ' + escapeHtml(g.classes.join('، ')) : ''}
+                    ${g.family ? ' · 🏷️ ' + escapeHtml(FAM[g.family] || g.family) : ''}
                 </div>
 
-                ${r.introduction    ? `<h4>المقدمة</h4><p>${escapeHtml(r.introduction).split('\n').join('<br>')}</p>` : ''}
-                ${r.description     ? `<h4>الوصف</h4><p>${escapeHtml(r.description).split('\n').join('<br>')}</p>` : ''}
-                ${Array.isArray(r.steps) && r.steps.length
-                    ? `<h4>خطوات التنفيذ</h4><ol>${r.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}</ol>`
+                ${g.brief ? `<h4>عن الاستراتيجية</h4><p>${escapeHtml(g.brief)}</p>` : ''}
+                ${Array.isArray(g.steps) && g.steps.length
+                    ? `<h4>خطوات التطبيق</h4><ol>${g.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}</ol>`
                     : ''}
-                ${r.impact          ? `<h4>الأثر التعليمي</h4><p>${escapeHtml(r.impact).split('\n').join('<br>')}</p>` : ''}
-                ${r.recommendations ? `<h4>التوصيات</h4><p>${escapeHtml(r.recommendations).split('\n').join('<br>')}</p>` : ''}
+                ${Array.isArray(g.notes) && g.notes.length ? `
+                    <h4>سجلّ التطبيق</h4>
+                    <table class="mini-table">
+                        <thead><tr><th>التاريخ</th><th>الفصل</th><th>ما نُفِّذ</th></tr></thead>
+                        <tbody>${g.notes.map((n) => `
+                            <tr>
+                                <td>${escapeHtml(formatDate(n.date))}</td>
+                                <td>${escapeHtml(n.class || '—')}</td>
+                                <td>${escapeHtml(n.text)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>` : ''}
 
-                ${(s.imageUrls || []).length ? `
-                    <h4>صور التنفيذ</h4>
+                ${(g.imageUrls || []).length ? `
+                    <h4>شواهد التنفيذ</h4>
                     <div class="print-image-grid">
-                        ${s.imageUrls.map((u) => `<img src="${u}" alt="">`).join('')}
+                        ${g.imageUrls.map((u) => `<img src="${u}" alt="">`).join('')}
                     </div>
                 ` : ''}
             </article>

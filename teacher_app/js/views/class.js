@@ -14,7 +14,8 @@
         { key: 'curriculum', label: 'توزيع المنهج', icon: '🗓️' },
         { key: 'exams',      label: 'الاختبارات',   icon: '📝' },
         { key: 'worksheets', label: 'أوراق العمل',  icon: '📄' },
-        { key: 'homework',   label: 'الواجبات',     icon: '📚' }
+        { key: 'homework',   label: 'الواجبات',     icon: '📚' },
+        { key: 'strategies', label: 'الاستراتيجيات', icon: '🎯' }
     ];
 
     const ATTENDANCE = {
@@ -207,6 +208,10 @@
             global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
             global.TeacherDB.getAllByIndex('assignments', 'class_id', cls.id)
         ]);
+        /* عدّاد بطاقة الاستراتيجيات: كم استراتيجية مختلفة طُبِّقت في هذا
+           الفصل — لا عدد مرات التطبيق، فالمهم التنوّع في ملف الإنجاز. */
+        const stgLogs = await global.TeacherDB.getAllByIndex('strategy_logs', 'class_id', cls.id);
+        const strategyCount = new Set(stgLogs.map((l) => l.strategy_key)).size;
         const studentIds = new Set(students.map((s) => s.id));
         let present = 0, absent = 0, late = 0, marked = 0;
         const seen = new Set();
@@ -225,7 +230,8 @@
             { key: 'exams',      icon: '📝', label: 'الاختبارات',   count: exams.length,      tint: '#DC2626', bg: '#FEF1F1' },
             { key: 'worksheets', icon: '📄', label: 'أوراق العمل',  count: worksheets.length, tint: '#059669', bg: '#EDFBF5' },
             { key: 'homework',   icon: '📚', label: 'الواجبات',     count: homework.length,   tint: '#D97706', bg: '#FFF8EB' },
-            { key: 'curriculum', icon: '🗓️', label: 'توزيع المنهج', count: null,              tint: '#0891B2', bg: '#EDFAFD' }
+            { key: 'curriculum', icon: '🗓️', label: 'توزيع المنهج', count: null,              tint: '#0891B2', bg: '#EDFAFD' },
+            { key: 'strategies', icon: '🎯', label: 'الاستراتيجيات', count: strategyCount,     tint: '#BE185D', bg: '#FDF2F8' }
         ];
 
         container.innerHTML = `
@@ -315,6 +321,7 @@
         const panel = container.querySelector('#tab-panel');
         switch (state.activeTab) {
             case 'students':   await renderStudents(panel, cls); break;
+            case 'strategies': await global.ClassStrategiesView.render(panel, cls); break;
             case 'books':      await global.ClassBooksTab.render(panel, cls); break;
             case 'curriculum': await global.ClassCurriculumTab.render(panel, cls); break;
             case 'exams':      await global.ClassExamsTab.render(panel, cls); break;
