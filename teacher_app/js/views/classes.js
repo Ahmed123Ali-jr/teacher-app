@@ -60,17 +60,18 @@
         return `${n} فصلاً`;
     }
 
+    /* لافتة المرحلة خفيفة: عنوان صغير لا شريط، فالفصول نفسها هي البطاقات.
+       بلا فاصلة «·» بين الاسم والعدد — تلتصق بالرقم العربي فيُقرأ
+       «٣ فصول» كأنه «٣٠ فصول». */
     function sectionHtml(label, icon, list) {
         return `
             <div class="classes-stage-group">
-                <h3 class="stage-banner">
-                    <span class="stage-banner-icon">${icon}</span>
-                    <span class="stage-banner-label">${label}</span>
-                    <span class="stage-banner-count">${classCount(list.length)}</span>
+                <h3 class="cl-stage">
+                    <span>${icon}</span>
+                    <b>${label}</b>
+                    <span>${classCount(list.length)}</span>
                 </h3>
-                <div class="grid grid-3 classes-stage-grid">
-                    ${list.map(classCardHtml).join('')}
-                </div>
+                ${list.map(classRowHtml).join('')}
             </div>
         `;
     }
@@ -81,20 +82,17 @@
         return String(grade || '').replace(/^\s*الصف\s+/, '');
     }
 
-    function classCardHtml(c) {
-        const light = global.StageColors && global.StageColors.isLight(c.color);
+    /* صفّ واحد لكل فصل، تحت بعضها. بلا عدد الطلاب بطلب المستخدم — و«تعديل»
+       باقٍ لأنه المدخل الوحيد لتعديل الفصل في التطبيق كلّه. */
+    function classRowHtml(c) {
         return `
-            <button class="class-card ${light ? 'card-light' : ''}" data-class-id="${c.id}"
-                    style="--card-color: ${c.color || '#1E40AF'};">
-                <div>
-                    <h4 class="class-card-title">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</h4>
-                    <div class="class-card-subject">${escapeHtml(c.subject)}</div>
-                </div>
-                <div class="class-card-meta">
-                    <span>${global.Words.count(c.student_count || 0)}</span>
-                    <span class="class-card-edit" role="button" tabindex="0"
-                          data-edit-class="${c.id}">تعديل</span>
-                </div>
+            <button class="cls-row" data-class-id="${c.id}">
+                <span class="cls-tx">
+                    <span class="cls-t">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</span>
+                    <span class="cls-s">${escapeHtml(c.subject)}</span>
+                </span>
+                <span class="cls-edit" role="button" tabindex="0"
+                      data-edit-class="${c.id}">تعديل</span>
             </button>
         `;
     }
@@ -112,10 +110,10 @@
         container.querySelectorAll('[data-add-class], [data-empty-add]').forEach((el) => {
             el.addEventListener('click', openAdd);
         });
-        container.querySelectorAll('.class-card[data-class-id]').forEach((el) => {
+        container.querySelectorAll('.cls-row[data-class-id]').forEach((el) => {
             el.addEventListener('click', (e) => {
                 // «تعديل» has its own handler — don't navigate into the class.
-                if (e.target.closest('.class-card-edit')) return;
+                if (e.target.closest('.cls-edit')) return;
                 global.location.hash = '#/class/' + el.dataset.classId;
             });
         });

@@ -656,51 +656,36 @@ body.drawer-open { overflow: hidden; }
     padding-top: var(--space-6);
 }
 /* Stage banner — بارز (ثري دي) بإضاءة علوية وظل داخلي سفلي وظل عميق */
-.stage-banner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: linear-gradient(180deg,
-        color-mix(in srgb, var(--primary) 76%, #5B8DEF) 0%,
-        var(--primary) 55%,
-        color-mix(in srgb, var(--primary) 62%, #000) 100%);
-    color: #fff;
-    border: 1px solid color-mix(in srgb, var(--primary) 80%, #fff);
-    border-radius: 15px;
-    padding: 9px var(--space-4);
-    margin: 0 0 var(--space-4);
-    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .35),
-                inset 0 -2px 4px rgba(0, 0, 0, .3),
-                0 7px 14px color-mix(in srgb, var(--primary) 40%, transparent),
-                0 2px 4px color-mix(in srgb, var(--primary) 30%, transparent);
+/* لافتة المرحلة: عنوان خفيف لا شريط — الفصول نفسها هي البطاقات. */
+.cl-stage {
+    display: flex; align-items: baseline; gap: 7px;
+    margin: 0 3px var(--space-2);
+    font-size: 12.5px; font-weight: var(--fw-black); color: var(--text-muted);
 }
-.stage-banner-icon {
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    border-radius: 9px;
-    background: rgba(255, 255, 255, .18);
-    font-size: 14px;
+.cl-stage b { color: var(--primary); font-size: 13.5px; margin-inline-end: 2px; }
+
+/* صفّ الفصل: بتدرّج الأزرار الرصاصية المعتمد في التطبيق. */
+.cls-row {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 14px 15px; border-radius: 14px; cursor: pointer;
+    font-family: inherit; text-align: right;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
 }
-.stage-banner-label {
-    flex: 1;
-    font-size: 16.5px;
-    font-weight: var(--fw-black);
-    line-height: 1.4;
+.cls-row + .cls-row { margin-top: 9px; }
+.cls-row:active { transform: scale(.99); }
+.cls-tx { flex: 1; min-width: 0; display: block; }
+.cls-t {
+    display: block; font-size: 15.5px; font-weight: var(--fw-black);
+    color: var(--primary);
 }
-.stage-banner-count {
-    background: rgba(255, 255, 255, .16);
-    border: 1px solid rgba(255, 255, 255, .3);
-    border-radius: var(--radius-full);
-    padding: 3px 12px;
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-bold);
-    line-height: 1.6;
-    white-space: nowrap;
+.cls-s { display: block; font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.cls-edit {
+    flex: none; font-size: 12px; font-weight: var(--fw-black);
+    color: #B8963F; padding: 6px 10px; border-radius: 9px;
+    background: color-mix(in srgb, #C9A961 12%, transparent);
 }
-.classes-stage-grid { gap: var(--card-gap); }
 
 .classes-add-tile-wrap {
     margin-top: var(--space-4);
@@ -710,7 +695,6 @@ body.drawer-open { overflow: hidden; }
 @media (max-width: 768px) {
     /* مربعات جنب بعض (عمودان) والمراحل تحت بعض —
        نفس البطاقة المصغّرة المعتمدة (112px) بلا تربيع */
-    .classes-stage-grid { grid-template-columns: repeat(2, 1fr); }
     .classes-add-tile-wrap { max-width: 100%; }
 }
 
