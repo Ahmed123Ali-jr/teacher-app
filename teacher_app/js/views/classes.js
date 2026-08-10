@@ -52,13 +52,24 @@
         return sections.join('');
     }
 
-    /* لافتة المرحلة: الاسم وحده. العدد أُسقط — الفصول تحته معدودة بالنظر. */
+    /** Arabic-friendly class count: فصل واحد · فصلان · ٣ فصول · ١١ فصلاً */
+    function classCount(n) {
+        if (n === 1) return 'فصل واحد';
+        if (n === 2) return 'فصلان';
+        if (n <= 10) return `${n} فصول`;
+        return `${n} فصلاً`;
+    }
+
+    /* لافتة المرحلة خفيفة: عنوان صغير لا شريط، فالفصول نفسها هي البطاقات.
+       بلا فاصلة «·» بين الاسم والعدد — تلتصق بالرقم العربي فيُقرأ
+       «٣ فصول» كأنه «٣٠ فصول». */
     function sectionHtml(label, icon, list) {
         return `
             <div class="classes-stage-group">
                 <h3 class="cl-stage">
                     <span>${icon}</span>
                     <b>${label}</b>
+                    <span>${classCount(list.length)}</span>
                 </h3>
                 ${list.map(classRowHtml).join('')}
             </div>
