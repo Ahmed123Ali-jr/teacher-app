@@ -1960,10 +1960,12 @@ body.drawer-open { overflow: hidden; }
 /* «حصتك الحالية» — كانت ١٣px بشفافية ٦٥٪، أي أخفت عنصر في البطاقة
    رغم أنها العنوان الذي يقول ما هذه البطاقة أصلاً. */
 .hh-l {
-    font-size: 15px; font-weight: var(--fw-black);
-    color: #fff;
+    font-size: 17px; font-weight: var(--fw-black);
+    color: #fff; letter-spacing: -.2px;
 }
-.hh-t { font-size: 26px; font-weight: var(--fw-black); margin-top: 4px; }
+/* اسم الصف أصغر من عنوان البطاقة بطلب المستخدم: كان ٢٦px فيلتفّ على
+   سطرين ويطغى على ما حوله. */
+.hh-t { font-size: 14px; font-weight: var(--fw-black); margin-top: 4px; }
 .hh-s { font-size: var(--fs-sm); color: rgba(201, 169, 97, .95); font-weight: var(--fw-bold); margin-top: 4px; }
 .hh-prog { display: flex; align-items: center; gap: 9px; margin-top: 14px; }
 .hh-bar { flex: 1; height: 5px; border-radius: var(--radius-full); background: rgba(255, 255, 255, .15); overflow: hidden; }
