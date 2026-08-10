@@ -338,19 +338,18 @@
     function periodsBoxHtml(todayRows, classById, periodByN) {
         if (!todayRows.length) return '';
         const now = new Date().getHours() * 60 + new Date().getMinutes();
-        let done = 0;
         const chips = todayRows.map((r) => {
             const cls = r.class_id ? classById[r.class_id] : null;
             const p = periodByN[r.period];
             const start = p ? toMins(p.start) : null;
             const end = p ? toMins(p.end) : null;
             let st = '';
-            if (end !== null && now >= end) { st = 'past'; done++; }
+            if (end !== null && now >= end) st = 'past';
             else if (start !== null && end !== null && now >= start && now < end) st = 'live';
             const wait = !cls;
             const name = wait ? 'انتظار' : esc(chipName(cls));
             const inner = `
-                <span class="pc-n num">ح${r.period}</span>
+                <span class="pc-n num">${r.period}</span>
                 <span class="pc-t num">${p ? esc(p.start) : ''}</span>
                 <span class="pc-c">${name}</span>`;
             return wait
@@ -361,7 +360,6 @@
             <div class="pday-box">
                 <div class="pday-head">
                     <b>🕐 حصص اليوم</b>
-                    <span class="pday-cnt num">${done} / ${todayRows.length}</span>
                     <a href="#/schedule">الجدول كاملاً</a>
                 </div>
                 <div class="pday-chips">${chips}</div>

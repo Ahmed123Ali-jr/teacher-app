@@ -1873,11 +1873,6 @@ body.drawer-open { overflow: hidden; }
     font-size: 17px; font-weight: var(--fw-black); color: #fff;
     letter-spacing: -.2px;
 }
-.pday-cnt {
-    background: #C9A961; color: var(--primary);
-    font-weight: var(--fw-black); font-size: 13px;
-    border-radius: var(--radius-full); padding: 2px 10px;
-}
 .pday-head a { margin-right: auto; font-size: 12.5px; color: rgba(255,255,255,.8); text-decoration: underline; }
 .pday-chips {
     display: flex; gap: 8px;
