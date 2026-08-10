@@ -366,18 +366,6 @@
             </div>`;
     }
 
-    /* أزرار تجهيز فصل الحصة القادمة/الحالية */
-    function prepHtml(cls) {
-        if (!cls) return '';
-        return `
-            <div class="prep-l">تجهيز ${esc(shortGrade(cls.grade))} / ${esc(cls.section)}</div>
-            <div class="prep-grid">
-                <a href="#/class/${cls.id}/exams">📝 الاختبارات</a>
-                <a href="#/class/${cls.id}/worksheets">📄 أوراق العمل</a>
-                <a href="#/class/${cls.id}/homework">📚 الواجبات</a>
-            </div>`;
-    }
-
     /* ---- حالات الإعداد الأولى (البدء) ---- */
 
     /* أول فتح بلا فصول: البطاقة الرصاصية «أضف فصلك الأول» (البديل أ المعتمد) */
@@ -496,7 +484,6 @@
         const firstName = esc((teacher.name || '').trim().split(/\s+/)[0] || '');
 
         // فصل التجهيز: فصل الحصة الحالية/القادمة وإلا أول فصل
-        const prepClass = (nextClass && nextClass.cls) || classes[0] || null;
 
         // حالة الإعداد تحدّد محتوى الرئيسية
         const hasClasses     = classes.length > 0;
@@ -519,7 +506,6 @@
             // يوم دراسي فيه حصص: الرئيسية الكاملة
             body = remindersCardHtml(remindersToday, classById)
                  + periodsBoxHtml(todayRows, classById, periodByN)
-                 + prepHtml(prepClass)
                  + heroHtml(nextClass);
         }
 
