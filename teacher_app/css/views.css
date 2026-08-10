@@ -683,7 +683,7 @@ body.drawer-open { overflow: hidden; }
 .cls-s { display: block; font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 .cls-edit {
     flex: none; font-size: 12px; font-weight: var(--fw-black);
-    color: #B8963F; padding: 6px 10px; border-radius: 9px;
+    color: var(--primary); padding: 6px 10px; border-radius: 9px;
     background: color-mix(in srgb, #C9A961 12%, transparent);
 }
 
