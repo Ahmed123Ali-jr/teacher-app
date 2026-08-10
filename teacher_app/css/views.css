@@ -1946,7 +1946,12 @@ body.drawer-open { overflow: hidden; }
     font-style: normal;
 }
 @keyframes hh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
-.hh-body { display: block; color: inherit; text-decoration: none; }
+/* البطاقة فقدت سطرين بإزالة المادة والوقت المتبقّي، فقصرت. الحشو هنا
+   يعيد ارتفاعها ويمنح السطرين مجالاً بدل أن يتلاصقا أعلى البطاقة. */
+.hh-body {
+    display: block; color: inherit; text-decoration: none;
+    padding: 6px 0 12px;
+}
 /* «حصتك الحالية» — كانت ١٣px بشفافية ٦٥٪، أي أخفت عنصر في البطاقة
    رغم أنها العنوان الذي يقول ما هذه البطاقة أصلاً. */
 .hh-l {
@@ -1955,10 +1960,15 @@ body.drawer-open { overflow: hidden; }
 }
 /* اسم الصف أصغر من عنوان البطاقة بطلب المستخدم: كان ٢٦px فيلتفّ على
    سطرين ويطغى على ما حوله. */
-.hh-t { font-size: 14px; font-weight: var(--fw-black); margin-top: 4px; }
+/* اسم الفصل يأخذ الذهبي الذي كان يحمله سطر المادة قبل إزالته — فيبقى
+   واضحاً أنه المحتوى لا العنوان، رغم أنه أصغر منه. */
+.hh-t {
+    font-size: 14px; font-weight: var(--fw-black);
+    margin-top: 7px; color: #C9A961;
+}
 .hh-cta {
     display: flex; align-items: center; justify-content: center;
-    margin-top: 15px;
+    margin-top: 18px;
     min-height: 55px;
     border-radius: 13px;
     background: #C9A961; color: var(--primary);
