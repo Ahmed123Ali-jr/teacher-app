@@ -1574,22 +1574,10 @@
         global.Modal.open({ title: 'إضافة ' + global.Words.studentsBare(), body: form });
     }
 
-    let _pdfJsPromise = null;
+    /* نسخة واحدة في PdfCore — كانت هذه الدالة مكرّرة حرفياً في ثلاثة
+       ملفات، وكلها تشير إلى CDN خارجي. */
     function ensurePdfJs() {
-        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
-        if (_pdfJsPromise) return _pdfJsPromise;
-        const base = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
-        _pdfJsPromise = new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = base + 'pdf.min.js';
-            s.onload = () => {
-                global.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
-                resolve(global.pdfjsLib);
-            };
-            s.onerror = () => reject(new Error('تعذّر تحميل مكتبة عرض PDF.'));
-            document.head.appendChild(s);
-        });
-        return _pdfJsPromise;
+        return global.PdfCore.ensurePdfJs();
     }
 
     function blobToDataUrl(blob) {

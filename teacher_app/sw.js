@@ -16,6 +16,17 @@
 const BUILD_ID   = '__BUILD_ID__';   // replaced at deploy time
 const CACHE_NAME = 'teacher-app-' + BUILD_ID;
 
+/* مكتبات vendor مثبّتة الإصدار، فمحتواها لا يتغيّر أبداً. لها مخزنها
+   المستقل الذي لا يُمسح مع كل نشر — وإلا أعاد المعلم تنزيل ١.٩ ميجا
+   بعد كل تحديث. يُرفع رقمه يدوياً عند ترقية أي مكتبة فقط. */
+const VENDOR_CACHE = 'teacher-app-vendor-1';
+const VENDOR_FILES = [
+    './vendor/html2canvas.min.js',
+    './vendor/jspdf.umd.min.js',
+    './vendor/pdf.min.js',
+    './vendor/pdf.worker.min.js'
+];
+
 /* Install: cache the shell so first-paint works offline. */
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
@@ -26,6 +37,19 @@ self.addEventListener('install', (event) => {
             // Pre-cache failures shouldn't block install — runtime caching will fill in.
         }
         await self.skipWaiting();
+
+        /* بعد skipWaiting عمداً: تنزيل ١.٩ ميجا يجب ألّا يؤخّر ظهور
+           التحديث. وفشله لا يكسر شيئاً — يبقى التصدير يحتاج إنترنت. */
+        try {
+            const vendor = await caches.open(VENDOR_CACHE);
+            const missing = [];
+            for (const f of VENDOR_FILES) {
+                if (!(await vendor.match(f))) missing.push(f);
+            }
+            if (missing.length) await vendor.addAll(missing);
+        } catch (e) {
+            // بلا إنترنت أو ملف ناقص — التخزين وقت التشغيل يكمل لاحقاً.
+        }
     })());
 });
 
@@ -34,7 +58,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
         const keys = await caches.keys();
         await Promise.all(keys
-            .filter((k) => k !== CACHE_NAME)
+            .filter((k) => k !== CACHE_NAME && k !== VENDOR_CACHE)
             .map((k) => caches.delete(k)));
         await self.clients.claim();
     })());
@@ -78,6 +102,20 @@ self.addEventListener('fetch', (event) => {
             const fresh = await networkPromise;
             if (fresh) return fresh;
             throw new Error('offline and no cached shell');
+        })());
+        return;
+    }
+
+    /* vendor: مخزن أولاً دائماً — إصداراتها مثبّتة فلا معنى لسؤال الشبكة،
+       وهذا ما يجعل التصدير يعمل بلا إنترنت. */
+    if (url.pathname.includes('/vendor/')) {
+        event.respondWith((async () => {
+            const cache  = await caches.open(VENDOR_CACHE);
+            const cached = await cache.match(req, { ignoreSearch: true });
+            if (cached) return cached;
+            const fresh = await fetch(req);
+            if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
+            return fresh;
         })());
         return;
     }

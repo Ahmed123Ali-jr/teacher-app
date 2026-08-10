@@ -27,9 +27,17 @@
     PAGE.CONTENT_W = PAGE.W - 2 * PAGE.MX;   // 680
     PAGE.CONTENT_H = PAGE.H - 2 * PAGE.MY;   // 987
 
+    /* مستضافة محلياً لا من CDN: معالج الخدمة يتخطّى الطلبات الخارجية
+       عمداً، فكانت كل عمليات التصدير تموت بلا إنترنت — وهذا واقعي داخل
+       مبنى مدرسة. ولازم أيضاً للنسخة المغلَّفة على آبل ستور. */
+    const VENDOR = 'vendor/';
     const CDN = {
-        html2canvas: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
-        jspdf:       'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+        html2canvas: VENDOR + 'html2canvas.min.js',
+        jspdf:       VENDOR + 'jspdf.umd.min.js'
+    };
+    const PDFJS = {
+        main:   VENDOR + 'pdf.min.js',
+        worker: VENDOR + 'pdf.worker.min.js'
     };
 
     function loadScript(src) {
@@ -52,6 +60,22 @@
                 .catch((e) => { _enginePromise = null; throw e; });
         }
         return _enginePromise;
+    }
+
+    let _pdfJsPromise = null;
+    /** pdf.js لعرض الملفات المرفوعة. كانت هذه الدالة منسوخة حرفياً في
+     *  ثلاثة ملفات — نسخة واحدة هنا تخدمها كلها. */
+    function ensurePdfJs() {
+        if (global.pdfjsLib) return Promise.resolve(global.pdfjsLib);
+        if (_pdfJsPromise) return _pdfJsPromise;
+        _pdfJsPromise = loadScript(PDFJS.main)
+            .then(() => {
+                if (!global.pdfjsLib) throw new Error('تعذّر تحميل مكتبة عرض PDF.');
+                global.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS.worker;
+                return global.pdfjsLib;
+            })
+            .catch(() => { _pdfJsPromise = null; throw new Error('تعذّر تحميل مكتبة عرض PDF.'); });
+        return _pdfJsPromise;
     }
 
     /** print.css كلّه داخل كتل @media print، فلا يسري على الشاشة. نعيد
@@ -381,8 +405,8 @@
     }
 
     global.PdfCore = {
-        PAGE, CDN,
-        loadScript, preloadPdfEngine, printCssForScreen, ensurePrintRoot,
+        PAGE, CDN, PDFJS,
+        loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
         createStage, settle, paginate, renderPdf, deliverPdf
     };

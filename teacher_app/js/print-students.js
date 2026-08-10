@@ -156,9 +156,11 @@
        فيختار المعلم «حفظ في الملفات» أو أي تطبيق. تُحمَّل المكتبتان من
        CDN عند الحاجة فقط (لا تؤثران على سرعة إقلاع التطبيق).
        ====================================================================== */
+    /* نفس ملفات vendor التي يستعملها PdfCore — بالمسار نفسه حرفياً حتى
+       يتعرّف loadScript على النسخة المحمَّلة فلا تُنزَّل مرتين. */
     const CDN = {
-        html2canvas: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
-        jspdf:       'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+        html2canvas: 'vendor/html2canvas.min.js',
+        jspdf:       'vendor/jspdf.umd.min.js'
     };
 
     function loadScript(src) {
