@@ -135,20 +135,30 @@
             return (d >= 0 && d <= 4) ? d : -1;
         })();
 
+        const editing = !!ctx.editing;
+
         container.innerHTML = `
-            <div class="container sched-v2">
+            <div class="container sched-v2${editing ? ' is-editing' : ''}">
                 <div class="sched-head">
                     <h2>📅 الجدول الأسبوعي</h2>
                     <button type="button" class="sched-time-btn" id="btn-times">توقيت الحصص</button>
+                    <button type="button" class="sched-time-btn sched-edit-btn${editing ? ' on' : ''}"
+                            id="btn-edit" aria-pressed="${editing}">
+                        ${editing ? '✓ تم' : '✎ تعديل'}
+                    </button>
                 </div>
 
                 ${ctx.classes.length === 0 ? classesEmptyHint() : ''}
 
-                ${renderGrid(grid, ctx.periods, ctx.classes, todayIdx)}
+                ${renderGrid(grid, ctx.periods, ctx.classes, todayIdx, editing)}
 
-                <p class="sched-hint">اضغط أي خانة لإضافة حصة أو تعديلها</p>
+                <p class="sched-hint">${editing
+                    ? 'اضغط أي خانة لإضافة حصة أو تعديلها'
+                    : 'الجدول مقفول — اضغط «تعديل» لتغييره'}</p>
 
-                <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
+                ${editing
+                    ? '<button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>'
+                    : ''}
             </div>
         `;
 
@@ -198,7 +208,7 @@
 
     /* الشبكة المعتمدة (البديل ب): الحصص صفوفٌ على اليمين والأيام أعمدة أعلى،
        الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وعمود اليوم الحالي ذهبي. */
-    function renderGrid(grid, periods, classes, todayIdx) {
+    function renderGrid(grid, periods, classes, todayIdx, editing) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
         return `
             <div class="sched-wrap">
@@ -223,8 +233,11 @@
                                     const tc = d.index === todayIdx ? ' is-today' : '';
                                     const attrs = `data-day="${d.index}" data-period="${p.n}"`;
                                     if (!cell) {
+                                        /* الخانة الفارغة بلا علامة خارج وضع التعديل:
+                                           «+» دعوةٌ للضغط، وهي ما جعلت الجدول يتغيّر
+                                           بلمسة عابرة. */
                                         return `<td class="sched-cell${tc}" ${attrs}>
-                                            <div class="sched-box empty">+</div>
+                                            <div class="sched-box empty">${editing ? '+' : ''}</div>
                                         </td>`;
                                     }
                                     const cls = classById[cell.class_id];
@@ -255,15 +268,24 @@
     }
 
     function bind(container, ctx) {
-        container.querySelectorAll('.sched-cell').forEach((td) => {
-            td.addEventListener('click', () => {
-                openCellEditor(
-                    Number(td.dataset.day),
-                    Number(td.dataset.period),
-                    ctx,
-                    container
-                );
+        /* الخانات لا تفتح المحرّر إلا في وضع التعديل — الحارس هنا لا في
+           الرسم وحده، حتى لا يفتحه ضغط على خانة معبّأة أيضاً. */
+        if (ctx.editing) {
+            container.querySelectorAll('.sched-cell').forEach((td) => {
+                td.addEventListener('click', () => {
+                    openCellEditor(
+                        Number(td.dataset.day),
+                        Number(td.dataset.period),
+                        ctx,
+                        container
+                    );
+                });
             });
+        }
+
+        container.querySelector('#btn-edit')?.addEventListener('click', () => {
+            ctx.editing = !ctx.editing;
+            paintView(container, ctx);
         });
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
