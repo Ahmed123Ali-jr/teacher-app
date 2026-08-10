@@ -444,7 +444,6 @@
                 <a href="#/class/${info.cls.id}" class="hh-body">
                     <div class="hh-l">${isNow ? 'حصتك الحالية' : 'حصتك القادمة'}</div>
                     <div class="hh-t">${esc(shortGrade(info.cls.grade))} / ${esc(info.cls.section)}</div>
-                    <div class="hh-s">${esc(info.cls.subject)} · حصة <span class="num">${info.period.n}</span></div>
                     ${progress}
                 </a>
                 <a href="#/class/${info.cls.id}/students" class="hh-cta">📋 سجل المتابعة</a>
