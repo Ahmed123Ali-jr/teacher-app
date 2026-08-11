@@ -98,12 +98,50 @@
         return Array.from(byKey.values()).sort((a, b) => b.times - a.times);
     }
 
+    /* سجلّات متفرّقة → صفّ واحد لكل مبادرة:
+       {key, name, brief, goal, steps, times, dates[], notes[], beneficiaries, evidence[]}
+       المخصَّصة تُجمَّع باسمها لأن مفتاحها واحد لكلّها. */
+    function groupInitiativeLogs(logs) {
+        const CUSTOM = global.Initiatives ? global.Initiatives.CUSTOM_KEY : '__custom__';
+        const byId = new Map();
+        for (const l of (logs || []).slice().sort((a, b) => String(a.date).localeCompare(b.date))) {
+            const isCustom = l.initiative_key === CUSTOM;
+            const id = isCustom ? CUSTOM + ':' + (l.custom_name || '') : l.initiative_key;
+            let g = byId.get(id);
+            if (!g) {
+                const meta = (!isCustom && global.Initiatives)
+                    ? global.Initiatives.get(l.initiative_key) : null;
+                g = {
+                    key: l.initiative_key,
+                    name: isCustom ? (l.custom_name || 'مبادرة خاصة')
+                                   : (meta ? meta.name : l.initiative_key),
+                    brief: meta ? meta.brief : '',
+                    goal:  meta ? meta.goal  : '',
+                    steps: meta ? meta.steps : [],
+                    times: 0, dates: [], notes: [], beneficiaries: 0, evidence: []
+                };
+                byId.set(id, g);
+            }
+            g.times++;
+            if (l.date) g.dates.push(l.date);
+            if (l.note) g.notes.push({ date: l.date, text: l.note });
+            if (typeof l.beneficiaries === 'number') g.beneficiaries += l.beneficiaries;
+            if (Array.isArray(l.evidence)) g.evidence.push(...l.evidence);
+        }
+        return Array.from(byId.values()).sort((a, b) => b.times - a.times);
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const portfolio  = await loadPortfolio(teacher.id);
-        const initiatives= await global.TeacherDB.getAllByIndex('initiatives', 'teacher_id', teacher.id);
+
+        /* المبادرات كالاستراتيجيات: تُبنى من سجلّ المعلّم وشواهده
+           (initiative_logs) لا من نصّ مولَّد. */
+        const initiatives = groupInitiativeLogs(
+            await global.TeacherDB.getAllByIndex('initiative_logs', 'teacher_id', teacher.id)
+        );
 
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
 

@@ -1,290 +1,445 @@
 /* ==========================================================================
-   views/portfolio-initiatives.js — Initiatives section (AI-powered).
-   Same pattern as strategies, different fields and report shape.
+   views/portfolio-initiatives.js — مكتبة المبادرات المدرسية.
+
+   بنفس نموذج مكتبة الاستراتيجيات: البطاقة تُفتح في مكانها بخطوات التنفيذ،
+   وزرّان أسفلها — «نفّذتها» يفتح لوحة التسجيل، و«شواهدي» يعرض ما سُجِّل.
+
+   الفرق عن الاستراتيجيات: المبادرة على مستوى المدرسة لا الفصل، فلا
+   class_id فيها ومكانها ملف الإنجاز لا صفحة الفصل. ومعها حقلان زائدان:
+   عدد المستفيدين (اختياري)، ومبادرة يكتبها المعلّم بنفسه إن لم يجد ما
+   نفّذه في القائمة.
    ========================================================================== */
 
 (function (global) {
     'use strict';
 
-    function escapeHtml(s) {
+    const BUCKET   = 'evidence';   // نفس مخزن شواهد الاستراتيجيات
+    const MAX_SIDE = 1280;
+
+    let _cat = 'all';
+    let _openKey = null;
+
+    function esc(s) {
         return String(s || '').replace(/[&<>"']/g, (m) => ({
             '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
         }[m]));
     }
-    function escapeAttr(s) { return escapeHtml(s); }
 
-    function formatDate(iso) {
-        if (!iso) return '';
+    function todayISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    function isoPlus(days) {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        return d.getFullYear() + '-' +
+               String(d.getMonth() + 1).padStart(2, '0') + '-' +
+               String(d.getDate()).padStart(2, '0');
+    }
+
+    function humanDate(iso) {
         try {
             return new Intl.DateTimeFormat('ar-SA', {
-                day: 'numeric', month: 'short', year: 'numeric'
-            }).format(new Date(iso));
+                weekday: 'long', day: 'numeric', month: 'long'
+            }).format(new Date(iso + 'T00:00:00'));
         } catch { return iso; }
     }
 
-    async function render(body, ctx) {
-        const items = ctx.initiatives.slice().sort((a, b) =>
-            (b.date || '').localeCompare(a.date || ''));
+    function timesWord(n) {
+        if (n === 0)  return 'لم تُنفَّذ';
+        if (n === 1)  return 'مرة';
+        if (n === 2)  return 'مرتان';
+        if (n <= 10)  return n + ' مرات';
+        return n + ' مرة';
+    }
 
-        body.innerHTML = `
-            <button class="btn btn-primary" id="add-init">+ إضافة مبادرة</button>
-            <div style="margin-top: var(--space-4);">
-                ${items.length === 0
-                    ? `<p class="text-muted">لا توجد مبادرات بعد. أضف مبادرتك التربوية وسيصنع الذكاء الاصطناعي تقريراً احترافياً لها.</p>`
-                    : items.map((s) => card(s)).join('')}
+    /* الصورة تُصغَّر قبل الرفع: صورة الكاميرا ٤ ميغابايت تصير نحو ١٥٠
+       كيلوبايت، فالرفع أسرع والمخزن أخفّ. */
+    function compress(file) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                const scale = Math.min(1, MAX_SIDE / Math.max(img.width, img.height));
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                c.getContext('2d').drawImage(img, 0, 0, w, h);
+                c.toBlob((b) => resolve(b || file), 'image/jpeg', 0.82);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+            img.src = url;
+        });
+    }
+
+    async function loadLogs(teacher) {
+        const rows = await global.TeacherDB.getAllByIndex('initiative_logs', 'teacher_id', teacher.id);
+        return rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    }
+
+    /* ---------- العرض ---------- */
+
+    async function render(panel, ctx) {
+        const teacher = ctx.teacher;
+        const logs = await loadLogs(teacher);
+
+        const counts = {};
+        logs.forEach((l) => { counts[l.initiative_key] = (counts[l.initiative_key] || 0) + 1; });
+
+        const cats = global.Initiatives.categories();
+        const list = _cat === 'all' ? global.Initiatives.all() : global.Initiatives.ofCategory(_cat);
+        const done = global.Initiatives.all().filter((x) => counts[x.key]).length;
+
+        /* المبادرات المخصَّصة تُعرض في بطاقات مستقلة أعلى القائمة —
+           ليست في الكتالوج فلا تظهر بالترشيح. */
+        const customLogs = logs.filter((l) => l.initiative_key === global.Initiatives.CUSTOM_KEY);
+        const customNames = [...new Set(customLogs.map((l) => l.custom_name).filter(Boolean))];
+
+        panel.innerHTML = `
+            <div class="stg-head">
+                <div class="stg-sum">
+                    <b class="num">${done}</b>
+                    <span>من ${global.Initiatives.all().length} مبادرة نفّذتها${
+                        customNames.length ? ` · و${customNames.length} مبادرة خاصة` : ''}</span>
+                </div>
+            </div>
+
+            <button type="button" class="stg-btn ghost ini-add" id="ini-custom">
+                + مبادرة ليست في القائمة
+            </button>
+
+            <div class="stg-fams">
+                <button type="button" class="stg-fam ${_cat === 'all' ? 'on' : ''}" data-cat="all">الكل</button>
+                ${cats.map((c) => `
+                    <button type="button" class="stg-fam ${_cat === c.key ? 'on' : ''}"
+                            data-cat="${c.key}">${c.icon} ${esc(c.label)}</button>
+                `).join('')}
+            </div>
+
+            <div class="stg-list">
+                ${_cat === 'all' ? customNames.map((n) =>
+                    customCardHtml(n, customLogs.filter((l) => l.custom_name === n).length)).join('') : ''}
+                ${list.map((x) => cardHtml(x, counts[x.key] || 0, cats)).join('')}
             </div>
         `;
 
-        body.querySelector('#add-init').addEventListener('click', () => openForm(ctx));
-
-        body.querySelectorAll('[data-init-view]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const id = btn.dataset.initView;
-                const row = await global.TeacherDB.get('initiatives', id);
-                if (row) openPreview(row);
-            });
-        });
-        body.querySelectorAll('[data-init-edit]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const id = btn.dataset.initEdit;
-                const row = await global.TeacherDB.get('initiatives', id);
-                if (row) openForm(ctx, row);
-            });
-        });
-        body.querySelectorAll('[data-init-del]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                if (!global.confirm('حذف هذه المبادرة؟')) return;
-                await global.TeacherDB.remove('initiatives', btn.dataset.initDel);
-                global.TeacherApp.toast('تم الحذف.', 'info');
-                ctx.refresh();
-            });
-        });
+        bind(panel, ctx, logs);
     }
 
-    function card(s) {
-        const imgs = Array.isArray(s.images) ? s.images.length : 0;
+    function iconOf(catKey, cats) {
+        const c = cats.find((x) => x.key === catKey);
+        return c ? c.icon : '💡';
+    }
+
+    function cardHtml(x, count, cats) {
+        const open = _openKey === x.key;
         return `
-            <article class="portfolio-card">
-                <div class="portfolio-card-header">
-                    <h4>${escapeHtml(s.name)}</h4>
-                    <div class="flex gap-2">
-                        <button class="btn btn-ghost btn-sm" data-init-view="${s.id}">👁️</button>
-                        <button class="btn btn-ghost btn-sm" data-init-edit="${s.id}">✏️</button>
-                        <button class="btn btn-ghost btn-sm" data-init-del="${s.id}">🗑️</button>
+            <div class="stg-card ${open ? 'open' : ''}" data-key="${x.key}">
+                <button type="button" class="stg-top" data-toggle>
+                    <span class="ic">${iconOf(x.cat, cats)}</span>
+                    <span class="tx">
+                        <span class="nm">${esc(x.name)}</span>
+                        <span class="sub">${esc(x.brief)}</span>
+                    </span>
+                    <span class="badge ${count ? 'done' : 'none'}">${esc(timesWord(count))}</span>
+                </button>
+                ${open ? `
+                    <p class="ini-goal">🎯 ${esc(x.goal)}</p>
+                    <ol class="stg-steps">
+                        ${x.steps.map((t) => `<li>${esc(t)}</li>`).join('')}
+                    </ol>
+                    <div class="ini-ev">
+                        <b>شواهد مقترحة:</b> ${x.evidence.map(esc).join(' · ')}
                     </div>
-                </div>
-                <div class="portfolio-card-meta">
-                    <span>📅 ${formatDate(s.date)}</span>
-                    ${s.audience ? `<span>🎯 ${escapeHtml(s.audience)}</span>` : ''}
-                    ${s.beneficiaries ? `<span>👥 ${escapeHtml(String(s.beneficiaries))} مستفيد</span>` : ''}
-                    ${imgs ? `<span>🖼️ ${imgs}</span>` : ''}
-                    ${s.report ? '<span class="badge badge-success">✓ تقرير</span>' : ''}
-                </div>
-            </article>
+                    <div class="stg-act">
+                        <button type="button" class="stg-btn main" data-apply>✓ نفّذتها</button>
+                        <button type="button" class="stg-btn ghost" data-mine
+                                ${count ? '' : 'disabled'}>شواهدي (${count})</button>
+                    </div>` : ''}
+            </div>
         `;
     }
 
-    function openForm(ctx, existing) {
-        const form = document.createElement('div');
-        const draft = existing
-            ? JSON.parse(JSON.stringify({ ...existing, images: [] }))
-            : { name: '', date: '', audience: '', beneficiaries: '', description: '', images: [], report: null };
-        if (existing) draft.images = existing.images || [];
+    /* بطاقة مبادرة كتبها المعلّم: بلا خطوات ولا شواهد مقترحة — الكتالوج
+       لا يعرفها، فلا نخترع لها محتوى. */
+    function customCardHtml(name, count) {
+        const key = 'custom:' + name;
+        const open = _openKey === key;
+        return `
+            <div class="stg-card ${open ? 'open' : ''}" data-custom="${esc(name)}" data-key="${esc(key)}">
+                <button type="button" class="stg-top" data-toggle>
+                    <span class="ic">✍️</span>
+                    <span class="tx">
+                        <span class="nm">${esc(name)}</span>
+                        <span class="sub">مبادرة خاصة بك</span>
+                    </span>
+                    <span class="badge done">${esc(timesWord(count))}</span>
+                </button>
+                ${open ? `
+                    <div class="stg-act">
+                        <button type="button" class="stg-btn main" data-apply>✓ نفّذتها مرة أخرى</button>
+                        <button type="button" class="stg-btn ghost" data-mine>شواهدي (${count})</button>
+                    </div>` : ''}
+            </div>
+        `;
+    }
 
-        let step = existing ? 2 : 1;
+    function bind(panel, ctx, logs) {
+        panel.querySelectorAll('[data-cat]').forEach((b) => {
+            b.addEventListener('click', () => {
+                _cat = b.dataset.cat;
+                _openKey = null;
+                render(panel, ctx);
+            });
+        });
+
+        panel.querySelector('#ini-custom')?.addEventListener('click', () =>
+            openLogSheet(panel, ctx, global.Initiatives.CUSTOM_KEY, null, ''));
+
+        panel.querySelectorAll('.stg-card').forEach((card) => {
+            const key = card.dataset.key;
+            const customName = card.dataset.custom || '';
+            const isCustom = !!customName;
+            const realKey = isCustom ? global.Initiatives.CUSTOM_KEY : key;
+
+            card.querySelector('[data-toggle]')?.addEventListener('click', () => {
+                _openKey = _openKey === key ? null : key;
+                render(panel, ctx);
+            });
+            card.querySelector('[data-apply]')?.addEventListener('click', () =>
+                openLogSheet(panel, ctx, realKey, null, customName));
+            card.querySelector('[data-mine]')?.addEventListener('click', () =>
+                openMineSheet(panel, ctx, realKey, logs.filter((l) =>
+                    l.initiative_key === realKey &&
+                    (!isCustom || l.custom_name === customName))));
+        });
+    }
+
+    /* ---------- لوحة التسجيل ---------- */
+
+    function openLogSheet(panel, ctx, key, existing, customName) {
+        const isCustom = key === global.Initiatives.CUSTOM_KEY;
+        const x = isCustom ? null : global.Initiatives.get(key);
+
+        const pick = {
+            date: existing ? existing.date : todayISO(),
+            note: existing ? (existing.note || '') : '',
+            name: existing ? (existing.custom_name || '') : (customName || ''),
+            ben:  existing && existing.beneficiaries != null ? String(existing.beneficiaries) : ''
+        };
+        let files = [];
+        let saving = false;
+        const QUICK = [
+            { d: todayISO(),  label: 'اليوم' },
+            { d: isoPlus(-1), label: 'أمس' },
+            { d: isoPlus(-7), label: 'الأسبوع الماضي' }
+        ];
+        let custom = !QUICK.some((q) => q.d === pick.date);
+
+        const body = document.createElement('div');
+        body.className = 'sch-sheet';
         paint();
 
-        function paint() { step === 1 ? paintStep1() : paintStep2(); }
+        function paint() {
+            body.innerHTML = `
+                ${isCustom ? `
+                    <div class="sch-lbl">اسم المبادرة</div>
+                    <input type="text" class="input" id="ini-name" maxlength="80"
+                           placeholder="مثال: ركن الابتكار" value="${esc(pick.name)}">
+                ` : ''}
 
-        function paintStep1() {
-            form.innerHTML = `
-                <div class="field">
-                    <label class="label">اسم المبادرة *</label>
-                    <input class="input" id="i-name" required
-                           placeholder="مثلاً: مبادرة قارئ الشهر"
-                           value="${escapeAttr(draft.name)}">
+                <div class="sch-lbl"${isCustom ? ' style="margin-top:15px"' : ''}>متى نفّذتها؟</div>
+                <div class="sch-chips">
+                    ${QUICK.map((q) => `
+                        <button type="button" class="sch-chip ${!custom && pick.date === q.d ? 'on' : ''}"
+                                data-quick="${q.d}">${q.label}</button>
+                    `).join('')}
+                    <button type="button" class="sch-chip ${custom ? 'on' : ''}" data-other>✎ تاريخ آخر</button>
                 </div>
-                <div class="grid grid-2">
-                    <div class="field">
-                        <label class="label">تاريخ التنفيذ *</label>
-                        <input class="input" id="i-date" type="date" required
-                               value="${draft.date || ''}">
-                    </div>
-                    <div class="field">
-                        <label class="label">عدد المستفيدين</label>
-                        <input class="input" id="i-ben" type="text"
-                               placeholder="مثلاً: 30"
-                               value="${escapeAttr(String(draft.beneficiaries || ''))}">
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="label">الفئة المستهدفة</label>
-                    <input class="input" id="i-aud" placeholder="طلاب الصف الثاني / أولياء الأمور / ..."
-                           value="${escapeAttr(draft.audience || '')}">
-                </div>
-                <div class="field">
-                    <label class="label">وصف المبادرة (اختياري)</label>
-                    <textarea class="textarea" id="i-desc" rows="4">${escapeHtml(draft.description)}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">الصور (حتى ٥)</label>
-                    <input class="input" id="i-images" type="file" accept="image/*" multiple>
-                    <div class="field-hint">الصور حالياً: ${draft.images.length}</div>
-                </div>
+                ${custom ? `<input type="date" class="input" id="ini-date" max="${todayISO()}"
+                                   value="${esc(pick.date)}" style="margin-bottom:13px">` : ''}
 
-                <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                    <button class="btn btn-primary" id="gen">${existing?.report ? 'إعادة توليد' : '✨ توليد التقرير'}</button>
-                    ${existing ? '<button class="btn btn-secondary" id="save-only">حفظ فقط</button>' : ''}
-                    <button class="btn btn-ghost" data-modal-close>إلغاء</button>
-                </div>
+                <div class="sch-lbl">عدد المستفيدين (اختياري)</div>
+                <input type="number" class="input" id="ini-ben" min="0" max="99999"
+                       inputmode="numeric" placeholder="مثال: ٤٥" value="${esc(pick.ben)}">
+
+                <div class="sch-lbl" style="margin-top:15px">ملاحظة (اختياري)</div>
+                <input type="text" class="input" id="ini-note" maxlength="200"
+                       placeholder="ما الذي نفّذته بالضبط؟" value="${esc(pick.note)}">
+
+                <div class="sch-lbl" style="margin-top:15px">الشواهد</div>
+                <button type="button" class="stg-drop" id="ini-pick">📷 أضف صور التنفيذ</button>
+                <input type="file" id="ini-file" accept="image/*" multiple hidden>
+                <p class="stg-warn">🔒 الشواهد خاصة بك وحدك. وإن ظهر فيها طلاب،
+                   فتصويرهم تحكمه أنظمة الوزارة وموافقة أولياء الأمور — والأسلم
+                   توثيق اللوحات أو الأعمال دون وجوه.</p>
+                <div class="stg-thumbs" id="ini-thumbs"></div>
+
+                <button type="button" class="fsave" id="ini-save">💾 حفظ الشاهد</button>
             `;
-
-            form.querySelector('#i-images').addEventListener('change', (e) => {
-                const files = Array.from(e.target.files).slice(0, 5);
-                for (const f of files) {
-                    if (f.size > 5 * 1024 * 1024) continue;
-                    draft.images.push(f);
-                }
-                form.querySelector('.field-hint').textContent = 'الصور حالياً: ' + draft.images.length;
+            body.querySelector('#ini-name')?.addEventListener('input', (e) => { pick.name = e.target.value; });
+            body.querySelector('#ini-note').addEventListener('input', (e) => { pick.note = e.target.value; });
+            body.querySelector('#ini-ben').addEventListener('input', (e) => { pick.ben = e.target.value; });
+            body.querySelector('#ini-date')?.addEventListener('input', (e) => {
+                if (e.target.value) pick.date = e.target.value;
             });
-
-            form.querySelector('#gen').addEventListener('click', async () => {
-                if (!collect()) return;
-                const btn = form.querySelector('#gen');
-                btn.disabled = true; btn.innerHTML = '⏳ جارٍ التوليد...';
-                try {
-                    draft.report = await global.AI.generateInitiativeReport({
-                        name: draft.name, date: draft.date,
-                        audience: draft.audience, beneficiaries: draft.beneficiaries,
-                        description: draft.description, image_count: draft.images.length
-                    });
-                    step = 2;
-                    paint();
-                } catch (err) {
-                    global.TeacherApp.toast(err.message, 'error');
-                    btn.disabled = false;
-                    btn.innerHTML = '✨ توليد التقرير';
-                }
-            });
-
-            form.querySelector('#save-only')?.addEventListener('click', async () => {
-                if (!collect()) return;
-                await persist();
-            });
+            paintThumbs();
         }
 
-        function collect() {
-            draft.name    = form.querySelector('#i-name').value.trim();
-            draft.date    = form.querySelector('#i-date').value;
-            draft.audience= form.querySelector('#i-aud').value.trim();
-            draft.beneficiaries = form.querySelector('#i-ben').value.trim();
-            draft.description = form.querySelector('#i-desc').value.trim();
-            if (!draft.name || !draft.date) {
-                global.TeacherApp.toast('الاسم والتاريخ مطلوبان.', 'warning');
-                return false;
+        function paintThumbs() {
+            const box = body.querySelector('#ini-thumbs');
+            if (!box) return;
+            box.innerHTML = files.map((f, i) => `
+                <span class="stg-thumb">
+                    <img src="${URL.createObjectURL(f)}" alt="">
+                    <button type="button" class="x" data-rm="${i}">✕</button>
+                </span>
+            `).join('');
+        }
+
+        body.addEventListener('click', async (e) => {
+            const q = e.target.closest('[data-quick]');
+            if (q) { pick.date = q.dataset.quick; custom = false; return paint(); }
+            if (e.target.closest('[data-other]')) { custom = true; return paint(); }
+
+            const rm = e.target.closest('[data-rm]');
+            if (rm) { files.splice(Number(rm.dataset.rm), 1); return paintThumbs(); }
+
+            if (e.target.closest('#ini-pick')) return body.querySelector('#ini-file').click();
+
+            if (!e.target.closest('#ini-save') || saving) return;
+
+            const name = String(pick.name || '').trim();
+            if (isCustom && !name) {
+                return global.TeacherApp.toast('اكتب اسم المبادرة أولاً.', 'warning', 3000);
             }
-            return true;
-        }
+            saving = true;
 
-        function paintStep2() {
-            const r = draft.report || {};
-            form.innerHTML = `
-                <p class="text-muted" style="font-size:var(--fs-sm); margin-bottom:var(--space-4);">
-                    راجع التقرير المُولَّد وعدّله.
-                </p>
-                <div class="field">
-                    <label class="label">المقدمة</label>
-                    <textarea class="textarea" data-r="introduction" rows="3">${escapeHtml(r.introduction || '')}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">الأهداف (كل هدف في سطر)</label>
-                    <textarea class="textarea" data-r="goals" rows="4">${escapeHtml((r.goals || []).join('\n'))}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">التنفيذ</label>
-                    <textarea class="textarea" data-r="execution" rows="3">${escapeHtml(r.execution || '')}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">النتائج</label>
-                    <textarea class="textarea" data-r="results" rows="3">${escapeHtml(r.results || '')}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">الأثر</label>
-                    <textarea class="textarea" data-r="impact" rows="3">${escapeHtml(r.impact || '')}</textarea>
-                </div>
+            const teacher = await global.Auth.currentTeacher();
+            const paths = existing ? (existing.evidence || []).slice() : [];
 
-                <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                    <button class="btn btn-primary" id="save-final">💾 حفظ في الملف</button>
-                    <button class="btn btn-ghost" id="back-step1">← رجوع</button>
-                    <button class="btn btn-ghost" data-modal-close>إلغاء</button>
-                </div>
-            `;
+            const btn = body.querySelector('#ini-save');
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    btn.textContent = `⏳ رفع الصورة ${i + 1} من ${files.length}…`;
+                    const blob = await compress(files[i]);
+                    /* المسار يبدأ بمعرّف المعلم — سياسة المخزن تشترطه. */
+                    const path = `${teacher.id}/ini-${Date.now()}-${i}.jpg`;
+                    const { error } = await global.SB.storage
+                        .from(BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+                    if (error) throw error;
+                    paths.push(path);
+                }
+            } catch (err) {
+                saving = false;
+                btn.textContent = '💾 حفظ الشاهد';
+                return global.TeacherApp.toast('تعذّر رفع الصورة: ' + err.message, 'error', 6000);
+            }
 
-            form.querySelector('#save-final').addEventListener('click', async () => {
-                const r = {};
-                form.querySelectorAll('[data-r]').forEach((el) => { r[el.dataset.r] = el.value.trim(); });
-                r.goals = String(r.goals || '').split('\n').map((s) => s.trim()).filter(Boolean);
-                draft.report = r;
-                await persist();
-            });
-            form.querySelector('#back-step1').addEventListener('click', () => { step = 1; paint(); });
-        }
-
-        async function persist() {
+            const ben = parseInt(pick.ben, 10);
             const row = {
-                ...draft,
-                teacher_id: ctx.teacher.id,
-                updated_at: new Date().toISOString(),
-                created_at: existing?.created_at || new Date().toISOString()
+                teacher_id:     teacher.id,
+                initiative_key: key,
+                custom_name:    isCustom ? name : null,
+                date:           pick.date,
+                note:           String(pick.note || '').trim(),
+                beneficiaries:  Number.isFinite(ben) && ben >= 0 ? ben : null,
+                evidence:       paths,
+                updated_at:     new Date().toISOString()
             };
             if (existing) row.id = existing.id;
-            await global.TeacherDB.put('initiatives', row);
+            else row.created_at = new Date().toISOString();
+
             global.Modal.close();
-            global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
-            ctx.refresh();
-        }
-
-        global.Modal.open({
-            title: existing ? 'تعديل المبادرة' : 'إضافة مبادرة جديدة',
-            body: form
+            global.TeacherApp.toast('تم تسجيل المبادرة ✅', 'success', 1400);
+            try {
+                if (existing) await global.TeacherDB.put('initiative_logs', row);
+                else await global.TeacherDB.add('initiative_logs', row);
+            } catch (err) {
+                return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
+            }
+            _openKey = null;
+            await render(panel, ctx);
+            if (ctx.refresh) ctx.refresh();
         });
+
+        body.addEventListener('change', (e) => {
+            if (e.target.id !== 'ini-file') return;
+            files = files.concat(Array.from(e.target.files || []));
+            e.target.value = '';
+            paintThumbs();
+        });
+
+        const title = isCustom
+            ? (pick.name ? '✓ ' + pick.name : '✍️ مبادرة جديدة')
+            : '✓ ' + (x ? x.name : 'تسجيل مبادرة');
+        global.Modal.open({ title, body });
     }
 
-    function openPreview(s) {
-        const r = s.report || {};
-        const box = document.createElement('div');
-        box.innerHTML = `
-            <h3 style="margin-top:0; color: var(--primary);">${escapeHtml(s.name)}</h3>
-            <div class="text-muted" style="font-size:var(--fs-sm); margin-bottom:var(--space-4);">
-                📅 ${formatDate(s.date)}
-                ${s.audience ? ' · 🎯 ' + escapeHtml(s.audience) : ''}
-                ${s.beneficiaries ? ' · 👥 ' + escapeHtml(String(s.beneficiaries)) + ' مستفيد' : ''}
-            </div>
+    /* ---------- شواهدي ---------- */
 
-            ${r.introduction ? block('المقدمة', r.introduction) : ''}
-            ${Array.isArray(r.goals) && r.goals.length
-                ? `<h4>الأهداف</h4><ul>${r.goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`
-                : ''}
-            ${r.execution ? block('التنفيذ', r.execution) : ''}
-            ${r.results   ? block('النتائج', r.results) : ''}
-            ${r.impact    ? block('الأثر', r.impact) : ''}
+    async function openMineSheet(panel, ctx, key, rows) {
+        const label = key === global.Initiatives.CUSTOM_KEY
+            ? (rows[0] && rows[0].custom_name) || 'مبادرة خاصة'
+            : global.Initiatives.nameOf(key);
 
-            ${(s.images || []).length ? `
-                <h4>الصور</h4>
-                <div class="image-grid">
-                    ${s.images.map((blob) => `<img src="${URL.createObjectURL(blob)}" alt="" loading="lazy">`).join('')}
+        const body = document.createElement('div');
+        body.className = 'sch-sheet';
+        body.innerHTML = `<p class="dp-hint">جارٍ تحميل الشواهد…</p>`;
+        global.Modal.open({ title: '📎 ' + label, body });
+
+        /* روابط موقّتة: المخزن خاص فلا تُفتح صوره برابط مباشر. */
+        const withUrls = await Promise.all(rows.map(async (r) => {
+            const urls = await Promise.all((r.evidence || []).map(async (p) => {
+                try {
+                    const { data } = await global.SB.storage.from(BUCKET).createSignedUrl(p, 3600);
+                    return data ? data.signedUrl : null;
+                } catch { return null; }
+            }));
+            return { row: r, urls: urls.filter(Boolean) };
+        }));
+
+        body.innerHTML = withUrls.map(({ row, urls }) => `
+            <div class="stg-log" data-log="${row.id}">
+                <div class="stg-log-h">
+                    <b>${esc(humanDate(row.date))}</b>
+                    ${row.beneficiaries != null
+                        ? `<span class="ini-ben num">👥 ${row.beneficiaries}</span>` : ''}
+                    <button type="button" class="x" data-del="${row.id}">🗑️</button>
                 </div>
-            ` : ''}
-
-            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button class="btn btn-ghost" data-modal-close>إغلاق</button>
+                ${row.note ? `<p class="stg-log-n">${esc(row.note)}</p>` : ''}
+                ${urls.length ? `<div class="stg-thumbs">
+                    ${urls.map((u) => `<a class="stg-thumb" href="${esc(u)}" target="_blank" rel="noopener">
+                        <img src="${esc(u)}" alt=""></a>`).join('')}
+                </div>` : '<p class="stg-log-n">بلا صور</p>'}
             </div>
-        `;
-        global.Modal.open({ title: 'عرض المبادرة', body: box });
-    }
+        `).join('') || '<p class="dp-hint">لا شواهد بعد.</p>';
 
-    function block(title, text) {
-        return `<h4>${title}</h4><p>${String(text || '').split('\n').map(escapeHtml).join('<br>')}</p>`;
+        body.addEventListener('click', async (e) => {
+            const d = e.target.closest('[data-del]');
+            if (!d) return;
+            if (!global.confirm('حذف هذا الشاهد؟')) return;
+            const row = rows.find((r) => r.id === d.dataset.del);
+            global.Modal.close();
+            global.TeacherApp.toast('تم الحذف.', 'info', 1200);
+            try {
+                /* الصور تُحذف من المخزن أيضاً — لا تتتالى مع حذف الصف. */
+                if (row && row.evidence && row.evidence.length) {
+                    await global.SB.storage.from(BUCKET).remove(row.evidence);
+                }
+                await global.TeacherDB.remove('initiative_logs', d.dataset.del);
+            } catch (err) {
+                global.TeacherApp.toast('تعذّر الحذف: ' + err.message, 'error', 6000);
+            }
+            _openKey = null;
+            await render(panel, ctx);
+            if (ctx.refresh) ctx.refresh();
+        });
     }
 
     global.PortfolioInitiatives = { render };

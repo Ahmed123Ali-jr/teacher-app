@@ -57,8 +57,11 @@
                 }
             }
         };
+        /* المبادرات صارت سجلّاً بشواهد في المخزن كالاستراتيجيات، فتُوقَّع
+           مثلها. وcollect باقٍ للصفوف القديمة التي تحمل images محلية. */
         collect(initiatives);
         await signEvidence(strategies);
+        await signEvidence(initiatives);
 
         const root = ensurePrintRoot();
         root.innerHTML = '<p style="padding:20mm; text-align:center;">⏳ جارٍ تحضير ملف الطباعة (تحويل الملفات والصور)...</p>';
@@ -105,6 +108,7 @@
             }
         }
         await signEvidence(ctx.strategies || []);
+        await signEvidence(ctx.initiatives || []);
 
         let stage = null;
         try {
@@ -955,29 +959,45 @@
         `;
     }
 
-    function initiativeBlock(s) {
-        const r = s.report || {};
+    /* المبادرة تُطبع من سجلّ المعلّم لا من نصّ مولَّد — كأختها
+       strategyBlock. المخصَّصة بلا خطوات، فتُطبع بما سجّله وحده. */
+    function initiativeBlock(g) {
+        const first = (g.dates || [])[0];
+        const last  = (g.dates || [])[(g.dates || []).length - 1];
+        const span  = !first ? '' : (first === last ? formatDate(first)
+                                   : formatDate(first) + ' — ' + formatDate(last));
+        const times = g.times === 1 ? 'مرة واحدة'
+                    : g.times === 2 ? 'مرتان' : g.times + ' مرات';
         return `
             <article class="report-article avoid-break">
-                <h3>${escapeHtml(s.name)}</h3>
+                <h3>${escapeHtml(g.name)}</h3>
                 <div class="meta-line">
-                    📅 ${formatDate(s.date)}
-                    ${s.audience ? ' · 🎯 ' + escapeHtml(s.audience) : ''}
-                    ${s.beneficiaries ? ' · 👥 ' + escapeHtml(String(s.beneficiaries)) + ' مستفيد' : ''}
+                    🔁 نُفِّذت ${escapeHtml(times)}
+                    ${span ? ' · 📅 ' + escapeHtml(span) : ''}
+                    ${g.beneficiaries ? ' · 👥 ' + escapeHtml(String(g.beneficiaries)) + ' مستفيد' : ''}
                 </div>
 
-                ${r.introduction ? `<h4>المقدمة</h4><p>${escapeHtml(r.introduction).split('\n').join('<br>')}</p>` : ''}
-                ${Array.isArray(r.goals) && r.goals.length
-                    ? `<h4>الأهداف</h4><ul>${r.goals.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`
+                ${g.goal  ? `<h4>الهدف</h4><p>${escapeHtml(g.goal)}</p>` : ''}
+                ${g.brief && !g.goal ? `<h4>عن المبادرة</h4><p>${escapeHtml(g.brief)}</p>` : ''}
+                ${Array.isArray(g.steps) && g.steps.length
+                    ? `<h4>خطوات التنفيذ</h4><ol>${g.steps.map((st) => `<li>${escapeHtml(st)}</li>`).join('')}</ol>`
                     : ''}
-                ${r.execution ? `<h4>التنفيذ</h4><p>${escapeHtml(r.execution).split('\n').join('<br>')}</p>` : ''}
-                ${r.results   ? `<h4>النتائج</h4><p>${escapeHtml(r.results).split('\n').join('<br>')}</p>` : ''}
-                ${r.impact    ? `<h4>الأثر</h4><p>${escapeHtml(r.impact).split('\n').join('<br>')}</p>` : ''}
+                ${Array.isArray(g.notes) && g.notes.length ? `
+                    <h4>سجلّ التنفيذ</h4>
+                    <table class="mini-table">
+                        <thead><tr><th>التاريخ</th><th>ما نُفِّذ</th></tr></thead>
+                        <tbody>${g.notes.map((n) => `
+                            <tr>
+                                <td>${escapeHtml(formatDate(n.date))}</td>
+                                <td>${escapeHtml(n.text)}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>` : ''}
 
-                ${(s.imageUrls || []).length ? `
-                    <h4>الصور</h4>
+                ${(g.imageUrls || []).length ? `
+                    <h4>الشواهد</h4>
                     <div class="print-image-grid">
-                        ${s.imageUrls.map((u) => `<img src="${u}" alt="">`).join('')}
+                        ${g.imageUrls.map((u) => `<img src="${u}" alt="">`).join('')}
                     </div>
                 ` : ''}
             </article>
