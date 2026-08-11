@@ -8,7 +8,6 @@
 
     const STAGE_ORDER  = ['primary', 'intermediate', 'secondary'];
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
-    const STAGE_ICONS  = { primary: '🏫', intermediate: '📘', secondary: '🎓' };
 
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
@@ -42,22 +41,21 @@
 
         const sections = STAGE_ORDER
             .filter((s) => buckets[s].length > 0)
-            .map((s) => sectionHtml(STAGE_LABELS[s], STAGE_ICONS[s], buckets[s]));
+            .map((s) => sectionHtml(STAGE_LABELS[s], buckets[s]));
 
         if (buckets.other.length) {
-            sections.push(sectionHtml('أخرى', '📚', buckets.other));
+            sections.push(sectionHtml('أخرى', buckets.other));
         }
 
         /* زر الإضافة أعلى الصفحة وحده — تكراره أسفل البطاقات كان يشتّت. */
         return sections.join('');
     }
 
-    /* لافتة المرحلة: الاسم وحده. العدد أُسقط — الفصول تحته معدودة بالنظر. */
-    function sectionHtml(label, icon, list) {
+    /* لافتة المرحلة: الاسم وحده — بلا أيقونة ولا عدد. */
+    function sectionHtml(label, list) {
         return `
             <div class="classes-stage-group">
                 <h3 class="cl-stage">
-                    <span>${icon}</span>
                     <b>${label}</b>
                 </h3>
                 ${list.map(classRowHtml).join('')}
