@@ -41,6 +41,14 @@
         return `${n} قسماً`;
     }
 
+    function initiativesWord(n) {
+        if (n === 0) return '٣٠ مبادرة جاهزة';
+        if (n === 1) return 'مبادرة واحدة نُفِّذت';
+        if (n === 2) return 'مبادرتان نُفِّذتا';
+        if (n <= 10) return `${n} مبادرات نُفِّذت`;
+        return `${n} مبادرة نُفِّذت`;
+    }
+
     function evidenceWord(n) {
         if (n === 0) return 'لا شواهد';
         if (n === 1) return 'شاهد واحد';
@@ -52,12 +60,14 @@
     /* الشواهد موزّعة على مخازن عدّة: بعضها في صف ملف الإنجاز وبعضها يُجمع
        من فصول المعلم — نعدّها كلها كي يرى رقماً يمثّل ملفه فعلاً. */
     async function collectStats(teacher) {
+        /* الاستراتيجيات والمبادرات تُقرآن من سجلّاتهما لا من الجدولين
+           القديمين المولَّدين — هذان صارا فارغين، فكان العدّ يُسقطهما. */
         const [portfolio, strategies, initiatives, classes, reminders] = await Promise.all([
             global.TeacherDB.get('portfolio', teacher.id),
-            global.TeacherDB.getAllByIndex('strategies',  'teacher_id', teacher.id),
-            global.TeacherDB.getAllByIndex('initiatives', 'teacher_id', teacher.id),
-            global.TeacherDB.getAllByIndex('classes',     'teacher_id', teacher.id),
-            global.TeacherDB.getAllByIndex('reminders',   'teacher_id', teacher.id)
+            global.TeacherDB.getAllByIndex('strategy_logs',   'teacher_id', teacher.id),
+            global.TeacherDB.getAllByIndex('initiative_logs', 'teacher_id', teacher.id),
+            global.TeacherDB.getAllByIndex('classes',         'teacher_id', teacher.id),
+            global.TeacherDB.getAllByIndex('reminders',       'teacher_id', teacher.id)
         ]);
 
         const perClass = await Promise.all(classes.map((c) => Promise.all([
@@ -87,7 +97,12 @@
             evidence: buckets.reduce((a, b) => a + b, 0),
             sections: filled,
             updated:  p.updated_at || null,
-            reminders: reminders.filter((r) => !r.done && r.date >= today).length
+            reminders: reminders.filter((r) => !r.done && r.date >= today).length,
+            /* المبادرات المختلفة لا عدد مرات التنفيذ — المهم التنوّع. */
+            initiatives: new Set(initiatives.map((r) =>
+                r.initiative_key === '__custom__'
+                    ? '__custom__:' + (r.custom_name || '')
+                    : r.initiative_key)).size
         };
     }
 
@@ -123,6 +138,11 @@
                         <span class="ic">📊</span>
                         <span class="t">التقارير</span>
                         <span class="h">الحضور والتقييمات</span>
+                    </a>
+                    <a href="#/initiatives" class="enjaz-tile wide">
+                        <span class="ic">🌟</span>
+                        <span class="t">المبادرات</span>
+                        <span class="h">${escapeHtml(initiativesWord(s.initiatives))}</span>
                     </a>
                 </div>
 

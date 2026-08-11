@@ -3946,6 +3946,10 @@ body.drawer-open { overflow: hidden; }
 
 /* المربّعان والصفّ — نفس مادة بطاقات الفصول الرصاصية. */
 .enjaz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* المبادرات ثالثة في شبكة من عمودين، فتمتدّ عبرهما بدل أن تترك فراغاً
+   بجانبها — والامتداد يعطيها بروزاً يناسب كونها الأحدث. */
+.enjaz-tile.wide { grid-column: 1 / -1; }
 .enjaz-tile,
 .enjaz-row {
     text-decoration: none;

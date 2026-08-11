@@ -26,6 +26,7 @@
         { pattern: /^\/reports$/,                  view: 'reports',   auth: true, chrome: true },
         { pattern: /^\/classes$/,                  view: 'classes',   auth: true, chrome: true },
         { pattern: /^\/shortcuts$/,                view: 'shortcuts', auth: true, chrome: true },
+        { pattern: /^\/initiatives$/,              view: 'initiatives', auth: true, chrome: true },
         { pattern: /^\/profile$/,                  view: 'profile',   auth: true, chrome: true }
     ];
 
@@ -173,6 +174,27 @@
                 const el = document.getElementById('view-classes');
                 el.hidden = false;
                 await global.ClassesView.render(el);
+                await updateHeaderName();
+                break;
+            }
+            case 'initiatives': {
+                /* مكتبة المبادرات صفحة مستقلة أيضاً: الوصول إليها من
+                   «إنجاز» بضغطة واحدة بدل فتح ملف الإنجاز ثم نشر قسمها.
+                   نفس المكوّن يخدم الموضعين. */
+                const el = document.getElementById('view-initiatives');
+                el.hidden = false;
+                el.innerHTML = `
+                    <div class="container">
+                        <div class="section-header classes-header" style="margin-top: var(--space-6);">
+                            <h2 class="section-title">المبادرات</h2>
+                            <a href="#/shortcuts" class="btn-add-gray">← إنجاز</a>
+                        </div>
+                        <div id="ini-panel"></div>
+                    </div>`;
+                await global.PortfolioInitiatives.render(
+                    el.querySelector('#ini-panel'),
+                    { teacher: await global.Auth.currentTeacher() }
+                );
                 await updateHeaderName();
                 break;
             }
