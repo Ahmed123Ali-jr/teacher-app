@@ -117,39 +117,33 @@
                 <button type="button" class="stg-fam ${_cat === 'all' ? 'on' : ''}" data-cat="all">الكل</button>
                 ${cats.map((c) => `
                     <button type="button" class="stg-fam ${_cat === c.key ? 'on' : ''}"
-                            data-cat="${c.key}">${c.icon} ${esc(c.label)}</button>
+                            data-cat="${c.key}">${esc(c.label)}</button>
                 `).join('')}
             </div>
 
             <div class="stg-list">
                 ${_cat === 'all' ? customNames.map((n) =>
                     customCardHtml(n, customLogs.filter((l) => l.custom_name === n).length)).join('') : ''}
-                ${list.map((x) => cardHtml(x, counts[x.key] || 0, cats)).join('')}
+                ${list.map((x) => cardHtml(x, counts[x.key] || 0)).join('')}
             </div>
         `;
 
         bind(panel, ctx, logs);
     }
 
-    function iconOf(catKey, cats) {
-        const c = cats.find((x) => x.key === catKey);
-        return c ? c.icon : '💡';
-    }
-
-    function cardHtml(x, count, cats) {
+    function cardHtml(x, count) {
         const open = _openKey === x.key;
         return `
             <div class="stg-card ${open ? 'open' : ''}" data-key="${x.key}">
                 <button type="button" class="stg-top" data-toggle>
-                    <span class="ic">${iconOf(x.cat, cats)}</span>
                     <span class="tx">
                         <span class="nm">${esc(x.name)}</span>
-                        <span class="sub">${esc(x.brief)}</span>
                     </span>
                     <span class="badge ${count ? 'done' : 'none'}">${esc(timesWord(count))}</span>
                 </button>
                 ${open ? `
-                    <p class="ini-goal">🎯 ${esc(x.goal)}</p>
+                    <p class="ini-brief">${esc(x.brief)}</p>
+                    <p class="ini-goal">${esc(x.goal)}</p>
                     <ol class="stg-steps">
                         ${x.steps.map((t) => `<li>${esc(t)}</li>`).join('')}
                     </ol>
@@ -173,14 +167,13 @@
         return `
             <div class="stg-card ${open ? 'open' : ''}" data-custom="${esc(name)}" data-key="${esc(key)}">
                 <button type="button" class="stg-top" data-toggle>
-                    <span class="ic">✍️</span>
                     <span class="tx">
                         <span class="nm">${esc(name)}</span>
-                        <span class="sub">مبادرة خاصة بك</span>
                     </span>
                     <span class="badge done">${esc(timesWord(count))}</span>
                 </button>
                 ${open ? `
+                    <p class="ini-brief">مبادرة كتبتها بنفسك</p>
                     <div class="stg-act">
                         <button type="button" class="stg-btn main" data-apply>✓ نفّذتها مرة أخرى</button>
                         <button type="button" class="stg-btn ghost" data-mine>شواهدي (${count})</button>
