@@ -650,12 +650,11 @@ body.drawer-open { overflow: hidden; }
 .classes-stage-group {
     margin-bottom: var(--space-6);
 }
-/* فاصل ذهبي رفيع بين المراحل */
+/* بلا خط فاصل بين المراحل: لافتة كل مرحلة تُعرّف بنفسها، والخط كان
+   يضيف ثِقلاً في صفحة قوامها صفوف خفيفة. التباعد وحده يفصل. */
 .classes-stage-group + .classes-stage-group {
-    border-top: 1.5px solid color-mix(in srgb, #C9A961 55%, #fff);
-    padding-top: var(--space-6);
+    padding-top: var(--space-4);
 }
-/* Stage banner — بارز (ثري دي) بإضاءة علوية وظل داخلي سفلي وظل عميق */
 /* لافتة المرحلة: عنوان خفيف لا شريط — الفصول نفسها هي البطاقات. */
 .cl-stage {
     display: flex; align-items: baseline; gap: 7px;
