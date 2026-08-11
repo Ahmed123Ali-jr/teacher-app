@@ -1370,10 +1370,9 @@ body.drawer-open { overflow: hidden; }
     display: block;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg,
-        color-mix(in srgb, var(--cls-color) 80%, #000) 0%,
-        var(--cls-color) 45%,
-        color-mix(in srgb, var(--cls-color) 85%, #fff) 100%);
+    /* كحلي مصمت: التدرّج الثلاثي كان يُفتّح الزاوية السفلية ويُغمّق
+       العليا، فيبدو اللون غير ثابت. */
+    background: var(--primary);
     border-radius: var(--radius-lg);
     padding: var(--space-5);
     color: #fff;
@@ -1382,14 +1381,6 @@ body.drawer-open { overflow: hidden; }
     margin-bottom: var(--space-4);
 }
 .hub-featured:hover { color: #fff; }
-.hub-featured-bubble {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .06);
-    pointer-events: none;
-}
-.hub-featured-bubble.b1 { width: 120px; height: 120px; left: -24px; top: -24px; }
-.hub-featured-bubble.b2 { width: 90px; height: 90px; left: 40px; bottom: -44px; background: rgba(255,255,255,.05); }
 .hub-featured-head {
     display: flex;
     align-items: center;

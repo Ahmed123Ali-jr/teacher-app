@@ -244,8 +244,6 @@
                 </div>
 
                 <a class="hub-featured" href="#/class/${cls.id}/students" style="--cls-color:${heroColor(cls)}">
-                    <div class="hub-featured-bubble b1"></div>
-                    <div class="hub-featured-bubble b2"></div>
                     <div class="hub-featured-head">
                         <div class="hub-featured-icon">👥</div>
                         <div class="hub-featured-titles">
@@ -497,8 +495,6 @@
 
         panel.innerHTML = `
             <div class="hub-featured reg-hero" style="--cls-color:${heroColor(cls)}">
-                <div class="hub-featured-bubble b1"></div>
-                <div class="hub-featured-bubble b2"></div>
                 <div class="hub-featured-head">
                     <div class="hub-featured-icon">👥</div>
                     <div class="hub-featured-titles">
