@@ -18,8 +18,8 @@
 
         container.innerHTML = `
             <div class="container">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <h2 class="section-title">📚 فصولي</h2>
+                <div class="section-header classes-header" style="margin-top: var(--space-6);">
+                    <h2 class="section-title">فصولي</h2>
                     <button class="btn-add-gray" id="btn-add-class">+ إضافة فصل</button>
                 </div>
                 ${classes.length === 0
