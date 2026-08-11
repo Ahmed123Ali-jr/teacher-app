@@ -26,15 +26,7 @@
         } catch { return iso; }
     }
 
-    function ensurePrintRoot() {
-        let el = document.getElementById('print-root');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'print-root';
-            document.body.appendChild(el);
-        }
-        return el;
-    }
+    const ensurePrintRoot = () => global.PdfCore.ensurePrintRoot();
 
     function readValues(row) {
         if (row && row.values && typeof row.values === 'object') return row.values;
@@ -82,10 +74,7 @@
         ].filter(Boolean).join('-');
     }
 
-    function todayISO() {
-        const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    }
+    const todayISO = () => global.PdfCore.todayISO();
 
     /** التدفق المشترك: يبني المستند، يفرض الاتجاه الأفقي، ويستدعي print().
      *  عند حفظ PDF نغيّر عنوان الصفحة مؤقتاً لأن المتصفح يستخدمه كاسم الملف. */
@@ -111,92 +100,18 @@
         setTimeout(() => global.print(), 50);
     }
 
-    /** الطباعة تمرّ بنفس مسار «حفظ PDF»: نُولّد صور الصفحات بمقاس A4 أفقي
-     *  ثابت ثم نطبعها كصور تملأ الورقة — فيخرج المطبوع مطابقاً للملف
-     *  المحفوظ تماماً، ولا يتأثر باختلاف تعامل المتصفحات مع @page
-     *  (خصوصاً iOS الذي كان يطبعها عمودية). */
-    async function print(opts) {
-        const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
-            && global.TeacherApp.toast(m, t, d);
-        try {
-            toast('جارٍ تجهيز الطباعة…', 'info', 3000);
-            const images = await renderPageImages(opts);
-
-            const root = ensurePrintRoot();
-            root.innerHTML = `
-                <div class="print-image-doc">
-                    ${images.map((src) => `<img class="print-page-img" src="${src}" alt="">`).join('')}
-                </div>`;
-
-            // بلا هوامش: الصورة نفسها تتضمّن هوامش الورقة، فتملأ الصفحة تماماً.
-            const styleEl = applyLandscape('0');
-            document.body.classList.add('is-printing');
-            const done = () => {
-                document.body.classList.remove('is-printing');
-                if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
-                global.removeEventListener('afterprint', done);
-            };
-            global.addEventListener('afterprint', done);
-            global.setTimeout(done, 60000);
-            // ننتظر تحميل الصور قبل استدعاء الطباعة
-            const imgs = Array.from(root.querySelectorAll('img'));
-            await Promise.all(imgs.map((im) => im.complete
-                ? Promise.resolve()
-                : new Promise((r) => { im.onload = im.onerror = r; })));
-            setTimeout(() => global.print(), 60);
-        } catch (err) {
-            console.warn('[print-students] print via images failed:', err);
-            run(opts);   // مسار احتياطي: الطباعة بالـHTML مباشرة
-        }
-    }
-
     /* ======================================================================
        حفظ PDF مباشرة (بدون نافذة الطباعة)
        نولّد ملف PDF داخل التطبيق ثم نفتح ورقة المشاركة/الحفظ الأصلية —
        فيختار المعلم «حفظ في الملفات» أو أي تطبيق. تُحمَّل المكتبتان من
        CDN عند الحاجة فقط (لا تؤثران على سرعة إقلاع التطبيق).
        ====================================================================== */
-    /* نفس ملفات vendor التي يستعملها PdfCore — بالمسار نفسه حرفياً حتى
-       يتعرّف loadScript على النسخة المحمَّلة فلا تُنزَّل مرتين. */
-    const CDN = {
-        html2canvas: 'vendor/html2canvas.min.js',
-        jspdf:       'vendor/jspdf.umd.min.js'
-    };
+    /* تحميل المحرّك وتنسيق الطباعة ومسارات المكتبات: كلها في PdfCore.
+       كانت منسوخة هنا، فكل تعديل عليها كان يلزم تطبيقه مرتين — وقد وقع
+       ذلك فعلاً عند نقل المكتبات إلى vendor. */
+    const preloadPdfEngine  = () => global.PdfCore.preloadPdfEngine();
 
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            if (document.querySelector(`script[src="${src}"]`)) return resolve();
-            const s = document.createElement('script');
-            s.src = src;
-            s.onload = () => resolve();
-            s.onerror = () => reject(new Error('تعذّر تحميل مكوّن PDF'));
-            document.head.appendChild(s);
-        });
-    }
-
-    let _enginePromise = null;
-    /** يُحمّل محرّك PDF مسبقاً (يُستدعى عند فتح نافذة الطباعة) حتى تكون
-     *  الضغطة على «حفظ PDF» سريعة ولا تفقد صلاحية المشاركة في iOS. */
-    function preloadPdfEngine() {
-        if (!_enginePromise) {
-            _enginePromise = Promise.all([
-                loadScript(CDN.html2canvas),
-                loadScript(CDN.jspdf)
-            ]).catch((e) => { _enginePromise = null; throw e; });
-        }
-        return _enginePromise;
-    }
-
-    /** ينسخ تنسيق الطباعة ليعمل على الشاشة أثناء التقاط الصورة. */
-    async function printCssForScreen() {
-        const link = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-            .find((l) => l.href.includes('print.css'));
-        if (!link) return null;
-        const css = await (await fetch(link.href)).text();
-        const el = document.createElement('style');
-        el.textContent = css.replace(/@media\s+print\s*\{/g, '@media all {');
-        return el;
-    }
+    const printCssForScreen = () => global.PdfCore.printCssForScreen();
 
     /** يقسّم المستند إلى صفحات عند فواصل .page-break، مع تكرار الترويسة. */
     function splitPages(docEl) {
@@ -296,29 +211,14 @@
                 pdf.addImage(img, 'JPEG', 0, 0, PW_MM, PH_MM);
             });
 
-            const fileName = buildFileName(opts) + '.pdf';
-            const blob = pdf.output('blob');
-
-            // ورقة المشاركة الأصلية (حفظ في الملفات / واتساب / …)
-            const file = new File([blob], fileName, { type: 'application/pdf' });
-            if (global.navigator.canShare && global.navigator.canShare({ files: [file] })) {
-                try {
-                    await global.navigator.share({ files: [file], title: fileName });
-                    return;
-                } catch (err) {
-                    if (err && err.name === 'AbortError') return;   // ألغى المعلم
-                    /* غير ذلك: ننزّل الملف بدلاً من المشاركة */
-                }
+            /* التسليم في PdfCore: ورقة المشاركة ثم التنزيل احتياطاً.
+               اسم الملف يُمرَّر بلا لاحقة — deliverPdf تضيف ‎.pdf بنفسها.
+               والتوست يُبنى من القيمة الراجعة: لا رسالة نجاح بعد مشاركة
+               (الورقة نفسها إشعار) ولا بعد إلغاء المعلم لها. */
+            const how = await global.PdfCore.deliverPdf(pdf.output('blob'), buildFileName(opts));
+            if (how === 'downloaded') {
+                toast('تم حفظ السجل ✅ افتح الملف للطباعة', 'success', 4000);
             }
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 10000);
-            toast('تم حفظ السجل ✅ افتح الملف للطباعة', 'success', 4000);
         } catch (err) {
             console.warn('[print-students] savePdf failed:', err);
             toast('تعذّر إنشاء الملف — سنفتح نافذة الطباعة بدلاً منه.', 'warning', 4000);
@@ -691,5 +591,5 @@
         return String(v);
     }
 
-    global.PrintStudents = { print, savePdf, preloadPdfEngine };
+    global.PrintStudents = { savePdf, preloadPdfEngine };
 })(window);
