@@ -1407,13 +1407,13 @@ body.drawer-open { overflow: hidden; }
 .hub-featured-title { font-weight: var(--fw-black); font-size: var(--fs-lg); }
 .hub-featured-sub   { font-size: var(--fs-xs); opacity: .85; margin-top: 2px; }
 /* السهم مرسوم بالحدود لا بحرف: حروف «‹›» تنعكس تلقائياً مع اتجاه
-   النص، فاتجاهها في صفحة عربية غير مضمون. الحدّان العلوي واليمين
-   بدوران ٤٥ درجة يشيران يميناً دائماً. */
+   النص، فاتجاهها في صفحة عربية غير مضمون. الحدّان العلوي واليسار
+   بدوران ‎-٤٥ درجة يشيران يساراً دائماً. */
 .hub-featured-chev {
     flex: none; width: 9px; height: 9px; margin-inline-start: 2px;
     border-top: 2.5px solid #fff;
-    border-right: 2.5px solid #fff;
-    transform: rotate(45deg);
+    border-left: 2.5px solid #fff;
+    transform: rotate(-45deg);
 }
 @media (prefers-reduced-motion: no-preference) {
     .hub-featured-chev { animation: chev-blink 1.4s ease-in-out infinite; }
