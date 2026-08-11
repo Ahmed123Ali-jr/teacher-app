@@ -139,7 +139,7 @@
                         <span class="t">التقارير</span>
                         <span class="h">الحضور والتقييمات</span>
                     </a>
-                    <a href="#/initiatives" class="enjaz-tile wide">
+                    <a href="#/initiatives" class="enjaz-tile">
                         <span class="ic">🌟</span>
                         <span class="t">المبادرات</span>
                         <span class="h">${escapeHtml(initiativesWord(s.initiatives))}</span>
