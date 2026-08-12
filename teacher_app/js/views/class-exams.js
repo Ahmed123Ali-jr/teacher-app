@@ -11,6 +11,17 @@
         }[m]));
     }
     function escapeAttr(s) { return escapeHtml(s); }
+    const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    /* التصريف العربي يختلف بالعدد: «سؤالان» لا «٢ سؤال». */
+    function countWord(n, one, two, few, many) {
+        if (n === 1) return one;
+        if (n === 2) return two;
+        if (n <= 10) return arDigits(n) + ' ' + few;
+        return arDigits(n) + ' ' + many;
+    }
+    const qWord = (n) => countWord(n, 'سؤال واحد', 'سؤالان', 'أسئلة', 'سؤالاً');
+    const mWord = (n) => countWord(n, 'درجة واحدة', 'درجتان', 'درجات', 'درجة');
 
     const TYPE_LABELS = {
         mcq: 'اختيار من متعدد',
@@ -33,21 +44,32 @@
         panel.innerHTML = `
             <div class="section-header">
                 <h3 class="section-title">📝 اختبارات الفصل</h3>
-                <button class="btn btn-primary" id="btn-new-exam">+ اختبار جديد</button>
+                <div class="flex gap-2">
+                    <button class="btn btn-ghost btn-sm" id="btn-gen-exam">⚡ توليد</button>
+                    <button class="btn btn-primary" id="btn-manual-exam">+ اختبار جديد</button>
+                </div>
             </div>
 
             ${exams.length === 0 ? emptyState() : listHtml(exams)}
         `;
 
-        panel.querySelector('#btn-new-exam')?.addEventListener('click', () => startWizard(cls, panel));
-        panel.querySelector('[data-empty-add]')?.addEventListener('click', () => startWizard(cls, panel));
+        /* البابان: الكتابة بنفسه هي الأصل، والتوليد بابٌ ثانٍ. كان
+           المحرّر اليدوي محبوساً خلف التوليد — لا يبلغه المعلّم إلا بعد
+           المرور به، وهو ما لا يريده من لا يريد الذكاء الاصطناعي. */
+        panel.querySelector('#btn-manual-exam')?.addEventListener('click', () => startManual(cls, panel));
+        panel.querySelectorAll('[data-empty-add]').forEach((b) =>
+            b.addEventListener('click', () => startManual(cls, panel)));
+        panel.querySelector('#btn-gen-exam')?.addEventListener('click', () => startWizard(cls, panel));
 
         panel.querySelectorAll('[data-exam-open]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.examOpen;
                 const exam = await global.TeacherDB.get('exams', id);
                 if (exam) {
-                    state[cls.id] = { cls, exam, step: 3 };
+                    /* اختبارٌ محفوظ يُفتح على الأسئلة بلا مسوّدة خلفه —
+                       فيسلك مسلك اليدوي، وإلّا قاد «رجوع» إلى خطوةٍ
+                       تقرأ s.draft وهي غير موجودة. */
+                    state[cls.id] = { cls, exam, step: 3, manual: true };
                     renderWizard(panel, cls);
                 }
             });
@@ -80,7 +102,7 @@
             <div class="empty-state">
                 <div class="icon">📝</div>
                 <h3>لم تنشئ أي اختبار بعد</h3>
-                <p>توليد اختبار احترافي من كتاب المعلم في ٤ خطوات.</p>
+                <p>اكتب أسئلتك بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
                 <button class="btn btn-primary" data-empty-add>+ اختبار جديد</button>
             </div>
         `;
@@ -94,7 +116,7 @@
                         <div>
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(e.title)}</h4>
                             <div class="text-muted" style="font-size:var(--fs-sm);">
-                                ${e.questions?.length || 0} سؤال ·
+                                ${qWord(e.questions?.length || 0)} ·
                                 ${formatShortDate(e.created_at)}
                             </div>
                         </div>
@@ -121,6 +143,30 @@
     /* ==========================================================================
        WIZARD
        ========================================================================== */
+
+    /** الإنشاء اليدوي: يبدأ من محرّر الأسئلة مباشرةً بورقةٍ فارغة. */
+    function startManual(cls, panel) {
+        state[cls.id] = {
+            cls,
+            step: 3,
+            manual: true,
+            exam: {
+                class_id: cls.id,
+                title: 'اختبار ' + (cls.subject || '') ,
+                source_type: 'manual',
+                source_details: '',
+                questions: [],
+                settings: {
+                    include_school: true, include_teacher: true,
+                    include_date: false, include_name: true,
+                    include_grade: true, include_instructions: true,
+                    include_answers: false
+                },
+                created_at: new Date().toISOString()
+            }
+        };
+        renderWizard(panel, cls);
+    }
 
     async function startWizard(cls, panel) {
         const books = await global.TeacherDB.getAllByIndex('books', 'class_id', cls.id);
@@ -154,7 +200,7 @@
             <div class="wizard">
                 <div class="wizard-header">
                     <button class="btn btn-ghost btn-sm" id="wiz-back-list">← قائمة الاختبارات</button>
-                    ${stepDots(s.step)}
+                    ${stepDots(s.step, s.manual)}
                 </div>
                 <div id="wiz-body"></div>
             </div>
@@ -174,18 +220,22 @@
         else if (s.step === 4) step4(body, cls);
     }
 
-    function stepDots(current) {
-        const steps = [
-            { n: 1, label: 'المصدر' },
-            { n: 2, label: 'التفاصيل' },
-            { n: 3, label: 'المراجعة' },
-            { n: 4, label: 'الطباعة' }
-        ];
+    function stepDots(current, manual) {
+        /* المسار اليدوي خطوتان لا أربع: خطوتا المصدر والتفاصيل للتوليد
+           وحده، وعرضهما مطفأتين يوهم المعلّم أنه تخطّى شيئاً. */
+        const steps = manual
+            ? [{ n: 3, label: 'الأسئلة' }, { n: 4, label: 'الطباعة' }]
+            : [
+                { n: 1, label: 'المصدر' },
+                { n: 2, label: 'التفاصيل' },
+                { n: 3, label: 'المراجعة' },
+                { n: 4, label: 'الطباعة' }
+            ];
         return `
             <div class="wizard-steps">
-                ${steps.map((st) => `
+                ${steps.map((st, i) => `
                     <div class="wiz-step ${st.n === current ? 'active' : ''} ${st.n < current ? 'done' : ''}">
-                        <div class="wiz-step-dot">${st.n}</div>
+                        <div class="wiz-step-dot">${arDigits(i + 1)}</div>
                         <div class="wiz-step-label">${st.label}</div>
                     </div>
                 `).join('')}
@@ -447,7 +497,9 @@
         const total = exam.questions.reduce((sum, q) => sum + (q.points || 1), 0);
 
         body.innerHTML = `
-            <h3 class="wizard-title">الخطوة ٣ من ٤: المراجعة والتعديل</h3>
+            <h3 class="wizard-title">${s.manual
+                ? 'الخطوة ١ من ٢: أسئلة الاختبار'
+                : 'الخطوة ٣ من ٤: المراجعة والتعديل'}</h3>
 
             <div class="exam-meta">
                 <div class="field" style="margin:0; flex:1;">
@@ -455,17 +507,23 @@
                     <input class="input" id="exam-title" value="${escapeAttr(exam.title)}">
                 </div>
                 <div class="exam-stats">
-                    <div><strong>${exam.questions.length}</strong> سؤال</div>
-                    <div><strong>${total}</strong> درجة</div>
+                    <div>${qWord(exam.questions.length)}</div>
+                    <div>${mWord(total)}</div>
                 </div>
             </div>
 
             <div class="questions-list" id="q-list">
-                ${exam.questions.map((q, i) => questionCard(q, i)).join('')}
+                ${exam.questions.length
+                    ? exam.questions.map((q, i) => questionCard(q, i, s.manual)).join('')
+                    : `<p class="text-muted" style="text-align:center; padding:var(--space-5) 0;
+                            font-size:var(--fs-sm); line-height:1.9;">
+                           لا أسئلة بعد.<br>أضف سؤالاً واختر نوعه: اختيار من متعدد،
+                           أو صح وخطأ، أو أكمل الفراغ، أو مقالي.
+                       </p>`}
             </div>
 
             <button class="btn btn-secondary btn-sm" id="btn-add-q"
-                    style="margin-top: var(--space-4);">+ إضافة سؤال يدوي</button>
+                    style="margin-top: var(--space-4);">+ إضافة سؤال</button>
 
             <div class="wizard-footer">
                 <button class="btn btn-ghost" id="btn-back">← رجوع</button>
@@ -490,7 +548,16 @@
             step3(body, cls);
         });
 
-        body.querySelector('#btn-back').addEventListener('click', () => {
+        body.querySelector('#btn-back').addEventListener('click', async () => {
+            /* في المسار اليدوي ليس خلف هذه الخطوة خطوة — الرجوع خروجٌ
+               إلى القائمة، وما لم يُحفظ يُنبَّه عليه. */
+            if (s.manual) {
+                const dirty = exam.questions.length && !exam.id;
+                if (dirty && !global.confirm('سيتم فقدان الأسئلة غير المحفوظة. متابعة؟')) return;
+                const panel = body.closest('#tab-panel');
+                delete state[cls.id];
+                return render(panel, cls);
+            }
             if (!global.confirm('الرجوع سيُبقي الأسئلة. متابعة؟')) return;
             s.step = 2;
             renderWizard(body.closest('#tab-panel'), cls);
@@ -500,6 +567,14 @@
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
         });
         body.querySelector('#btn-to-print').addEventListener('click', async () => {
+            if (!exam.questions.length) {
+                return global.TeacherApp.toast('أضف سؤالاً واحداً على الأقل.', 'warning');
+            }
+            const blank = exam.questions.findIndex((q) => !String(q.text || '').trim());
+            if (blank >= 0) {
+                return global.TeacherApp.toast(
+                    `السؤال ${arDigits(blank + 1)} بلا نصّ — اكتبه أو احذفه.`, 'warning', 4000);
+            }
             await saveExam(exam);
             s.step = 4;
             renderWizard(body.closest('#tab-panel'), cls);
@@ -513,7 +588,7 @@
         return exam;
     }
 
-    function questionCard(q, i) {
+    function questionCard(q, i, manual) {
         let body = '';
         if (q.type === 'mcq') {
             body = `
@@ -541,7 +616,7 @@
                 </div>
             `;
         } else if (q.type === 'essay') {
-            body = `<div class="text-muted" style="font-size:var(--fs-sm);">سؤال مقالي — المعلم يصحّح يدوياً.</div>`;
+            body = `<div class="text-muted" style="font-size:var(--fs-sm);">سؤال مقالي — تُطبع تحته أربعة سطور للإجابة.</div>`;
         } else {
             body = `<div class="text-muted" style="font-size:var(--fs-sm);">سؤال مطابقة.</div>`;
         }
@@ -558,7 +633,7 @@
                     <input class="input input-sm" data-q-points="${i}" type="number" min="1" max="10"
                            value="${q.points || 1}" title="الدرجة" style="max-width: 70px;">
                     <div class="q-actions">
-                        <button class="btn btn-ghost btn-sm" data-q-regen="${i}" title="إعادة توليد">🔄</button>
+                        ${manual ? '' : `<button class="btn btn-ghost btn-sm" data-q-regen="${i}" title="إعادة توليد">🔄</button>`}
                         <button class="btn btn-ghost btn-sm" data-q-del="${i}" title="حذف">🗑️</button>
                     </div>
                 </div>
@@ -646,7 +721,7 @@
         const settings = exam.settings;
 
         body.innerHTML = `
-            <h3 class="wizard-title">الخطوة ٤ من ٤: خيارات الطباعة</h3>
+            <h3 class="wizard-title">${s.manual ? 'الخطوة ٢ من ٢' : 'الخطوة ٤ من ٤'}: خيارات الطباعة</h3>
 
             <div class="card" style="margin-bottom: var(--space-4);">
                 <div class="checkbox-list">
@@ -661,7 +736,7 @@
             </div>
 
             <div class="wizard-footer">
-                <button class="btn btn-ghost" id="btn-back">← رجوع للمراجعة</button>
+                <button class="btn btn-ghost" id="btn-back">← رجوع ${s.manual ? 'للأسئلة' : 'للمراجعة'}</button>
                 <button class="btn btn-primary" id="btn-print">🖨️ معاينة وطباعة</button>
             </div>
         `;
