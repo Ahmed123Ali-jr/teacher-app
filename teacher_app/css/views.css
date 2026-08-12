@@ -4947,3 +4947,104 @@ body.drawer-open { overflow: hidden; }
     margin-top: 6px; font-size: 12px; font-weight: 500;
     line-height: 1.9; color: var(--text-muted);
 }
+
+/* ==========================================================================
+   قارئ الكتب (book-reader.js) — التصميم ج.
+
+   يملأ الشاشة كلّها: الكتاب يُقرأ لا يُطالَع في نافذة. والورق على خلفية
+   داكنة كما في القرّاء المعروفين — أرحم للعين في الإضاءة المنخفضة، وأوضح
+   لحدود الصفحة.
+   ========================================================================== */
+body.br-open { overflow: hidden; }          /* لا تمرير خلف القارئ */
+
+.br-root {
+    position: fixed; inset: 0; z-index: 950;
+    background: #2C2C2A;
+    display: flex; flex-direction: column;
+    overscroll-behavior: contain;
+}
+
+.br-top {
+    flex: none; display: flex; align-items: center; gap: 10px;
+    padding: calc(9px + env(safe-area-inset-top)) 12px 9px;
+    color: #fff; background: var(--primary);
+}
+.br-nm {
+    flex: 1; min-width: 0; font-size: 13px; font-weight: var(--fw-black);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.br-x, .br-go {
+    flex: none; min-height: 34px; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-weight: var(--fw-black); color: #fff;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.24);
+}
+.br-x  { width: 34px; font-size: 14px; padding: 0; }
+.br-go { padding: 0 12px; font-size: 11.5px; }
+
+.br-scroll {
+    /* position يجعل الصفحات تُقاس من منطقة التمرير لا من جذر القارئ:
+       بدونه يحمل offsetTop ارتفاعَ الشريط العلوي، فيقفز «اذهب إلى صفحة»
+       أبعد من هدفه بمقداره، ويخطئ تمييزُ الصفحة الحالية. */
+    position: relative;
+    flex: 1; min-height: 0; padding: 12px 10px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.br-pg {
+    display: block; margin: 0 auto 12px; max-width: 100%;
+    background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.45);
+}
+
+.br-thumbs {
+    flex: none; display: flex; gap: 8px; overflow-x: auto;
+    padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+    background: var(--primary);
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.br-thumbs::-webkit-scrollbar { display: none; }
+.br-th {
+    flex: none; width: 46px; padding: 0; border: 0; cursor: pointer;
+    background: none; text-align: center; font-family: inherit;
+}
+.br-th canvas {
+    width: 46px; display: block; background: #fff; border-radius: 4px;
+    border: 2px solid transparent; box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+.br-th.on canvas { border-color: #C9A961; }
+.br-th .n { display: block; font-size: 9.5px; color: rgba(255,255,255,.7); margin-top: 3px; }
+.br-th.on .n { color: #C9A961; font-weight: var(--fw-black); }
+
+.br-msg {
+    position: absolute; inset: 0; z-index: 3;
+    display: grid; place-items: center; text-align: center;
+    background: #2C2C2A; color: #fff; font-size: 13px; line-height: 2; padding: 24px;
+}
+.br-retry {
+    display: block; margin: 16px auto 0; min-height: 44px; padding: 0 20px;
+    border-radius: 12px; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: var(--fw-black); color: var(--primary);
+    background: #ECEAE3; border: 1.5px solid #D8D5CC;
+}
+
+/* لوحة «اذهب إلى صفحة» */
+.br-jump {
+    position: absolute; inset: 0; z-index: 4; display: none;
+    place-items: center; padding: 20px; background: rgba(0,0,0,.55);
+}
+.br-jump.open { display: grid; }
+.br-jump-box {
+    width: 100%; max-width: 300px; padding: 16px; text-align: center;
+    background: var(--surface); border-radius: 16px;
+}
+.br-jump-box h4 { margin: 0 0 12px; font-size: 14px; color: var(--primary); }
+.br-jump-box input {
+    width: 100%; font-family: inherit; font-size: 18px; font-weight: var(--fw-black);
+    text-align: center; color: var(--primary); padding: 10px; outline: none;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 11px;
+}
+.br-jump-row { display: flex; gap: 8px; margin-top: 12px; }
+.br-jump-row button {
+    flex: 1; min-height: 44px; border-radius: 11px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: var(--fw-black);
+}
+.br-jump-row .go { color: #fff; background: var(--primary); border: 1.5px solid #0A2049; }
+.br-jump-row .no { color: var(--primary); background: #ECEAE3; border: 1.5px solid #D8D5CC; }

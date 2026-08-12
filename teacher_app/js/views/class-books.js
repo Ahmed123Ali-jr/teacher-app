@@ -1,5 +1,9 @@
 /* ==========================================================================
-   views/class-books.js — Books tab (upload PDF + optional text context).
+   views/class-books.js — كتب الفصل: رفعٌ وتصفّح، لا غير.
+
+   كانت الشاشة تستخرج نصّ الكتاب آلياً وتطلب «سياقاً» يُلصقه المعلّم،
+   وكلاهما بُني ليغذّي توليد الاختبارات. وقد سقط ذلك بقرار المنتج: الكتاب
+   يُرفع ليُقرأ في التطبيق (BookReader) لا ليُقرأ آلياً.
    ========================================================================== */
 
 (function (global) {
@@ -25,35 +29,6 @@
         other: 'أخرى'
     };
 
-    /* ---------- PDF text extraction (browser-side via PDF.js) ---------- */
-    /* نسخة واحدة في PdfCore — كانت هذه الدالة مكرّرة حرفياً في ثلاثة
-       ملفات، وكلها تشير إلى CDN خارجي. */
-    function ensurePdfJs() {
-        return global.PdfCore.ensurePdfJs();
-    }
-
-    /** Extract all readable text from a PDF Blob. Returns a single string
-     *  with each page prefixed by "[صفحة N]" so the AI can refer to pages.
-     *  onProgress(current, total) lets the caller surface a progress hint. */
-    async function extractPdfText(file, onProgress) {
-        const pdfjs = await ensurePdfJs();
-        const buf = await file.arrayBuffer();
-        const doc = await pdfjs.getDocument({ data: buf }).promise;
-        const total = doc.numPages;
-        const pages = [];
-        for (let i = 1; i <= total; i++) {
-            if (onProgress) onProgress(i, total);
-            // Let the UI breathe between pages so the modal doesn't freeze.
-            if (i % 5 === 0) await new Promise((r) => setTimeout(r, 0));
-            const page = await doc.getPage(i);
-            const content = await page.getTextContent();
-            const text = content.items.map((it) => it.str || '').join(' ').trim();
-            if (text) pages.push(`[صفحة ${i}]\n${text}`);
-            page.cleanup();
-        }
-        return pages.join('\n\n');
-    }
-
     async function render(panel, cls) {
         const books = await global.TeacherDB.getAllByIndex('books', 'class_id', cls.id);
 
@@ -64,15 +39,6 @@
             </div>
 
             ${books.length === 0 ? emptyState() : bookGrid(books)}
-
-            <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
-                <h4 style="margin-top:0">💡 كيف تستفيد من الكتب؟</h4>
-                <ul style="padding-right: var(--space-5); line-height: 1.9; margin: 0;">
-                    <li>ارفع ملف PDF لكتاب الطالب أو كتاب النشاط.</li>
-                    <li>أضف <strong>نصاً من صفحات معينة</strong> في خانة "السياق" — الذكاء الاصطناعي يستخدمه لتوليد اختبارات مطابقة.</li>
-                    <li>كلما كان السياق أدق، كانت الأسئلة أقرب للمنهج.</li>
-                </ul>
-            </div>
         `;
 
         panel.querySelector('#btn-add-book')?.addEventListener('click', () => openForm(cls, panel));
@@ -99,43 +65,26 @@
             });
         });
 
-        panel.querySelectorAll('[data-book-download]').forEach((btn) => {
+        panel.querySelectorAll('[data-book-read]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const id = btn.dataset.bookDownload;
-                // Prefer the local IndexedDB blob (new flow, no size limit).
-                const blob = await global.TeacherDB.BookFiles.get(id);
-                if (blob) {
-                    const book = await global.TeacherDB.get('books', id);
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = book?.filename || 'book.pdf';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    return;
+                const book = books.find((b) => String(b.id) === btn.dataset.bookRead);
+                if (!book) return;
+                btn.disabled = true;
+                try {
+                    await global.BookReader.open(book);
+                } catch (err) {
+                    console.warn('[books] open failed:', err);
+                    global.TeacherApp.toast(
+                        'تعذّر فتح الكتاب: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
+                } finally {
+                    btn.disabled = false;
                 }
-                // Otherwise the file might live on Supabase Storage (older
-                // uploads when this device was online and < 50 MB).
-                const book = await global.TeacherDB.get('books', id);
-                if (book?.storage_path && book.storage_path !== 'local') {
-                    const { data, error } = await global.SB.storage
-                        .from('books')
-                        .createSignedUrl(book.storage_path, 60 * 60);
-                    if (!error) { global.open(data.signedUrl, '_blank'); return; }
-                }
-                // Legacy: base64 in row
-                if (book?.file instanceof Blob) {
-                    const url = URL.createObjectURL(book.file);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = book.filename || 'book.pdf';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    return;
-                }
-                global.TeacherApp.toast('الملف غير محفوظ على هذا الجهاز. أعد رفعه.', 'warning', 5000);
             });
         });
+
+        /* مكتبة العرض تُحمّل بالخلفية فور فتح الشاشة: أول لمسة على «تصفّح»
+           تجد المكتبة جاهزة، فلا ينتظر المعلّم أمام شاشةٍ سوداء. */
+        global.PdfCore.ensurePdfJs().catch(() => {});
     }
 
     function emptyState() {
@@ -143,7 +92,7 @@
             <div class="empty-state">
                 <div class="icon">📚</div>
                 <h3>لا توجد كتب بعد</h3>
-                <p>ارفع كتاب الطالب أو كتاب النشاط كملف PDF، وأضف نصاً من الفصل لتوليد اختبارات دقيقة.</p>
+                <p>ارفع كتاب الطالب أو كتاب النشاط كملف PDF، وتصفّحه داخل التطبيق متى شئت.</p>
                 <button class="btn btn-primary" data-empty-add>+ رفع كتاب</button>
             </div>
         `;
@@ -159,12 +108,11 @@
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(b.title || 'كتاب')}</h4>
                             <div class="text-muted" style="font-size: var(--fs-sm);">
                                 <span class="badge badge-info">${TYPE_LABELS[b.type] || '—'}</span>
-                                ${b.file ? `<span style="margin-right: var(--space-2);">${formatSize(b.file.size)}</span>` : ''}
+                                ${b.size_bytes ? `<span style="margin-right: var(--space-2);">${formatSize(b.size_bytes)}</span>` : ''}
                             </div>
-                            ${b.context ? `<p class="text-muted" style="font-size:var(--fs-sm); margin-top:var(--space-2); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">📝 ${escapeHtml(b.context.slice(0, 140))}${b.context.length > 140 ? '…' : ''}</p>` : ''}
                         </div>
                         <div class="book-actions">
-                            ${b.file ? `<button class="btn btn-ghost btn-sm" data-book-download="${b.id}" title="تحميل">⬇️</button>` : ''}
+                            <button class="btn btn-primary btn-sm" data-book-read="${b.id}">📖 تصفّح</button>
                             <button class="btn btn-ghost btn-sm" data-book-edit="${b.id}" title="تعديل">✏️</button>
                             <button class="btn btn-ghost btn-sm" data-book-delete="${b.id}" title="حذف">🗑️</button>
                         </div>
@@ -200,15 +148,8 @@
                 <div class="field-hint">
                     ${existing && existing.storage_path
                         ? `ملف محفوظ: ${existing.filename || 'book.pdf'}. اختر ملفاً جديداً للاستبدال.`
-                        : 'الملف يُحفظ على جهازك، وسيُستخرَج نصّه تلقائياً ليستخدمه الذكاء الاصطناعي في توليد الأسئلة.'}
+                        : 'الملف يُحفظ على جهازك، وتتصفّحه داخل التطبيق بلا إنترنت.'}
                 </div>
-            </div>
-
-            <div class="field">
-                <label class="label" for="b-context">السياق النصي من الكتاب (اختياري — مفيد لتوليد اختبارات دقيقة)</label>
-                <textarea class="textarea" id="b-context" rows="6"
-                          placeholder="ألصق هنا نص الفصل أو الوحدة أو الدرس الذي تريد توليد أسئلة منه...">${existing ? escapeHtml(existing.context || '') : ''}</textarea>
-                <div class="field-hint">كلما كان النص أدق، جاءت أسئلة الذكاء الاصطناعي أقرب للمنهج.</div>
             </div>
 
             <div class="field" style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-sm); padding: var(--space-3);">
@@ -252,7 +193,6 @@
                     class_id: cls.id,
                     title,
                     type:     form.querySelector('#b-type').value,
-                    context:  form.querySelector('#b-context').value.trim(),
                     filename:     existing?.filename     || '',
                     storage_path: existing?.storage_path || null,
                     size_bytes:   existing?.size_bytes   || null,
@@ -274,23 +214,6 @@
                     row.mime_type    = file.type || 'application/pdf';
                     row.filename     = file.name;
                     row.storage_path = 'local';
-
-                    // Extract the PDF text in the browser so the AI exam
-                    // generator has the real book content. If the teacher
-                    // already pasted custom context, keep theirs untouched.
-                    if (!row.context) {
-                        try {
-                            if (btn) btn.textContent = '⏳ جارٍ قراءة الكتاب...';
-                            const text = await extractPdfText(file, (cur, total) => {
-                                if (btn) btn.textContent = `⏳ قراءة الكتاب (${cur}/${total})...`;
-                            });
-                            row.context = text;
-                            console.info('[books] extracted text chars:', text.length);
-                        } catch (e) {
-                            console.warn('[books] PDF text extraction failed:', e.message);
-                            // Continue without extracted text; teacher can paste manually later
-                        }
-                    }
                 }
 
                 if (btn) btn.textContent = '⏳ جارٍ الحفظ...';
