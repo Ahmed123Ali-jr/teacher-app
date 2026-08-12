@@ -825,20 +825,43 @@
        التحميل — بيانات IndexedDB لا تُمس. */
     const VER_RE = /js\/views\/schedule\.js\?v=([A-Za-z0-9]+)/;
 
+    /* بصمة كل الملفّات المُصدَّرة لا ملفٍّ واحد.
+       كان المؤشّر يقارن schedule.js وحده، فإذا تغيّر غيره — محرّك
+       الطباعة مثلاً — أعلن «أحدث نسخة ✅» والمعلّم يشغّل كوداً قديماً.
+       مؤشّرٌ يطمئن كذباً أسوأ من غيابه. */
+    function versionsIn(text) {
+        return (text.match(/(?:js|css)\/[\w./-]+\?v=[A-Za-z0-9]+/g) || []).sort().join('|');
+    }
+    function runningVersions() {
+        const tags = [...global.document.scripts].map((s) => s.getAttribute('src') || '')
+            .concat([...global.document.querySelectorAll('link[rel="stylesheet"]')]
+                .map((l) => l.getAttribute('href') || ''));
+        return versionsIn(tags.join('\n'));
+    }
+    /* عدد الملفّات المختلفة، ليعرف المعلّم حجم الفارق لا وجوده فقط. */
+    function diffCount(a, b) {
+        const A = new Set(a.split('|')), B = new Set(b.split('|'));
+        let n = 0;
+        B.forEach((x) => { if (!A.has(x)) n += 1; });
+        return n;
+    }
+
     function bindAbout(container) {
         const slot = container.querySelector('#build-id');
         if (slot) {
             const runningEl = [...global.document.scripts].find((s) => VER_RE.test(s.src));
             const running = runningEl ? runningEl.src.match(VER_RE)[1] : '؟';
+            const mine = runningVersions();
             slot.textContent = running;
             fetch('index.html?nocache=' + Number(new Date()), { cache: 'no-store' })
                 .then((r) => r.text())
                 .then((txt) => {
-                    const m = txt.match(VER_RE);
-                    if (!m) return;
-                    slot.textContent = m[1] === running
-                        ? running + ' (أحدث نسخة ✅)'
-                        : running + ' ← يتوفر تحديث: ' + m[1];
+                    const theirs = versionsIn(txt);
+                    if (!theirs) return;
+                    if (theirs === mine) { slot.textContent = running + ' (أحدث نسخة ✅)'; return; }
+                    const n = diffCount(mine, theirs);
+                    slot.textContent = running + ' ← يتوفر تحديث ('
+                        + (n ? n + ' ملفاً' : 'ملفّات') + ') — اضغط «تحديث التطبيق الآن»';
                 })
                 .catch(() => {});
         }
