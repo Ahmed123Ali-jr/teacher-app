@@ -760,12 +760,11 @@
 
     function renderMission(body, ctx) {
         body.innerHTML = `
-            <div class="flex gap-3" style="margin-bottom: var(--space-4); flex-wrap: wrap;">
-                <button class="btn btn-secondary" id="btn-gen-mission">✨ توليد بالذكاء الاصطناعي</button>
-                <span class="text-muted" style="font-size: var(--fs-sm); align-self: center;">
-                    — أو اكتب يدوياً في الحقول أدناه.
-                </span>
-            </div>
+            <button type="button" class="btn-add-gray mv-open" id="btn-mv-lib">
+                📖 اختر من المكتبة
+            </button>
+            <p class="mv-hint">صياغات رسمية مبنية على المعايير المهنية للمعلمين
+               ورؤية وزارة التعليم — اخترها ثم عدّلها لتشبهك.</p>
 
             <div class="field">
                 <label class="label">الرسالة الشخصية</label>
@@ -793,75 +792,79 @@
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
         });
 
-        body.querySelector('#btn-gen-mission').addEventListener('click', () => openMissionGenerator(body, ctx));
+        body.querySelector('#btn-mv-lib').addEventListener('click', () => openMissionLibrary(body));
     }
 
-    function openMissionGenerator(body, ctx) {
-        const form = document.createElement('form');
-        const p = ctx.portfolio.personal || {};
-        const subjects = (ctx.teacher.subjects || [ctx.teacher.subject]).filter(Boolean).join('، ');
-        form.innerHTML = `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                أجب باختصار — سيُستخدم هذا لصياغة رسالة/رؤية شخصية تشبهك، وتقدر تعدّلها بعد التوليد.
-            </p>
-            <div class="field">
-                <label class="label">قيم تؤمن بها كمعلم</label>
-                <input class="input" id="g-values" type="text"
-                       placeholder="مثال: الصدق، التعلم المستمر، احترام الطالب">
-            </div>
-            <div class="field">
-                <label class="label">ما الذي تركّز عليه في تدريسك؟</label>
-                <input class="input" id="g-focus" type="text"
-                       placeholder="مثال: بناء شخصية الطالب، التفكير النقدي، ربط المادة بالواقع">
-            </div>
-            <div class="grid grid-2">
-                <div class="field">
-                    <label class="label">سنوات الخبرة</label>
-                    <input class="input" id="g-years" type="text" value="${escapeAttr(p.experience_years || '')}">
-                </div>
-                <div class="field">
-                    <label class="label">المراحل التي تدرّسها</label>
-                    <input class="input" id="g-stage" type="text" placeholder="ابتدائي / متوسط / ثانوي">
-                </div>
-            </div>
-            <div class="field">
-                <label class="label">ملاحظات إضافية (اختياري)</label>
-                <textarea class="textarea" id="g-notes" rows="2" placeholder="أي شيء تريد أن يظهر في رسالتك..."></textarea>
-            </div>
+    /* مكتبة الرسالة والرؤية: اختيارٌ من صياغات مؤصَّلة بدل توليد نصّ.
+       الرسالة والرؤية تُستبدلان بالمختار، والأهداف تُجمع لأن المعلم
+       يكتب عادةً عدّة أهداف لا هدفاً واحداً. */
+    function openMissionLibrary(body) {
+        const C = global.MissionCatalog;
+        const box = document.createElement('div');
+        let tab = 'mission';
+        const chosen = new Set();
 
-            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">✨ توليد</button>
-                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-            </div>
-        `;
+        const listOf = () => tab === 'mission' ? C.missions()
+                           : tab === 'vision'  ? C.visions()
+                           : C.goals();
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true; btn.innerHTML = '⏳ جارٍ التوليد...';
-            try {
-                const out = await global.AI.generateMissionVision({
-                    name:    ctx.teacher.name,
-                    subject: subjects,
-                    stage:   form.querySelector('#g-stage').value.trim(),
-                    years:   form.querySelector('#g-years').value.trim(),
-                    values:  form.querySelector('#g-values').value.trim(),
-                    focus:   form.querySelector('#g-focus').value.trim(),
-                    notes:   form.querySelector('#g-notes').value.trim()
+        function paint() {
+            const items = listOf();
+            const multi = tab === 'goals';
+            box.innerHTML = `
+                <div class="mv-tabs">
+                    ${[['mission', 'الرسالة'], ['vision', 'الرؤية'], ['goals', 'الأهداف']]
+                        .map(([k, l]) => `<button type="button" class="mv-tab ${tab === k ? 'on' : ''}"
+                                                  data-tab="${k}">${l}</button>`).join('')}
+                </div>
+                <p class="mv-note">${multi
+                    ? 'اختر ما شئت من الأهداف — تُضاف كلها إلى حقل الأهداف.'
+                    : 'اختر صياغةً واحدة، ثم عدّلها في الحقل كما تشاء.'}</p>
+                <div class="mv-list">
+                    ${items.map((x, n) => `
+                        <button type="button" class="mv-item ${chosen.has(tab + ':' + n) ? 'on' : ''}"
+                                data-i="${n}">
+                            <span class="ax">${escapeHtml(C.axisLabel(x.axis))}</span>
+                            <span class="tx">${escapeHtml(x.text)}</span>
+                        </button>`).join('')}
+                </div>
+                ${multi ? `<button type="button" class="fsave" id="mv-apply">
+                    إضافة المختار (<span id="mv-n">${chosen.size}</span>)</button>` : ''}
+            `;
+
+            box.querySelectorAll('[data-tab]').forEach((b) => {
+                b.addEventListener('click', () => { tab = b.dataset.tab; paint(); });
+            });
+
+            box.querySelectorAll('[data-i]').forEach((b) => {
+                b.addEventListener('click', () => {
+                    const x = listOf()[+b.dataset.i];
+                    if (!multi) {
+                        body.querySelector('#' + tab).value = x.text;
+                        global.Modal.close();
+                        global.TeacherApp.toast('أُدرجت — عدّلها ثم اضغط «حفظ».', 'success', 4000);
+                        return;
+                    }
+                    const id = tab + ':' + b.dataset.i;
+                    if (chosen.has(id)) chosen.delete(id); else chosen.add(id);
+                    b.classList.toggle('on');
+                    box.querySelector('#mv-n').textContent = chosen.size;
                 });
-                // Populate fields in the outer form
-                body.querySelector('#mission').value = out.mission || '';
-                body.querySelector('#vision').value  = out.vision  || '';
-                body.querySelector('#goals').value   = out.goals   || '';
-                global.Modal.close();
-                global.TeacherApp.toast('تم التوليد — راجع النتيجة ثم اضغط "حفظ".', 'success', 4000);
-            } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
-                btn.disabled = false; btn.innerHTML = '✨ توليد';
-            }
-        });
+            });
 
-        global.Modal.open({ title: '✨ توليد الرسالة والرؤية', body: form });
+            box.querySelector('#mv-apply')?.addEventListener('click', () => {
+                const picked = C.goals().filter((_, n) => chosen.has('goals:' + n));
+                if (!picked.length) return;
+                const field = body.querySelector('#goals');
+                const prev = field.value.trim();
+                field.value = (prev ? prev + '\n' : '') + picked.map((g) => '• ' + g.text).join('\n');
+                global.Modal.close();
+                global.TeacherApp.toast('أُضيفت — عدّلها ثم اضغط «حفظ».', 'success', 4000);
+            });
+        }
+
+        paint();
+        global.Modal.open({ title: '📖 مكتبة الرسالة والرؤية', body: box });
     }
 
     /* ---------- Generic file list (certificates / schedules / extras) ---------- */
