@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="robots" content="noindex">
+<title>معاينة — قارئ الكتب</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=1">
+<link rel="stylesheet" href="css/main.css?v=D16">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=4">
+
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    background: var(--bg); color: var(--primary);
+    display: flex; flex-direction: column;
+    overscroll-behavior: none;
+}
+
+.pv-cap {
+    flex: none; padding: 10px 12px 8px; text-align: center;
+    font-size: 12.5px; font-weight: var(--fw-black);
+}
+.pv-cap span {
+    display: block; font-size: 11px; font-weight: 500;
+    color: var(--text-muted); margin-top: 3px; line-height: 1.7;
+}
+
+/* ---------- إطار القارئ: يملأ ما بقي من الشاشة ---------- */
+#reader {
+    flex: 1; min-height: 0; position: relative;
+    background: #2C2C2A;               /* الورق يُقرأ على داكن، كالقرّاء المعروفين */
+    overflow: hidden;
+}
+.rd-top {
+    position: absolute; inset-inline: 0; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; color: #fff;
+    background: linear-gradient(180deg, rgba(15,44,92,.96), rgba(15,44,92,.86));
+    backdrop-filter: blur(8px);
+}
+.rd-top .nm { flex: 1; font-size: 13px; font-weight: var(--fw-black); }
+.rd-top button {
+    flex: none; min-height: 32px; padding: 0 11px; border-radius: 9px; cursor: pointer;
+    font-family: inherit; font-size: 11.5px; font-weight: var(--fw-black);
+    color: #fff; background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.24);
+}
+
+.rd-load .pick {
+    display: block; margin: 18px auto 0; max-width: 240px; min-height: 48px;
+    line-height: 48px; border-radius: 13px; cursor: pointer;
+    font-size: 14px; font-weight: var(--fw-black); color: #0F2C5C;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+}
+.rd-load {
+    position: absolute; inset: 0; z-index: 9;
+    display: grid; place-items: center; text-align: center;
+    color: #fff; font-size: 13px; line-height: 2; background: #2C2C2A;
+}
+
+/* ---------- أ: تمرير مستمر ---------- */
+.rd-scroll {
+    position: absolute; inset: 0; padding: 52px 10px 16px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.rd-scroll .pg { margin: 0 auto 12px; display: block; max-width: 100%;
+                 background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+.rd-badge {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 6; padding: 6px 14px; border-radius: 20px;
+    background: rgba(0,0,0,.62); color: #fff; font-size: 12px; font-weight: var(--fw-black);
+    pointer-events: none; transition: opacity .25s;
+}
+
+/* ---------- ب: صفحة بصفحة، سحب أفقي ---------- */
+.rd-pager {
+    position: absolute; inset: 0; padding: 52px 0 64px;
+    display: flex; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+.rd-pager::-webkit-scrollbar { display: none; }
+.rd-slide {
+    flex: 0 0 100%; scroll-snap-align: center;
+    display: grid; place-items: center; padding: 0 10px;
+}
+.rd-slide canvas { max-width: 100%; max-height: 100%;
+                   background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+.rd-bottom {
+    position: absolute; inset-inline: 0; bottom: 0; z-index: 5;
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, rgba(15,44,92,.96), rgba(15,44,92,.86));
+    backdrop-filter: blur(8px); color: #fff;
+}
+.rd-bottom .n { flex: none; font-size: 12px; font-weight: var(--fw-black); min-width: 56px; text-align: center; }
+.rd-bottom input[type=range] { flex: 1; accent-color: #C9A961; direction: rtl; }
+
+/* ---------- ج: مستمر + شريط مصغّرات ---------- */
+.rd-thumbs {
+    position: absolute; inset-inline: 0; bottom: 0; z-index: 5;
+    display: flex; gap: 8px; overflow-x: auto; padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+    background: rgba(15,44,92,.94); backdrop-filter: blur(8px);
+    -webkit-overflow-scrolling: touch;
+}
+.rd-thumbs::-webkit-scrollbar { display: none; }
+.rd-th {
+    flex: none; width: 46px; cursor: pointer; border: 0; padding: 0;
+    background: none; text-align: center;
+}
+.rd-th canvas {
+    width: 46px; display: block; background: #fff; border-radius: 4px;
+    border: 2px solid transparent; box-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+.rd-th.on canvas { border-color: #C9A961; }
+.rd-th .n { display: block; font-size: 9.5px; color: rgba(255,255,255,.7); margin-top: 3px; }
+.rd-th.on .n { color: #C9A961; font-weight: var(--fw-black); }
+
+/* ---------- شريط اختيار البديل ---------- */
+.pv-bar {
+    flex: none; display: flex; gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.95); border-top: 1px solid var(--border);
+}
+.pv-bar button {
+    flex: 1; min-height: 46px; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: var(--fw-black); color: var(--primary);
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16,24,40,.09);
+}
+.pv-bar button.on {
+    color: #fff; border-color: #0A2049;
+    background: linear-gradient(150deg, #1B3E77 0%, var(--primary) 55%, #0A2049 100%);
+}
+
+/* لوحة «اذهب إلى صفحة» */
+.rd-jump {
+    position: absolute; inset: 0; z-index: 8; display: none;
+    place-items: center; background: rgba(0,0,0,.55); padding: 20px;
+}
+.rd-jump.open { display: grid; }
+.rd-jump .box {
+    background: #fff; border-radius: 16px; padding: 16px; width: 100%; max-width: 300px;
+    text-align: center;
+}
+.rd-jump h4 { margin: 0 0 12px; font-size: 14px; color: var(--primary); }
+.rd-jump input {
+    width: 100%; font-family: inherit; font-size: 18px; font-weight: var(--fw-black);
+    text-align: center; color: var(--primary); padding: 10px;
+    border: 1.5px solid var(--border); border-radius: 11px; outline: none;
+}
+.rd-jump .row { display: flex; gap: 8px; margin-top: 12px; }
+.rd-jump .row button {
+    flex: 1; min-height: 42px; border-radius: 11px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: var(--fw-black);
+}
+.rd-jump .go { color: #fff; background: var(--primary); border: 1.5px solid #0A2049; }
+.rd-jump .no { color: var(--primary); background: #ECEAE3; border: 1.5px solid #D8D5CC; }
+</style>
+</head>
+<body>
+
+<div class="pv-cap" id="cap"></div>
+<div id="reader"><div class="rd-load" id="load">
+    <div>
+        <div style="font-size:34px; margin-bottom:10px;">📖</div>
+        اختر كتاباً من جوالك لتجرّب القارئ<br>
+        <span style="font-size:11px; opacity:.7">الملف لا يُرفع ولا يُحفظ — يُقرأ في جهازك وحده</span>
+        <label class="pick">اختر ملف PDF<input type="file" accept="application/pdf,.pdf" id="file" hidden></label>
+    </div>
+</div></div>
+
+<div class="pv-bar">
+    <button data-v="a" class="on">أ</button>
+    <button data-v="b">ب</button>
+    <button data-v="c">ج</button>
+</div>
+
+<script src="js/pdf-core.js?v=4"></script>
+<script>
+(function () {
+    'use strict';
+
+    const ar  = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const readerEl = document.getElementById('reader');
+    const capEl = document.getElementById('cap');
+
+    const VARIANTS = {
+        a: ['أ — تمرير مستمر', 'كل الصفحات في عمود واحد تُمرّرها بإبهامك · رقم الصفحة يظهر أثناء التمرير · زرّ «اذهب» للقفز'],
+        b: ['ب — صفحة بصفحة', 'صفحةٌ تملأ الشاشة وتسحب لتنتقل · منزلقٌ سفلي يقفز بك في الكتاب كلّه'],
+        c: ['ج — مستمر + مصغّرات', 'تمريرٌ مستمر وشريط مصغّرات أسفل الشاشة · تلمح الصفحة قبل أن تذهب إليها']
+    };
+
+    /* ------------------------------------------------------------------
+       كتابٌ تجريبي حقيقي: تُبنى صفحاته HTML ثم تُلتقط بنفس محرّك التطبيق،
+       فما تراه في القارئ هو ما سيراه المعلّم من ملفٍّ حقيقي.
+       ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------
+       القارئ
+       ------------------------------------------------------------------ */
+    let doc = null, current = 'a', bookName = 'الكتاب';
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    async function renderTo(canvas, pageNo, cssWidth) {
+        const page = await doc.getPage(pageNo);
+        const base = page.getViewport({ scale: 1 });
+        const scale = cssWidth / base.width;
+        const vp = page.getViewport({ scale: scale * DPR });
+        canvas.width = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        canvas.style.width = cssWidth + 'px';
+        canvas.style.height = Math.floor(vp.height / DPR) + 'px';
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    }
+
+    const topBar = (name) => `
+        <div class="rd-top">
+            <span class="nm">${name}</span>
+            <button data-jump>اذهب إلى صفحة</button>
+        </div>`;
+
+    const jumpBox = () => `
+        <div class="rd-jump" id="jump">
+            <div class="box">
+                <h4>اذهب إلى صفحة</h4>
+                <input type="number" min="1" max="${doc.numPages}" id="jump-n" placeholder="١ – ${ar(doc.numPages)}">
+                <div class="row">
+                    <button class="no" data-jump-no>إلغاء</button>
+                    <button class="go" data-jump-go>اذهب</button>
+                </div>
+            </div>
+        </div>`;
+
+    /* ---------- أ: تمرير مستمر ---------- */
+    function variantA() {
+        readerEl.innerHTML = topBar(bookName)
+            + '<div class="rd-scroll" id="sc"></div>'
+            + '<div class="rd-badge" id="badge"></div>' + jumpBox();
+
+        const sc = document.getElementById('sc');
+        const badge = document.getElementById('badge');
+        const w = Math.min(sc.clientWidth - 20, 720);
+
+        /* الصفحات تُرسم عند اقترابها لا كلها دفعةً واحدة: كتابٌ من مئتَي
+           صفحة يُسقط التبويب لو رُسم كاملاً. */
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((e) => {
+                if (!e.isIntersecting) return;
+                const c = e.target;
+                if (c.dataset.done) return;
+                c.dataset.done = '1';
+                renderTo(c, Number(c.dataset.p), w);
+            });
+        }, { root: sc, rootMargin: '400px 0px' });
+
+        for (let i = 1; i <= doc.numPages; i++) {
+            const c = document.createElement('canvas');
+            c.className = 'pg';
+            c.dataset.p = i;
+            c.style.width = w + 'px';
+            c.style.height = Math.floor(w * 848 / 600) + 'px';
+            sc.appendChild(c);
+            io.observe(c);
+        }
+
+        let hide;
+        const update = () => {
+            const mid = sc.scrollTop + sc.clientHeight / 2;
+            let n = 1;
+            [...sc.children].forEach((c, i) => { if (c.offsetTop <= mid) n = i + 1; });
+            badge.textContent = `${ar(n)} / ${ar(doc.numPages)}`;
+            badge.style.opacity = '1';
+            clearTimeout(hide);
+            hide = setTimeout(() => { badge.style.opacity = '0'; }, 1400);
+        };
+        sc.addEventListener('scroll', update);
+        update();
+
+        bindJump((n) => { sc.scrollTo({ top: sc.children[n - 1].offsetTop - 8, behavior: 'smooth' }); });
+    }
+
+    /* ---------- ب: صفحة بصفحة ---------- */
+    function variantB() {
+        readerEl.innerHTML = topBar(bookName)
+            + '<div class="rd-pager" id="pg"></div>'
+            + `<div class="rd-bottom">
+                   <span class="n" id="pn"></span>
+                   <input type="range" id="sl" min="1" max="${doc.numPages}" value="1">
+               </div>` + jumpBox();
+
+        const pg = document.getElementById('pg');
+        const pn = document.getElementById('pn');
+        const sl = document.getElementById('sl');
+
+        for (let i = 1; i <= doc.numPages; i++) {
+            const s = document.createElement('div');
+            s.className = 'rd-slide';
+            const c = document.createElement('canvas');
+            c.dataset.p = i;
+            s.appendChild(c);
+            pg.appendChild(s);
+        }
+
+        /* الجارتان تُرسمان مسبقاً فلا يرى المعلّم بياضاً عند السحب. */
+        const drawn = new Set();
+        const draw = (n) => {
+            if (n < 1 || n > doc.numPages || drawn.has(n)) return;
+            drawn.add(n);
+            const c = pg.children[n - 1].querySelector('canvas');
+            const box = pg.getBoundingClientRect();
+            const w = Math.min(box.width - 20, (box.height - 8) * 600 / 848);
+            renderTo(c, n, Math.floor(w));
+        };
+
+        const currentPage = () => Math.round(Math.abs(pg.scrollLeft) / pg.clientWidth) + 1;
+        const sync = () => {
+            const n = currentPage();
+            pn.textContent = `${ar(n)} / ${ar(doc.numPages)}`;
+            sl.value = n;
+            draw(n); draw(n + 1); draw(n - 1);
+        };
+        pg.addEventListener('scroll', sync);
+        sl.addEventListener('input', () => {
+            const n = Number(sl.value);
+            pg.scrollTo({ left: -(n - 1) * pg.clientWidth, behavior: 'auto' });
+            draw(n);
+        });
+        sync();
+        bindJump((n) => { pg.scrollTo({ left: -(n - 1) * pg.clientWidth, behavior: 'smooth' }); draw(n); });
+    }
+
+    /* ---------- ج: مستمر + مصغّرات ---------- */
+    function variantC() {
+        readerEl.innerHTML = topBar(bookName)
+            + '<div class="rd-scroll" id="sc" style="padding-bottom:86px;"></div>'
+            + '<div class="rd-thumbs" id="th"></div>' + jumpBox();
+
+        const sc = document.getElementById('sc');
+        const th = document.getElementById('th');
+        const w = Math.min(sc.clientWidth - 20, 720);
+
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach((e) => {
+                if (!e.isIntersecting || e.target.dataset.done) return;
+                e.target.dataset.done = '1';
+                renderTo(e.target, Number(e.target.dataset.p), w);
+            });
+        }, { root: sc, rootMargin: '400px 0px' });
+
+        for (let i = 1; i <= doc.numPages; i++) {
+            const c = document.createElement('canvas');
+            c.className = 'pg';
+            c.dataset.p = i;
+            c.style.width = w + 'px';
+            c.style.height = Math.floor(w * 848 / 600) + 'px';
+            sc.appendChild(c);
+            io.observe(c);
+
+            const b = document.createElement('button');
+            b.className = 'rd-th';
+            b.dataset.p = i;
+            b.innerHTML = `<canvas></canvas><span class="n">${ar(i)}</span>`;
+            th.appendChild(b);
+            renderTo(b.querySelector('canvas'), i, 46);
+        }
+
+        const marks = [...th.children];
+        const sync = () => {
+            const mid = sc.scrollTop + sc.clientHeight / 2;
+            let n = 1;
+            [...sc.children].forEach((c, i) => { if (c.offsetTop <= mid) n = i + 1; });
+            marks.forEach((m, i) => m.classList.toggle('on', i === n - 1));
+            const on = marks[n - 1];
+            if (on) th.scrollTo({ left: on.offsetLeft - th.clientWidth / 2 + 23, behavior: 'smooth' });
+        };
+        sc.addEventListener('scroll', sync);
+        th.addEventListener('click', (e) => {
+            const b = e.target.closest('.rd-th');
+            if (!b) return;
+            sc.scrollTo({ top: sc.children[Number(b.dataset.p) - 1].offsetTop - 8, behavior: 'smooth' });
+        });
+        sync();
+        bindJump((n) => { sc.scrollTo({ top: sc.children[n - 1].offsetTop - 8, behavior: 'smooth' }); });
+    }
+
+    function bindJump(go) {
+        const box = document.getElementById('jump');
+        readerEl.querySelector('[data-jump]').addEventListener('click', () => {
+            box.classList.add('open');
+            document.getElementById('jump-n').focus();
+        });
+        box.querySelector('[data-jump-no]').addEventListener('click', () => box.classList.remove('open'));
+        box.querySelector('[data-jump-go]').addEventListener('click', () => {
+            const n = Number(document.getElementById('jump-n').value);
+            if (n >= 1 && n <= doc.numPages) go(n);
+            box.classList.remove('open');
+        });
+    }
+
+    function draw() {
+        if (!doc) return;
+        capEl.innerHTML = `${VARIANTS[current][0]}<span>${VARIANTS[current][1]}</span>`;
+        if (current === 'a') variantA();
+        else if (current === 'b') variantB();
+        else variantC();
+    }
+
+    document.querySelectorAll('.pv-bar button').forEach((b) => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.pv-bar button').forEach((x) => x.classList.remove('on'));
+            b.classList.add('on');
+            current = b.dataset.v;
+            draw();
+        });
+    });
+
+    /* الملف يُقرأ محلياً بلا رفع: القارئ كلّه يعمل بلا إنترنت، وهذا
+       شرطٌ في مدرسةٍ لا شبكة فيها. */
+    document.getElementById('file').addEventListener('change', async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const load = document.getElementById('load');
+        load.innerHTML = 'جارٍ فتح «' + f.name + '»…';
+        try {
+            const lib = await window.PdfCore.ensurePdfJs();
+            doc = await lib.getDocument({ data: await f.arrayBuffer() }).promise;
+            bookName = f.name.replace(/\.pdf$/i, '');
+            draw();
+        } catch (err) {
+            load.innerHTML = 'تعذّر فتح الملف:<br><span style="font-size:11px">'
+                + (err.message || err) + '</span>';
+        }
+    });
+})();
+</script>
+</body>
+</html>
