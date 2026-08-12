@@ -33,6 +33,10 @@
 
     const state = {}; // per-render working state (exam draft)
 
+    /* دالّةٌ لا نصّ: البطاقة تمرّر ترتيب السؤال، فيُبنى الزرّ بمعرّفه. */
+    const regenBtn = (i) =>
+        `<button class="btn btn-ghost btn-sm" data-q-regen="${i}" title="إعادة توليد">🔄</button>`;
+
     /* ==========================================================================
        LIST
        ========================================================================== */
@@ -513,13 +517,10 @@
             </div>
 
             <div class="questions-list" id="q-list">
-                ${exam.questions.length
-                    ? exam.questions.map((q, i) => questionCard(q, i, s.manual)).join('')
-                    : `<p class="text-muted" style="text-align:center; padding:var(--space-5) 0;
-                            font-size:var(--fs-sm); line-height:1.9;">
-                           لا أسئلة بعد.<br>أضف سؤالاً واختر نوعه: اختيار من متعدد،
-                           أو صح وخطأ، أو أكمل الفراغ، أو مقالي.
-                       </p>`}
+                ${global.QuestionEditor.listHtml(exam.questions, {
+                    points: true,
+                    actions: s.manual ? '' : regenBtn
+                })}
             </div>
 
             <button class="btn btn-secondary btn-sm" id="btn-add-q"
@@ -537,14 +538,7 @@
         body.querySelector('#exam-title').addEventListener('input', (e) => { exam.title = e.target.value; });
 
         body.querySelector('#btn-add-q').addEventListener('click', () => {
-            exam.questions.push({
-                id: 'q_manual_' + Date.now(),
-                type: 'mcq',
-                text: '',
-                options: ['', '', '', ''],
-                answer: '',
-                points: 1
-            });
+            exam.questions.push(global.QuestionEditor.blank(true));
             step3(body, cls);
         });
 
@@ -567,14 +561,8 @@
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
         });
         body.querySelector('#btn-to-print').addEventListener('click', async () => {
-            if (!exam.questions.length) {
-                return global.TeacherApp.toast('أضف سؤالاً واحداً على الأقل.', 'warning');
-            }
-            const blank = exam.questions.findIndex((q) => !String(q.text || '').trim());
-            if (blank >= 0) {
-                return global.TeacherApp.toast(
-                    `السؤال ${arDigits(blank + 1)} بلا نصّ — اكتبه أو احذفه.`, 'warning', 4000);
-            }
+            const bad = global.QuestionEditor.validate(exam.questions);
+            if (bad) return global.TeacherApp.toast(bad, 'warning', 4000);
             await saveExam(exam);
             s.step = 4;
             renderWizard(body.closest('#tab-panel'), cls);
@@ -588,107 +576,16 @@
         return exam;
     }
 
-    function questionCard(q, i, manual) {
-        let body = '';
-        if (q.type === 'mcq') {
-            body = `
-                <div class="opts-list">
-                    ${(q.options || ['', '', '', '']).map((opt, k) => `
-                        <div class="opt-row">
-                            <input type="radio" name="ans-${i}" ${q.answer === opt ? 'checked' : ''} data-q-ans="${i}" data-k="${k}">
-                            <input class="input" data-q-opt="${i}" data-k="${k}" value="${escapeAttr(opt)}">
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else if (q.type === 'tf') {
-            body = `
-                <div class="flex gap-3" style="margin-top: var(--space-2);">
-                    <label><input type="radio" name="tf-${i}" value="صح" ${q.answer === 'صح' ? 'checked' : ''} data-q-tf="${i}"> صح ✓</label>
-                    <label><input type="radio" name="tf-${i}" value="خطأ" ${q.answer === 'خطأ' ? 'checked' : ''} data-q-tf="${i}"> خطأ ✗</label>
-                </div>
-            `;
-        } else if (q.type === 'fill') {
-            body = `
-                <div class="field" style="margin:0;">
-                    <label class="label">الإجابة الصحيحة</label>
-                    <input class="input" value="${escapeAttr(q.answer || '')}" data-q-fill="${i}">
-                </div>
-            `;
-        } else if (q.type === 'essay') {
-            body = `<div class="text-muted" style="font-size:var(--fs-sm);">سؤال مقالي — تُطبع تحته أربعة سطور للإجابة.</div>`;
-        } else {
-            body = `<div class="text-muted" style="font-size:var(--fs-sm);">سؤال مطابقة.</div>`;
-        }
-
-        return `
-            <article class="q-card" data-q="${i}">
-                <div class="q-header">
-                    <span class="q-index">${i + 1}</span>
-                    <select class="select select-sm" data-q-type="${i}">
-                        ${Object.entries(TYPE_LABELS).map(([k, v]) =>
-                            `<option value="${k}" ${q.type === k ? 'selected' : ''}>${v}</option>`
-                        ).join('')}
-                    </select>
-                    <input class="input input-sm" data-q-points="${i}" type="number" min="1" max="10"
-                           value="${q.points || 1}" title="الدرجة" style="max-width: 70px;">
-                    <div class="q-actions">
-                        ${manual ? '' : `<button class="btn btn-ghost btn-sm" data-q-regen="${i}" title="إعادة توليد">🔄</button>`}
-                        <button class="btn btn-ghost btn-sm" data-q-del="${i}" title="حذف">🗑️</button>
-                    </div>
-                </div>
-                <div class="field" style="margin-bottom: var(--space-3);">
-                    <textarea class="textarea" data-q-text="${i}" rows="2">${escapeHtml(q.text)}</textarea>
-                </div>
-                ${body}
-            </article>
-        `;
-    }
-
+    /* المحرّر مشترك مع أوراق العمل في QuestionEditor — ولا يبقى هنا
+       إلا «إعادة التوليد»، فهو وحده المرتبط بالذكاء الاصطناعي. */
     function bindQuestions(body, cls) {
         const s = state[cls.id];
         const exam = s.exam;
 
-        body.querySelectorAll('[data-q-text]').forEach((el) =>
-            el.addEventListener('input', (e) => {
-                exam.questions[Number(el.dataset.qText)].text = e.target.value;
-            }));
-        body.querySelectorAll('[data-q-points]').forEach((el) =>
-            el.addEventListener('change', (e) => {
-                exam.questions[Number(el.dataset.qPoints)].points = Number(e.target.value) || 1;
-            }));
-        body.querySelectorAll('[data-q-type]').forEach((el) =>
-            el.addEventListener('change', (e) => {
-                const q = exam.questions[Number(el.dataset.qType)];
-                q.type = e.target.value;
-                if (q.type === 'mcq' && !q.options) q.options = ['', '', '', ''];
-                step3(body, cls);
-            }));
-        body.querySelectorAll('[data-q-opt]').forEach((el) =>
-            el.addEventListener('input', (e) => {
-                const q = exam.questions[Number(el.dataset.qOpt)];
-                q.options[Number(el.dataset.k)] = e.target.value;
-            }));
-        body.querySelectorAll('[data-q-ans]').forEach((el) =>
-            el.addEventListener('change', (e) => {
-                const q = exam.questions[Number(el.dataset.qAns)];
-                q.answer = q.options[Number(el.dataset.k)];
-            }));
-        body.querySelectorAll('[data-q-tf]').forEach((el) =>
-            el.addEventListener('change', (e) => {
-                exam.questions[Number(el.dataset.qTf)].answer = e.target.value;
-            }));
-        body.querySelectorAll('[data-q-fill]').forEach((el) =>
-            el.addEventListener('input', (e) => {
-                exam.questions[Number(el.dataset.qFill)].answer = e.target.value;
-            }));
-        body.querySelectorAll('[data-q-del]').forEach((btn) =>
-            btn.addEventListener('click', () => {
-                const i = Number(btn.dataset.qDel);
-                if (!global.confirm('حذف هذا السؤال؟')) return;
-                exam.questions.splice(i, 1);
-                step3(body, cls);
-            }));
+        global.QuestionEditor.bind(body, exam.questions, {
+            rerender: () => step3(body, cls)
+        });
+
         body.querySelectorAll('[data-q-regen]').forEach((btn) =>
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.qRegen);

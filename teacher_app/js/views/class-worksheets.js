@@ -1,5 +1,13 @@
 /* ==========================================================================
-   views/class-worksheets.js — Worksheets tab (simpler wizard).
+   views/class-worksheets.js — أوراق العمل، بنفس نمط الاختبارات.
+
+   كانت الورقة تمارينَ نصّيةً حرّة لا أنواع لها، ولا تُنشأ إلا بالتوليد.
+   صارت أسئلةً كأسئلة الاختبار (اختيار من متعدد · صح وخطأ · إكمال ·
+   مقالي) تُحرَّر بـQuestionEditor نفسه وتُطبع بمحرّك PDF نفسه.
+
+   والفارق الباقي عن الاختبار اثنان: لا درجات، ولها سطر تعليمات يكتبه
+   المعلّم بنفسه. وما حُفظ بالنمط القديم (exercises) يُقرأ ويُحوَّل عند
+   الفتح، فلا تضيع ورقةٌ سابقة.
    ========================================================================== */
 
 (function (global) {
@@ -10,9 +18,23 @@
             '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
         }[m]));
     }
-    function escapeAttr(s) { return escapeHtml(s); }
+    const escapeAttr = escapeHtml;
+    const QE = () => global.QuestionEditor;
+
+    function countWord(n, one, two, few, many) {
+        const ar = QE().arDigits;
+        if (n === 1) return one;
+        if (n === 2) return two;
+        if (n <= 10) return ar(n) + ' ' + few;
+        return ar(n) + ' ' + many;
+    }
+    const qWord = (n) => countWord(n, 'سؤال واحد', 'سؤالان', 'أسئلة', 'سؤالاً');
 
     const state = {};
+
+    /* ==========================================================================
+       القائمة
+       ========================================================================== */
 
     async function render(panel, cls) {
         const sheets = (await global.TeacherDB.getAllByIndex('worksheets', 'class_id', cls.id))
@@ -21,21 +43,25 @@
         panel.innerHTML = `
             <div class="section-header">
                 <h3 class="section-title">📄 أوراق عمل الفصل</h3>
-                <button class="btn btn-primary" id="btn-new-sheet">+ ورقة جديدة</button>
+                <div class="flex gap-2">
+                    <button class="btn btn-ghost btn-sm" id="btn-gen-sheet">⚡ توليد</button>
+                    <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة جديدة</button>
+                </div>
             </div>
             ${sheets.length === 0 ? empty() : list(sheets)}
         `;
 
-        panel.querySelector('#btn-new-sheet')?.addEventListener('click', () => startWizard(cls, panel));
-        panel.querySelector('[data-empty-add]')?.addEventListener('click', () => startWizard(cls, panel));
+        panel.querySelector('#btn-manual-sheet')?.addEventListener('click', () => startManual(cls, panel));
+        panel.querySelectorAll('[data-empty-add]').forEach((b) =>
+            b.addEventListener('click', () => startManual(cls, panel)));
+        panel.querySelector('#btn-gen-sheet')?.addEventListener('click', () => startWizard(cls, panel));
 
         panel.querySelectorAll('[data-ws-open]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const row = await global.TeacherDB.get('worksheets', Number(btn.dataset.wsOpen));
-                if (row) {
-                    state[cls.id] = { cls, step: 2, sheet: row };
-                    renderWizard(panel, cls);
-                }
+                if (!row) return;
+                state[cls.id] = { cls, step: 2, sheet: normalize(row) };
+                renderWizard(panel, cls);
             });
         });
         panel.querySelectorAll('[data-ws-print]').forEach((btn) => {
@@ -43,7 +69,7 @@
                 const row = await global.TeacherDB.get('worksheets', Number(btn.dataset.wsPrint));
                 if (!row) return;
                 global.PrintWorksheet.savePdf(
-                    { sheet: row, cls, teacher: await global.Auth.currentTeacher() });
+                    { sheet: normalize(row), cls, teacher: await global.Auth.currentTeacher() });
             });
         });
         panel.querySelectorAll('[data-ws-delete]').forEach((btn) => {
@@ -56,12 +82,21 @@
         });
     }
 
+    /** يضمن وجود questions مهما كان عمر الصفّ المحفوظ. */
+    function normalize(row) {
+        if (!row.questions || !row.questions.length) {
+            row.questions = QE().fromExercises(row.exercises);
+        }
+        return row;
+    }
+    const countOf = (r) => (r.questions?.length || r.exercises?.length || 0);
+
     function empty() {
         return `
             <div class="empty-state">
                 <div class="icon">📄</div>
                 <h3>لا توجد أوراق بعد</h3>
-                <p>ولّد ورقة عمل تدريبية حول أي درس بالذكاء الاصطناعي.</p>
+                <p>اكتب أسئلتك بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
                 <button class="btn btn-primary" data-empty-add>+ ورقة جديدة</button>
             </div>
         `;
@@ -75,7 +110,7 @@
                         <div>
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(r.title)}</h4>
                             <div class="text-muted" style="font-size:var(--fs-sm);">
-                                ${r.exercises?.length || 0} تمرين ·
+                                ${qWord(countOf(r))} ·
                                 ${new Date(r.created_at).toLocaleDateString('ar-SA')}
                             </div>
                         </div>
@@ -90,6 +125,26 @@
         `;
     }
 
+    /* ==========================================================================
+       الإنشاء
+       ========================================================================== */
+
+    /** الباب الأصل: محرّر الأسئلة مباشرةً بورقةٍ فارغة. */
+    function startManual(cls, panel) {
+        state[cls.id] = {
+            cls, step: 2, manual: true,
+            sheet: {
+                class_id: cls.id,
+                title: 'ورقة عمل — ' + (cls.subject || ''),
+                topic: '',
+                instructions: '',
+                questions: [],
+                created_at: new Date().toISOString()
+            }
+        };
+        renderWizard(panel, cls);
+    }
+
     function startWizard(cls, panel) {
         state[cls.id] = {
             cls, step: 1,
@@ -102,10 +157,11 @@
     function renderWizard(panel, cls) {
         const s = state[cls.id];
         if (!s) return render(panel, cls);
-
         if (s.step === 1) step1(panel, cls);
         else step2(panel, cls);
     }
+
+    /* ---------- التوليد (بابٌ ثانوي) ---------- */
 
     function step1(panel, cls) {
         const s = state[cls.id];
@@ -115,7 +171,7 @@
                 <div class="wizard-header">
                     <button class="btn btn-ghost btn-sm" id="back-list">← قائمة الأوراق</button>
                 </div>
-                <h3 class="wizard-title">ورقة عمل جديدة</h3>
+                <h3 class="wizard-title">توليد ورقة عمل</h3>
 
                 <div class="field">
                     <label class="label">الموضوع / الدرس *</label>
@@ -126,7 +182,7 @@
                     <label class="label">عدد التمارين</label>
                     <select class="select" id="ws-count">
                         ${[5, 8, 10, 12, 15].map((n) =>
-                            `<option value="${n}" ${d.count === n ? 'selected' : ''}>${n} تمرين</option>`
+                            `<option value="${n}" ${d.count === n ? 'selected' : ''}>${QE().arDigits(n)} تمارين</option>`
                         ).join('')}
                     </select>
                 </div>
@@ -136,7 +192,7 @@
                               placeholder="ألصق نصاً من الكتاب ليكون أساس التمارين...">${escapeHtml(d.context)}</textarea>
                 </div>
                 <div class="field">
-                    <label class="label">ملاحظات للذكاء الاصطناعي</label>
+                    <label class="label">ملاحظات</label>
                     <textarea class="textarea" id="ws-notes" rows="2"
                               placeholder="مثلاً: اجعل التمارين متدرجة الصعوبة...">${escapeHtml(d.notes)}</textarea>
                 </div>
@@ -166,14 +222,14 @@
                     subject: cls.subject, grade: `${cls.grade} / ${cls.section}`,
                     topic: d.topic, context: d.context, count: d.count, notes: d.notes
                 });
-                s.sheet = {
+                s.sheet = normalize({
                     class_id: cls.id,
                     title: result.title,
                     topic: d.topic,
                     instructions: result.instructions,
                     exercises: result.exercises,
                     created_at: new Date().toISOString()
-                };
+                });
                 s.step = 2;
                 renderWizard(panel, cls);
             } catch (err) {
@@ -182,6 +238,8 @@
             }
         });
     }
+
+    /* ---------- المحرّر ---------- */
 
     function step2(panel, cls) {
         const s = state[cls.id];
@@ -192,30 +250,23 @@
                 <div class="wizard-header">
                     <button class="btn btn-ghost btn-sm" id="back-list">← القائمة</button>
                 </div>
-                <h3 class="wizard-title">مراجعة وتعديل الورقة</h3>
+                <h3 class="wizard-title">أسئلة ورقة العمل</h3>
 
                 <div class="field">
                     <label class="label">العنوان</label>
                     <input class="input" id="ws-title" value="${escapeAttr(sh.title)}">
                 </div>
                 <div class="field">
-                    <label class="label">التعليمات</label>
-                    <textarea class="textarea" id="ws-inst" rows="2">${escapeHtml(sh.instructions)}</textarea>
+                    <label class="label">التعليمات (تُطبع أعلى الورقة)</label>
+                    <textarea class="textarea" id="ws-inst" rows="2"
+                              placeholder="مثلاً: أجب عن الأسئلة الآتية مستعيناً بكتابك.">${escapeHtml(sh.instructions || '')}</textarea>
                 </div>
 
-                <h4>التمارين (${sh.exercises.length})</h4>
-                <div class="questions-list" id="ex-list">
-                    ${sh.exercises.map((ex, i) => `
-                        <article class="q-card">
-                            <div class="q-header">
-                                <span class="q-index">${i + 1}</span>
-                                <button class="btn btn-ghost btn-sm" data-del="${i}">🗑️</button>
-                            </div>
-                            <textarea class="textarea" data-ex-text="${i}" rows="2">${escapeHtml(ex.text)}</textarea>
-                        </article>
-                    `).join('')}
+                <div class="questions-list" id="q-list">
+                    ${QE().listHtml(sh.questions, { points: false })}
                 </div>
-                <button class="btn btn-secondary btn-sm" id="add-ex" style="margin-top:var(--space-3);">+ تمرين</button>
+                <button class="btn btn-secondary btn-sm" id="add-q"
+                        style="margin-top:var(--space-3);">+ إضافة سؤال</button>
 
                 <div class="wizard-footer">
                     <button class="btn btn-secondary" id="ws-save">💾 حفظ</button>
@@ -226,36 +277,45 @@
 
         panel.querySelector('#ws-title').addEventListener('input', (e) => { sh.title = e.target.value; });
         panel.querySelector('#ws-inst').addEventListener('input', (e) => { sh.instructions = e.target.value; });
-        panel.querySelectorAll('[data-ex-text]').forEach((el) =>
-            el.addEventListener('input', (e) => {
-                sh.exercises[Number(el.dataset.exText)].text = e.target.value;
-            }));
-        panel.querySelectorAll('[data-del]').forEach((btn) =>
-            btn.addEventListener('click', () => {
-                if (!global.confirm('حذف هذا التمرين؟')) return;
-                sh.exercises.splice(Number(btn.dataset.del), 1);
-                step2(panel, cls);
-            }));
-        panel.querySelector('#add-ex').addEventListener('click', () => {
-            sh.exercises.push({ id: 'ex_' + Date.now(), text: '', hint: '' });
+
+        QE().bind(panel, sh.questions, { rerender: () => step2(panel, cls) });
+
+        panel.querySelector('#add-q').addEventListener('click', () => {
+            sh.questions.push(QE().blank(false));
             step2(panel, cls);
         });
 
         panel.querySelector('#back-list').addEventListener('click', async () => {
+            if (sh.questions.length && !sh.id
+                && !global.confirm('سيتم فقدان الأسئلة غير المحفوظة. متابعة؟')) return;
             delete state[cls.id];
             await render(panel, cls);
         });
+
         panel.querySelector('#ws-save').addEventListener('click', async () => {
-            sh.updated_at = new Date().toISOString();
-            sh.id = await global.TeacherDB.put('worksheets', sh);
+            await save(sh);
             global.TeacherApp.toast('تم الحفظ ✅', 'success');
         });
+
         panel.querySelector('#ws-print').addEventListener('click', async () => {
-            sh.updated_at = new Date().toISOString();
-            sh.id = await global.TeacherDB.put('worksheets', sh);
+            const bad = QE().validate(sh.questions);
+            if (bad) return global.TeacherApp.toast(bad, 'warning', 4000);
+            await save(sh);
             global.PrintWorksheet.savePdf(
                 { sheet: sh, cls, teacher: await global.Auth.currentTeacher() });
         });
+
+        /* تحميل محرّك PDF بالخلفية: إيماءة المستخدم في iOS تضيع لو
+           انتظرت المكتبتين، فلا تفتح ورقة المشاركة. */
+        global.PrintWorksheet.preloadPdfEngine().catch(() => {});
+    }
+
+    async function save(sh) {
+        sh.updated_at = new Date().toISOString();
+        /* التمارين القديمة تُحذف بعد التحويل، فلا يبقى مصدران للحقيقة. */
+        delete sh.exercises;
+        sh.id = await global.TeacherDB.put('worksheets', sh);
+        return sh;
     }
 
     global.ClassWorksheetsTab = { render };

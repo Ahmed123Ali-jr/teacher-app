@@ -36,6 +36,10 @@
         return ar(n) + ' درجة';
     }
 
+    /* درجةٌ غير مذكورة تعني «واحدة» في الاختبار، أما ورقة العمل فتمرّر
+       صفراً صريحاً — فالفرق بين «لم تُذكر» و«لا درجة» فرقٌ حقيقي. */
+    const pts = (q) => (q.points == null ? 1 : q.points);
+
     const ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'];
     const LETTERS  = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
 
@@ -134,7 +138,7 @@
         groups.forEach((g, gi) => {
             const secNo = gi + 1;
             /* ورقة العمل بلا درجات: صفرٌ يعني «لا تطبع درجة» لا «صفر درجة». */
-            const total = g.items.reduce((s, q) => s + (q.points || 0), 0);
+            const total = g.items.reduce((s, q) => s + pts(q), 0);
             blocks.push({ kind: 'sec', sec: secNo, html:
                 `<div class="ex-sec">السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}`
                 + (total ? `<span class="g">(${marks(total)})</span>` : '') + '</div>' });
@@ -168,7 +172,7 @@
                 blocks.push({ kind: 'q', sec: secNo, html:
                     `<div class="ex-q"><span class="n">${n}-</span>`
                     + `<span class="t">${escapeHtml(q.text).replace(/\n/g, '<br>')}</span>`
-                    + (q.points > 0 ? `<span class="m">(${marks(q.points)})</span>` : '')
+                    + (pts(q) > 0 ? `<span class="m">(${marks(pts(q))})</span>` : '')
                     + '</div>' + lines(opts.answerLines || 4) });
             });
         });
@@ -210,7 +214,7 @@
         const { exam, cls, teacher } = ctx;
         const p = global.PrintPrefs || {};
         const s = exam.settings || {};
-        const total = (exam.questions || []).reduce((sum, q) => sum + (q.points || 0), 0);
+        const total = (exam.questions || []).reduce((sum, q) => sum + pts(q), 0);
 
         const right = [
             'المملكة العربية السعودية',
@@ -233,11 +237,14 @@
 
         const term = p.academicYear ? ` — ${escapeHtml(p.academicYear)}` : '';
 
+        /* خانة الدرجة تسقط مع الدرجات: ورقة العمل لا تُصحَّح بدرجة،
+           فصندوقٌ فارغ اسمه «الدرجة» يُربك الطالب ووليّه. */
+        const withGrade = s.include_grade !== false && total > 0;
         const info = (s.include_name !== false) ? `
             <table class="ex-info"><tr>
-                <td style="width:58%;">اسم الطالب: ....................................................</td>
-                <td>رقم الجلوس: ..................</td>
-                <td style="width:15%; text-align:center;">الدرجة<br>&nbsp;</td>
+                <td style="width:${withGrade ? 58 : 70}%;">اسم الطالب: ....................................................</td>
+                <td>${withGrade ? 'رقم الجلوس: ..................' : 'الصف: ..................'}</td>
+                ${withGrade ? '<td style="width:15%; text-align:center;">الدرجة<br>&nbsp;</td>' : ''}
             </tr></table>` : '';
 
         /* تعليمات المعلم إن كتبها (ورقة العمل)، وإلّا فالنصّ المعتاد. */
@@ -468,17 +475,18 @@
        ------------------------------------------------------------------ */
     async function saveWorksheetPdf(ctx, opts) {
         const sheet = ctx.sheet || {};
-        /* التمارين نصوصٌ حرّة بلا نوعٍ ولا درجة — تُعامَل كمقالية فتنال
-           مساحة كتابة، والتلميح يُطبع تحت التمرين لأنه جزءٌ من السؤال. */
+        /* أسئلةٌ كأسئلة الاختبار، بلا درجات. والأوراق المحفوظة بالنمط
+           القديم (تمارين نصّية) تُحوَّل هنا أيضاً — قد تُطبع من القائمة
+           بلا أن تمرّ بالمحرّر. */
+        const questions = (sheet.questions && sheet.questions.length)
+            ? sheet.questions
+            : global.QuestionEditor.fromExercises(sheet.exercises);
+
         const exam = {
             title: sheet.title || 'ورقة عمل',
             settings: { include_name: true, include_grade: false, include_teacher: true,
                         include_instructions: false },
-            questions: (sheet.exercises || []).map((ex) => ({
-                type: 'essay',
-                text: ex.hint ? `${ex.text}\n(${ex.hint})` : ex.text,
-                points: 0
-            }))
+            questions: questions.map((q) => Object.assign({}, q, { points: 0 }))
         };
         return savePdf({ exam, cls: ctx.cls, teacher: ctx.teacher, instructions: sheet.instructions },
             Object.assign({ answerLines: 3 }, opts));
