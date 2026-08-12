@@ -41,7 +41,9 @@
         panel.querySelectorAll('[data-ws-print]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const row = await global.TeacherDB.get('worksheets', Number(btn.dataset.wsPrint));
-                if (row) global.PrintWorksheet.print(row, cls, await global.Auth.currentTeacher());
+                if (!row) return;
+                global.PrintWorksheet.savePdf(
+                    { sheet: row, cls, teacher: await global.Auth.currentTeacher() });
             });
         });
         panel.querySelectorAll('[data-ws-delete]').forEach((btn) => {
@@ -251,7 +253,8 @@
         panel.querySelector('#ws-print').addEventListener('click', async () => {
             sh.updated_at = new Date().toISOString();
             sh.id = await global.TeacherDB.put('worksheets', sh);
-            global.PrintWorksheet.print(sh, cls, await global.Auth.currentTeacher());
+            global.PrintWorksheet.savePdf(
+                { sheet: sh, cls, teacher: await global.Auth.currentTeacher() });
         });
     }
 

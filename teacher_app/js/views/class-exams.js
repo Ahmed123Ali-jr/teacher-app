@@ -57,7 +57,10 @@
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.examPrint;
                 const exam = await global.TeacherDB.get('exams', id);
-                if (exam) global.PrintExam.print(exam, cls, await global.Auth.currentTeacher());
+                if (!exam) return;
+                const teacher = await global.Auth.currentTeacher();
+                global.PrintExam.savePdf({ exam, cls, teacher },
+                    { includeAnswers: !!exam.settings?.include_answers });
             });
         });
 
@@ -674,8 +677,13 @@
         body.querySelector('#btn-print').addEventListener('click', async () => {
             await saveExam(exam);
             const teacher = await global.Auth.currentTeacher();
-            global.PrintExam.print(exam, cls, teacher);
+            global.PrintExam.savePdf({ exam, cls, teacher },
+                { includeAnswers: !!settings.include_answers });
         });
+
+        /* تحميل محرّك PDF فور فتح الخطوة، لا عند الضغط: إيماءة المستخدم
+           في iOS تضيع لو انتظرت تحميل المكتبتين، فلا تفتح ورقة المشاركة. */
+        global.PrintExam.preloadPdfEngine().catch(() => {});
     }
 
     function checkbox(name, label, checked) {
