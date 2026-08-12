@@ -143,6 +143,10 @@
                 `<div class="ex-sec">السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}`
                 + (total ? `<span class="g">(${marks(total)})</span>` : '') + '</div>' });
 
+            /* درجة السؤال بجانبه تفيد حين تختلف داخل القسم، أما قسمٌ
+               بسؤالٍ واحد فرأسه قاله سلفاً — فلا يُكتب مرّتين. */
+            const perQ = g.items.length > 1;
+
             g.items.forEach((q, i) => {
                 const n = ar(i + 1);
                 if (g.type === 'tf') {
@@ -172,7 +176,7 @@
                 blocks.push({ kind: 'q', sec: secNo, html:
                     `<div class="ex-q"><span class="n">${n}-</span>`
                     + `<span class="t">${escapeHtml(q.text).replace(/\n/g, '<br>')}</span>`
-                    + (pts(q) > 0 ? `<span class="m">(${marks(pts(q))})</span>` : '')
+                    + (perQ && pts(q) > 0 ? `<span class="m">(${marks(pts(q))})</span>` : '')
                     + '</div>' + lines(opts.answerLines || 4) });
             });
         });
