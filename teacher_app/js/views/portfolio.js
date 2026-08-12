@@ -758,113 +758,143 @@
 
     /* ---------- Mission & vision ---------- */
 
+    /* ---------- الرسالة والرؤية: بطاقات تُقرأ لا صناديق تُملأ ----------
+       الصناديق الفارغة كانت تطالب المعلم بالكتابة، والمكتبة — وهي الفكرة —
+       مخفيةٌ خلف زر صغير. الآن كل حقل بطاقةٌ تعرض نصّه كاملاً، والضغط
+       يفتح مكتبة ذلك الحقل ومعها الكتابة الحرة. */
+    const MV_FIELDS = [
+        { key: 'mission', label: 'الرسالة الشخصية',
+          empty: 'اختر صياغة من المكتبة، أو اكتبها بنفسك.' },
+        { key: 'vision',  label: 'الرؤية',
+          empty: 'سطر واحد يصف ما تسعى إليه.' },
+        { key: 'goals',   label: 'الأهداف المهنية',
+          empty: 'اختر ما يناسبك من الأهداف — تُضاف كقائمة.' }
+    ];
+
     function renderMission(body, ctx) {
         body.innerHTML = `
-            <button type="button" class="btn-add-gray mv-open" id="btn-mv-lib">
-                📖 اختر من المكتبة
-            </button>
             <p class="mv-hint">صياغات رسمية مبنية على المعايير المهنية للمعلمين
                ورؤية وزارة التعليم — اخترها ثم عدّلها لتشبهك.</p>
-
-            <div class="field">
-                <label class="label">الرسالة الشخصية</label>
-                <textarea class="textarea" id="mission" rows="4"
-                          placeholder="رسالتي التربوية...">${escapeHtml(ctx.portfolio.mission || '')}</textarea>
+            <div class="mvc">
+                ${MV_FIELDS.map((f) => mvCardHtml(f, ctx.portfolio[f.key] || '')).join('')}
             </div>
-            <div class="field">
-                <label class="label">الرؤية</label>
-                <textarea class="textarea" id="vision" rows="4"
-                          placeholder="رؤيتي المستقبلية...">${escapeHtml(ctx.portfolio.vision || '')}</textarea>
-            </div>
-            <div class="field">
-                <label class="label">الأهداف المهنية</label>
-                <textarea class="textarea" id="goals" rows="4"
-                          placeholder="أهدافي للعام الدراسي...">${escapeHtml(ctx.portfolio.goals || '')}</textarea>
-            </div>
-            <button class="btn btn-primary" id="save-mission">💾 حفظ</button>
         `;
 
-        body.querySelector('#save-mission').addEventListener('click', async () => {
-            ctx.portfolio.mission = body.querySelector('#mission').value.trim();
-            ctx.portfolio.vision  = body.querySelector('#vision').value.trim();
-            ctx.portfolio.goals   = body.querySelector('#goals').value.trim();
-            await savePortfolio(ctx.portfolio);
-            global.TeacherApp.toast('تم الحفظ ✅', 'success');
+        body.querySelectorAll('[data-mv]').forEach((el) => {
+            el.addEventListener('click', () => openMvSheet(body, ctx, el.dataset.mv));
         });
-
-        body.querySelector('#btn-mv-lib').addEventListener('click', () => openMissionLibrary(body));
     }
 
-    /* مكتبة الرسالة والرؤية: اختيارٌ من صياغات مؤصَّلة بدل توليد نصّ.
-       الرسالة والرؤية تُستبدلان بالمختار، والأهداف تُجمع لأن المعلم
-       يكتب عادةً عدّة أهداف لا هدفاً واحداً. */
-    function openMissionLibrary(body) {
-        const C = global.MissionCatalog;
-        const box = document.createElement('div');
-        let tab = 'mission';
-        const chosen = new Set();
+    /* الأهداف تُعرض قائمةً كاملة بلا اقتطاع — المعلم يريد أن يرى ما كتبه
+       لا ملخّصاً عنه. */
+    function mvCardHtml(f, value) {
+        const has = !!String(value).trim();
+        let inner;
+        if (!has) {
+            inner = `<span class="mvc-empty">${escapeHtml(f.empty)}</span>`;
+        } else if (f.key === 'goals') {
+            const lines = String(value).split('\n')
+                .map((x) => x.replace(/^[•\-\s]+/, '').trim()).filter(Boolean);
+            inner = `<ul class="mvc-goals">${lines.map((x) =>
+                `<li>${escapeHtml(x)}</li>`).join('')}</ul>`;
+        } else {
+            inner = `<span class="mvc-tx">${escapeHtml(value)}</span>`;
+        }
+        return `
+            <button type="button" class="mvc-card ${has ? '' : 'is-empty'}" data-mv="${f.key}">
+                <span class="mvc-head">
+                    <span class="mvc-lbl">${escapeHtml(f.label)}</span>
+                    <span class="mvc-edit">${has ? 'تعديل' : 'اختر'}</span>
+                </span>
+                ${inner}
+            </button>
+        `;
+    }
 
-        const listOf = () => tab === 'mission' ? C.missions()
-                           : tab === 'vision'  ? C.visions()
-                           : C.goals();
+    /* لوحة الحقل الواحد: مكتبته وحدها لا الثلاثة، ومعها الكتابة الحرة.
+       الأهداف اختيار متعدد يُضاف إلى ما هو مكتوب، والرسالة والرؤية
+       اختيار مفرد يستبدل. */
+    function openMvSheet(body, ctx, key) {
+        const f = MV_FIELDS.find((x) => x.key === key);
+        const C = global.MissionCatalog;
+        const items = key === 'mission' ? C.missions()
+                    : key === 'vision'  ? C.visions()
+                    : C.goals();
+        const multi = key === 'goals';
+        const box = document.createElement('div');
+        let tab = 'lib';
+        const chosen = new Set();
+        let draft = ctx.portfolio[key] || '';
 
         function paint() {
-            const items = listOf();
-            const multi = tab === 'goals';
             box.innerHTML = `
-                <div class="mv-tabs">
-                    ${[['mission', 'الرسالة'], ['vision', 'الرؤية'], ['goals', 'الأهداف']]
-                        .map(([k, l]) => `<button type="button" class="mv-tab ${tab === k ? 'on' : ''}"
-                                                  data-tab="${k}">${l}</button>`).join('')}
+                <div class="mvs-tabs">
+                    <button type="button" class="mvs-tab ${tab === 'lib' ? 'on' : ''}"
+                            data-t="lib">من المكتبة</button>
+                    <button type="button" class="mvs-tab ${tab === 'own' ? 'on' : ''}"
+                            data-t="own">أكتبها بنفسي</button>
                 </div>
-                <p class="mv-note">${multi
-                    ? 'اختر ما شئت من الأهداف — تُضاف كلها إلى حقل الأهداف.'
-                    : 'اختر صياغةً واحدة، ثم عدّلها في الحقل كما تشاء.'}</p>
-                <div class="mv-list">
-                    ${items.map((x, n) => `
-                        <button type="button" class="mv-item ${chosen.has(tab + ':' + n) ? 'on' : ''}"
-                                data-i="${n}">
-                            <span class="ax">${escapeHtml(C.axisLabel(x.axis))}</span>
-                            <span class="tx">${escapeHtml(x.text)}</span>
-                        </button>`).join('')}
-                </div>
-                ${multi ? `<button type="button" class="fsave" id="mv-apply">
-                    إضافة المختار (<span id="mv-n">${chosen.size}</span>)</button>` : ''}
+                ${tab === 'lib' ? `
+                    <p class="mv-note">${multi
+                        ? 'اختر ما شئت — يُضاف إلى ما كتبته.'
+                        : 'اختر صياغةً واحدة — تحلّ محلّ الحالية، ويمكنك تعديلها بعدها.'}</p>
+                    <div class="mv-list">
+                        ${items.map((x, n) => `
+                            <button type="button" class="mv-item ${chosen.has(n) ? 'on' : ''}"
+                                    data-i="${n}">
+                                <span class="ax">${escapeHtml(C.axisLabel(x.axis))}</span>
+                                <span class="tx">${escapeHtml(x.text)}</span>
+                            </button>`).join('')}
+                    </div>
+                    ${multi ? `<button type="button" class="fsave" id="mv-add">
+                        إضافة المختار (<span id="mv-n">${chosen.size}</span>)</button>` : ''}
+                ` : `
+                    <textarea class="textarea mv-own" id="mv-text" rows="${multi ? 7 : 5}"
+                              placeholder="${escapeAttr(f.empty)}">${escapeHtml(draft)}</textarea>
+                    <button type="button" class="fsave" id="mv-save">💾 حفظ</button>
+                `}
             `;
 
-            box.querySelectorAll('[data-tab]').forEach((b) => {
-                b.addEventListener('click', () => { tab = b.dataset.tab; paint(); });
+            box.querySelectorAll('[data-t]').forEach((b) => {
+                b.addEventListener('click', () => {
+                    if (tab === 'own') draft = box.querySelector('#mv-text').value;
+                    tab = b.dataset.t; paint();
+                });
             });
 
             box.querySelectorAll('[data-i]').forEach((b) => {
                 b.addEventListener('click', () => {
-                    const x = listOf()[+b.dataset.i];
-                    if (!multi) {
-                        body.querySelector('#' + tab).value = x.text;
-                        global.Modal.close();
-                        global.TeacherApp.toast('أُدرجت — عدّلها ثم اضغط «حفظ».', 'success', 4000);
-                        return;
-                    }
-                    const id = tab + ':' + b.dataset.i;
-                    if (chosen.has(id)) chosen.delete(id); else chosen.add(id);
+                    const n = +b.dataset.i;
+                    if (!multi) { commit(items[n].text); return; }
+                    if (chosen.has(n)) chosen.delete(n); else chosen.add(n);
                     b.classList.toggle('on');
                     box.querySelector('#mv-n').textContent = chosen.size;
                 });
             });
 
-            box.querySelector('#mv-apply')?.addEventListener('click', () => {
-                const picked = C.goals().filter((_, n) => chosen.has('goals:' + n));
-                if (!picked.length) return;
-                const field = body.querySelector('#goals');
-                const prev = field.value.trim();
-                field.value = (prev ? prev + '\n' : '') + picked.map((g) => '• ' + g.text).join('\n');
-                global.Modal.close();
-                global.TeacherApp.toast('أُضيفت — عدّلها ثم اضغط «حفظ».', 'success', 4000);
+            box.querySelector('#mv-add')?.addEventListener('click', () => {
+                if (!chosen.size) return;
+                const picked = items.filter((_, n) => chosen.has(n)).map((g) => g.text);
+                const prev = String(draft).split('\n')
+                    .map((x) => x.replace(/^[•\-\s]+/, '').trim()).filter(Boolean);
+                commit([...prev, ...picked].map((x) => '• ' + x).join('\n'));
+            });
+
+            box.querySelector('#mv-save')?.addEventListener('click', () => {
+                commit(box.querySelector('#mv-text').value);
             });
         }
 
+        async function commit(value) {
+            ctx.portfolio[key] = String(value).trim();
+            await savePortfolio(ctx.portfolio);
+            global.Modal.close();
+            global.TeacherApp.toast('تم الحفظ ✅', 'success', 3000);
+            renderMission(body, ctx);
+        }
+
         paint();
-        global.Modal.open({ title: '📖 مكتبة الرسالة والرؤية', body: box });
+        global.Modal.open({ title: '📖 ' + f.label, body: box });
     }
 
     /* ---------- Generic file list (certificates / schedules / extras) ---------- */
