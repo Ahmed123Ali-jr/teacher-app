@@ -498,33 +498,15 @@
         const exam = s.exam;
         if (!exam) { s.step = 1; return renderWizard(body.closest('#tab-panel'), cls); }
 
-        const total = exam.questions.reduce((sum, q) => sum + (q.points || 1), 0);
-
         body.innerHTML = `
             <h3 class="wizard-title">${s.manual
                 ? 'الخطوة ١ من ٢: أسئلة الاختبار'
                 : 'الخطوة ٣ من ٤: المراجعة والتعديل'}</h3>
 
-            <div class="exam-meta">
-                <div class="field" style="margin:0; flex:1;">
-                    <label class="label">عنوان الاختبار</label>
-                    <input class="input" id="exam-title" value="${escapeAttr(exam.title)}">
-                </div>
-                <div class="exam-stats">
-                    <div>${qWord(exam.questions.length)}</div>
-                    <div>${mWord(total)}</div>
-                </div>
-            </div>
-
-            <div class="questions-list" id="q-list">
-                ${global.QuestionEditor.listHtml(exam.questions, {
-                    points: true,
-                    actions: s.manual ? '' : regenBtn
-                })}
-            </div>
-
-            <button class="btn btn-secondary btn-sm" id="btn-add-q"
-                    style="margin-top: var(--space-4);">+ إضافة سؤال</button>
+            ${global.QuestionEditor.editorHtml(exam.title, exam.questions, {
+                points: true,
+                actions: s.manual ? null : regenBtn
+            })}
 
             <div class="wizard-footer">
                 <button class="btn btn-ghost" id="btn-back">← رجوع</button>
@@ -534,13 +516,6 @@
         `;
 
         bindQuestions(body, cls);
-
-        body.querySelector('#exam-title').addEventListener('input', (e) => { exam.title = e.target.value; });
-
-        body.querySelector('#btn-add-q').addEventListener('click', () => {
-            exam.questions.push(global.QuestionEditor.blank(true));
-            step3(body, cls);
-        });
 
         body.querySelector('#btn-back').addEventListener('click', async () => {
             /* في المسار اليدوي ليس خلف هذه الخطوة خطوة — الرجوع خروجٌ
@@ -583,7 +558,9 @@
         const exam = s.exam;
 
         global.QuestionEditor.bind(body, exam.questions, {
-            rerender: () => step3(body, cls)
+            points: true,
+            rerender: () => step3(body, cls),
+            onTitle: (v) => { exam.title = v; }
         });
 
         body.querySelectorAll('[data-q-regen]').forEach((btn) =>

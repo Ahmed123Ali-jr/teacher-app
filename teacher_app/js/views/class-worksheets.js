@@ -252,21 +252,15 @@
                 </div>
                 <h3 class="wizard-title">أسئلة ورقة العمل</h3>
 
-                <div class="field">
-                    <label class="label">العنوان</label>
-                    <input class="input" id="ws-title" value="${escapeAttr(sh.title)}">
-                </div>
-                <div class="field">
+                ${QE().editorHtml(sh.title, sh.questions, {
+                    points: false, titleLabel: 'عنوان ورقة العمل'
+                })}
+
+                <div class="field" style="margin-top:var(--space-4);">
                     <label class="label">التعليمات (تُطبع أعلى الورقة)</label>
                     <textarea class="textarea" id="ws-inst" rows="2"
                               placeholder="مثلاً: أجب عن الأسئلة الآتية مستعيناً بكتابك.">${escapeHtml(sh.instructions || '')}</textarea>
                 </div>
-
-                <div class="questions-list" id="q-list">
-                    ${QE().listHtml(sh.questions, { points: false })}
-                </div>
-                <button class="btn btn-secondary btn-sm" id="add-q"
-                        style="margin-top:var(--space-3);">+ إضافة سؤال</button>
 
                 <div class="wizard-footer">
                     <button class="btn btn-secondary" id="ws-save">💾 حفظ</button>
@@ -275,14 +269,12 @@
             </div>
         `;
 
-        panel.querySelector('#ws-title').addEventListener('input', (e) => { sh.title = e.target.value; });
         panel.querySelector('#ws-inst').addEventListener('input', (e) => { sh.instructions = e.target.value; });
 
-        QE().bind(panel, sh.questions, { rerender: () => step2(panel, cls) });
-
-        panel.querySelector('#add-q').addEventListener('click', () => {
-            sh.questions.push(QE().blank(false));
-            step2(panel, cls);
+        QE().bind(panel, sh.questions, {
+            points: false,
+            rerender: () => step2(panel, cls),
+            onTitle: (v) => { sh.title = v; }
         });
 
         panel.querySelector('#back-list').addEventListener('click', async () => {
