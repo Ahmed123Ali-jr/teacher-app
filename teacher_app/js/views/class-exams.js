@@ -531,17 +531,39 @@
             s.step = 2;
             renderWizard(body.closest('#tab-panel'), cls);
         });
-        body.querySelector('#btn-save').addEventListener('click', async () => {
-            await saveExam(exam);
-            global.TeacherApp.toast('تم الحفظ ✅', 'success');
+        body.querySelector('#btn-save').addEventListener('click', async (e) => {
+            await guard(e.currentTarget, async () => {
+                await saveExam(exam);
+                global.TeacherApp.toast('تم الحفظ ✅', 'success');
+            });
         });
-        body.querySelector('#btn-to-print').addEventListener('click', async () => {
+        body.querySelector('#btn-to-print').addEventListener('click', async (e) => {
             const bad = global.QuestionEditor.validate(exam.questions);
             if (bad) return global.TeacherApp.toast(bad, 'warning', 4000);
-            await saveExam(exam);
-            s.step = 4;
-            renderWizard(body.closest('#tab-panel'), cls);
+            await guard(e.currentTarget, async () => {
+                await saveExam(exam);
+                s.step = 4;
+                renderWizard(body.closest('#tab-panel'), cls);
+            });
         });
+    }
+
+    /* أيّ رفضٍ داخل مستمع نقرٍ لا يُلتقط يموت صامتاً: لا رسالة ولا
+       أثر، والزرّ يبدو كأنه لا يعمل. وهذا بالضبط ما يشتكي منه المعلّم
+       حين يقول «ما يضغط». فليُعطَّل الزرّ أثناء العمل، ولتظهر الرسالة
+       إن سقط — الصمت أسوأ من الخطأ. */
+    async function guard(btn, fn) {
+        const label = btn ? btn.innerHTML : null;
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
+        try {
+            await fn();
+        } catch (err) {
+            console.warn('[class-exams] action failed:', err);
+            global.TeacherApp.toast(
+                'تعذّر إتمام العملية: ' + ((err && err.message) || 'خطأ غير معروف'), 'error', 6000);
+        } finally {
+            if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = label; }
+        }
     }
 
     async function saveExam(exam) {
@@ -623,11 +645,13 @@
             s.step = 3;
             renderWizard(body.closest('#tab-panel'), cls);
         });
-        body.querySelector('#btn-print').addEventListener('click', async () => {
-            await saveExam(exam);
-            const teacher = await global.Auth.currentTeacher();
-            global.PrintExam.savePdf({ exam, cls, teacher },
-                { includeAnswers: !!settings.include_answers });
+        body.querySelector('#btn-print').addEventListener('click', async (e) => {
+            await guard(e.currentTarget, async () => {
+                await saveExam(exam);
+                const teacher = await global.Auth.currentTeacher();
+                await global.PrintExam.savePdf({ exam, cls, teacher },
+                    { includeAnswers: !!settings.include_answers });
+            });
         });
 
         /* تحميل محرّك PDF فور فتح الخطوة، لا عند الضغط: إيماءة المستخدم

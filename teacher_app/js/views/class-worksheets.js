@@ -284,22 +284,42 @@
             await render(panel, cls);
         });
 
-        panel.querySelector('#ws-save').addEventListener('click', async () => {
-            await save(sh);
-            global.TeacherApp.toast('تم الحفظ ✅', 'success');
+        panel.querySelector('#ws-save').addEventListener('click', async (e) => {
+            await guard(e.currentTarget, async () => {
+                await save(sh);
+                global.TeacherApp.toast('تم الحفظ ✅', 'success');
+            });
         });
 
-        panel.querySelector('#ws-print').addEventListener('click', async () => {
+        panel.querySelector('#ws-print').addEventListener('click', async (e) => {
             const bad = QE().validate(sh.questions);
             if (bad) return global.TeacherApp.toast(bad, 'warning', 4000);
-            await save(sh);
-            global.PrintWorksheet.savePdf(
-                { sheet: sh, cls, teacher: await global.Auth.currentTeacher() });
+            await guard(e.currentTarget, async () => {
+                await save(sh);
+                await global.PrintWorksheet.savePdf(
+                    { sheet: sh, cls, teacher: await global.Auth.currentTeacher() });
+            });
         });
 
         /* تحميل محرّك PDF بالخلفية: إيماءة المستخدم في iOS تضيع لو
            انتظرت المكتبتين، فلا تفتح ورقة المشاركة. */
         global.PrintWorksheet.preloadPdfEngine().catch(() => {});
+    }
+
+    /* رفضٌ غير ملتقَط داخل مستمع نقرٍ يموت صامتاً، فيبدو الزرّ معطّلاً
+       بلا سبب. انظر النظير في class-exams.js. */
+    async function guard(btn, fn) {
+        const label = btn ? btn.innerHTML : null;
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
+        try {
+            await fn();
+        } catch (err) {
+            console.warn('[class-worksheets] action failed:', err);
+            global.TeacherApp.toast(
+                'تعذّر إتمام العملية: ' + ((err && err.message) || 'خطأ غير معروف'), 'error', 6000);
+        } finally {
+            if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = label; }
+        }
     }
 
     async function save(sh) {
