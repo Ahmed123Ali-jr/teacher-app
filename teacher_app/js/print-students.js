@@ -158,6 +158,7 @@
         _rowsOverride = FIXED_ROWS[opts.mode] || 12;
 
         const stage = document.createElement('div');
+        stage.id = global.PdfCore.STAGE_ID;   // قواعد الطباعة محصورةٌ عليه
         stage.setAttribute('style',
             `position:fixed; top:0; left:-20000px; width:${PAGE_W}px; background:#fff; z-index:-1;`);
         const cssEl = await printCssForScreen();

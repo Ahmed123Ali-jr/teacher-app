@@ -78,15 +78,109 @@
         return _pdfJsPromise;
     }
 
-    /** print.css كلّه داخل كتل @media print، فلا يسري على الشاشة. نعيد
-     *  كتابته ليسري أثناء القياس والالتقاط. */
+    /* ------------------------------------------------------------------
+       print.css كلّه داخل كتل @media print فلا يسري على الشاشة، ونحن
+       نحتاجه ساريًا أثناء القياس والالتقاط.
+
+       وكان يُحوَّل @media print إلى @media all ويُلصق داخل المسرح — وهذا
+       عطبٌ صامت: عنصر <style> يصبغ **المستند كلّه** أينما وُضع. فكانت
+       قواعد الطباعة تنهال على التطبيق الحيّ طوال مدّة التصدير:
+
+         .bottom-nav, .btn, .app-header { display:none }  → تختفي الأيقونات
+         html, body { font-size:12pt; color:#000 }        → يتشوّه النصّ
+         .grid-2/3/4 { grid-template-columns: … }         → تتبعثر الشاشة
+         :root { --bg:#fff; --border:#ccc; … }            → تنبسط الألوان
+
+       فالعلاج أن تُحصر كل قاعدة في المسرح: تُسبق المُحدِّدات بمعرّفه،
+       وتُخاطَب html/body/:root المسرحَ نفسه، وتُسقط قواعد إخفاء التطبيق
+       لأنها بلا معنى داخله. والطباعة الورقية الحقيقية لا تتأثّر — هي
+       تقرأ print.css من رابطه الأصلي لا من هذه النسخة.
+       ------------------------------------------------------------------ */
+    const STAGE_ID = 'pdfcore-stage';
+    const SCOPE    = '#' + STAGE_ID;
+
+    /** يقسّم قائمة مُحدِّدات على الفواصل العليا وحدها — لا داخل :is() أو
+     *  [attr=","]. */
+    function splitSelectors(text) {
+        const out = [];
+        let depth = 0, quote = null, buf = '';
+        for (const ch of text) {
+            if (quote) { buf += ch; if (ch === quote) quote = null; continue; }
+            if (ch === '"' || ch === "'") { quote = ch; buf += ch; continue; }
+            if (ch === '(' || ch === '[') depth += 1;
+            if (ch === ')' || ch === ']') depth -= 1;
+            if (ch === ',' && depth === 0) { out.push(buf); buf = ''; continue; }
+            buf += ch;
+        }
+        out.push(buf);
+        return out.map((s) => s.trim()).filter(Boolean);
+    }
+
+    function scopeSelector(sel) {
+        const m = sel.match(/^(html|body|:root)\b/);
+        if (!m) return SCOPE + ' ' + sel;
+        const rest = sel.slice(m[0].length);
+        /* body.is-printing > #app وأمثاله: قواعد تخصّ قشرة التطبيق، ولا
+           مقابل لها داخل المسرح. */
+        if (/^[.#:[]/.test(rest)) return null;
+        return SCOPE + rest;
+    }
+
+    function scopeRules(rules, out) {
+        for (const rule of rules) {
+            if (rule.type === CSSRule.STYLE_RULE) {
+                const sels = splitSelectors(rule.selectorText)
+                    .map(scopeSelector).filter(Boolean);
+                if (sels.length) out.push(sels.join(', ') + ' { ' + rule.style.cssText + ' }');
+            } else if (rule.type === CSSRule.MEDIA_RULE) {
+                /* كتل الطباعة تُفكّ لتسري، وما عداها يُنقل بشرطه كما هو. */
+                if (/\bprint\b/.test(rule.conditionText || rule.media.mediaText)) {
+                    scopeRules(rule.cssRules, out);
+                } else {
+                    const inner = [];
+                    scopeRules(rule.cssRules, inner);
+                    if (inner.length) {
+                        out.push('@media ' + rule.media.mediaText + ' { ' + inner.join('\n') + ' }');
+                    }
+                }
+            } else if (rule.type === CSSRule.SUPPORTS_RULE) {
+                const inner = [];
+                scopeRules(rule.cssRules, inner);
+                if (inner.length) out.push('@supports ' + rule.conditionText + ' { ' + inner.join('\n') + ' }');
+            } else if (rule.type === CSSRule.KEYFRAMES_RULE || rule.type === CSSRule.FONT_FACE_RULE) {
+                out.push(rule.cssText);
+            }
+            /* @page يُتجاهل: المُرقِّم يبني صناديق الصفحات بنفسه. */
+        }
+    }
+
     async function printCssForScreen() {
         const link = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
             .find((l) => l.href.includes('print.css'));
         if (!link) return null;
         const css = await (await fetch(link.href)).text();
+
+        /* media="not all" ليُحلَّل الملف دون أن يُطبَّق لحظةً واحدة. */
+        const probe = document.createElement('style');
+        probe.media = 'not all';
+        probe.textContent = css;
+        document.head.appendChild(probe);
+
+        const out = [];
+        try {
+            scopeRules(Array.from(probe.sheet.cssRules), out);
+        } catch (e) {
+            /* تعذّر التحليل (ملفٌ من أصلٍ آخر مثلاً): لا نحقن شيئاً بدل
+               أن نحقن قواعد غير محصورة تُخرّب الشاشة. */
+            console.warn('[pdf-core] تعذّر حصر تنسيق الطباعة:', e);
+            probe.remove();
+            return null;
+        }
+        probe.remove();
+
         const el = document.createElement('style');
-        el.textContent = css.replace(/@media\s+print\s*\{/g, '@media all {');
+        el.dataset.pdfcore = 'scoped-print';
+        el.textContent = out.join('\n');
         return el;
     }
 
@@ -118,6 +212,7 @@
        ------------------------------------------------------------------ */
     async function createStage() {
         const stage = document.createElement('div');
+        stage.id = STAGE_ID;          // عليه تُحصر قواعد الطباعة
         stage.setAttribute('style',
             `position:fixed; top:0; left:-20000px; width:${PAGE.W}px; background:#fff; z-index:-1;`);
         const cssEl = await printCssForScreen();
@@ -405,7 +500,7 @@
     }
 
     global.PdfCore = {
-        PAGE, CDN, PDFJS,
+        PAGE, CDN, PDFJS, STAGE_ID,
         loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
         createStage, settle, paginate, renderPdf, deliverPdf
