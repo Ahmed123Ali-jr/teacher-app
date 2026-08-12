@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>معاينة — التصميم أ على ثلاث صفحات</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=1">
+
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    background: #E9E7E0; color: #0F2C5C;
+    padding: 14px 12px calc(86px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+}
+.pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 900; text-align: center; }
+.pv-note  { margin: 0 0 12px; font-size: 11.5px; line-height: 1.85; color: #6B7280; text-align: center; }
+.pv-cap   { margin: 0 0 8px; font-size: 12px; font-weight: 900; text-align: center; }
+.pv-cap span { display: block; font-size: 10.5px; font-weight: 500; color: #6B7280; margin-top: 2px; }
+
+.sheet-wrap { overflow: hidden; margin: 0 auto; }
+.stack { transform-origin: top right; }
+
+.pv-bar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+    display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.94); backdrop-filter: blur(10px);
+    border-top: 1px solid #D8D5CC;
+}
+.pv-bar button {
+    flex: 1; min-height: 46px; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; font-weight: 900; color: #0F2C5C;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16,24,40,.09);
+}
+.pv-bar button.on {
+    color: #fff;
+    background: linear-gradient(150deg, #1B3E77 0%, #0F2C5C 55%, #0A2049 100%);
+    border-color: #0A2049;
+}
+
+/* ==========================================================================
+   الصفحة: صندوق A4 حقيقي. الجسم يحمل الكتل، والترقيم مثبَّت في الأسفل.
+   ========================================================================== */
+.pg {
+    position: relative;
+    width: 794px; height: 1123px; padding: 68px 57px;
+    background: #fff; color: #111;
+    margin-bottom: 18px; box-shadow: 0 6px 22px rgba(16,24,40,.16);
+    overflow: hidden;
+}
+.pg-body > :first-child { margin-top: 0 !important; }
+.pg-foot {
+    position: absolute; bottom: 26px; inset-inline: 57px;
+    text-align: center; font-size: 11.5px; color: #555;
+    border-top: 1px solid #DDD; padding-top: 6px;
+}
+
+/* المسطرة: نسخة خارج الشاشة بعرض المحتوى الحقيقي، تُقاس فيها كل كتلة
+   قبل رصّها. القياس الفعلي لا التقدير — وهذا هو الفرق كلّه. */
+#ruler { position: fixed; top: 0; left: -30000px; width: 680px; background: #fff; color: #111; }
+
+/* ---------- عناصر التصميم أ ---------- */
+.pg h1, .pg h2, .pg p, .pg ol, .pg ul, #ruler h1, #ruler ol, #ruler ul { margin: 0; padding: 0; }
+.pg ol, .pg ul, #ruler ol, #ruler ul { list-style: none; }
+.q-txt { font-size: 15px; line-height: 1.9; }
+
+.a-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.a-head .side { font-size: 13.5px; line-height: 2.05; font-weight: 700; }
+.a-head .side.l { text-align: left; }
+.a-logo {
+    width: 78px; height: 78px; border-radius: 50%;
+    border: 1.5px dashed #B9BEC7; display: grid; place-items: center;
+    font-size: 11px; color: #9AA0A6; text-align: center; line-height: 1.5;
+}
+.a-rule  { border: 0; border-top: 2px solid #111; margin: 10px 0 0; }
+.a-rule2 { border: 0; border-top: 1px solid #111; margin: 2px 0 14px; }
+.a-title { text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 14px !important; }
+.a-info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.a-info td { border: 1px solid #111; padding: 9px 10px; font-size: 14px; font-weight: 700; }
+
+/* ترويسة مختصرة للصفحات التالية */
+.a-slim {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 12.5px; font-weight: 700; color: #333;
+    border-bottom: 1.5px solid #111; padding-bottom: 6px; margin-bottom: 14px;
+}
+.a-slim .l { margin-inline-start: auto; font-weight: 500; }
+
+.a-sec {
+    display: flex; align-items: baseline; gap: 8px;
+    font-size: 15.5px; font-weight: 900; margin: 18px 0 10px;
+    border-bottom: 1.5px solid #111; padding-bottom: 5px;
+}
+.a-sec .g { margin-inline-start: auto; font-size: 13px; font-weight: 700; }
+.a-cont {
+    font-size: 13px; font-weight: 900; color: #555;
+    margin: 0 0 10px; padding-bottom: 4px; border-bottom: 1px dashed #BBB;
+}
+.a-q { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
+.a-q .n { font-weight: 900; font-size: 15px; line-height: 1.9; }
+.a-opts { display: flex; flex-wrap: wrap; gap: 4px 26px; margin: 0 0 16px 0; padding-inline-start: 22px; }
+.a-opts li { font-size: 14.5px; line-height: 1.9; }
+.a-tbl { width: 100%; border-collapse: collapse; }
+.a-tbl th, .a-tbl td { border: 1px solid #111; padding: 9px 10px; font-size: 14.5px; }
+.a-tbl th { background: #F0F0F0; font-weight: 900; font-size: 13.5px; }
+.a-tbl .c { text-align: center; width: 62px; }
+.a-tbl .m { text-align: center; width: 40px; }
+.a-tbl-wrap { margin-bottom: 16px; }
+.lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
+</style>
+</head>
+<body>
+
+<h1 class="pv-title">التصميم أ — اختبار طويل على ثلاث صفحات</h1>
+<p class="pv-note">
+    ٣٦ سؤالاً. الصفحات مقسَّمة بالقياس الفعلي لا بالتقدير.<br>
+    اختر من الأسفل شكل ترويسة الصفحات التالية.
+</p>
+
+<div class="pv-cap" id="cap"></div>
+<div class="sheet-wrap" id="wrap"><div class="stack" id="stack"></div></div>
+<div id="ruler"></div>
+
+<div class="pv-bar">
+    <button data-m="slim" class="on">ترويسة مختصرة</button>
+    <button data-m="full">ترويسة كاملة</button>
+    <button data-m="none">بلا ترويسة</button>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const ar  = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    /* «درجة واحدة» لا «١ درجة»، و«درجتان» لا «٢ درجة» — التصريف العربي
+       يختلف بالعدد، وورقة الاختبار يقرؤها مشرف. */
+    function marks(n) {
+        if (n === 1)  return 'درجة واحدة';
+        if (n === 2)  return 'درجتان';
+        if (n <= 10)  return ar(n) + ' درجات';
+        return ar(n) + ' درجة';
+    }
+
+    const EXAM = {
+        school: 'متوسطة الأمير سلطان', dept: 'إدارة التعليم بمنطقة عسير',
+        title: 'اختبار الفترة الأولى', subject: 'العلوم',
+        grade: 'الأول المتوسط', term: 'الفصل الدراسي الأول',
+        time: 'ساعة ونصف', total: 42
+    };
+
+    const MCQ = [
+        { t: 'أيُّ الأجزاء الآتية مسؤولٌ عن نقل الماء والأملاح في النبات؟', o: ['الخشب', 'اللحاء', 'الوَرقة', 'الزهرة'] },
+        { t: 'تتحوّل الطاقة الكهربائية في المصباح المتوهّج إلى طاقة:', o: ['ضوئية وحرارية', 'صوتية', 'حركية', 'كيميائية'] },
+        { t: 'أيُّ الحالات الآتية تُعدّ تغيُّراً كيميائياً؟', o: ['صدأ الحديد', 'ذوبان الثلج', 'تبخُّر الماء', 'تكسُّر الزجاج'] },
+        { t: 'الجهاز المستعمل في قياس درجة الحرارة هو:', o: ['الميزان الحراري', 'البارومتر', 'الأميتر', 'المِسعر'] },
+        { t: 'تُصنَّف الفطريات ضمن مملكة:', o: ['الفطريات', 'النباتات', 'الحيوانات', 'البدائيات'] },
+        { t: 'أيُّ المصادر الآتية يُعدّ مصدراً متجدّداً للطاقة؟', o: ['طاقة الرياح', 'الفحم الحجري', 'النفط', 'الغاز الطبيعي'] },
+        { t: 'العنصر الأكثر وفرةً في الغلاف الجوّي للأرض هو:', o: ['النيتروجين', 'الأكسجين', 'ثاني أكسيد الكربون', 'الأرجون'] },
+        { t: 'تحدث ظاهرة الكسوف الشمسي عندما يقع:', o: ['القمر بين الأرض والشمس', 'الأرض بين الشمس والقمر', 'الشمس بين الأرض والقمر', 'القمر خلف الأرض'] }
+    ];
+
+    const TF = [
+        'القمر جسمٌ مضيءٌ بذاته.',
+        'تنتقل الحرارة في الأجسام المعدنية بطريقة التوصيل.',
+        'الهواء الجوّي خليطٌ من عدّة غازات.',
+        'تُعدّ الخلية أصغر وحدة بنائية في جسم الكائن الحي.',
+        'يزداد الضغط الجوّي كلّما ارتفعنا عن سطح البحر.',
+        'الماء النقي موصلٌ جيّدٌ للتيار الكهربائي.',
+        'تحتاج النباتات إلى ضوء الشمس لإتمام عملية البناء الضوئي.',
+        'جميع المعادن صلبةٌ في درجة حرارة الغرفة.',
+        'يُعدّ الصوت موجةً تحتاج إلى وسطٍ ماديٍّ لتنتقل.',
+        'كتلة الجسم تتغيّر بتغيُّر موقعه على سطح الأرض.',
+        'تتنفّس الأسماك بوساطة الخياشيم.',
+        'الدم غير المؤكسج ينتقل من القلب إلى الرئتين.',
+        'تدور الأرض حول محورها مرّةً كل أربعٍ وعشرين ساعة.',
+        'يُستخدم مقياس رختر في قياس شدّة الزلازل.',
+        'الفلزّات موصّلةٌ جيّدةٌ للحرارة والكهرباء.',
+        'ينتج عن احتراق الوقود الأحفوري غاز الأكسجين.',
+        'الجاذبية الأرضية هي سبب سقوط الأجسام نحو الأرض.',
+        'تُعدّ البكتيريا كائناتٍ عديدة الخلايا.',
+        'الطاقة لا تفنى ولا تُستحدث من العدم.',
+        'يتكوّن الجهاز العصبي من الدماغ والحبل الشوكي والأعصاب.'
+    ];
+
+    const FILL = [
+        'الوحدة الأساسية لبناء أجسام الكائنات الحية هي ...............',
+        'تُقاس شدّة التيار الكهربائي بوحدة ...............',
+        'تُسمّى عملية تحوّل المادة من الحالة الصلبة إلى السائلة ...............',
+        'الغاز الذي تمتصّه النباتات في أثناء البناء الضوئي هو ...............',
+        'يتكوّن الجهاز الهضمي من الفم والمريء و...............'
+    ];
+
+    const ESSAY = [
+        { t: 'اذكر ثلاثاً من الطرق التي تُحافظ بها على البيئة المدرسية.', m: 3, lines: 4 },
+        { t: 'قارن بين التغيُّر الفيزيائي والتغيُّر الكيميائي، مع ذكر مثالٍ لكلٍّ منهما.', m: 3, lines: 5 },
+        { t: 'فسِّر: لماذا يُنصح بارتداء الملابس الفاتحة في فصل الصيف؟', m: 3, lines: 4 }
+    ];
+
+    const LETTERS = ['أ', 'ب', 'ج', 'د'];
+    const lines = (n) => `<div class="lines">${'<div class="ln"></div>'.repeat(n)}</div>`;
+
+    /* ------------------------------------------------------------------
+       بناء الكتل. كل كتلة وحدة لا تُشقّ: السؤال وخياراته معاً، والسطور
+       مع سؤالها المقالي. ما لا يسع الصفحة ينتقل كاملاً إلى التي تليها.
+       ------------------------------------------------------------------ */
+    const TF_HEAD = `<tr><th class="m">م</th><th>العبارة</th><th class="c">صح</th><th class="c">خطأ</th></tr>`;
+    const blocks = [];
+    let qn = 0;
+
+    blocks.push({ kind: 'sec', sec: 1,
+        html: `<div class="a-sec">السؤال الأول: اختر الإجابة الصحيحة فيما يأتي:<span class="g">(${marks(MCQ.length)})</span></div>` });
+    MCQ.forEach((q) => {
+        qn++;
+        blocks.push({ kind: 'q', sec: 1, html:
+            `<div class="a-q"><span class="n">${ar(qn)}-</span><span class="q-txt">${esc(q.t)}</span></div>
+             <ol class="a-opts">${q.o.map((o, k) => `<li>☐ ${LETTERS[k]}) ${esc(o)}</li>`).join('')}</ol>` });
+    });
+
+    blocks.push({ kind: 'sec', sec: 2,
+        html: `<div class="a-sec">السؤال الثاني: ضع علامة (✓) أمام العبارة الصحيحة و(✗) أمام الخاطئة:<span class="g">(${marks(TF.length)})</span></div>` });
+    TF.forEach((t, i) => {
+        blocks.push({ kind: 'row', sec: 2, html:
+            `<tr><td class="m">${ar(i + 1)}</td><td>${esc(t)}</td><td class="c">☐</td><td class="c">☐</td></tr>` });
+    });
+
+    blocks.push({ kind: 'sec', sec: 3,
+        html: `<div class="a-sec">السؤال الثالث: أكمل الفراغ بما يناسبه:<span class="g">(${marks(FILL.length)})</span></div>` });
+    FILL.forEach((t, i) => {
+        blocks.push({ kind: 'q', sec: 3, html:
+            `<div class="a-q" style="margin-bottom:14px;"><span class="n">${ar(i + 1)}-</span><span class="q-txt">${esc(t)}</span></div>` });
+    });
+
+    blocks.push({ kind: 'sec', sec: 4,
+        html: `<div class="a-sec">السؤال الرابع: أجب عمّا يأتي:<span class="g">(${marks(9)})</span></div>` });
+    ESSAY.forEach((q, i) => {
+        blocks.push({ kind: 'q', sec: 4, html:
+            `<div class="a-q"><span class="n">${ar(i + 1)}-</span><span class="q-txt">${esc(q.t)}</span>
+             <span style="margin-inline-start:auto; font-size:12.5px; color:#555;">(${marks(q.m)})</span></div>
+             ${lines(q.lines)}` });
+    });
+
+    const SEC_NAME = { 1: 'السؤال الأول', 2: 'السؤال الثاني', 3: 'السؤال الثالث', 4: 'السؤال الرابع' };
+
+    /* ---------- الترويسات ---------- */
+    function headFull() {
+        return `
+        <div class="a-head">
+            <div class="side">المملكة العربية السعودية<br>وزارة التعليم<br>${esc(EXAM.dept)}<br>${esc(EXAM.school)}</div>
+            <div class="a-logo">شعار<br>المدرسة</div>
+            <div class="side l">المادة: ${esc(EXAM.subject)}<br>الصف: ${esc(EXAM.grade)}<br>الزمن: ${esc(EXAM.time)}<br>الدرجة: ${ar(EXAM.total)}</div>
+        </div>
+        <hr class="a-rule"><hr class="a-rule2">
+        <h1 class="a-title">${esc(EXAM.title)} — ${esc(EXAM.term)}</h1>
+        <table class="a-info"><tr>
+            <td style="width:58%;">اسم الطالب: ....................................................</td>
+            <td>رقم الجلوس: ..................</td>
+            <td style="width:15%; text-align:center;">الدرجة<br>&nbsp;</td>
+        </tr></table>`;
+    }
+    function headSlim() {
+        return `<div class="a-slim">
+            <span>${esc(EXAM.title)} — ${esc(EXAM.subject)} — ${esc(EXAM.grade)}</span>
+            <span class="l">اسم الطالب: ..............................</span>
+        </div>`;
+    }
+    const headFor = (i, mode) =>
+        i === 0 ? headFull() : (mode === 'full' ? headFull() : mode === 'slim' ? headSlim() : '');
+
+    /* ------------------------------------------------------------------
+       القياس والرصّ.
+       ------------------------------------------------------------------ */
+    const ruler = document.getElementById('ruler');
+
+    function measure(html, asTable) {
+        ruler.innerHTML = asTable ? `<table class="a-tbl">${html}</table>` : html;
+        const h = ruler.offsetHeight;
+        ruler.innerHTML = '';
+        return h;
+    }
+
+    const CONTENT_H = 1123 - 2 * 68 - 34;   // ٩٥٣ — ٣٤ للترقيم في الأسفل
+    const TBL_MARGIN = 16;
+
+    function paginate(mode) {
+        const hHead  = { 0: measure(headFull()), n: mode === 'full' ? measure(headFull())
+                                                  : mode === 'slim' ? measure(headSlim()) : 0 };
+        const hTfHead = measure(TF_HEAD, true);
+        const hCont   = measure(`<div class="a-cont">تابع: السؤال الأول</div>`);
+
+        const pages = [];
+        let page = null, used = 0, avail = 0;
+
+        /* سطر «تابع» محجوزٌ في كل صفحةٍ بعد الأولى وإن لم يُرسم: حجزُ
+           سطرٍ قد يفيض عنه أرخص من فيضٍ يقصّ سؤالاً. */
+        const openPage = () => {
+            page = [];
+            pages.push(page);
+            const first = pages.length === 1;
+            avail = CONTENT_H - (first ? hHead[0] : hHead.n);
+            used  = first ? 0 : hCont;
+        };
+
+        /* ارتفاع الكتلة وحدها، محسوباً فيه رأس جدول صح/خطأ متى كان الصفّ
+           أوّلَ صفٍّ في صفحته. */
+        const heightOf = (b, onFreshPage) => {
+            if (b.kind !== 'row') return measure(b.html);
+            const firstRowHere = onFreshPage ||
+                !page.some((x) => x.kind === 'row' && x.sec === b.sec);
+            return measure(b.html, true) + (firstRowHere ? hTfHead + TBL_MARGIN : 0);
+        };
+
+        openPage();
+
+        for (let i = 0; i < blocks.length; i++) {
+            const b  = blocks[i];
+            const nx = blocks[i + 1];
+
+            let need = heightOf(b, false);
+            /* عنوان قسمٍ لا يُترك وحيداً في ذيل الصفحة: يُقاس معه أوّلُ ما
+               يليه، فإن لم يسعا معاً انتقلا معاً. */
+            if (b.kind === 'sec' && nx) need += heightOf(nx, true);
+
+            if (used + need > avail && page.length) openPage();
+
+            const own = heightOf(b, false);   // يُقاس قبل الدفع، وإلّا رأى الصفّ نفسه
+            page.push(b);
+            used += own;
+        }
+        return pages;
+    }
+
+    /* ------------------------------------------------------------------
+       الرسم: صفوف الجدول المتجاورة في صفحةٍ واحدة تُلَمّ في جدولٍ واحد
+       ويُعاد فوقها رأسه (م · العبارة · صح · خطأ) — فلا صفوف يتيمة بلا
+       عناوين أعمدة في الصفحة الثانية.
+       ------------------------------------------------------------------ */
+    /* «تابع» يُرسم فقط متى بدأت الصفحة بكتلةٍ تتبع قسماً افتُتح في
+       الصفحة السابقة — لا كلّما انقلبت الصفحة. */
+    function renderPage(page, i, total, mode, prev) {
+        let body = '';
+        const head = page[0];
+        if (i > 0 && head && head.kind !== 'sec' && prev && prev.length
+            && prev[prev.length - 1].sec === head.sec) {
+            body += `<div class="a-cont">تابع: ${SEC_NAME[head.sec]}</div>`;
+        }
+
+        let k = 0;
+        while (k < page.length) {
+            if (page[k].kind === 'row') {
+                let rows = '';
+                while (k < page.length && page[k].kind === 'row') { rows += page[k].html; k++; }
+                body += `<div class="a-tbl-wrap"><table class="a-tbl">${TF_HEAD}${rows}</table></div>`;
+            } else {
+                body += page[k].html;
+                k++;
+            }
+        }
+
+        return `<div class="pg">
+            ${headFor(i, mode)}
+            <div class="pg-body">${body}</div>
+            <div class="pg-foot">صفحة ${ar(i + 1)} من ${ar(total)}</div>
+        </div>`;
+    }
+
+    const wrap  = document.getElementById('wrap');
+    const stack = document.getElementById('stack');
+    const cap   = document.getElementById('cap');
+
+    const CAPS = {
+        slim: ['ترويسة مختصرة في الصفحات التالية', 'سطر واحد باسم الاختبار واسم الطالب — الأشيع في المدارس'],
+        full: ['ترويسة كاملة في كل صفحة', 'تتكرّر الترويسة الرسمية كاملةً — تأكل مساحةً وتزيد الصفحات'],
+        none: ['بلا ترويسة في الصفحات التالية', 'أكبر مساحة للأسئلة، ورقم الصفحة وحده في الأسفل']
+    };
+
+    function render(mode) {
+        const pages = paginate(mode);
+        stack.innerHTML = pages.map((p, i) => renderPage(p, i, pages.length, mode, pages[i - 1])).join('');
+        cap.innerHTML = `${CAPS[mode][0]} — ${ar(pages.length)} صفحات<span>${CAPS[mode][1]}</span>`;
+        fit();
+    }
+
+    function fit() {
+        const s = wrap.clientWidth / 794;
+        stack.style.transform = `scale(${s})`;
+        wrap.style.height = (stack.offsetHeight * s) + 'px';
+    }
+
+    document.querySelectorAll('.pv-bar button').forEach((b) => {
+        b.addEventListener('click', () => {
+            document.querySelectorAll('.pv-bar button').forEach((x) => x.classList.remove('on'));
+            b.classList.add('on');
+            render(b.dataset.m);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+
+    window.addEventListener('resize', fit);
+    document.fonts.ready.then(() => render('slim')).catch(() => render('slim'));
+    render('slim');
+})();
+</script>
+</body>
+</html>
