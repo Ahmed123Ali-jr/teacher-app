@@ -35,10 +35,33 @@
         html2canvas: VENDOR + 'html2canvas.min.js',
         jspdf:       VENDOR + 'jspdf.umd.min.js'
     };
+    /* cmaps وstandard_fonts ليسا ترفاً في ملفٍّ عربي:
+       • cMap: الخطوط ذات المعرّفات (CID) تُحيل رموزها إلى جداول تحويلٍ
+         معياريّة لا تُضمَّن في الملف. بلا هذه الجداول تُقرأ الرموز خطأً،
+         فتظهر الحروف منفصلةً أو مشوّهة.
+       • standardFontData: ملفٌّ لا يُضمّن خطّه يحتاج بديلاً من عند
+         pdf.js نفسها، وبلا هذه الملفّات لا تجد ما ترسم به.
+       ولذلك تُستضاف محلياً كبقيّة الموردين: القارئ يعمل بلا إنترنت. */
     const PDFJS = {
-        main:   VENDOR + 'pdf.min.js',
-        worker: VENDOR + 'pdf.worker.min.js'
+        main:      VENDOR + 'pdf.min.js',
+        worker:    VENDOR + 'pdf.worker.min.js',
+        cMaps:     VENDOR + 'cmaps/',
+        stdFonts:  VENDOR + 'standard_fonts/'
     };
+
+    /* مسارٌ مطلق لا نسبيّ: هذه الملفّات يطلبها عامل pdf.js، والعامل
+       يحلّ النسبيّ من موقع سكربته (‎/vendor/‎) لا من موقع الصفحة — فيصير
+       ‎/vendor/vendor/cmaps/‎ ويتعثّر الطلب. */
+    const abs = (p) => new URL(p, global.location.href).href;
+
+    /** خيارات getDocument التي يحتاجها كل مستند — مركزها هنا فلا تُنسى. */
+    function docOptions(extra) {
+        return Object.assign({
+            cMapUrl: abs(PDFJS.cMaps),
+            cMapPacked: true,
+            standardFontDataUrl: abs(PDFJS.stdFonts)
+        }, extra || {});
+    }
 
     function loadScript(src) {
         return new Promise((resolve, reject) => {
@@ -503,6 +526,6 @@
         PAGE, CDN, PDFJS, STAGE_ID,
         loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
-        createStage, settle, paginate, renderPdf, deliverPdf
+        createStage, settle, paginate, renderPdf, deliverPdf, docOptions
     };
 })(window);

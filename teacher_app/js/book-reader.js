@@ -216,7 +216,7 @@
         try {
             const lib  = await global.PdfCore.ensurePdfJs();
             const data = await loadData(book);
-            state.doc  = await lib.getDocument({ data }).promise;
+            state.doc  = await lib.getDocument(global.PdfCore.docOptions({ data })).promise;
             if (state.closed) return;
             await build();
         } catch (err) {

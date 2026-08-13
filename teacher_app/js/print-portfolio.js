@@ -181,7 +181,7 @@
     async function pdfToImages(blob, maxPages) {
         const pdfjs = await ensurePdfJs();
         const buf = await blob.arrayBuffer();
-        const doc = await pdfjs.getDocument({ data: buf }).promise;
+        const doc = await pdfjs.getDocument(global.PdfCore.docOptions({ data: buf })).promise;
         const n = Math.min(doc.numPages, maxPages || 30);
         const urls = [];
         for (let i = 1; i <= n; i++) {
