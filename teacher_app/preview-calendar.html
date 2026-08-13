@@ -8,34 +8,39 @@
 
 <link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="stylesheet" href="css/main.css?v=D16">
-<link rel="stylesheet" href="css/components.css?v=5">
-<link rel="stylesheet" href="css/views.css?v=D141">
 <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
 
 <style>
-body { padding: 14px 12px 40px; }
-.pv-title { margin: 0 0 4px; font-size: 15px; font-weight: var(--fw-black); text-align: center; color: var(--primary); }
+/* ==========================================================================
+   الفصل الدراسي مسارٌ يُقطع لا قائمةٌ تُقرأ.
+   خطٌّ رأسيّ يمشي مع الأسابيع: ما مضى مصمتٌ باهت، وأنت عقدةٌ ذهبية
+   نابضة، وما بقي مجوّف. والإجازة تكسر الخطّ فتُرى قبل أن تُقرأ.
+   ========================================================================== */
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 14px 12px 40px;
+    font-family: 'Tajawal', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+}
+.pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 900; text-align: center; color: var(--primary); }
 .pv-note  { margin: 0 0 14px; font-size: 11.5px; line-height: 1.85; color: var(--text-muted); text-align: center; }
 #stage { max-width: 520px; margin: 0 auto; }
 
-/* شبح الجدول — ليرى مكان البطاقة لا شكلها وحده */
 .ghost {
     background: var(--surface); border: 1.5px solid var(--border);
-    border-radius: 16px; padding: 14px; margin-bottom: 12px; opacity: .45;
+    border-radius: 16px; padding: 14px; margin-bottom: 12px; opacity: .4;
 }
 .ghost h4 { margin: 0 0 10px; font-size: 13px; color: var(--primary); }
 .ghost .g { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .ghost .g i { display: block; height: 26px; border-radius: 6px; background: color-mix(in srgb, #ECEAE3 60%, #fff); }
 
-/* ==========================================================================
-   البطاقة المطويّة
-   ========================================================================== */
+/* ---------- البطاقة ---------- */
 .cal {
     background: var(--surface); border: 1.5px solid var(--border);
-    border-radius: 16px; overflow: hidden;
+    border-radius: 18px; overflow: hidden;
     box-shadow: 0 2px 6px rgba(16,24,40,.05);
 }
-.cal.open { border-color: var(--primary); box-shadow: 0 4px 14px rgba(15,44,92,.14); }
+.cal.open { border-color: var(--primary); box-shadow: 0 6px 20px rgba(15,44,92,.16); }
 .cal-top {
     display: flex; align-items: center; gap: 11px; width: 100%;
     padding: 13px 14px; background: none; border: 0; cursor: pointer;
@@ -44,118 +49,166 @@ body { padding: 14px 12px 40px; }
 .cal-ic {
     width: 34px; height: 34px; flex: none; border-radius: 10px;
     background: color-mix(in srgb, #ECEAE3 55%, #fff);
-    border: 1.5px solid var(--border);
-    display: grid; place-items: center; font-size: 15px;
+    border: 1.5px solid var(--border); display: grid; place-items: center; font-size: 15px;
 }
 .cal.open .cal-ic { background: #F7F1E1; border-color: #E2D3AC; }
-.cal-tx { flex: 1; min-width: 0; }
-.cal-nm { display: block; font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
+.cal-nm { display: block; font-size: 13.5px; font-weight: 900; color: var(--primary); }
 .cal-sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-.cal-sub b { color: #8A6E2E; font-weight: var(--fw-black); }
-.cal-body { padding: 13px 14px 14px; border-top: 1px solid var(--border); }
+.cal-sub b { color: #8A6E2E; font-weight: 900; }
+.cal-tx { flex: 1; min-width: 0; }
+
+/* ==========================================================================
+   اللوحة العلوية — كحليّة، فيها القوس والعدّاد
+   ========================================================================== */
+.hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(155deg, #1B3E77 0%, #0F2C5C 55%, #0A2049 100%);
+    color: #fff; padding: 16px 14px;
+}
+/* وهجٌ ذهبيّ خافت خلف القوس — عمقٌ بلا زخرفة */
+.hero::after {
+    content: ''; position: absolute; inset-inline-end: -30px; top: -40px;
+    width: 170px; height: 170px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,97,.30) 0%, transparent 68%);
+}
+.hero-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; }
+.arc { width: 82px; height: 82px; flex: none; position: relative; }
+.arc svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.arc .mid {
+    position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+}
+.arc .mid b { display: block; font-size: 20px; font-weight: 900; line-height: 1; }
+.arc .mid span { display: block; font-size: 9px; opacity: .75; margin-top: 3px; }
+
+.hero-tx { flex: 1; min-width: 0; }
+.hero-tx .ord { font-size: 16px; font-weight: 900; line-height: 1.4; }
+.hero-tx .trm { font-size: 11.5px; opacity: .8; }
+.hero-tx .dates { font-size: 10.5px; opacity: .7; margin-top: 4px; line-height: 1.6; }
+
+.next {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 9px; margin-top: 13px;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(201,169,97,.45);
+    border-radius: 12px; padding: 9px 11px;
+}
+.next .cnt {
+    font-size: 20px; font-weight: 900; color: #E2C983; line-height: 1;
+}
+.next .cnt small { font-size: 10px; font-weight: 700; opacity: .85; margin-inline-start: 2px; }
+.next .tx { flex: 1; font-size: 11px; line-height: 1.6; }
+.next .tx b { color: #E2C983; }
 
 /* ---------- شريط الفصول ---------- */
-.trm { display: flex; gap: 6px; margin-bottom: 13px; }
-.trm button {
-    flex: 1; min-height: 40px; border-radius: 11px; cursor: pointer;
-    font-family: inherit; font-size: 12px; font-weight: var(--fw-black);
-    color: var(--primary); line-height: 1.35;
-    background: color-mix(in srgb, #ECEAE3 35%, #fff);
+.trm-bar { display: flex; gap: 6px; padding: 12px 14px 0; }
+.trm-bar button {
+    flex: 1; padding: 8px 4px; border-radius: 11px; cursor: pointer;
+    font-family: inherit; font-size: 11.5px; font-weight: 900; line-height: 1.3;
+    color: var(--primary); background: color-mix(in srgb, #ECEAE3 35%, #fff);
     border: 1.5px solid var(--border);
 }
-.trm button.on { color: #fff; background: var(--primary); border-color: var(--primary); }
-.trm button small { display: block; font-size: 9.5px; font-weight: 500; opacity: .75; }
+.trm-bar button.on { color: #fff; background: var(--primary); border-color: var(--primary); }
+.trm-bar button small { display: block; font-size: 9px; font-weight: 500; opacity: .7; margin-top: 1px; }
 
-/* ---------- سطر «أين أنت» ---------- */
-.now {
-    display: flex; flex-direction: column; gap: 7px;
-    background: color-mix(in srgb, #ECEAE3 32%, #fff);
-    border: 1.5px solid var(--border); border-radius: 12px;
-    padding: 11px 12px; margin-bottom: 13px;
-}
-.now .l1 { font-size: 13px; font-weight: var(--fw-black); color: var(--primary); }
-.now .l2 {
-    display: flex; align-items: baseline; gap: 6px;
-    font-size: 11.5px; color: var(--text); line-height: 1.7;
-    padding-top: 7px; border-top: 1px dashed var(--border);
-}
-.now .l2 .big { font-size: 17px; font-weight: var(--fw-black); color: #8A6E2E; }
-.now .l2 .nm { color: #8A6E2E; font-weight: var(--fw-black); }
-
-/* ---------- صفوف الأسابيع ---------- */
-.wks { display: flex; flex-direction: column; gap: 7px; }
+/* ==========================================================================
+   المسار — الخطّ الرأسي والعُقد
+   ========================================================================== */
+.path { padding: 14px 14px 16px; }
 .wk {
-    display: flex; gap: 10px; align-items: flex-start;
-    padding: 9px 10px; border-radius: 12px;
-    background: var(--surface);
-    border: 1.5px solid var(--border);
+    position: relative; display: flex; gap: 12px;
+    padding-bottom: 12px;
 }
-.wk-n {
-    width: 34px; height: 34px; flex: none; border-radius: 9px;
-    display: grid; place-items: center;
-    font-size: 13px; font-weight: var(--fw-black); color: #fff;
+/* الخيط الواصل بين العقدتين */
+/* الخيط تحت العُقد لا في جهة البطاقة: العقدة أوّل عنصرٍ في الصف،
+   فموضعها البداية — واليمين هو البداية في العربية. */
+.wk::before {
+    content: ''; position: absolute; top: 30px; bottom: -2px;
+    inset-inline-start: 14px;
+    width: 2.5px; background: var(--border); border-radius: 2px;
 }
-.wk[data-t="1"] .wk-n { background: #0F2C5C; }
-.wk[data-t="2"] .wk-n { background: #3E6096; }
-.wk[data-t="3"] .wk-n { background: #7C93BC; }
+.wk:last-child::before { display: none; }
+.wk.past::before { background: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+.wk.off-week::before { background: repeating-linear-gradient(180deg,#C9A961 0 5px,transparent 5px 10px); }
 
-.wk-b { flex: 1; min-width: 0; }
-.wk-ttl { font-size: 12.5px; font-weight: var(--fw-black); color: var(--primary); }
-/* سطرٌ لكل تقويم دائماً: الالتفاف كان يضعهما معاً حيناً ويفصلهما
-   حيناً، فيختلف ارتفاع الصفوف بلا سبب يراه المعلّم. */
-.wk-d {
-    display: flex; flex-direction: column; gap: 1px; margin-top: 2px;
-    font-size: 10.5px; color: var(--text-muted); line-height: 1.7;
+.node {
+    width: 30px; height: 30px; flex: none; border-radius: 50%;
+    display: grid; place-items: center; position: relative; z-index: 1;
+    font-size: 12px; font-weight: 900;
+    background: var(--surface); color: var(--text-muted);
+    border: 2.5px solid var(--border);
 }
-.wk-d span { white-space: nowrap; }
-.wk-d i {
-    font-style: normal; font-weight: var(--fw-black);
-    color: color-mix(in srgb, var(--primary) 55%, var(--text-muted));
-    margin-inline-end: 3px;
+.wk.past .node { background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+                 border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+                 color: color-mix(in srgb, var(--primary) 70%, var(--text-muted)); }
+.wk.off-week .node { background: #F5EEDC; border-color: #C9A961; color: #7A6224; }
+
+/* أنت هنا — العقدة تكبر وتنبض */
+.wk.now .node {
+    width: 38px; height: 38px; margin-inline-start: -4px;
+    font-size: 14px; color: #fff;
+    background: linear-gradient(150deg, #D9BC78 0%, #C9A961 55%, #A8873F 100%);
+    border-color: #fff;
+    box-shadow: 0 0 0 3px #C9A961, 0 4px 12px rgba(201,169,97,.5);
+}
+.wk.now::before { inset-inline-start: 14px; top: 38px; }
+
+/* ---------- بطاقة الأسبوع ---------- */
+.card {
+    flex: 1; min-width: 0; padding: 9px 11px; border-radius: 12px;
+    background: var(--surface); border: 1.5px solid var(--border);
+}
+.wk.past .card { opacity: .62; }
+.wk.now .card {
+    background: linear-gradient(150deg,
+        color-mix(in srgb, #C9A961 18%, var(--surface)),
+        color-mix(in srgb, #C9A961 6%, var(--surface)));
+    border-color: #C9A961; box-shadow: 0 3px 12px rgba(201,169,97,.24);
+}
+.wk.off-week .card { border-color: #E2D3AC; background: color-mix(in srgb, #F5EEDC 45%, var(--surface)); }
+
+.card .ttl {
+    display: flex; align-items: baseline; gap: 7px;
+    font-size: 12.5px; font-weight: 900; color: var(--primary);
+}
+.card .here {
+    font-size: 9px; font-weight: 900; color: #fff;
+    background: #B8963F; border-radius: 20px; padding: 1px 8px;
+}
+/* التاريخان: الهجري أولاً لأنه تقويم العمل، والميلادي تحته */
+.cal-dates { display: flex; flex-direction: column; gap: 1px; margin-top: 3px; }
+.cal-dates span { font-size: 10.5px; color: var(--text-muted); line-height: 1.65; white-space: nowrap; }
+.cal-dates i {
+    font-style: normal; font-weight: 900; margin-inline-end: 4px;
+    color: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
 }
 
-/* أيام الإجازة داخل الأسبوع */
-/* خمسة أعمدة لا التفاف: أيام الأسبوع صفٌّ واحد دائماً، وإلّا نزل
-   «الخميس» وحده فبدا كأنه يومٌ من نوعٍ آخر. */
-.wk-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-top: 6px; }
-.dy {
-    font-size: 9.5px; font-weight: var(--fw-black); text-align: center;
-    border-radius: 6px; padding: 3px 2px;
-    background: color-mix(in srgb, #ECEAE3 45%, #fff);
-    color: var(--text-muted); border: 1px solid var(--border);
+/* أيام الأسبوع — نقاطٌ تُرى قبل أن تُقرأ */
+.dots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+.dot { text-align: center; }
+.dot .d {
+    display: block;   /* بدونه لا يقبل السطريُّ ارتفاعاً فيختفي الشريط */
+    height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--primary) 22%, var(--border));
 }
-.dy.off { background: #F5EEDC; color: #7A6224; border-color: #E2D3AC; }
-.wk-hol {
-    margin-top: 5px; font-size: 10.5px; font-weight: var(--fw-black); color: #8A6E2E;
-}
+.dot.off .d { background: linear-gradient(90deg, #D9BC78, #B8963F); height: 6px; }
+.dot .l { display: block; font-size: 8.5px; color: var(--text-muted); margin-top: 3px; }
+.dot.off .l { color: #7A6224; font-weight: 900; }
 
-/* الأسبوع الحالي — بلونٍ مميّز لا بإطارٍ وحده */
-.wk.now-week {
-    background: linear-gradient(145deg,
-        color-mix(in srgb, #C9A961 20%, var(--surface)) 0%,
-        color-mix(in srgb, #C9A961 8%, var(--surface)) 100%);
-    border-color: #C9A961;
-    box-shadow: 0 2px 8px rgba(201,169,97,.28);
+.off-note {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+    padding-top: 7px; border-top: 1px dashed #E2D3AC;
+    font-size: 10.5px; font-weight: 900; color: #8A6E2E;
 }
-.wk.now-week .wk-n { background: #B8963F; }
-.wk.now-week .wk-ttl::after {
-    content: 'أنت هنا';
-    margin-inline-start: 7px; font-size: 9.5px; font-weight: var(--fw-black);
-    color: #fff; background: #B8963F; border-radius: 20px; padding: 1px 8px;
-    vertical-align: 1px;
+.off-note .pill {
+    font-size: 9px; background: #C9A961; color: #fff;
+    border-radius: 20px; padding: 1px 8px; font-weight: 900;
 }
-
-/* أسبوع إجازته مطوّلة */
-.wk.long-off { border-inline-start: 4px solid #C9A961; }
-.wk.long-off .wk-n { background: repeating-linear-gradient(135deg,#C9A961 0 5px,#B8963F 5px 10px); }
 </style>
 </head>
 <body>
 
-<h1 class="pv-title">التقويم الدراسي — التصميم ج بتعديلاتك</h1>
+<h1 class="pv-title">التقويم الدراسي — إنفوجرافيك</h1>
 <p class="pv-note">
-    فصلٌ واحد في كل مرة · كل أسبوع بتاريخيه الهجري والميلادي<br>
-    أيام الإجازة داخل الأسبوع محدّدة بأسمائها · وأسبوعك بلونٍ ذهبي<br>
+    الفصل مسارٌ يُقطع: ما مضى باهت، وأنت عقدةٌ ذهبية، وما بقي مجوّف.<br>
+    والإجازة تكسر الخيط فتُرى قبل أن تُقرأ.<br>
     <b>البيانات تجريبية — ستُستبدل بتقويمك</b>
 </p>
 
@@ -169,22 +222,18 @@ body { padding: 14px 12px 40px; }
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    /* الهجري من المتصفّح نفسه بتقويم أم القرى — لا مكتبة ولا جدول تحويل. */
+    /* الهجري من المتصفّح بتقويم أم القرى — لا مكتبة ولا جدول تحويل. */
     const HIJRI = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long' });
-    const GREG_M = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
-                    'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const GM = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     const hij  = (d) => HIJRI.format(d);
-    const greg = (d) => ar(d.getDate()) + ' ' + GREG_M[d.getMonth()];
+    const greg = (d) => ar(d.getDate()) + ' ' + GM[d.getMonth()];
 
-    const DAY_NAMES = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-    const ORD = ['', 'الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن',
+    const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+    const SHORT = ['ح', 'ن', 'ث', 'ر', 'خ'];
+    const ORD = ['','الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن',
                  'التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر'];
 
-    /* ------------------------------------------------------------------
-       بياناتٌ تجريبية بالبنية التي سيأخذها التقويم الحقيقي.
-       الإجازات بمداها اليومي لا بالأسبوع — لأن المطلوب تحديد الأيام
-       نفسها داخل الأسبوع لا الإشارة إلى أن فيه إجازة.
-       ------------------------------------------------------------------ */
     const D = (y, m, d) => new Date(y, m - 1, d);
     const START = D(2026, 8, 2);
     const TERMS = [
@@ -193,21 +242,15 @@ body { padding: 14px 12px 40px; }
         { n: 3, name: 'الفصل الثالث', weeks: 11 }
     ];
     const HOLIDAYS = [
-        { name: 'اليوم الوطني',            from: D(2026, 9, 23),  to: D(2026, 9, 23),  long: false },
-        { name: 'إجازة مطوّلة',            from: D(2026, 10, 12), to: D(2026, 10, 13), long: true  },
-        { name: 'إجازة نهاية الفصل الأول', from: D(2026, 10, 26), to: D(2026, 11, 5),  long: true  },
-        { name: 'إجازة مطوّلة',            from: D(2026, 12, 14), to: D(2026, 12, 15), long: true  },
-        { name: 'إجازة نهاية الفصل الثاني',from: D(2027, 1, 25),  to: D(2027, 2, 4),   long: true  },
-        { name: 'إجازة عيد الفطر',         from: D(2027, 3, 8),   to: D(2027, 3, 19),  long: true  }
+        { name: 'اليوم الوطني',             from: D(2026, 9, 23),  to: D(2026, 9, 23)  },
+        { name: 'إجازة مطوّلة',             from: D(2026, 10, 12), to: D(2026, 10, 13) },
+        { name: 'إجازة نهاية الفصل الأول',  from: D(2026, 10, 26), to: D(2026, 11, 5)  },
+        { name: 'إجازة مطوّلة',             from: D(2026, 12, 14), to: D(2026, 12, 15) },
+        { name: 'إجازة نهاية الفصل الثاني', from: D(2027, 1, 25),  to: D(2027, 2, 4)   },
+        { name: 'إجازة عيد الفطر',          from: D(2027, 3, 8),   to: D(2027, 3, 19)  }
     ];
+    const holidayOn = (d) => HOLIDAYS.find((h) => d >= h.from && d <= h.to);
 
-    const sameDay = (a, b) => a.getFullYear() === b.getFullYear()
-        && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-    const holidayOn = (d) => HOLIDAYS.find((h) =>
-        d >= new Date(h.from.getFullYear(), h.from.getMonth(), h.from.getDate())
-     && d <= new Date(h.to.getFullYear(), h.to.getMonth(), h.to.getDate()));
-
-    /* أسبوعٌ أسبوع، ولكلٍّ أيامه الخمسة موصوفةً بحالتها. */
     const WEEKS = [];
     (function build() {
         let n = 0;
@@ -215,103 +258,114 @@ body { padding: 14px 12px 40px; }
             for (let i = 0; i < t.weeks; i++) {
                 n += 1;
                 const from = new Date(START); from.setDate(START.getDate() + (n - 1) * 7);
-                const days = DAY_NAMES.map((nm, k) => {
+                const days = DAYS.map((nm, k) => {
                     const d = new Date(from); d.setDate(from.getDate() + k);
-                    return { name: nm, date: d, hol: holidayOn(d) || null };
+                    return { name: nm, short: SHORT[k], date: d, hol: holidayOn(d) || null };
                 });
                 const offs = days.filter((d) => d.hol);
                 WEEKS.push({
-                    n, term: t.n, from, to: days[4].date, days,
-                    offs,
-                    long: offs.some((d) => d.hol.long),
+                    n, term: t.n, from, to: days[4].date, days, offs,
                     holName: offs.length ? offs[0].hol.name : null,
-                    allOff: offs.length === 5
+                    allOff: offs.length === 5,
+                    k: i + 1
                 });
             }
         });
     })();
 
-    /* «اليوم» ثابت في المعاينة لتبقى اللقطة قابلة للمقارنة. */
     const TODAY = D(2026, 8, 13);
     const CURRENT = WEEKS.find((w) => TODAY >= w.from && TODAY <= new Date(w.to.getTime() + 2 * 864e5)) || WEEKS[0];
 
-    /* أقرب يوم إجازة قادم — بالأيام لا بالأسابيع، فهو ما يسأل عنه المعلّم. */
     const nextOff = (function () {
-        for (const w of WEEKS) {
-            for (const d of w.days) {
-                if (d.hol && d.date > TODAY) return { day: d, week: w };
-            }
-        }
+        for (const w of WEEKS) for (const d of w.days) if (d.hol && d.date > TODAY) return d;
         return null;
     })();
-    const daysTo = nextOff ? Math.round((nextOff.day.date - TODAY) / 864e5) : 0;
+    const daysTo = nextOff ? Math.round((nextOff.date - TODAY) / 864e5) : 0;
     const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
         : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
 
     let open = true, term = CURRENT.term;
-    const idxInTerm = (w) => WEEKS.filter((x) => x.term === w.term).findIndex((x) => x.n === w.n) + 1;
 
-    function head() {
-        const sub = nextOff
-            ? `الأسبوع ${ORD[idxInTerm(CURRENT)]} · <b>${esc(nextOff.day.hol.name)}</b> بعد ${dayWord(daysTo)}`
-            : `الأسبوع ${ORD[idxInTerm(CURRENT)]}`;
+    /* قوسٌ يقول موضعك من الفصل بلا رقمٍ يُقرأ. */
+    function arc() {
+        const t = TERMS[CURRENT.term - 1];
+        const pct = CURRENT.k / t.weeks;
+        const R = 34, C = 2 * Math.PI * R;
         return `
-            <button type="button" class="cal-top" data-toggle>
-                <span class="cal-ic">🗓️</span>
-                <span class="cal-tx">
-                    <span class="cal-nm">التقويم الدراسي ١٤٤٨هـ</span>
-                    <span class="cal-sub">${sub}</span>
+            <div class="arc">
+                <svg viewBox="0 0 82 82" aria-hidden="true">
+                    <circle cx="41" cy="41" r="${R}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="7"/>
+                    <circle cx="41" cy="41" r="${R}" fill="none" stroke="#C9A961" stroke-width="7"
+                            stroke-linecap="round"
+                            stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}"/>
+                </svg>
+                <span class="mid">
+                    <b>${ar(CURRENT.k)}</b>
+                    <span>من ${ar(t.weeks)} أسبوعاً</span>
                 </span>
-            </button>`;
+            </div>`;
     }
 
-    function nowBox() {
+    function hero() {
         const t = TERMS[CURRENT.term - 1];
         return `
-            <div class="now">
-                <span class="l1">
-                    أنت في الأسبوع ${ORD[idxInTerm(CURRENT)]} من ${t.name}
-                </span>
+            <div class="hero">
+                <div class="hero-row">
+                    ${arc()}
+                    <div class="hero-tx">
+                        <div class="ord">الأسبوع ${ORD[CURRENT.k]}</div>
+                        <div class="trm">${t.name} · العام ١٤٤٨هـ</div>
+                        <div class="dates">
+                            ${hij(CURRENT.from)} — ${hij(CURRENT.to)} هـ<br>
+                            ${greg(CURRENT.from)} — ${greg(CURRENT.to)}
+                        </div>
+                    </div>
+                </div>
                 ${nextOff ? `
-                <span class="l2">
-                    <span class="big">${ar(daysTo)}</span>
-                    <span>
-                        ${daysTo === 1 ? 'يوم' : daysTo === 2 ? 'يومان' : 'يوماً'}
-                        على <span class="nm">${esc(nextOff.day.hol.name)}</span>
-                        — ${nextOff.day.name} ${greg(nextOff.day.date)} · ${hij(nextOff.day.date)}هـ
+                <div class="next">
+                    <span class="cnt">${ar(daysTo)}<small>${daysTo === 2 ? 'يومان' : 'يوماً'}</small></span>
+                    <span class="tx">
+                        على <b>${esc(nextOff.hol.name)}</b><br>
+                        ${nextOff.name} ${greg(nextOff.date)} · ${hij(nextOff.date)} هـ
                     </span>
-                </span>` : ''}
+                </div>` : ''}
             </div>`;
     }
 
     function tabs() {
-        return `<div class="trm">
+        return `<div class="trm-bar">
             ${TERMS.map((t) => `
                 <button type="button" data-term="${t.n}" class="${term === t.n ? 'on' : ''}">
-                    ${t.name}
-                    <small>${ar(t.weeks)} أسبوعاً</small>
+                    ${t.name}<small>${ar(t.weeks)} أسبوعاً</small>
                 </button>`).join('')}
         </div>`;
     }
 
-    function weekRow(w) {
-        const k = idxInTerm(w);
+    function week(w) {
+        const state = w.n < CURRENT.n ? 'past' : w.n === CURRENT.n ? 'now' : 'next';
         return `
-            <div class="wk ${w.n === CURRENT.n ? 'now-week' : ''} ${w.long ? 'long-off' : ''}" data-t="${w.term}">
-                <span class="wk-n">${ar(k)}</span>
-                <div class="wk-b">
-                    <div class="wk-ttl">الأسبوع ${ORD[k]}</div>
-                    <div class="wk-d">
+            <div class="wk ${state} ${w.offs.length ? 'off-week' : ''}">
+                <span class="node">${ar(w.k)}</span>
+                <div class="card">
+                    <div class="ttl">
+                        <span>الأسبوع ${ORD[w.k]}</span>
+                        ${state === 'now' ? '<span class="here">أنت هنا</span>' : ''}
+                    </div>
+                    <div class="cal-dates">
                         <span><i>هـ</i>${hij(w.from)} — ${hij(w.to)}</span>
                         <span><i>م</i>${greg(w.from)} — ${greg(w.to)}</span>
                     </div>
+                    <div class="dots">
+                        ${w.days.map((d) => `
+                            <span class="dot ${d.hol ? 'off' : ''}">
+                                <span class="d"></span>
+                                <span class="l">${d.short}</span>
+                            </span>`).join('')}
+                    </div>
                     ${w.offs.length ? `
-                        <div class="wk-days">
-                            ${w.days.map((d) => `<span class="dy ${d.hol ? 'off' : ''}">${d.name}</span>`).join('')}
-                        </div>
-                        <div class="wk-hol">
-                            ${w.allOff ? 'إجازة الأسبوع كاملاً' : 'إجازة'}:
-                            ${esc(w.holName)} — ${dayWord(w.offs.length)}
+                        <div class="off-note">
+                            <span class="pill">${w.allOff ? 'الأسبوع كاملاً' : dayWord(w.offs.length)}</span>
+                            <span>${esc(w.holName)}${w.allOff ? '' : ' — ' + w.offs.map((d) => d.name).join(' و')}</span>
                         </div>` : ''}
                 </div>
             </div>`;
@@ -327,12 +381,14 @@ body { padding: 14px 12px 40px; }
                 <div class="g">${'<i></i>'.repeat(15)}</div>
             </div>
             <div class="cal ${open ? 'open' : ''}">
-                ${head()}
-                ${open ? `<div class="cal-body">
-                    ${nowBox()}
-                    ${tabs()}
-                    <div class="wks">${list.map(weekRow).join('')}</div>
-                </div>` : ''}
+                <button type="button" class="cal-top" data-toggle>
+                    <span class="cal-ic">🗓️</span>
+                    <span class="cal-tx">
+                        <span class="cal-nm">التقويم الدراسي ١٤٤٨هـ</span>
+                        <span class="cal-sub">الأسبوع ${ORD[CURRENT.k]} · <b>${nextOff ? esc(nextOff.hol.name) : ''}</b> بعد ${dayWord(daysTo)}</span>
+                    </span>
+                </button>
+                ${open ? hero() + tabs() + `<div class="path">${list.map(week).join('')}</div>` : ''}
             </div>`;
     }
 
