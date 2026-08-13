@@ -80,7 +80,12 @@ const SCHEDULE_TOOL = {
                         class_id:   { type: 'string' },
                         topic:      { type: 'string' },
                         unmatched:  { type: 'boolean' },
-                        class_text: { type: 'string' },
+                        /* الفصل غير المعروف: حقولٌ منفصلة لا نصّاً واحداً.
+                           فالنصّ «الأول/أ — علوم» كان يُقرأ عند العميل
+                           بتخمينٍ هشّ، والنموذج يعرف تقسيمه أصلاً. */
+                        new_grade:   { type: 'string', description: 'الصف كما هو مكتوب، مثل: الأول الثانوي' },
+                        new_section: { type: 'string', description: 'الشعبة كما هي مكتوبة، مثل: أ' },
+                        new_subject: { type: 'string', description: 'المادة إن كُتبت، وإلا اتركها فارغة' },
                     },
                     required: ['day', 'period'],
                 },
@@ -115,7 +120,10 @@ ${list}
 - class_id  (يجب أن يكون من القائمة أعلاه؛ التقط أفضل تطابق)
 - topic     (الموضوع/الدرس إن وُجد، نص قصير)
 
-إذا الخانة لفصل غير موجود في القائمة، اجعل unmatched=true وضع وصفاً نصياً في class_text.
+إذا الخانة لفصل غير موجود في القائمة، اجعل unmatched=true واملأ:
+- new_grade   (الصف كما هو مكتوب في الجدول)
+- new_section (الشعبة)
+- new_subject (المادة إن كانت مكتوبة، وإلا اتركها فارغة — لا تخمّنها)
 
 سلّم النتيجة عبر الأداة submit_schedule ولا تكتب شيئاً آخر.
 وإن لم تكن الصور جدولاً دراسياً، سلّم قائمة فارغة.`;
@@ -282,8 +290,13 @@ function cleanCells(raw: unknown): Record<string, unknown>[] {
         if (!Number.isInteger(period) || period < 1 || period > 12) continue;
         const cell: Record<string, unknown> = { day, period };
         if (typeof o.class_id === 'string' && o.class_id) cell.class_id = o.class_id.slice(0, MAX_FIELD);
-        if (o.unmatched === true) cell.unmatched = true;
-        if (typeof o.class_text === 'string') cell.class_text = o.class_text.slice(0, MAX_FIELD);
+        if (o.unmatched === true) {
+            cell.unmatched = true;
+            const f = (k: string) => String(o[k] ?? '').slice(0, MAX_FIELD).trim();
+            cell.new_grade   = f('new_grade');
+            cell.new_section = f('new_section');
+            cell.new_subject = f('new_subject');
+        }
         cell.topic = typeof o.topic === 'string' ? o.topic.slice(0, MAX_FIELD) : '';
         out.push(cell);
     }

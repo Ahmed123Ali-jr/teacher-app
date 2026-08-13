@@ -434,20 +434,45 @@
         function showPreview(cells) {
             const byId = {};
             ctx.classes.forEach((c) => { byId[c.id] = c; });
+            const CC = global.ClassCreate;
 
-            /* نقبل الخانة إن كان فصلها معروفاً ويومها وحصّتها في المدى. */
-            const ok = [];
-            const skipped = [];
+            /* ثلاثة مصائر للخانة: فصلٌ معروف، أو فصلٌ جديد يُنشأ، أو مهملة. */
+            const ok = [], skipped = [];
+            const news = [];            // فصولٌ جديدة فريدة
+            const newKey = {};          // مفتاح الفصل الجديد → موضعه في news
+
+            const inRange = (d, p) => d >= 0 && d < DAYS.length && p >= 1 && p <= ctx.periods.length;
+
             (cells || []).forEach((c) => {
                 const day = Number(c.day), period = Number(c.period);
-                const valid = byId[c.class_id]
-                    && day >= 0 && day < DAYS.length
-                    && period >= 1 && period <= ctx.periods.length;
-                if (valid) ok.push({ day, period, class_id: c.class_id, topic: String(c.topic || '').trim() });
-                else skipped.push(c);
+                if (!inRange(day, period)) return skipped.push(c);
+                const topic = String(c.topic || '').trim();
+
+                if (byId[c.class_id]) return ok.push({ day, period, class_id: c.class_id, topic });
+
+                /* فصلٌ لم يعرفه النموذج: يُقرأ صفُّه وشعبتُه، ويُبحث عنه عند
+                   المعلّم قبل إنشائه — فربّما كتبه بصيغةٍ أخرى. */
+                const parsed = CC && c.new_grade ? CC.parseGrade(c.new_grade) : null;
+                if (!parsed) return skipped.push(c);
+                const section = CC.parseSection(c.new_section);
+                if (!section) return skipped.push(c);
+
+                const found = CC.findExisting(ctx.classes, parsed.grade, section, c.new_subject);
+                if (found) return ok.push({ day, period, class_id: found.id, topic });
+
+                const key = CC.fold(parsed.grade) + '|' + CC.fold(section);
+                if (newKey[key] == null) {
+                    newKey[key] = news.length;
+                    news.push({
+                        stage: parsed.stage, grade: parsed.grade, section,
+                        subject: String(c.new_subject || '').trim(),
+                        take: true, cells: []
+                    });
+                }
+                news[newKey[key]].cells.push({ day, period, topic });
             });
 
-            if (!ok.length) {
+            if (!ok.length && !news.length) {
                 resultEl.innerHTML = `
                     <div class="callout callout-warn" style="margin-top: var(--space-4);">
                         لم أتعرّف على أيّ حصة. جرّب صورةً أوضح، أو تأكّد أن أسماء
@@ -456,46 +481,126 @@
                 return;
             }
 
-            /* كم خانة ستُطمس؟ المعلّم يستحقّ أن يعرف قبل أن يوافق. */
-            const overwrite = ok.filter((c) =>
-                ctx.schedule.some((r) => r.day === c.day && r.period === c.period && r.class_id)).length;
+            /* موادّ المعلّم أولاً — فما يدرّسه هو أول ما يجده. */
+            const subjectList = global.Subjects
+                ? global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL)
+                : [];
+            /* المادة المقروءة تُردّ إلى اسمها في التطبيق قبل عرضها، وإلا
+               حُفظت «رياضيات» بجانب «الرياضيات» فصارتا مادتين. */
+            news.forEach((n) => { n.subject = CC.normalizeSubject(n.subject, subjectList); });
 
-            resultEl.innerHTML = `
-                <div class="imp-box">
-                    <div class="imp-sum">
-                        <b>قُرئت ${arWord(ok.length)}</b>
-                        ${skipped.length ? `<span class="imp-skip">وتُخطّيت ${arWord(skipped.length)} لم أتعرّف على فصلها</span>` : ''}
-                        ${overwrite ? `<span class="imp-warn">وستُستبدل ${arWord(overwrite)} موجودة في جدولك</span>` : ''}
-                    </div>
-                    <ul class="imp-list">
-                        ${ok.map((c) => {
-                            const k = byId[c.class_id];
-                            return `<li><span class="d">${DAYS[c.day].label}</span>
-                                <span class="p">الحصة ${arDigits(c.period)}</span>
-                                <span class="c">${escapeHtml(k.grade + ' / ' + k.section)}</span>
-                                ${c.topic ? `<span class="t">${escapeHtml(c.topic)}</span>` : ''}</li>`;
-                        }).join('')}
-                    </ul>
-                    <button type="button" class="btn btn-primary btn-block" id="imp-apply">
-                        ✓ اعتمد ${arWord(ok.length)}
-                    </button>
-                </div>`;
+            function paintPreview() {
+                const taken = news.filter((n) => n.take);
+                const totalCells = ok.length + taken.reduce((a, n) => a + n.cells.length, 0);
 
-            resultEl.querySelector('#imp-apply').addEventListener('click', async (e) => {
-                const b = e.currentTarget;
-                b.disabled = true;
-                b.textContent = '⏳ جارٍ الحفظ…';
-                try {
-                    await applyCells(ok, ctx, container);
-                    global.Modal.close();
-                    global.TeacherApp.toast('تم استيراد ' + arWord(ok.length) + ' ✅', 'success', 3000);
-                } catch (err) {
-                    console.warn('[schedule] apply failed:', err);
-                    global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
-                    b.disabled = false;
-                    b.textContent = '✓ اعتمد ' + arWord(ok.length);
-                }
-            });
+                /* كم خانة ستُطمس؟ المعلّم يستحقّ أن يعرف قبل أن يوافق. */
+                const overwrite = ok.filter((c) =>
+                    ctx.schedule.some((r) => r.day === c.day && r.period === c.period && r.class_id)).length;
+
+                resultEl.innerHTML = `
+                    <div class="imp-box">
+                        <div class="imp-sum">
+                            <b>قُرئت ${arWord(totalCells)}</b>
+                            ${skipped.length ? `<span class="imp-skip">وتُخطّيت ${arWord(skipped.length)} لم أتعرّف على فصلها</span>` : ''}
+                            ${overwrite ? `<span class="imp-warn">وستُستبدل ${arWord(overwrite)} موجودة في جدولك</span>` : ''}
+                        </div>
+
+                        ${news.length ? `
+                            <div class="imp-new">
+                                <div class="imp-new-t">
+                                    ${news.length === 1 ? 'فصلٌ جديد سيُنشأ' : 'فصول جديدة ستُنشأ'}
+                                    <span>اختر مادة كلٍّ منها</span>
+                                </div>
+                                ${news.map((n, i) => `
+                                    <div class="imp-new-row ${n.take ? '' : 'off'}">
+                                        <label class="imp-new-on">
+                                            <input type="checkbox" data-new-take="${i}" ${n.take ? 'checked' : ''}>
+                                            <span class="nm">${escapeHtml(n.grade.replace(/^الصف\s+/, '') + ' / ' + n.section)}</span>
+                                            <span class="cnt">${arWord(n.cells.length)}</span>
+                                        </label>
+                                        <select class="imp-new-sub" data-new-subj="${i}" ${n.take ? '' : 'disabled'}>
+                                            <option value="">— اختر المادة —</option>
+                                            ${subjectList.map((s) => `
+                                                <option value="${escapeAttr(s)}" ${n.subject === s ? 'selected' : ''}>${escapeHtml(s)}</option>
+                                            `).join('')}
+                                            ${n.subject && !subjectList.includes(n.subject)
+                                                ? `<option value="${escapeAttr(n.subject)}" selected>${escapeHtml(n.subject)}</option>` : ''}
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>` : ''}
+
+                        ${ok.length ? `
+                            <ul class="imp-list">
+                                ${ok.map((c) => {
+                                    const k = byId[c.class_id];
+                                    return `<li><span class="d">${DAYS[c.day].label}</span>
+                                        <span class="p">الحصة ${arDigits(c.period)}</span>
+                                        <span class="c">${escapeHtml(k.grade + ' / ' + k.section)}</span>
+                                        ${c.topic ? `<span class="t">${escapeHtml(c.topic)}</span>` : ''}</li>`;
+                                }).join('')}
+                            </ul>` : ''}
+
+                        <button type="button" class="btn btn-primary btn-block" id="imp-apply">
+                            ✓ اعتمد ${arWord(totalCells, true)}${taken.length ? ' و' + clsWord(taken.length, true) : ''}
+                        </button>
+                    </div>`;
+                bindPreview();
+            }
+
+            function bindPreview() {
+                resultEl.querySelectorAll('[data-new-take]').forEach((el) => {
+                    el.addEventListener('change', () => {
+                        news[Number(el.dataset.newTake)].take = el.checked;
+                        paintPreview();
+                    });
+                });
+                resultEl.querySelectorAll('[data-new-subj]').forEach((el) => {
+                    el.addEventListener('change', () => {
+                        news[Number(el.dataset.newSubj)].subject = el.value;
+                    });
+                });
+
+                resultEl.querySelector('#imp-apply').addEventListener('click', async (e) => {
+                    const taken = news.filter((n) => n.take);
+                    /* لا فصلَ بلا مادة: الاسم وحده لا يميّز فصلين لمعلّمٍ
+                       يدرّس مادتين لنفس الصف. */
+                    const naked = taken.find((n) => !n.subject);
+                    if (naked) {
+                        return global.TeacherApp.toast(
+                            'اختر مادة ' + naked.grade.replace(/^الصف\s+/, '') + ' / ' + naked.section + '.',
+                            'warning', 4000);
+                    }
+                    const b = e.currentTarget;
+                    b.disabled = true;
+                    b.textContent = '⏳ جارٍ الحفظ…';
+                    try {
+                        const all = ok.slice();
+                        for (const n of taken) {
+                            const cls = await CC.create({
+                                teacher_id: ctx.teacher.id,
+                                stage: n.stage, grade: n.grade, section: n.section, subject: n.subject
+                            });
+                            ctx.classes.push(cls);
+                            n.cells.forEach((c) => all.push({ day: c.day, period: c.period,
+                                                              class_id: cls.id, topic: c.topic }));
+                        }
+                        await applyCells(all, ctx, container);
+                        global.Modal.close();
+                        global.TeacherApp.toast(
+                            'تم استيراد ' + arWord(all.length, true)
+                            + (taken.length ? ' وإنشاء ' + clsWord(taken.length, true) : '') + ' ✅',
+                            'success', 3500);
+                    } catch (err) {
+                        console.warn('[schedule] apply failed:', err);
+                        global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
+                        b.disabled = false;
+                        paintPreview();
+                    }
+                });
+            }
+
+            paintPreview();
         }
 
         global.Modal.open({ title: 'استيراد الجدول', body: form });
@@ -530,11 +635,19 @@
     }
 
     const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
-    function arWord(n) {
+    /* صيغتان لا واحدة: «قُرئت حصتان» مرفوعةٌ فاعلاً، و«اعتمد حصتين»
+       منصوبةٌ مفعولاً. وكانت واحدةً فقرأ المعلّم «اعتمد ٦ حصص وفصلان». */
+    function clsWord(n, acc) {
+        if (n === 1) return 'فصل واحد';
+        if (n === 2) return acc ? 'فصلين' : 'فصلان';
+        if (n <= 10) return arDigits(n) + ' فصول';
+        return arDigits(n) + ' فصلاً';
+    }
+    function arWord(n, acc) {
         if (n === 1) return 'حصة واحدة';
-        if (n === 2) return 'حصتان';
+        if (n === 2) return acc ? 'حصتين' : 'حصتان';
         if (n <= 10) return arDigits(n) + ' حصص';
-        return arDigits(n) + ' حصة';
+        return arDigits(n) + (acc ? ' حصةً' : ' حصة');
     }
 
 
