@@ -5091,12 +5091,12 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    مطويّة كبطاقة التذكيرات، وتنفتح على الفصل كلّه في شاشةٍ واحدة.
    البادئة ac- تخصّها وحدها فلا تصطدم بشيء.
    ========================================================================== */
+/* حاوية البطاقة: خارج ‎.sched-v2‎ لأنه يملأ الشاشة بـoverflow:hidden
+   فيقصّ كلّ ما بعد الشبكة. */
+.ac-wrap { padding-bottom: var(--space-8); }
+
 .ac-card {
-    /* flex:none شرطٌ لا زينة: حاوية الجدول ‎.sched-v2‎ مرنةٌ ذات
-       overflow:hidden، فتضغط البطاقة كعنصرٍ مرن وتقصّ الشبكة
-       والتفصيل — قِيست ‎٢٥١px‎ بدل ‎٤٣٨‎ قبل هذا السطر. */
-    flex: none;
-    display: block; margin-top: var(--space-5);
+    display: block; margin-top: var(--space-4);
     background: var(--surface); border: 1.5px solid var(--border);
     border-radius: 18px; overflow: hidden;
     box-shadow: 0 2px 6px rgba(16, 24, 40, .05);

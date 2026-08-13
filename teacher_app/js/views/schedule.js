@@ -167,8 +167,9 @@
                     <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
                 ` : ''}
 
-                ${calendarHtml(ctx)}
             </div>
+
+            ${calendarHtml(ctx)}
         `;
 
         ctx.grid = grid;
@@ -176,12 +177,22 @@
         bindCalendar(container, ctx);
     }
 
-    /* البطاقة اختيارية: لو لم تُحمَّل وحدتاها لأيّ سبب، يبقى الجدول
-       كما هو بلا خطأٍ ولا فراغ. */
+    /* البطاقة **خارج** ‎.sched-v2‎ لا داخله.
+
+       الجدول مصمَّمٌ ليملأ الشاشة تماماً: ‎max-height: 100dvh - 170px‎
+       مع ‎overflow:hidden‎، فتتوزّع الحصص على ما تبقّى مهما كان عددها.
+       وأيّ شيء يوضع داخله بعد الشبكة يُقصّ حتماً — وهذا ما حدث بالبطاقة
+       على جهاز المعلّم. فصارت شقيقةً له في حاويةٍ مستقلّة تنساب مع
+       الصفحة، والجدول يحتفظ بسلوكه بلا تعديل.
+
+       وهي اختيارية: لو لم تُحمَّل وحدتاها لأيّ سبب، يبقى الجدول كما هو
+       بلا خطأٍ ولا فراغ. */
     function calendarHtml(ctx) {
         if (!global.CalendarCard || !global.AcademicCalendar) return '';
         try {
-            return global.CalendarCard.html({ dept: ctx.dept, override: ctx.calPick });
+            return '<div class="container ac-wrap">'
+                 + global.CalendarCard.html({ dept: ctx.dept, override: ctx.calPick })
+                 + '</div>';
         } catch (err) {
             console.warn('[schedule] calendar card failed:', err);
             return '';
