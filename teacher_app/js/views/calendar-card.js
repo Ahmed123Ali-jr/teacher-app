@@ -82,12 +82,19 @@
         let headline, sub;
         if (st.inSpan) {
             headline = esc(st.inSpan.name);
-            sub = `تنتهي ${esc(AC().gregorian(st.inSpan.to))} · بعدها الأسبوع ${AC().ordinal(st.current.k)}`;
+            sub = st.nextWeek
+                ? `تنتهي ${esc(AC().gregorian(st.inSpan.to))} · بعدها الأسبوع ${AC().ordinal(st.nextWeek.k)}`
+                : `تنتهي ${esc(AC().gregorian(st.inSpan.to))} · وبها ينتهي الفصل ${esc(term.name)}`;
         } else if (st.before) {
             headline = st.firstWork ? esc(st.firstWork.name || 'بداية الدراسة') : 'قبل بداية العام';
             sub = st.firstWork
                 ? `${esc(AC().gregorian(st.firstWork.from))} · بعد ${dayWord(st.daysToStart)}`
                 : `الفصل ${esc(term.name)}`;
+        } else if (st.after) {
+            /* بين انتهاء آخر فصلٍ نعرفه ووصول تقويم ما بعده نافذةٌ واقعة
+               لا محالة. والصمت فيها أصدق من عرض الأسبوع الأخير كأنه جارٍ. */
+            headline = `انتهى الفصل ${esc(term.name)}`;
+            sub = 'تقويم الفصل التالي لم يُضف بعد';
         } else {
             headline = 'الأسبوع ' + AC().ordinal(st.current.k);
             sub = `الفصل ${esc(term.name)} · ${ar(st.current.k)} من ${ar(total)} أسبوعاً`;
@@ -129,7 +136,10 @@
 
     function grid(st) {
         const ar = AC().arDigits;
-        const curIdx = st.items.indexOf(st.inSpan || st.current);
+        /* بعد انتهاء الفصل مضى كلّ ما فيه — وإلّا بقي أسبوعُه الأخير
+           بلا صفةٍ: لا ماضياً ولا جارياً. */
+        const curIdx = st.after ? st.items.length
+                                : st.items.indexOf(st.inSpan || st.current);
 
         return `<div class="ac-grid">
             ${st.items.filter((i) => i.term === ui.term).map((it) => {
@@ -146,7 +156,7 @@
                 const cls = [
                     idx < curIdx ? 'past' : '',
                     it.offs.length ? 'hol' : '',
-                    it === st.current && !st.inSpan && !st.before ? 'now' : '',
+                    it === st.current && !st.inSpan && !st.before && !st.after ? 'now' : '',
                     it.k === ui.sel ? 'sel' : '',
                     it.exam ? 'exam' : ''
                 ].filter(Boolean).join(' ');
@@ -166,7 +176,7 @@
 
     function detail(st) {
         const w = st.weeks.find((x) => x.term === ui.term && x.k === ui.sel) || st.current;
-        const isNow = (w === st.current) && !st.inSpan && !st.before;
+        const isNow = (w === st.current) && !st.inSpan && !st.before && !st.after;
         const hj = AC().hijri, gr = AC().gregorian;
         return `
             <div class="ac-det ${isNow ? 'is-now' : ''} ${w.offs.length ? 'is-hol' : ''}">

@@ -222,14 +222,26 @@
         const firstWork = items.find((i) => i.kind === 'span' ? i.work : true);
         const daysToStart = firstWork ? Math.round((ts(firstWork.from) - t) / 864e5) : 0;
 
-        return { cal, items, weeks, current, inSpan, nextOff, daysToOff,
+        /* الأسبوع التالي للإجازة الجارية — إن وُجد. وإجازة منتصف العام
+           لا أسبوع بعدها في فصلنا، فلو افترضناه لقلنا للمعلّم إن أسبوعاً
+           مضى «قادم». */
+        const nextWeek = inSpan ? weekAfter(items, inSpan) : null;
+
+        return { cal, items, weeks, current, inSpan, nextWeek, nextOff, daysToOff,
                  before, after, firstWork, daysToStart };
     }
 
-    function nextWeekAfter(items, span) {
+    /** الأسبوع التالي للمقطع، أو null إن لم يكن بعده أسبوع. */
+    function weekAfter(items, span) {
         const i = items.indexOf(span);
         for (let j = i + 1; j < items.length; j++) if (items[j].kind === 'week') return items[j];
-        return items.filter((x) => x.kind === 'week').pop();
+        return null;
+    }
+
+    /* للعرض: يُرجِع أسبوعاً دائماً — آخر أسبوعٍ حين لا يوجد تالٍ، كي لا
+       تنكسر الواجهة. وللصدق يُسأل `nextWeek` لا هذا. */
+    function nextWeekAfter(items, span) {
+        return weekAfter(items, span) || items.filter((x) => x.kind === 'week').pop();
     }
 
     global.AcademicCalendar = {
