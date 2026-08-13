@@ -52,6 +52,7 @@
             items: [
                 { page: 'profile-link',  icon: '👤', label: 'بياناتي الشخصية',   sub: 'الاسم، التخصص، المواد', href: '#/profile' },
                 { page: 'school',        icon: '🏫', label: 'بيانات المدرسة',    sub: 'الاسم، إدارة التعليم، العام' },
+                { page: 'term',          icon: '📚', label: 'الفصل الدراسي',     sub: 'الانتقال بين الفصلين ونقل فصولك' },
                 { page: 'password',      icon: '🔐', label: 'تغيير كلمة المرور', sub: 'الحالية ثم الجديدة' }
             ]
         },
@@ -260,6 +261,9 @@
             case 'school':
                 title = '🏫 بيانات المدرسة';
                 body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
+            case 'term':
+                title = '📚 الفصل الدراسي';
+                body = await termBody(teacher); bindFn = bindTerm; break;
             case 'appearance':
                 title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
             case 'bell':
@@ -311,6 +315,137 @@
         });
 
         if (bindFn) bindFn(container, teacher);
+    }
+
+    /* ---------- الفصل الدراسي ----------
+       ثلاث خطوات لا شاشة واحدة: يرى فصله الحالي، ثم يُحذَّر بما سيحدث
+       تحديداً، ثم يختار ما ينقله. والتحذير صادقٌ لا مرعب — لا شيء يُحذف،
+       والرجوع تبديلٌ واحد. */
+
+    async function termBody() {
+        return '<div id="term-pane"></div>';
+    }
+
+    async function bindTerm(container) {
+        const pane = container.querySelector('#term-pane');
+        if (!pane || !global.TermSwitch) {
+            if (pane) pane.innerHTML = '<p class="text-muted">تعذّر تحميل وحدة الفصول.</p>';
+            return;
+        }
+        const TS = global.TermSwitch;
+        const teacher = await global.Auth.currentTeacher();
+        let busy = false;
+
+        const esc = escapeHtml;
+        const ar  = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+        const clsWord = (n) => (n === 1 ? 'فصل واحد' : n === 2 ? 'فصلان' : ar(n) + ' فصول');
+
+        async function draw(step, payload) {
+            const cur = await TS.current();
+            const by  = await TS.survey(teacher.id);
+            const other = TS.TERMS.find((t) => t.k !== cur) || TS.TERMS[1];
+            const mine  = by[cur] || [];
+            const there = by[other.k] || [];
+
+            if (step === 'warn') {
+                pane.innerHTML = `
+                    <div class="term-warn">
+                        <p class="term-warn-h">⚠️ قبل الانتقال إلى ${esc(other.label)}</p>
+                        <ul class="term-warn-l">
+                            <li><b>لا يُحذف شيء.</b> فصول ${esc(TS.labelOf(cur))} تبقى كما هي
+                                بحضورها ودرجاتها وملاحظاتها.</li>
+                            <li><b>تختار ما تنقله معك.</b> ينتقل الفصل بأسماء طلابه
+                                وببنود تقييمك كما رتّبتها.</li>
+                            <li><b>وتبدأ نظيفةً:</b> الحضور والدرجات والملاحظات والمنهج
+                                والاختبارات وأوراق العمل.</li>
+                            <li><b>والجدول المدرسي يبدأ فارغاً</b> — تبنيه من جديد
+                                لـ${esc(other.label)}.</li>
+                            <li><b>ويمكنك الرجوع</b> متى شئت، فتجد كلّ شيء مكانه.</li>
+                        </ul>
+                        <div class="term-acts">
+                            <button type="button" class="btn btn-primary" data-term-go>متابعة</button>
+                            <button type="button" class="btn btn-secondary" data-term-home>إلغاء</button>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            if (step === 'pick') {
+                pane.innerHTML = `
+                    <p class="term-q">أيّ الفصول تنقلها معك إلى ${esc(other.label)}؟</p>
+                    <div class="term-pick">
+                        ${mine.map((c) => `
+                            <label class="term-opt">
+                                <input type="checkbox" value="${esc(c.id)}" checked>
+                                <span>${esc(TS.nameOf(c))}</span>
+                            </label>`).join('')}
+                    </div>
+                    <div class="term-acts">
+                        <button type="button" class="btn btn-primary" data-term-carry>
+                            انقل وانتقل
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-term-home>رجوع</button>
+                    </div>`;
+                return;
+            }
+
+            /* الرئيسية */
+            pane.innerHTML = `
+                <div class="term-now">
+                    <span class="term-now-l">أنت الآن في</span>
+                    <b class="term-now-v">${esc(TS.labelOf(cur))}</b>
+                    <span class="term-now-s">${clsWord(mine.length)}</span>
+                </div>
+                ${payload ? `<p class="term-done">${esc(payload)}</p>` : ''}
+                ${there.length ? `
+                    <p class="text-muted" style="font-size: var(--fs-sm);">
+                        ${esc(other.label)} فيه ${clsWord(there.length)} بالفعل —
+                        فالانتقال إليه لا ينقل شيئاً جديداً.
+                    </p>
+                    <button type="button" class="btn btn-primary" data-term-plain>
+                        الانتقال إلى ${esc(other.label)}
+                    </button>`
+                  : `
+                    <button type="button" class="btn btn-primary" data-term-warn>
+                        الانتقال إلى ${esc(other.label)}
+                    </button>`}`;
+        }
+
+        async function apply(ids) {
+            if (busy) return;
+            busy = true;
+            const cur = await TS.current();
+            const other = TS.TERMS.find((t) => t.k !== cur) || TS.TERMS[1];
+            try {
+                let msg = 'انتقلت إلى ' + other.label + '.';
+                if (ids && ids.length) {
+                    const r = await TS.carry(ids, other.k);
+                    msg = 'نُقل ' + clsWord(r.classes) + ' و' + ar(r.students) + ' طالباً.';
+                }
+                await TS.setTerm(other.k);
+                global.TeacherApp?.toast?.(msg, 'success');
+                /* تحميلٌ كامل: كل شاشةٍ مرسومةٍ الآن بُنيت على الفصل السابق. */
+                global.location.hash = '#/';
+                global.location.reload();
+            } catch (e) {
+                busy = false;
+                global.TeacherApp?.toast?.('تعذّر الانتقال: ' + e.message, 'error');
+            }
+        }
+
+        pane.addEventListener('click', async (e) => {
+            if (e.target.closest('[data-term-warn]'))  return draw('warn');
+            if (e.target.closest('[data-term-go]'))    return draw('pick');
+            if (e.target.closest('[data-term-home]'))  return draw('home');
+            if (e.target.closest('[data-term-plain]')) return apply([]);
+            if (e.target.closest('[data-term-carry]')) {
+                const ids = Array.from(pane.querySelectorAll('.term-opt input:checked'))
+                    .map((i) => i.value);
+                return apply(ids);
+            }
+        });
+
+        await draw('home');
     }
 
     /* ---------- Page bodies ---------- */

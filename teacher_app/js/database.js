@@ -363,6 +363,37 @@
     function resetHydration() {
         _hydratePromise = null;
         _cachedUid = null;
+        _term = null;
+    }
+
+    /* ---------- الفصل الدراسي ----------
+       أربعة عشر موضعاً في التطبيق تقرأ الفصول بصيغةٍ واحدة متطابقة، وستّةٌ
+       تكتب في الجدول المدرسي. فالتصفية والوسم هنا — في مكانٍ واحد — بدل
+       عشرين تعديلاً في أربعة عشر ملفاً، كلُّ واحدٍ منها فرصةُ خطأ.
+
+       والقاعدة بسيطة: ما لا يحمل `term` فهو من الفصل الأول — فكلّ ما بُني
+       قبل اليوم كذلك، ولا يحتاج هجرةَ بيانات.
+
+       ولا يُصفَّى `getAll` — النسخة الاحتياطية تريد السنة كلّها لا فصلاً. */
+    const TERM_SCOPED = { classes: true, schedule: true };
+
+    let _term = null;
+
+    const termOf = (row) => {
+        const n = Number(row && row.term);
+        return (n >= 1 && n <= 3) ? n : 1;
+    };
+
+    async function currentTerm() {
+        if (_term != null) return _term;
+        /* من المخبأ رأساً: `get('settings')` يمرّ بمسارٍ يقرأ الفصول، فتدور. */
+        let n = 1;
+        try {
+            const row = await Cache.get('settings', 'academic_term');
+            if (row) n = Number(row.value);
+        } catch (e) { /* قراءةٌ فاشلة لا تحبس المعلّم خارج فصوله */ }
+        _term = (n >= 1 && n <= 3) ? n : 1;
+        return _term;
     }
 
     /* Books store the PDF in Supabase Storage (bucket "books"); the row
@@ -438,6 +469,7 @@
 
         const row = Object.assign({}, value);
         delete row.id;
+        if (TERM_SCOPED[storeName] && row.term == null) row.term = await currentTerm();
         const { data, error } = await sb.from(table).insert(row).select('*').single();
         if (error) err(storeName + ' add', error);
         await Cache.put(storeName, data);
@@ -495,6 +527,7 @@
         }
 
         const row = Object.assign({}, value);
+        if (TERM_SCOPED[storeName] && row.term == null) row.term = await currentTerm();
         if (row.id == null) {
             delete row.id;
             const { data, error } = await sb.from(table).insert(row).select('*').single();
@@ -550,8 +583,17 @@
             const all = await Cache.getAll(storeName);
             rows = all.filter((r) => r[indexName] === value);
         }
+        if (TERM_SCOPED[storeName]) {
+            const t = await currentTerm();
+            rows = rows.filter((r) => termOf(r) === t);
+        }
         if (storeName === 'books') return rows.map(booksIn);
         return rows;
+    }
+
+    /** كلّ الفصول بلا تصفية — لشاشة التبديل وحدها، فهي تعرض ما ليس فيه. */
+    async function allClasses() {
+        return Cache.getAll('classes');
     }
 
     async function remove(storeName, key) {
@@ -698,6 +740,14 @@
         destroy, exportAll, importAll,
         Settings,
         BookFiles,
+        Term: {
+            current: currentTerm,
+            /** يُبطل المذكّرة بعد تغيير `academic_term` — وإلّا ظلّت القراءات
+             *  تُصفّى بفصلٍ تركه المعلّم. */
+            forget: () => { _term = null; },
+            allClasses,
+            of: termOf
+        },
         STORES: STORE_NAMES,
         VERSION: 'sb-cached-1',
         // Cache control

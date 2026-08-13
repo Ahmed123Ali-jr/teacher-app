@@ -5330,3 +5330,49 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     background: color-mix(in srgb, #ECEAE3 35%, var(--surface));
     border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px;
 }
+
+/* ==========================================================================
+   الفصل الدراسي (الإعدادات) — تبديل الفصل ونقل الفصول
+   ========================================================================== */
+
+.term-now {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: var(--space-4); margin-bottom: var(--space-4);
+    background: var(--primary); color: var(--text-inverse); border-radius: var(--radius-lg);
+}
+.term-now-l { font-size: var(--fs-xs); opacity: .72; }
+.term-now-v { font-size: var(--fs-lg); font-weight: 700; }
+.term-now-s { font-size: var(--fs-xs); color: var(--accent); }
+
+.term-done {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+    border-radius: var(--radius-md); padding: var(--space-3);
+    font-size: var(--fs-sm); margin: 0 0 var(--space-4);
+}
+
+.term-warn-h { font-weight: 700; margin: 0 0 var(--space-3); }
+/* القائمة بحرفٍ عربي: النقطة الافتراضية تلتصق بالكلمة في RTL. */
+.term-warn-l { list-style: none; padding: 0; margin: 0 0 var(--space-5); }
+.term-warn-l li {
+    position: relative; padding-inline-start: var(--space-5);
+    margin-bottom: var(--space-3); font-size: var(--fs-sm); line-height: 1.7;
+}
+.term-warn-l li::before {
+    content: '—'; position: absolute; inset-inline-start: 0; color: var(--accent);
+}
+
+.term-q { font-weight: 700; margin: 0 0 var(--space-3); }
+.term-pick { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-5); }
+.term-opt {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    font-size: var(--fs-sm); cursor: pointer;
+}
+.term-opt input { width: 20px; height: 20px; accent-color: var(--primary); flex: none; }
+.term-opt:has(input:checked) { border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+.term-acts { display: flex; flex-direction: column; gap: var(--space-2); }
+.term-acts .btn { width: 100%; }
