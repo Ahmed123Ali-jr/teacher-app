@@ -1,12 +1,14 @@
 /* ==========================================================================
    views/calendar-card.js — بطاقة التقويم الدراسي أسفل الجدول الأسبوعي.
 
-   مطويّة كبطاقة التذكيرات: سطرٌ يقول أين أنت ومتى الإجازة القادمة،
-   وتنفتح على الفصل كلّه في شاشةٍ واحدة بلا تمرير — لأن المعلّم يفتح
-   التقويم ليعرف لا ليقرأ.
+   مطويّة كبطاقة التذكيرات: سطرٌ يقول أين أنت ومتى الانقطاع القادم،
+   وتنفتح على الفصل كلّه في شاشةٍ واحدة — لأن المعلّم يفتح التقويم
+   ليعرف لا ليقرأ.
 
-   وكل خليّة تحمل معلومتها بلا كلمات: رقم الأسبوع، وخمس نقاطٍ هي أيامه،
-   الغامقة منها إجازة. والتفصيل يظهر لأسبوعٍ واحد: الملموس أو أسبوعك.
+   كل خليّة تحمل معلومتها بلا كلمات: رقم الأسبوع، وخمس نقاطٍ هي أيامه،
+   الغامقة منها إجازة. والفواصل (عودة المعلمين · إجازة الخريف · منتصف
+   العام) شرائطُ عريضة في تسلسلها — لأن إجازة الخريف تقع بين أسبوعين لا
+   داخل أحدهما، فلو عُرضت الأسابيع وحدها لاختفت وهي أطول انقطاع.
 
    البيانات في academic-calendar.js — هذا الملف عرضٌ لا مصدرُ حقيقة.
    ========================================================================== */
@@ -29,76 +31,104 @@
         return ar(n) + ' يوماً';
     }
 
-    /* حالة الواجهة تعيش هنا لا في القاعدة: انطواء البطاقة والفصل
-       المعروض تفضيلاتُ لحظة، لا بيانات تستحقّ رحلةً للخادم. */
+    /* حالة الواجهة لحظيّة: انطواء البطاقة والفصل المعروض تفضيلاتُ عرض،
+       لا بيانات تستحقّ رحلةً للخادم. */
     const ui = { open: false, term: null, sel: null, swap: false };
+
+    const weeksOfTerm = (st, n) => st.weeks.filter((w) => w.term === n);
 
     /* ------------------------------------------------------------------
        الرسم
        ------------------------------------------------------------------ */
 
-    function arc(st) {
-        const ar = AC().arDigits;
-        const t = st.cal.terms[st.current.term - 1];
-        const R = 22, C = 2 * Math.PI * R;
-        const pct = Math.max(0, Math.min(1, st.current.k / t.weeks));
-        return `
-            <span class="ac-arc">
-                <svg viewBox="0 0 54 54" aria-hidden="true">
-                    <circle cx="27" cy="27" r="${R}" fill="none" stroke="rgba(255,255,255,.20)" stroke-width="5"/>
-                    <circle cx="27" cy="27" r="${R}" fill="none" stroke="#C9A961" stroke-width="5"
-                            stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}"/>
-                </svg>
-                <span class="mid">${ar(st.current.k)}</span>
-            </span>`;
-    }
-
     function band(st) {
         const ar = AC().arDigits;
-        const t = st.cal.terms[st.current.term - 1];
+        const total = weeksOfTerm(st, st.current.term).length;
+        const term = st.cal.terms.find((t) => t.n === st.current.term);
+        const R = 22, C = 2 * Math.PI * R;
+        const pct = Math.max(0, Math.min(1, st.current.k / total));
+
+        /* حين نكون داخل إجازة، الصدق أن نقولها لا أن نُظهر أسبوعاً
+           لم يبدأ بعد كأنه جارٍ. */
+        let headline, sub;
+        if (st.inSpan) {
+            headline = esc(st.inSpan.name);
+            sub = `تنتهي ${esc(AC().gregorian(st.inSpan.to))} · بعدها الأسبوع ${AC().ordinal(st.current.k)}`;
+        } else if (st.before) {
+            headline = st.firstWork ? esc(st.firstWork.name || 'بداية الدراسة') : 'قبل بداية العام';
+            sub = st.firstWork
+                ? `${esc(AC().gregorian(st.firstWork.from))} · بعد ${dayWord(st.daysToStart)}`
+                : `الفصل ${esc(term.name)}`;
+        } else {
+            headline = 'الأسبوع ' + AC().ordinal(st.current.k);
+            sub = `الفصل ${esc(term.name)} · ${ar(st.current.k)} من ${ar(total)} أسبوعاً`;
+        }
+
         return `
             <div class="ac-band">
-                ${arc(st)}
+                <span class="ac-arc">
+                    <svg viewBox="0 0 54 54" aria-hidden="true">
+                        <circle cx="27" cy="27" r="${R}" fill="none" stroke="rgba(255,255,255,.20)" stroke-width="5"/>
+                        <circle cx="27" cy="27" r="${R}" fill="none" stroke="#C9A961" stroke-width="5"
+                                stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}"/>
+                    </svg>
+                    <span class="mid">${ar(st.current.k)}</span>
+                </span>
                 <span class="ac-band-tx">
-                    <span class="ord">الأسبوع ${AC().ordinal(st.current.k)}</span>
-                    <span class="sub">الفصل ${esc(t.name)} · ${ar(st.current.k)} من ${ar(t.weeks)} أسبوعاً</span>
+                    <span class="ord">${headline}</span>
+                    <span class="sub">${sub}</span>
                 </span>
                 ${st.nextOff ? `
                     <span class="ac-cd">
                         <b>${ar(st.daysToOff)}</b>
-                        <span>${st.daysToOff === 2 ? 'يومان' : 'يوماً'} على<br>${esc(st.nextOff.hol.name)}</span>
+                        <span>${st.daysToOff === 2 ? 'يومان' : 'يوماً'} على<br>${esc(st.nextOff.name)}</span>
                     </span>` : ''}
             </div>`;
     }
 
+    /* شريط الفصول يظهر حين يكون هناك أكثر من فصل — وزرٌّ وحيد لا معنى له. */
     function tabs(st) {
+        if (st.cal.terms.length < 2) return '';
         const ar = AC().arDigits;
         return `<div class="ac-terms">
             ${st.cal.terms.map((t) => `
                 <button type="button" data-ac-term="${t.n}" class="${ui.term === t.n ? 'on' : ''}">
-                    الفصل ${esc(t.name)}<small>${ar(t.weeks)} أسبوعاً</small>
+                    الفصل ${esc(t.name)}<small>${ar(weeksOfTerm(st, t.n).length)} أسبوعاً</small>
                 </button>`).join('')}
         </div>`;
     }
 
     function grid(st) {
         const ar = AC().arDigits;
-        const list = st.weeks.filter((w) => w.term === ui.term);
+        const curIdx = st.items.indexOf(st.inSpan || st.current);
+
         return `<div class="ac-grid">
-            ${list.map((w) => {
+            ${st.items.filter((i) => i.term === ui.term).map((it) => {
+                const idx = st.items.indexOf(it);
+                if (it.kind === 'span') {
+                    const cls = [it.work ? 'work' : '', idx < curIdx ? 'past' : '',
+                                 it === st.inSpan ? 'now' : ''].filter(Boolean).join(' ');
+                    return `
+                        <div class="ac-span ${cls}">
+                            <span class="nm">${esc(it.name)}</span>
+                            <span class="rg">${esc(AC().gregorian(it.from))} — ${esc(AC().gregorian(it.to))}</span>
+                        </div>`;
+                }
                 const cls = [
-                    w.n < st.current.n ? 'past' : '',
-                    w.offs.length ? 'hol' : '',
-                    w.n === st.current.n ? 'now' : '',
-                    w.n === ui.sel ? 'sel' : ''
+                    idx < curIdx ? 'past' : '',
+                    it.offs.length ? 'hol' : '',
+                    it === st.current && !st.inSpan && !st.before ? 'now' : '',
+                    it.k === ui.sel ? 'sel' : '',
+                    it.exam ? 'exam' : ''
                 ].filter(Boolean).join(' ');
-                const label = 'الأسبوع ' + AC().ordinal(w.k)
-                    + (w.offs.length ? ' — فيه إجازة' : '');
+                const label = 'الأسبوع ' + AC().ordinal(it.k)
+                    + (it.exam ? ' — أسبوع اختبارات' : '')
+                    + (it.offs.length ? ' — فيه إجازة' : '');
                 return `
-                    <button type="button" class="ac-cell ${cls}" data-ac-week="${w.n}"
+                    <button type="button" class="ac-cell ${cls}" data-ac-week="${it.k}"
                             aria-label="${esc(label)}">
-                        <span class="n">${ar(w.k)}</span>
-                        <span class="dd">${w.days.map((d) =>
+                        <span class="n">${ar(it.k)}</span>
+                        <span class="dd">${it.days.map((d) =>
                             `<i class="${d.hol ? 'off' : ''}"></i>`).join('')}</span>
                     </button>`;
             }).join('')}
@@ -106,13 +136,14 @@
     }
 
     function detail(st) {
-        const w = st.weeks.find((x) => x.n === ui.sel) || st.current;
-        const isNow = w.n === st.current.n;
+        const w = st.weeks.find((x) => x.term === ui.term && x.k === ui.sel) || st.current;
+        const isNow = (w === st.current) && !st.inSpan && !st.before;
         const hj = AC().hijri, gr = AC().gregorian;
         return `
             <div class="ac-det ${isNow ? 'is-now' : ''} ${w.offs.length ? 'is-hol' : ''}">
                 <div class="ac-det-h">
                     <span class="t">الأسبوع ${AC().ordinal(w.k)}</span>
+                    ${w.exam ? '<span class="tag exam">اختبارات</span>' : ''}
                     ${isNow ? '<span class="tag">أنت هنا</span>' : ''}
                 </div>
                 <div class="ac-det-d">
@@ -152,27 +183,35 @@
     }
 
     function summary(st) {
-        if (st.before) return 'لم يبدأ العام الدراسي بعد';
-        if (st.after)  return 'انتهى العام الدراسي';
-        return `الأسبوع ${AC().ordinal(st.current.k)}`
-            + (st.nextOff ? ` · <b>${esc(st.nextOff.hol.name)}</b> بعد ${dayWord(st.daysToOff)}` : '');
+        const tail = st.nextOff
+            ? ` · <b>${esc(st.nextOff.name)}</b> بعد ${dayWord(st.daysToOff)}` : '';
+        if (st.inSpan) return esc(st.inSpan.name) + ` حتى ${esc(AC().gregorian(st.inSpan.to))}`;
+        if (st.before) {
+            return st.daysToStart > 0
+                ? `${esc(st.firstWork.name || 'بداية الدراسة')} بعد ${dayWord(st.daysToStart)}`
+                : 'يبدأ العام قريباً';
+        }
+        if (st.after)  return 'انتهى الفصل الدراسي الأول';
+        return `الأسبوع ${AC().ordinal(st.current.k)}` + tail;
     }
 
     /**
      * يبني البطاقة كاملةً.
-     * @param {object} ctx — { dept, override }
+     * @param {object} ctx — { dept, override, today }
      * @returns {string} HTML
      */
     function html(ctx) {
         if (!AC()) return '';
         const st = AC().state(AC().resolve(ctx.dept, ctx.override), ctx.today);
 
-        /* أوّل رسمة: الفصل الحالي والأسبوع الحالي — بلا أن يختار شيئاً. */
+        /* أوّل رسمة: فصل المعلّم وأسبوعه — بلا أن يختار شيئاً. */
         if (ui.term === null) ui.term = st.current.term;
-        if (ui.sel === null)  ui.sel  = st.current.n;
-        /* الفصل المعروض قد يختفي إن بُدّل التقويم — نعيده إلى الحالي. */
+        if (ui.sel === null)  ui.sel  = st.current.k;
+        /* بعد تبديل التقويم قد يختفي الفصل أو الأسبوع المختار. */
         if (!st.cal.terms.some((t) => t.n === ui.term)) ui.term = st.current.term;
-        if (!st.weeks.some((w) => w.n === ui.sel)) ui.sel = st.current.n;
+        if (!st.weeks.some((w) => w.term === ui.term && w.k === ui.sel)) {
+            ui.sel = (ui.term === st.current.term) ? st.current.k : 1;
+        }
 
         return `
             <section class="ac-card ${ui.open ? 'open' : ''}" aria-label="التقويم الدراسي">
@@ -190,14 +229,17 @@
                         <button type="button" class="ac-which ${ctx.override ? 'manual' : ''}" data-ac-swap>
                             ${esc(st.cal.label)}
                         </button>
-                        ${st.cal.provisional
-                            ? '<span class="ac-prov">تواريخ مبدئية</span>' : ''}
                     </div>
                     ${ui.swap ? swapPanel(ctx, st) : ''}
                     ${band(st)}
                     ${tabs(st)}
                     ${grid(st)}
                     ${detail(st)}
+                    <p class="ac-foot">
+                        <span>${AC().arDigits(st.cal.stats.weeks)} أسبوع دراسة</span>
+                        <span>${AC().arDigits(st.cal.stats.days)} يوم دراسة</span>
+                        <span>${AC().arDigits(st.cal.stats.offDays)} يوم إجازة</span>
+                    </p>
                 ` : ''}
             </section>`;
     }
@@ -211,8 +253,7 @@
         if (!card) return;
 
         card.addEventListener('click', (e) => {
-            const swapBtn = e.target.closest('[data-ac-swap]');
-            if (swapBtn) { ui.swap = !ui.swap; return redraw(); }
+            if (e.target.closest('[data-ac-swap]')) { ui.swap = !ui.swap; return redraw(); }
 
             const pick = e.target.closest('[data-ac-cal]');
             if (pick) {
@@ -220,8 +261,7 @@
                 /* اختيارٌ يوافق الافتراضي ليس تجاوزاً — يُمسح ليتبع
                    إدارته لو نُقل إلى إدارةٍ أخرى لاحقاً. */
                 const next = (key === AC().defaultKeyFor(ctx.dept)) ? null : key;
-                ui.swap = false;
-                ui.term = null; ui.sel = null;
+                ui.swap = false; ui.term = null; ui.sel = null;
                 return onChange(next);
             }
 
@@ -229,7 +269,7 @@
             if (week) { ui.sel = Number(week.dataset.acWeek); return redraw(); }
 
             const term = e.target.closest('[data-ac-term]');
-            if (term) { ui.term = Number(term.dataset.acTerm); return redraw(); }
+            if (term) { ui.term = Number(term.dataset.acTerm); ui.sel = 1; return redraw(); }
 
             if (e.target.closest('[data-ac-toggle]')) { ui.open = !ui.open; return redraw(); }
         });

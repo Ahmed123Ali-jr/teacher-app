@@ -5266,3 +5266,38 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     margin-top: 7px; padding-top: 7px; border-top: 1px dashed #E2D3AC;
     font-size: 10.5px; font-weight: var(--fw-black); color: #8A6E2E; line-height: 1.65;
 }
+
+/* ---------- فواصل التقويم: عودة المعلمين والإجازات ---------- */
+.ac-span {
+    grid-column: 1 / -1;
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    padding: 7px 11px; border-radius: 10px;
+    background: #F7F1E1; border: 1.5px solid #E2D3AC;
+}
+.ac-span .nm { font-size: 11px; font-weight: var(--fw-black); color: #7A6224; }
+.ac-span .rg { font-size: 9.5px; color: #8A7A50; margin-inline-start: auto; }
+/* عودة المعلمين عملٌ لا إجازة — فلا تُلوّن بلون الإجازات. */
+.ac-span.work {
+    background: color-mix(in srgb, #ECEAE3 40%, var(--surface));
+    border-color: var(--border);
+}
+.ac-span.work .nm { color: var(--primary); }
+.ac-span.work .rg { color: var(--text-muted); }
+.ac-span.past { opacity: .5; }
+.ac-span.now { border-color: #C9A961; box-shadow: 0 2px 8px rgba(201,169,97,.3); opacity: 1; }
+
+/* أسبوع الاختبارات */
+.ac-cell.exam { border-color: var(--primary); border-style: dashed; }
+.ac-det-h .tag.exam { background: var(--primary); }
+
+/* ثلاث خانات لا سطرٌ بنقاطٍ فاصلة: النقطة الوسطى بعد رقمٍ عربي تُقرأ
+   صفراً — «٨٨ ·» تُرى «٨٨٠». */
+.ac-foot {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    margin: 0; padding: 0 13px 13px;
+}
+.ac-foot span {
+    font-size: 9.5px; color: var(--text-muted); line-height: 1.7;
+    background: color-mix(in srgb, #ECEAE3 35%, var(--surface));
+    border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px;
+}
