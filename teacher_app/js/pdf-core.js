@@ -510,6 +510,49 @@
         return pdf.output('blob');
     }
 
+    /* ------------------------------------------------------------------
+       ملفٌّ → صور لعين Claude.
+       كانت هذه الدالّة في class.js وحدها، ثم احتاجها استيراد الجدول —
+       فنُقلت هنا بدل نسخها. صورةٌ تُعاد كما هي، وملف PDF يُرسَم صفحةً
+       صفحة (بسقفٍ للعدد، فالملفّ قد يكون مئات الصفحات).
+       ------------------------------------------------------------------ */
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload  = () => resolve(fr.result);
+            fr.onerror = () => reject(fr.error);
+            fr.readAsDataURL(blob);
+        });
+    }
+
+    async function fileToImagePages(file, maxPages) {
+        const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
+        if (!isPdf) {
+            const dataUrl = await blobToDataUrl(file);
+            const [meta, b64] = dataUrl.split(',');
+            const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
+            return [{ base64: b64, mediaType }];
+        }
+        const pdfjs = await ensurePdfJs();
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument(docOptions({ data: buf })).promise;
+        const n = Math.min(doc.numPages, maxPages || 20);
+        const pages = [];
+        for (let i = 1; i <= n; i++) {
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            pages.push({ base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], mediaType: 'image/jpeg' });
+            canvas.width = canvas.height = 0;
+            page.cleanup();
+        }
+        try { await doc.destroy(); } catch (e) { /* لا شيء */ }
+        return pages;
+    }
+
     /**
      * يسلّم الملف للمعلم. القيمة الراجعة حقيقية لا مفترضة، حتى لا يظهر
      * توست نجاح بعد إلغاء ورقة المشاركة.
@@ -540,6 +583,7 @@
         PAGE, CDN, PDFJS, STAGE_ID,
         loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
-        createStage, settle, paginate, renderPdf, deliverPdf, docOptions
+        createStage, settle, paginate, renderPdf, deliverPdf, docOptions,
+        blobToDataUrl, fileToImagePages
     };
 })(window);

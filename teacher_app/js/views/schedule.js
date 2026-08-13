@@ -156,9 +156,12 @@
                     ? 'اضغط أي خانة لإضافة حصة أو تعديلها'
                     : 'الجدول مقفول — اضغط «تعديل» لتغييره'}</p>
 
-                ${editing
-                    ? '<button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>'
-                    : ''}
+                ${editing ? `
+                    <button type="button" class="sched-import" id="btn-import">
+                        📷 استيراد الجدول من صورة أو ملف
+                    </button>
+                    <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
+                ` : ''}
             </div>
         `;
 
@@ -304,6 +307,174 @@
                 () => render(container)
             );
         });
+
+        container.querySelector('#btn-import')?.addEventListener('click', () => openImport(ctx, container));
+    }
+
+    /* ==========================================================================
+       استيراد الجدول من صورة أو ملف.
+
+       الاستعمال الثاني — والأخير — المسموح للذكاء الاصطناعي في التطبيق:
+       المعلّم يصوّر جدوله المطبوع فيُقرأ ويُملأ. راجع القرار في
+       [[no-ai-except-imports]].
+
+       وقاعدةٌ تحكم التنفيذ: **لا يُكتب شيء قبل أن يراه المعلّم**. القراءة
+       الآلية تخطئ، وجدولٌ مكتوبٌ بالخطأ فوق جدولٍ صحيح خسارةٌ لا تُسترد.
+       فالنتيجة تُعرض أولاً، ولا تُحفظ إلا بضغطة تأكيد.
+       ========================================================================== */
+
+    function openImport(ctx, container) {
+        const form = document.createElement('div');
+        form.innerHTML = `
+            <div class="field">
+                <label class="label" for="sched-file">صورة الجدول أو ملف PDF</label>
+                <input class="input" id="sched-file" type="file" accept="image/*,.pdf">
+                <div class="field-hint">
+                    صوّر جدولك المطبوع أو ارفعه ملفاً. تُقرأ الخانات وتُعرض عليك
+                    قبل الحفظ — لن يتغيّر جدولك حتى تؤكّد.
+                </div>
+            </div>
+            <div id="imp-result"></div>
+            <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="button" class="btn btn-primary" id="imp-go">قراءة الجدول</button>
+                <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
+            </div>
+        `;
+
+        const resultEl = form.querySelector('#imp-result');
+        const goBtn = form.querySelector('#imp-go');
+
+        goBtn.addEventListener('click', async () => {
+            const file = form.querySelector('#sched-file').files[0];
+            const label = goBtn.textContent;
+            goBtn.disabled = true;
+            try {
+                if (!file) throw new Error('اختر ملفاً أولاً.');
+                if (!(await global.AI.hasApiKey())) {
+                    throw new Error('مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.');
+                }
+                if (file.size > 20 * 1024 * 1024) throw new Error('الملف كبير جداً (أقصى ٢٠ ميجابايت).');
+                if (!ctx.classes.length) throw new Error('أضف فصولك أولاً — بلا فصول لا يمكن ربط الخانات.');
+
+                goBtn.textContent = '⏳ جارٍ القراءة…';
+                const pages = await global.PdfCore.fileToImagePages(file, 5);
+                const cells = await global.AI.extractScheduleFromImage({
+                    pages, classes: ctx.classes, periodCount: ctx.periods.length
+                });
+                showPreview(cells);
+            } catch (err) {
+                console.warn('[schedule] import failed:', err);
+                global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
+            } finally {
+                goBtn.disabled = false;
+                goBtn.textContent = label;
+            }
+        });
+
+        function showPreview(cells) {
+            const byId = {};
+            ctx.classes.forEach((c) => { byId[c.id] = c; });
+
+            /* نقبل الخانة إن كان فصلها معروفاً ويومها وحصّتها في المدى. */
+            const ok = [];
+            const skipped = [];
+            (cells || []).forEach((c) => {
+                const day = Number(c.day), period = Number(c.period);
+                const valid = byId[c.class_id]
+                    && day >= 0 && day < DAYS.length
+                    && period >= 1 && period <= ctx.periods.length;
+                if (valid) ok.push({ day, period, class_id: c.class_id, topic: String(c.topic || '').trim() });
+                else skipped.push(c);
+            });
+
+            if (!ok.length) {
+                resultEl.innerHTML = `
+                    <div class="callout callout-warn" style="margin-top: var(--space-4);">
+                        لم أتعرّف على أيّ حصة. جرّب صورةً أوضح، أو تأكّد أن أسماء
+                        الفصول في الصورة تشبه أسماء فصولك في التطبيق.
+                    </div>`;
+                return;
+            }
+
+            /* كم خانة ستُطمس؟ المعلّم يستحقّ أن يعرف قبل أن يوافق. */
+            const overwrite = ok.filter((c) =>
+                ctx.schedule.some((r) => r.day === c.day && r.period === c.period && r.class_id)).length;
+
+            resultEl.innerHTML = `
+                <div class="imp-box">
+                    <div class="imp-sum">
+                        <b>قُرئت ${arWord(ok.length)}</b>
+                        ${skipped.length ? `<span class="imp-skip">وتُخطّيت ${arWord(skipped.length)} لم أتعرّف على فصلها</span>` : ''}
+                        ${overwrite ? `<span class="imp-warn">وستُستبدل ${arWord(overwrite)} موجودة في جدولك</span>` : ''}
+                    </div>
+                    <ul class="imp-list">
+                        ${ok.map((c) => {
+                            const k = byId[c.class_id];
+                            return `<li><span class="d">${DAYS[c.day].label}</span>
+                                <span class="p">الحصة ${arDigits(c.period)}</span>
+                                <span class="c">${escapeHtml(k.grade + ' / ' + k.section)}</span>
+                                ${c.topic ? `<span class="t">${escapeHtml(c.topic)}</span>` : ''}</li>`;
+                        }).join('')}
+                    </ul>
+                    <button type="button" class="btn btn-primary btn-block" id="imp-apply">
+                        ✓ اعتمد ${arWord(ok.length)}
+                    </button>
+                </div>`;
+
+            resultEl.querySelector('#imp-apply').addEventListener('click', async (e) => {
+                const b = e.currentTarget;
+                b.disabled = true;
+                b.textContent = '⏳ جارٍ الحفظ…';
+                try {
+                    await applyCells(ok, ctx, container);
+                    global.Modal.close();
+                    global.TeacherApp.toast('تم استيراد ' + arWord(ok.length) + ' ✅', 'success', 3000);
+                } catch (err) {
+                    console.warn('[schedule] apply failed:', err);
+                    global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
+                    b.disabled = false;
+                    b.textContent = '✓ اعتمد ' + arWord(ok.length);
+                }
+            });
+        }
+
+        global.Modal.open({ title: 'استيراد الجدول', body: form });
+    }
+
+    /** يكتب الخانات المقروءة فوق ما يقابلها، ويترك ما عداه كما هو. */
+    async function applyCells(cells, ctx, container) {
+        const writes = [];
+        cells.forEach((c) => {
+            const idx = ctx.schedule.findIndex((r) => r.day === c.day && r.period === c.period);
+            const prev = idx >= 0 ? ctx.schedule[idx] : null;
+            const row = Object.assign({
+                teacher_id: ctx.teacher.id,
+                created_at: prev ? prev.created_at : new Date().toISOString()
+            }, prev || {}, {
+                day: c.day, period: c.period, class_id: c.class_id, topic: c.topic,
+                /* الاستيراد يُلغي حالات الانتظار والاحتياط: الخانة صارت حصةً. */
+                wait_kind: null, wait_date: null, sub_class: null, sub_date: null,
+                updated_at: new Date().toISOString()
+            });
+            if (idx >= 0) ctx.schedule[idx] = row; else ctx.schedule.push(row);
+            writes.push(row);
+        });
+
+        paintView(container, ctx);
+
+        /* كتابةٌ متوازية لا متتابعة — ثلاثون خانةً تعني ثلاثين رحلة. */
+        await Promise.all(writes.map(async (row) => {
+            if (row.id) return global.TeacherDB.put('schedule', row);
+            row.id = await global.TeacherDB.add('schedule', row);
+        }));
+    }
+
+    const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    function arWord(n) {
+        if (n === 1) return 'حصة واحدة';
+        if (n === 2) return 'حصتان';
+        if (n <= 10) return arDigits(n) + ' حصص';
+        return arDigits(n) + ' حصة';
     }
 
 

@@ -5048,3 +5048,39 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .br-jump-row .go { color: #fff; background: var(--primary); border: 1.5px solid #0A2049; }
 .br-jump-row .no { color: var(--primary); background: #ECEAE3; border: 1.5px solid #D8D5CC; }
+
+/* ---------- استيراد الجدول من صورة ---------- */
+.sched-import {
+    display: block; width: 100%; margin: var(--space-4) 0 var(--space-2);
+    min-height: 46px; border-radius: 13px; cursor: pointer; font-family: inherit;
+    font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary);
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
+    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16, 24, 40, .09);
+}
+.imp-box { margin-top: var(--space-4); }
+.imp-sum {
+    font-size: 12.5px; line-height: 2; color: var(--text);
+    background: color-mix(in srgb, #ECEAE3 30%, var(--surface));
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 10px;
+}
+.imp-sum b { color: var(--primary); display: block; }
+.imp-sum span { display: block; font-size: 11.5px; }
+.imp-skip { color: var(--text-muted); }
+.imp-warn { color: #A3651B; font-weight: var(--fw-black); }
+.imp-list {
+    list-style: none; margin: 0 0 12px; padding: 0;
+    max-height: 240px; overflow-y: auto;
+    border: 1.5px solid var(--border); border-radius: 12px;
+}
+.imp-list li {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    padding: 8px 11px; font-size: 12px;
+    border-bottom: 1px solid var(--border);
+}
+.imp-list li:last-child { border-bottom: 0; }
+.imp-list .d { font-weight: var(--fw-black); color: var(--primary); min-width: 46px; }
+.imp-list .p { color: var(--text-muted); }
+.imp-list .c { font-weight: 700; }
+.imp-list .t { color: var(--text-muted); font-size: 11px; }
