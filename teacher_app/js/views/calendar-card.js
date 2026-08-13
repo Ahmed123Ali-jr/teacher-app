@@ -253,7 +253,7 @@
                     </span>
                     <span class="ac-chev" aria-hidden="true"></span>
                 </button>
-                ${ui.open ? `
+                <div class="ac-body">
                     <div class="ac-badges">
                         <button type="button" class="ac-which ${ctx.override ? 'manual' : ''}" data-ac-swap>
                             ${esc(st.cal.label)}
@@ -269,7 +269,7 @@
                         <span>${AC().arDigits(st.cal.stats.days)} يوم دراسة</span>
                         <span>${AC().arDigits(st.cal.stats.offDays)} يوم إجازة</span>
                     </p>
-                ` : ''}
+                </div>
             </section>`;
     }
 
@@ -301,13 +301,17 @@
             if (term) { ui.term = Number(term.dataset.acTerm); ui.sel = 1; return redraw(); }
 
             if (e.target.closest('[data-ac-toggle]')) {
-                const opening = !ui.open;
-                ui.open = opening;
-                redraw();
-                /* عند الفتح ننزل بالشاشة إليها: المعلّم ضغط ليرى، لا
-                   ليسحب. والإزاحة بمقدار الشريط العلوي لأنه لاصقٌ
-                   فيغطّي رأس البطاقة لو أُهملت. */
-                if (opening) scrollToCard(root);
+                /* قلبُ صنفٍ لا إعادة رسم: الارتفاع ينتقل بـCSS فينكمش
+                   الطول تدريجياً وتتبعه الشاشة بلا قفزة. وإعادة الرسم
+                   كانت تُلغي العنصر فتضيع الحركة. */
+                ui.open = !ui.open;
+                card.classList.toggle('open', ui.open);
+                const btn = card.querySelector('[data-ac-toggle]');
+                if (btn) btn.setAttribute('aria-expanded', ui.open ? 'true' : 'false');
+                /* عند الفتح ننزل بالشاشة إليها: المعلّم ضغط ليرى لا
+                   ليسحب. ورأس البطاقة لا يتحرّك بالتمدّد، فالقياس الآن
+                   صحيحٌ رغم أن الحركة لم تنته. */
+                if (ui.open) scrollToCard(root);
                 return;
             }
         });

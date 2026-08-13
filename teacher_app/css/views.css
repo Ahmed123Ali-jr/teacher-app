@@ -5130,7 +5130,30 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .ac-card.open .ac-chev { transform: rotate(225deg); }
 
-.ac-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 13px 2px; }
+/* الجسم موجودٌ دائماً ويُطوى بالارتفاع: انتقالٌ يديره المتصفّح، فينكمش
+   طول الصفحة تدريجياً وتتبعه الشاشة بلا قفزة. وإخفاؤه بـdisplay:none
+   كان يجعل الطيّ لحظياً فيشدّ التمرير دفعةً واحدة. */
+.ac-body {
+    max-height: 0; opacity: 0; overflow: hidden;
+    /* visibility بعد انتهاء الانتقال: الجسم يبقى في الصفحة ليُطوى
+       انسياباً، فلولا إخفائه لبقيت أزراره في مسار لوحة المفاتيح وقارئ
+       الشاشة وهي غير مرئية. */
+    visibility: hidden;
+    transition: max-height .32s cubic-bezier(.4, 0, .2, 1),
+                opacity .22s ease,
+                visibility 0s linear .32s;
+}
+.ac-card.open .ac-body {
+    max-height: 1400px; opacity: 1; visibility: visible;
+    transition: max-height .32s cubic-bezier(.4, 0, .2, 1),
+                opacity .22s ease,
+                visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+    .ac-body { transition: none; }
+}
+
+.ac-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 13px 2px; }
 .ac-which {
     display: inline-flex; align-items: center; gap: 5px;
     font-family: inherit; font-size: 10px; font-weight: var(--fw-black);
