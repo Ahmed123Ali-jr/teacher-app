@@ -5133,24 +5133,30 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* الجسم موجودٌ دائماً ويُطوى بالارتفاع: انتقالٌ يديره المتصفّح، فينكمش
    طول الصفحة تدريجياً وتتبعه الشاشة بلا قفزة. وإخفاؤه بـdisplay:none
    كان يجعل الطيّ لحظياً فيشدّ التمرير دفعةً واحدة. */
+/* الفتح فوريّ والطيّ منسابٌ — والانتقال يخصّ الحالة المقصودة لا
+   العنصر، فوضعُه في القاعدة المطويّة وحدها يعطي الاتجاهين ما يناسبهما:
+
+   • الفتح فوريّ لأن التمرير يليه مباشرة. لو تمدّدت البطاقة تدريجياً
+     لبدأ التمرير والصفحة ما زالت قصيرة، فيُقصّ مساره ثم يطول الطول
+     تحته — وهو التعثّر الذي رآه المعلّم.
+   • الطيّ منسابٌ لأن لا شيء يليه: ينكمش الطول تدريجياً وتتبعه الشاشة
+     بلا قفزة.
+
+   وvisibility مؤجَّلة حتى نهاية الانتقال، فلا تبقى أزرارٌ مخفيّة في
+   مسار لوحة المفاتيح وقارئ الشاشة. */
 .ac-body {
-    max-height: 0; opacity: 0; overflow: hidden;
-    /* visibility بعد انتهاء الانتقال: الجسم يبقى في الصفحة ليُطوى
-       انسياباً، فلولا إخفائه لبقيت أزراره في مسار لوحة المفاتيح وقارئ
-       الشاشة وهي غير مرئية. */
-    visibility: hidden;
-    transition: max-height .32s cubic-bezier(.4, 0, .2, 1),
-                opacity .22s ease,
-                visibility 0s linear .32s;
+    max-height: 0; opacity: 0; overflow: hidden; visibility: hidden;
+    transition: max-height .30s cubic-bezier(.4, 0, .2, 1),
+                opacity .20s ease,
+                visibility 0s linear .30s;
 }
 .ac-card.open .ac-body {
     max-height: 1400px; opacity: 1; visibility: visible;
-    transition: max-height .32s cubic-bezier(.4, 0, .2, 1),
-                opacity .22s ease,
-                visibility 0s;
+    transition: none;
 }
 @media (prefers-reduced-motion: reduce) {
-    .ac-body { transition: none; }
+    /* بلا تأجيلٍ لvisibility أيضاً، وإلّا بقي الجسم مرئياً بعد الطيّ. */
+    .ac-body { transition: visibility 0s; }
 }
 
 .ac-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 13px 2px; }
