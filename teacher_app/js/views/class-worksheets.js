@@ -1,9 +1,10 @@
 /* ==========================================================================
    views/class-worksheets.js — أوراق العمل، بنفس نمط الاختبارات.
 
-   كانت الورقة تمارينَ نصّيةً حرّة لا أنواع لها، ولا تُنشأ إلا بالتوليد.
-   صارت أسئلةً كأسئلة الاختبار (اختيار من متعدد · صح وخطأ · إكمال ·
-   مقالي) تُحرَّر بـQuestionEditor نفسه وتُطبع بمحرّك PDF نفسه.
+   كانت الورقة تمارينَ نصّيةً حرّة لا أنواع لها، ولا تُنشأ إلا بتوليدٍ
+   آلي. صارت أسئلةً كأسئلة الاختبار (اختيار من متعدد · صح وخطأ ·
+   إكمال · مقالي) يكتبها المعلّم بنفسه في QuestionEditor نفسه، وتُطبع
+   بمحرّك PDF نفسه. ولا توليد آلي في الشاشتين.
 
    والفارق الباقي عن الاختبار اثنان: لا درجات، ولها سطر تعليمات يكتبه
    المعلّم بنفسه. وما حُفظ بالنمط القديم (exercises) يُقرأ ويُحوَّل عند
@@ -43,10 +44,7 @@
         panel.innerHTML = `
             <div class="section-header">
                 <h3 class="section-title">📄 أوراق عمل الفصل</h3>
-                <div class="flex gap-2">
-                    <button class="btn btn-ghost btn-sm" id="btn-gen-sheet">⚡ توليد</button>
-                    <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة جديدة</button>
-                </div>
+                <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة جديدة</button>
             </div>
             ${sheets.length === 0 ? empty() : list(sheets)}
         `;
@@ -54,7 +52,6 @@
         panel.querySelector('#btn-manual-sheet')?.addEventListener('click', () => startManual(cls, panel));
         panel.querySelectorAll('[data-empty-add]').forEach((b) =>
             b.addEventListener('click', () => startManual(cls, panel)));
-        panel.querySelector('#btn-gen-sheet')?.addEventListener('click', () => startWizard(cls, panel));
 
         panel.querySelectorAll('[data-ws-open]').forEach((btn) => {
             btn.addEventListener('click', async () => {
@@ -129,10 +126,10 @@
        الإنشاء
        ========================================================================== */
 
-    /** الباب الأصل: محرّر الأسئلة مباشرةً بورقةٍ فارغة. */
+    /** إنشاء ورقة: محرّر الأسئلة مباشرةً بورقةٍ فارغة. */
     function startManual(cls, panel) {
         state[cls.id] = {
-            cls, step: 2, manual: true,
+            cls, step: 2,
             sheet: {
                 class_id: cls.id,
                 title: 'ورقة عمل — ' + (cls.subject || ''),
@@ -145,98 +142,10 @@
         renderWizard(panel, cls);
     }
 
-    function startWizard(cls, panel) {
-        state[cls.id] = {
-            cls, step: 1,
-            draft: { topic: '', count: 8, context: '', notes: '' },
-            sheet: null
-        };
-        renderWizard(panel, cls);
-    }
-
     function renderWizard(panel, cls) {
         const s = state[cls.id];
         if (!s) return render(panel, cls);
-        if (s.step === 1) step1(panel, cls);
-        else step2(panel, cls);
-    }
-
-    /* ---------- التوليد (بابٌ ثانوي) ---------- */
-
-    function step1(panel, cls) {
-        const s = state[cls.id];
-        const d = s.draft;
-        panel.innerHTML = `
-            <div class="wizard">
-                <div class="wizard-header">
-                    <button class="btn btn-ghost btn-sm" id="back-list">← قائمة الأوراق</button>
-                </div>
-                <h3 class="wizard-title">توليد ورقة عمل</h3>
-
-                <div class="field">
-                    <label class="label">الموضوع / الدرس *</label>
-                    <input class="input" id="ws-topic" type="text" required
-                           placeholder="مثال: جمع الكسور العشرية" value="${escapeAttr(d.topic)}">
-                </div>
-                <div class="field">
-                    <label class="label">عدد التمارين</label>
-                    <select class="select" id="ws-count">
-                        ${[5, 8, 10, 12, 15].map((n) =>
-                            `<option value="${n}" ${d.count === n ? 'selected' : ''}>${QE().arDigits(n)} تمارين</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                <div class="field">
-                    <label class="label">سياق من الكتاب (اختياري)</label>
-                    <textarea class="textarea" id="ws-ctx" rows="4"
-                              placeholder="ألصق نصاً من الكتاب ليكون أساس التمارين...">${escapeHtml(d.context)}</textarea>
-                </div>
-                <div class="field">
-                    <label class="label">ملاحظات</label>
-                    <textarea class="textarea" id="ws-notes" rows="2"
-                              placeholder="مثلاً: اجعل التمارين متدرجة الصعوبة...">${escapeHtml(d.notes)}</textarea>
-                </div>
-
-                <div class="wizard-footer">
-                    <button class="btn btn-primary" id="ws-gen">⚡ توليد الورقة</button>
-                </div>
-            </div>
-        `;
-
-        panel.querySelector('#ws-topic').addEventListener('input', (e) => { d.topic = e.target.value; });
-        panel.querySelector('#ws-count').addEventListener('change', (e) => { d.count = Number(e.target.value); });
-        panel.querySelector('#ws-ctx').addEventListener('input', (e) => { d.context = e.target.value; });
-        panel.querySelector('#ws-notes').addEventListener('input', (e) => { d.notes = e.target.value; });
-
-        panel.querySelector('#back-list').addEventListener('click', async () => {
-            delete state[cls.id];
-            await render(panel, cls);
-        });
-
-        panel.querySelector('#ws-gen').addEventListener('click', async () => {
-            if (!d.topic.trim()) return global.TeacherApp.toast('أدخل الموضوع.', 'warning');
-            const btn = panel.querySelector('#ws-gen');
-            btn.disabled = true; btn.innerHTML = '⏳ جارٍ التوليد...';
-            try {
-                const result = await global.AI.generateWorksheet({
-                    subject: cls.subject, grade: `${cls.grade} / ${cls.section}`,
-                    topic: d.topic, context: d.context, count: d.count, notes: d.notes
-                });
-                s.sheet = normalize({
-                    class_id: cls.id,
-                    title: result.title,
-                    topic: d.topic,
-                    instructions: result.instructions,
-                    exercises: result.exercises,
-                    created_at: new Date().toISOString()
-                });
-                s.step = 2;
-                renderWizard(panel, cls);
-            } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
-                btn.disabled = false; btn.innerHTML = '⚡ توليد الورقة';
-            }
-        });
+        step2(panel, cls);
     }
 
     /* ---------- المحرّر ---------- */
