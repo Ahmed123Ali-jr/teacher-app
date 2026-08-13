@@ -5084,3 +5084,185 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .imp-list .p { color: var(--text-muted); }
 .imp-list .c { font-weight: 700; }
 .imp-list .t { color: var(--text-muted); font-size: 11px; }
+
+/* ==========================================================================
+   بطاقة التقويم الدراسي (calendar-card.js) — أسفل الجدول الأسبوعي.
+
+   مطويّة كبطاقة التذكيرات، وتنفتح على الفصل كلّه في شاشةٍ واحدة.
+   البادئة ac- تخصّها وحدها فلا تصطدم بشيء.
+   ========================================================================== */
+.ac-card {
+    /* flex:none شرطٌ لا زينة: حاوية الجدول ‎.sched-v2‎ مرنةٌ ذات
+       overflow:hidden، فتضغط البطاقة كعنصرٍ مرن وتقصّ الشبكة
+       والتفصيل — قِيست ‎٢٥١px‎ بدل ‎٤٣٨‎ قبل هذا السطر. */
+    flex: none;
+    display: block; margin-top: var(--space-5);
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 2px 6px rgba(16, 24, 40, .05);
+}
+.ac-card.open { border-color: var(--primary); box-shadow: 0 6px 20px rgba(15, 44, 92, .16); }
+
+.ac-top {
+    display: flex; align-items: center; gap: 11px; width: 100%;
+    padding: 13px 14px; background: none; border: 0; cursor: pointer;
+    font-family: inherit; text-align: right;
+}
+.ac-ic {
+    width: 34px; height: 34px; flex: none; border-radius: 10px;
+    background: color-mix(in srgb, #ECEAE3 55%, var(--surface));
+    border: 1.5px solid var(--border);
+    display: grid; place-items: center; font-size: 15px;
+}
+.ac-card.open .ac-ic { background: #F7F1E1; border-color: #E2D3AC; }
+.ac-tx { flex: 1; min-width: 0; }
+.ac-tx .nm { display: block; font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
+.ac-tx .sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.ac-tx .sub b { color: #8A6E2E; font-weight: var(--fw-black); }
+
+/* السهم مرسومٌ بحدود لا بحرف: الحروف المرآتية تنقلب مع الاتجاه.
+   والحدود ماديّة لا منطقية، ليشير إلى أسفل في الاتجاهين معاً. */
+.ac-chev {
+    width: 8px; height: 8px; flex: none; margin-inline-start: 2px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: rotate(45deg); transition: transform var(--dur-base, .2s) ease;
+}
+.ac-card.open .ac-chev { transform: rotate(225deg); }
+
+.ac-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 13px 2px; }
+.ac-which {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: inherit; font-size: 10px; font-weight: var(--fw-black);
+    color: #7A6224; background: #F7F1E1; border: 1px solid #E2D3AC;
+    border-radius: 20px; padding: 3px 10px; cursor: pointer;
+}
+.ac-which::after { content: '⇄'; font-size: 11px; opacity: .75; }
+.ac-which.manual { border-style: dashed; }
+.ac-prov {
+    font-size: 10px; font-weight: var(--fw-black); color: var(--text-muted);
+    background: color-mix(in srgb, #ECEAE3 45%, var(--surface));
+    border: 1px dashed var(--border); border-radius: 20px; padding: 3px 10px;
+}
+
+/* ---------- لوحة تبديل التقويم ---------- */
+.ac-swap { padding: 8px 13px 4px; display: flex; flex-direction: column; gap: 6px; }
+.ac-swap .hint { font-size: 10.5px; color: var(--text-muted); line-height: 1.7; }
+.ac-swap button {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: right;
+    padding: 9px 11px; border-radius: 11px; cursor: pointer; font-family: inherit;
+    background: var(--surface); border: 1.5px solid var(--border);
+}
+.ac-swap button.on { border-color: #C9A961; background: color-mix(in srgb, #C9A961 12%, var(--surface)); }
+.ac-swap .tick {
+    width: 17px; height: 17px; flex: none; border-radius: 50%;
+    border: 2px solid var(--border); display: grid; place-items: center;
+    font-size: 9px; color: #fff;
+}
+.ac-swap button.on .tick { background: #B8963F; border-color: #B8963F; }
+.ac-swap .lb { flex: 1; min-width: 0; }
+.ac-swap .lb b { display: block; font-size: 12px; font-weight: var(--fw-black); color: var(--primary); }
+.ac-swap .lb span { display: block; font-size: 9.5px; color: var(--text-muted); margin-top: 1px; }
+
+/* ---------- الشريط الكحليّ ---------- */
+.ac-band {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px; margin-top: 9px; color: #fff;
+    background: linear-gradient(155deg, #1B3E77 0%, #0F2C5C 60%, #0A2049 100%);
+}
+.ac-band::after {
+    content: ''; position: absolute; inset-inline-end: -26px; top: -34px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,97,.30) 0%, transparent 68%);
+}
+.ac-arc { width: 54px; height: 54px; flex: none; position: relative; z-index: 1; }
+.ac-arc svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ac-arc .mid {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 16px; font-weight: var(--fw-black);
+}
+.ac-band-tx { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.ac-band-tx .ord { display: block; font-size: 14px; font-weight: var(--fw-black); line-height: 1.35; }
+.ac-band-tx .sub { display: block; font-size: 10.5px; opacity: .78; }
+.ac-cd {
+    flex: none; position: relative; z-index: 1; text-align: center;
+    background: rgba(255,255,255,.10); border: 1px solid rgba(201,169,97,.45);
+    border-radius: 11px; padding: 6px 10px; min-width: 66px;
+}
+.ac-cd b { display: block; font-size: 17px; font-weight: var(--fw-black); color: #E2C983; line-height: 1.1; }
+.ac-cd > span { display: block; font-size: 8.5px; opacity: .85; line-height: 1.4; margin-top: 1px; }
+
+/* ---------- شريط الفصول ---------- */
+.ac-terms { display: flex; gap: 5px; padding: 11px 13px 0; }
+.ac-terms button {
+    flex: 1; padding: 6px 3px; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: var(--fw-black); line-height: 1.25;
+    color: var(--primary); background: color-mix(in srgb, #ECEAE3 35%, var(--surface));
+    border: 1.5px solid var(--border);
+}
+.ac-terms button.on { color: #fff; background: var(--primary); border-color: var(--primary); }
+.ac-terms button small { display: block; font-size: 8.5px; font-weight: 500; opacity: .7; }
+
+/* ---------- شبكة الأسابيع ---------- */
+.ac-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 11px 13px 0; }
+.ac-cell {
+    aspect-ratio: 1 / 1.12; border-radius: 10px; cursor: pointer; padding: 0;
+    font-family: inherit; border: 1.5px solid var(--border);
+    background: color-mix(in srgb, #ECEAE3 22%, var(--surface));
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.ac-cell .n { font-size: 12px; font-weight: var(--fw-black); color: var(--primary); line-height: 1; }
+.ac-cell .dd { display: flex; gap: 1.5px; align-items: center; }
+.ac-cell .dd i {
+    width: 3.5px; height: 3.5px; border-radius: 50%;
+    background: color-mix(in srgb, var(--primary) 26%, var(--border));
+}
+/* نقطة الإجازة أكبر وأغمق: الذهبيّ الفاتح على أرضيةٍ عاجية لا يُرى. */
+.ac-cell .dd i.off { width: 5px; height: 5px; background: #A8873F; }
+
+.ac-cell.past { opacity: .5; }
+.ac-cell.hol { background: #F7F1E1; border-color: #E2D3AC; }
+.ac-cell.hol .n { color: #7A6224; }
+.ac-cell.sel { border-color: var(--primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 28%, transparent); }
+.ac-cell.now {
+    opacity: 1;
+    background: linear-gradient(150deg, #D9BC78 0%, #C9A961 55%, #A8873F 100%);
+    border-color: #A8873F; box-shadow: 0 3px 10px rgba(201,169,97,.4);
+}
+.ac-cell.now .n { color: #fff; }
+.ac-cell.now .dd i { background: rgba(255,255,255,.55); }
+.ac-cell.now .dd i.off { background: #fff; }
+
+/* ---------- لوحة التفصيل ---------- */
+.ac-det {
+    margin: 11px 13px 13px; padding: 11px 12px; border-radius: 13px;
+    background: color-mix(in srgb, #ECEAE3 26%, var(--surface));
+    border: 1.5px solid var(--border);
+}
+.ac-det.is-now { background: color-mix(in srgb, #C9A961 13%, var(--surface)); border-color: #C9A961; }
+.ac-det.is-hol { background: color-mix(in srgb, #F5EEDC 55%, var(--surface)); border-color: #E2D3AC; }
+.ac-det-h { display: flex; align-items: baseline; gap: 7px; }
+.ac-det-h .t { flex: 1; font-size: 13px; font-weight: var(--fw-black); color: var(--primary); }
+.ac-det-h .tag {
+    font-size: 9px; font-weight: var(--fw-black); color: #fff; background: #B8963F;
+    border-radius: 20px; padding: 1px 8px;
+}
+.ac-det-d { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+.ac-det-d span { font-size: 10.5px; color: var(--text-muted); line-height: 1.7; }
+.ac-det-d i {
+    font-style: normal; font-weight: var(--fw-black); margin-inline-end: 4px;
+    color: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
+}
+.ac-det-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+.ac-dy {
+    text-align: center; font-size: 9.5px; font-weight: var(--fw-black);
+    border-radius: 7px; padding: 4px 2px;
+    background: color-mix(in srgb, #ECEAE3 45%, var(--surface));
+    color: var(--text-muted); border: 1px solid var(--border);
+}
+.ac-dy.off { background: #C9A961; color: #fff; border-color: #A8873F; }
+.ac-det-note {
+    margin-top: 7px; padding-top: 7px; border-top: 1px dashed #E2D3AC;
+    font-size: 10.5px; font-weight: var(--fw-black); color: #8A6E2E; line-height: 1.65;
+}

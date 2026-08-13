@@ -122,8 +122,12 @@
         const schedule = cleanupExpired(rawSched);
         const periods  = await getPeriodTimes();
         const autofill = await global.TeacherDB.Settings.get('period_autofill');
+        /* التقويم يحتاج إدارة التعليم واختيار المعلّم إن بدّله. القراءتان
+           من الإعدادات المحلية فلا رحلةَ شبكة. */
+        const dept     = await global.TeacherDB.Settings.get('education_dept');
+        const calPick  = await global.TeacherDB.Settings.get('academic_calendar');
 
-        paintView(container, { teacher, classes, schedule, periods, autofill });
+        paintView(container, { teacher, classes, schedule, periods, autofill, dept, calPick });
     }
 
     /* الرسم من الحالة المحفوظة في الذاكرة وحدها — بلا أي نداء للقاعدة، فيعود
@@ -162,11 +166,43 @@
                     </button>
                     <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
                 ` : ''}
+
+                ${calendarHtml(ctx)}
             </div>
         `;
 
         ctx.grid = grid;
         bind(container, ctx);
+        bindCalendar(container, ctx);
+    }
+
+    /* البطاقة اختيارية: لو لم تُحمَّل وحدتاها لأيّ سبب، يبقى الجدول
+       كما هو بلا خطأٍ ولا فراغ. */
+    function calendarHtml(ctx) {
+        if (!global.CalendarCard || !global.AcademicCalendar) return '';
+        try {
+            return global.CalendarCard.html({ dept: ctx.dept, override: ctx.calPick });
+        } catch (err) {
+            console.warn('[schedule] calendar card failed:', err);
+            return '';
+        }
+    }
+
+    function bindCalendar(container, ctx) {
+        if (!global.CalendarCard || !container.querySelector('.ac-card')) return;
+        global.CalendarCard.bind(
+            container,
+            { dept: ctx.dept, override: ctx.calPick },
+            () => paintView(container, ctx),
+            (next) => {
+                ctx.calPick = next;
+                paintView(container, ctx);
+                /* الحفظ بالخلفية: التبديل يظهر فوراً، ولا ينتظر الشبكة. */
+                bgSave(() => next
+                    ? global.TeacherDB.Settings.set('academic_calendar', next)
+                    : global.TeacherDB.Settings.unset('academic_calendar'));
+            }
+        );
     }
 
     function classesEmptyHint() {
