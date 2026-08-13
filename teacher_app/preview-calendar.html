@@ -30,6 +30,23 @@ body {
 .pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 900; text-align: center; color: var(--primary); }
 .pv-note  { margin: 0 0 14px; font-size: 11.5px; line-height: 1.85; color: var(--text-muted); text-align: center; }
 #stage { max-width: 520px; margin: 0 auto; }
+.pv-dept {
+    max-width: 520px; margin: 0 auto 14px; padding: 10px 12px;
+    background: var(--surface); border: 1.5px dashed var(--border-strong); border-radius: 13px;
+}
+.pv-dept label { display: block; font-size: 10.5px; color: var(--text-muted); margin-bottom: 5px; }
+.pv-dept select {
+    width: 100%; font-family: inherit; font-size: 13px; font-weight: 900;
+    color: var(--primary); background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 10px;
+}
+/* سطر التقويم المطبَّق — ليعرف المعلّم أيّهما يقرأ */
+.which {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 4px; font-size: 10px; font-weight: 900;
+    color: #7A6224; background: #F7F1E1; border: 1px solid #E2D3AC;
+    border-radius: 20px; padding: 2px 9px; width: fit-content;
+}
 .pv-h { margin: 14px 0 6px; font-size: 11.5px; font-weight: 900; color: var(--text-muted); text-align: center; }
 
 .ghost {
@@ -185,9 +202,14 @@ body {
 <h1 class="pv-title">التقويم الدراسي — مضغوط</h1>
 <p class="pv-note">
     الفصل كلّه في شاشةٍ واحدة بلا تمرير.<br>
-    المس أيّ أسبوع فتنزل تفاصيله في اللوحة تحته.<br>
+    المس أيّ أسبوع فتنزل تفاصيله · وتقويمك يُختار من إدارة تعليمك.<br>
     <b>البيانات تجريبية — ستُستبدل بتقويمك</b>
 </p>
+
+<div class="pv-dept">
+    <label for="dept">إدارة تعليمك (للمعاينة — التطبيق يعرفها من إعداداتك)</label>
+    <select id="dept"></select>
+</div>
 
 <div id="stage"></div>
 <p class="pv-h" id="hgt"></p>
@@ -211,29 +233,70 @@ body {
                  'التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر'];
 
     const D = (y, m, d) => new Date(y, m - 1, d);
-    const START = D(2026, 8, 2);
-    const TERMS = [
-        { n: 1, name: 'الأول',  weeks: 13 },
-        { n: 2, name: 'الثاني', weeks: 12 },
-        { n: 3, name: 'الثالث', weeks: 11 }
-    ];
-    const HOLIDAYS = [
-        { name: 'اليوم الوطني',             from: D(2026, 9, 23),  to: D(2026, 9, 23)  },
-        { name: 'إجازة مطوّلة',             from: D(2026, 10, 12), to: D(2026, 10, 13) },
-        { name: 'إجازة نهاية الفصل الأول',  from: D(2026, 10, 26), to: D(2026, 11, 5)  },
-        { name: 'إجازة مطوّلة',             from: D(2026, 12, 14), to: D(2026, 12, 15) },
-        { name: 'إجازة نهاية الفصل الثاني', from: D(2027, 1, 25),  to: D(2027, 2, 4)   },
-        { name: 'إجازة عيد الفطر',          from: D(2027, 3, 8),   to: D(2027, 3, 19)  }
-    ];
-    const holidayOn = (d) => HOLIDAYS.find((h) => d >= h.from && d <= h.to);
 
-    const WEEKS = [];
-    (function build() {
+    /* ------------------------------------------------------------------
+       تقويمان لا واحد.
+
+       مكة المكرمة وجدة والطائف لها تقويمها، وبقيّة المناطق تقويمٌ آخر.
+       والتطبيق لا يسأل المعلّم عنه: إدارة تعليمه محفوظةٌ عنده منذ
+       التهيئة، والثلاث المذكورة هنّ كلّ إدارات منطقة مكة المكرمة —
+       فالقاعدة سطرٌ واحد لا قائمةُ أسماء تُنسى إحداها.
+       ------------------------------------------------------------------ */
+    const CALS = {
+        makkah: {
+            label: 'تقويم مكة المكرمة وجدة والطائف',
+            start: D(2026, 8, 9),
+            terms: [{ n: 1, name: 'الأول', weeks: 13 }, { n: 2, name: 'الثاني', weeks: 12 },
+                    { n: 3, name: 'الثالث', weeks: 11 }],
+            holidays: [
+                { name: 'اليوم الوطني',             from: D(2026, 9, 23),  to: D(2026, 9, 23)  },
+                { name: 'إجازة مطوّلة',             from: D(2026, 10, 19), to: D(2026, 10, 20) },
+                { name: 'إجازة نهاية الفصل الأول',  from: D(2026, 11, 2),  to: D(2026, 11, 12) },
+                { name: 'إجازة مطوّلة',             from: D(2026, 12, 21), to: D(2026, 12, 22) },
+                { name: 'إجازة نهاية الفصل الثاني', from: D(2027, 2, 1),   to: D(2027, 2, 11)  },
+                { name: 'إجازة عيد الفطر',          from: D(2027, 3, 8),   to: D(2027, 3, 19)  }
+            ]
+        },
+        other: {
+            label: 'تقويم بقيّة المناطق',
+            start: D(2026, 8, 2),
+            terms: [{ n: 1, name: 'الأول', weeks: 13 }, { n: 2, name: 'الثاني', weeks: 12 },
+                    { n: 3, name: 'الثالث', weeks: 11 }],
+            holidays: [
+                { name: 'اليوم الوطني',             from: D(2026, 9, 23),  to: D(2026, 9, 23)  },
+                { name: 'إجازة مطوّلة',             from: D(2026, 10, 12), to: D(2026, 10, 13) },
+                { name: 'إجازة نهاية الفصل الأول',  from: D(2026, 10, 26), to: D(2026, 11, 5)  },
+                { name: 'إجازة مطوّلة',             from: D(2026, 12, 14), to: D(2026, 12, 15) },
+                { name: 'إجازة نهاية الفصل الثاني', from: D(2027, 1, 25),  to: D(2027, 2, 4)   },
+                { name: 'إجازة عيد الفطر',          from: D(2027, 3, 8),   to: D(2027, 3, 19)  }
+            ]
+        }
+    };
+
+    const DEPTS = ['الرياض','مكة المكرمة','جدة','الطائف','المدينة المنورة','القصيم','الشرقية',
+                   'الأحساء','عسير','تبوك','حائل','الحدود الشمالية','جازان','نجران','الباحة','الجوف'];
+    /* القاعدة: كلّ إدارة في منطقة مكة المكرمة تتبع تقويمها. */
+    const MAKKAH_DEPTS = ['مكة المكرمة', 'جدة', 'الطائف'];
+    const calKeyFor = (dept) => MAKKAH_DEPTS.indexOf(dept) >= 0 ? 'makkah' : 'other';
+
+    let dept = 'عسير';
+    let CAL, TERMS, WEEKS, CURRENT, nextOff, daysTo;
+
+    const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
+        : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
+    const TODAY = D(2026, 8, 13);
+
+    function loadCalendar() {
+        CAL = CALS[calKeyFor(dept)];
+        TERMS = CAL.terms;
+        const holidayOn = (d) => CAL.holidays.find((h) => d >= h.from && d <= h.to);
+
+        WEEKS = [];
         let n = 0;
         TERMS.forEach((t) => {
             for (let i = 0; i < t.weeks; i++) {
                 n += 1;
-                const from = new Date(START); from.setDate(START.getDate() + (n - 1) * 7);
+                const from = new Date(CAL.start); from.setDate(CAL.start.getDate() + (n - 1) * 7);
                 const days = DAYS.map((nm, k) => {
                     const d = new Date(from); d.setDate(from.getDate() + k);
                     return { name: nm, date: d, hol: holidayOn(d) || null };
@@ -246,18 +309,13 @@ body {
                 });
             }
         });
-    })();
 
-    const TODAY = D(2026, 8, 13);
-    const CURRENT = WEEKS.find((w) => TODAY >= w.from && TODAY <= new Date(w.to.getTime() + 2 * 864e5)) || WEEKS[0];
-
-    const nextOff = (function () {
-        for (const w of WEEKS) for (const d of w.days) if (d.hol && d.date > TODAY) return d;
-        return null;
-    })();
-    const daysTo = nextOff ? Math.round((nextOff.date - TODAY) / 864e5) : 0;
-    const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
-        : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
+        CURRENT = WEEKS.find((w) => TODAY >= w.from && TODAY <= new Date(w.to.getTime() + 2 * 864e5)) || WEEKS[0];
+        nextOff = null;
+        for (const w of WEEKS) { for (const d of w.days) if (d.hol && d.date > TODAY) { nextOff = d; break; } if (nextOff) break; }
+        daysTo = nextOff ? Math.round((nextOff.date - TODAY) / 864e5) : 0;
+    }
+    loadCalendar();
 
     let open = true, term = CURRENT.term, sel = CURRENT.n;
 
@@ -348,6 +406,7 @@ body {
                     <span class="cal-tx">
                         <span class="cal-nm">التقويم الدراسي ١٤٤٨هـ</span>
                         <span class="cal-sub">الأسبوع ${ORD[CURRENT.k]} · <b>${nextOff ? esc(nextOff.hol.name) : ''}</b> بعد ${dayWord(daysTo)}</span>
+                        <span class="which">${esc(CAL.label)}</span>
                     </span>
                 </button>
                 ${open ? band() + tabs() + grid() + detail() : ''}
@@ -355,6 +414,15 @@ body {
         const h = document.querySelector('.cal').getBoundingClientRect().height;
         document.getElementById('hgt').textContent = 'ارتفاع البطاقة مفتوحةً: ' + Math.round(h) + 'px';
     }
+
+    const deptSel = document.getElementById('dept');
+    deptSel.innerHTML = DEPTS.map((d) => `<option ${d === dept ? 'selected' : ''}>${d}</option>`).join('');
+    deptSel.addEventListener('change', () => {
+        dept = deptSel.value;
+        loadCalendar();
+        term = CURRENT.term; sel = CURRENT.n;
+        draw();
+    });
 
     stage.addEventListener('click', (e) => {
         if (e.target.closest('[data-toggle]')) { open = !open; return draw(); }
