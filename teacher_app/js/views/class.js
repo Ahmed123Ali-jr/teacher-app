@@ -1529,7 +1529,14 @@
                                 throw new Error('الملف كبير جداً (أقصى 20MB).');
                             }
                             btn.textContent = '⏳ جارٍ القراءة...';
-                            const pages = await fileToImagePages(file, 20);
+                            /* بلا سقفٍ منّا — والكشف الطويل يُقرأ كلّه. */
+                            const pages = await fileToImagePages(file);
+                            if (pages.skipped > 0) {
+                                global.TeacherApp.toast(
+                                    'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
+                                    + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
+                                    'warning', 7000);
+                            }
                             names = await global.AI.extractStudentNamesFromImage({ pages });
                         }
                     }

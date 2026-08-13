@@ -408,7 +408,16 @@
                 if (!ctx.classes.length) throw new Error('أضف فصولك أولاً — بلا فصول لا يمكن ربط الخانات.');
 
                 goBtn.textContent = '⏳ جارٍ القراءة…';
-                const pages = await global.PdfCore.fileToImagePages(file, 5);
+                /* بلا سقفٍ منّا: يُقرأ الملف كلّه حتى سقف النموذج نفسه.
+                   وإن تجاوزه، يُقال صراحةً — فإهمالُ صفحةٍ بصمتٍ يُقرأ
+                   نجاحاً وهو نقص. */
+                const pages = await global.PdfCore.fileToImagePages(file);
+                if (pages.skipped > 0) {
+                    global.TeacherApp.toast(
+                        'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
+                        + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
+                        'warning', 7000);
+                }
                 const cells = await global.AI.extractScheduleFromImage({
                     pages, classes: ctx.classes, periodCount: ctx.periods.length
                 });

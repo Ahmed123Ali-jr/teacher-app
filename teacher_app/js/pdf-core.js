@@ -550,6 +550,9 @@
         });
     }
 
+    /* أقصى ما يقبله النموذج في الطلب الواحد. ليس اختياراً منّا. */
+    const MAX_IMAGE_PAGES = 100;
+
     async function fileToImagePages(file, maxPages) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
@@ -563,8 +566,12 @@
         const pdfjs = await ensurePdfJs();
         const buf = await file.arrayBuffer();
         const doc = await pdfjs.getDocument(docOptions({ data: buf })).promise;
-        const n = Math.min(doc.numPages, maxPages || 20);
+        /* السقف الافتراضي هو سقف النموذج نفسه: مئة صورةٍ في الطلب الواحد.
+           فما دون ذلك ليس قيداً منّا. */
+        const n = Math.min(doc.numPages, maxPages || MAX_IMAGE_PAGES);
         const pages = [];
+        pages.total   = doc.numPages;
+        pages.skipped = doc.numPages - n;
         for (let i = 1; i <= n; i++) {
             const page = await doc.getPage(i);
             const viewport = page.getViewport({ scale: 1.5 });
@@ -611,6 +618,6 @@
         loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
         createStage, settle, paginate, renderPdf, deliverPdf, docOptions,
-        blobToDataUrl, fileToImagePages
+        blobToDataUrl, fileToImagePages, MAX_IMAGE_PAGES
     };
 })(window);

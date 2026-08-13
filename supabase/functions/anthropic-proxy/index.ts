@@ -23,17 +23,22 @@ const ANTHROPIC_URL     = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 
 /* النموذج يُثبَّت هنا: لا يُقبل من العميل، فلا يُطلب نموذجٌ أغلى. */
-const MODEL      = 'claude-sonnet-4-5-20250929';
-const MAX_TOKENS = 4000;
+const MODEL = 'claude-sonnet-4-5-20250929';
 
-/* سقوفٌ تمنع الاستنزاف بالحجم لا بالمحتوى. */
-const MAX_PAGES        = 12;
+/* المخرَج يتّسع للصفحات: كشفٌ من عشرين صفحة لا تسعه أربعة آلاف توكن،
+   فيُقصّ الردّ في منتصفه وتضيع أسماء بلا أن يدري أحد. */
+const maxTokensFor = (pages: number) => Math.min(16000, 1500 + pages * 700);
+
+/* سقوفٌ تمنع الاستنزاف بالحجم لا بالمحتوى.
+   وMAX_PAGES ليس اختياراً منّا: مئة صورةٍ هو أقصى ما يقبله النموذج في
+   الطلب الواحد. فالجدول الطويل والكشف الطويل يُقرآن كاملَين. */
+const MAX_PAGES        = 100;
 const MAX_IMAGE_CHARS  = 5_500_000;   // ~4MB بعد فكّ base64 — حدّ Anthropic 5MB
-const MAX_TOTAL_CHARS  = 24_000_000;
+const MAX_TOTAL_CHARS  = 20_000_000;
 const MAX_CLASSES      = 200;
 const MAX_FIELD        = 120;
-const MAX_NAMES        = 400;
-const MAX_CELLS        = 200;
+const MAX_NAMES        = 2000;   // كشفٌ من مئة صفحة يحتمل أكثر من ٤٠٠ اسم
+const MAX_CELLS        = 600;
 
 const MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -193,7 +198,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
             model:       MODEL,
-            max_tokens:  MAX_TOKENS,
+            max_tokens:  maxTokensFor(pages.length),
             temperature: kind === 'names' ? 0.1 : 0.2,
             system,
             tools:       [tool],
@@ -229,19 +234,19 @@ Deno.serve(async (req) => {
    ========================================================================== */
 
 function validatePages(raw: unknown): { media_type: string; data: string }[] | string {
-    if (!Array.isArray(raw) || raw.length === 0) return 'pages must be a non-empty array';
-    if (raw.length > MAX_PAGES) return `pages must be at most ${MAX_PAGES}`;
+    if (!Array.isArray(raw) || raw.length === 0) return 'اختر ملفاً أولاً.';
+    if (raw.length > MAX_PAGES) return `الملف أكثر من ${MAX_PAGES} صفحة — أقصى ما يُقرأ دفعةً واحدة.`;
 
     const out: { media_type: string; data: string }[] = [];
     let total = 0;
     for (const p of raw) {
         const mt = String((p as Record<string, unknown>)?.media_type ?? '');
         const d  = (p as Record<string, unknown>)?.data;
-        if (!MEDIA_TYPES.includes(mt)) return 'unsupported media_type';
+        if (!MEDIA_TYPES.includes(mt)) return 'صيغة الملف غير مدعومة.';
         if (typeof d !== 'string' || d.length === 0) return 'page data must be base64 text';
-        if (d.length > MAX_IMAGE_CHARS) return 'image too large';
+        if (d.length > MAX_IMAGE_CHARS) return 'إحدى الصفحات كبيرة جداً.';
         total += d.length;
-        if (total > MAX_TOTAL_CHARS) return 'images too large in total';
+        if (total > MAX_TOTAL_CHARS) return 'الملف كبير جداً — جرّب تقسيمه إلى ملفَّين.';
         out.push({ media_type: mt, data: d });
     }
     return out;
