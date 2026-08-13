@@ -5376,3 +5376,52 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 
 .term-acts { display: flex; flex-direction: column; gap: var(--space-2); }
 .term-acts .btn { width: 100%; }
+
+/* ==========================================================================
+   التهيئة على خطوتين — مؤشّر التقدّم وحقول «عنك»
+   ========================================================================== */
+
+.setup-steps {
+    display: flex; align-items: center; gap: 7px;
+    margin: 0 var(--space-1) var(--space-5);
+}
+.setup-steps .dot {
+    width: 10px; height: 10px; border-radius: 50%; flex: none;
+    background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+.setup-steps .dot.on   { background: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.setup-steps .dot.done { background: var(--accent); }
+.setup-steps .bar {
+    height: 2px; width: 34px; flex: none; border-radius: 2px;
+    background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+.setup-steps .bar.on { background: var(--accent); }
+.setup-steps .lbl {
+    margin-inline-start: auto;
+    font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--text-muted);
+}
+
+/* عنوانٌ يحمل توضيحه بجانبه بدل سطرٍ ثالث يطيل الشاشة. */
+.fgrp-h {
+    font-weight: var(--fw-medium); color: var(--text-muted);
+    opacity: .85; margin-inline-start: var(--space-2);
+}
+
+/* المواد كثيرة، فتُلفّ ولا تُمدّ. */
+.fchips.wrap { margin-bottom: var(--space-4); }
+
+.setup-other { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+.setup-other .setup-fld { flex: 1; margin-bottom: 0; }
+.setup-other-go {
+    flex: none; padding: 0 var(--space-5); border: 0; border-radius: 13px;
+    background: var(--primary); color: var(--text-inverse);
+    font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-black);
+    cursor: pointer;
+}
+
+.setup-back {
+    display: block; width: 100%; margin: calc(var(--space-4) * -1) 0 var(--space-8);
+    min-height: 44px; border: 0; border-radius: 13px; background: transparent;
+    color: var(--text-muted); font-family: inherit;
+    font-size: var(--fs-sm); font-weight: var(--fw-bold); cursor: pointer;
+}

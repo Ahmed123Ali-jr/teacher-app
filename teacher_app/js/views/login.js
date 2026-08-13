@@ -5,21 +5,6 @@
 (function (global) {
     'use strict';
 
-    const SUBJECTS = [
-        'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
-        'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
-        'الاجتماعيات', 'التاريخ', 'الجغرافيا',
-        'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية', 'أخرى'
-    ];
-
-    function subjectCheckboxes() {
-        return SUBJECTS.map((s, i) => `
-            <label class="subject-chip">
-                <input type="checkbox" name="subjects" value="${s}" id="sub-${i}">
-                <span>${s}</span>
-            </label>
-        `).join('');
-    }
 
     function render(container) {
         let mode = 'login'; // or 'register'
@@ -68,7 +53,7 @@
                 <div class="auth-card">
                     <div class="auth-logo">🎓</div>
                     <h2 class="auth-title">إنشاء حساب</h2>
-                    <p class="auth-subtitle">معلومات أساسية تظهر في المطبوعات</p>
+                    <p class="auth-subtitle">حسابك أولاً — ونسألك عن مدرستك بعد الدخول</p>
 
                     <form id="form-register" novalidate>
                         <div class="field">
@@ -88,25 +73,6 @@
                             <input class="input" id="reg-password" type="password" required
                                    autocomplete="new-password" minlength="6">
                             <div class="field-hint">٦ أحرف على الأقل</div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="reg-school">اسم المدرسة *</label>
-                            <input class="input" id="reg-school" type="text" required
-                                   placeholder="مدرسة الأمير سلطان الابتدائية">
-                        </div>
-
-                        <div class="field">
-                            <label class="label">المواد التي تدرّسها * <span class="field-hint" style="display:inline">(يمكن اختيار أكثر من مادة)</span></label>
-                            <div class="subject-grid" id="reg-subjects">
-                                ${subjectCheckboxes()}
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="label" for="reg-phone">رقم الجوال (اختياري)</label>
-                            <input class="input" id="reg-phone" type="tel"
-                                   autocomplete="tel" placeholder="05xxxxxxxx">
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-lg btn-block">
@@ -177,17 +143,12 @@
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             try {
-                const subjects = Array.from(
-                    container.querySelectorAll('#reg-subjects input[type="checkbox"]:checked')
-                ).map((el) => el.value);
-
+                /* المدرسة والمواد والجوال تُسأل في التهيئة مرتّبةً — «عنك»
+                   ثم «مدرستك». وكانت المدرسة تُسأل هنا وهناك معاً. */
                 await global.Auth.register({
-                    name:        container.querySelector('#reg-name').value,
-                    email:       container.querySelector('#reg-email').value,
-                    password:    container.querySelector('#reg-password').value,
-                    school_name: container.querySelector('#reg-school').value,
-                    subjects,
-                    phone:       container.querySelector('#reg-phone').value
+                    name:     container.querySelector('#reg-name').value,
+                    email:    container.querySelector('#reg-email').value,
+                    password: container.querySelector('#reg-password').value
                 });
                 global.TeacherApp.toast('تم إنشاء حسابك بنجاح. أهلاً بك!', 'success');
                 global.location.hash = '#/dashboard';

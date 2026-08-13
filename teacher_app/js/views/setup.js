@@ -1,10 +1,17 @@
 /* ==========================================================================
-   views/setup.js — تهيئة المدرسة (النموذج أ: خطوة واحدة).
-   تظهر مرة واحدة بعد إنشاء الحساب قبل دخول التطبيق، وتجمع ما تحتاجه بقية
-   الشاشات: اسم المدرسة ونوعها وإدارة التعليم والمنطقة والفصل الدراسي.
+   views/setup.js — التهيئة على خطوتين: «عنك» ثم «مدرستك».
 
-   نوع المدرسة ليس بياناً شكلياً — عليه تتوقّف كلمة «طالب/طالبة» في
-   التطبيق كله.
+   كانت خطوةً واحدة تسأل عن المدرسة وحدها، بينما تُسأل المواد في شاشة
+   التسجيل — **واسم المدرسة يُسأل في الشاشتين معاً**. فالمعلّم يكتبه مرّتين
+   ولا يدري لماذا.
+
+   فصار التسجيل حساباً فقط (اسم وبريد وكلمة مرور)، والتهيئة تجمع الباقي
+   مرتّباً كما يفكّر المعلّم: **من هو أولاً، ثم أين يعمل.**
+
+   والمواد ليست بياناً شكلياً: عليها تتوقّف قائمة «موادك» في نافذة إضافة
+   الفصل — فمعلّم الرياضيات يجدها أول ما يفتحها لا بين ست عشرة مادة.
+
+   ونوع المدرسة كذلك: عليه تتوقّف كلمة «طالب/طالبة» في التطبيق كله.
    ========================================================================== */
 
 (function (global) {
@@ -37,7 +44,8 @@
             const gender = await global.TeacherDB.Settings.get('school_gender');
             const term   = await global.TeacherDB.Settings.get('academic_term');
             const dept   = await global.TeacherDB.Settings.get('education_dept');
-            return !!(teacher && teacher.school_name && gender && term && dept);
+            const subs   = global.Subjects ? global.Subjects.ofTeacher(teacher) : [];
+            return !!(teacher && teacher.school_name && gender && term && dept && subs.length);
         } catch { return true; }   // خطأ في القراءة لا يحبس المعلم خارج تطبيقه
     }
 
@@ -45,22 +53,82 @@
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
+        const S = global.Subjects;
         const pick = {
-            school: teacher.school_name || '',
-            dept:   (await global.TeacherDB.Settings.get('education_dept')) || '',
-            gender: (await global.TeacherDB.Settings.get('school_gender')) || '',
-            term:   (await global.TeacherDB.Settings.get('academic_term')) || 1
+            name:     teacher.name || '',
+            subjects: S ? S.ofTeacher(teacher).slice() : [],
+            phone:    teacher.phone || '',
+            school:   teacher.school_name || '',
+            dept:     (await global.TeacherDB.Settings.get('education_dept')) || '',
+            gender:   (await global.TeacherDB.Settings.get('school_gender')) || '',
+            term:     (await global.TeacherDB.Settings.get('academic_term')) || 1
         };
+        let step = 0;          // 0 = عنك · 1 = مدرستك
+        let other = false;     // حقل «مادة أخرى» مفتوح؟
         let saving = false;
 
         const first = String(teacher.name || '').trim().split(/\s+/)[0] || 'معلّم';
 
-        container.innerHTML = `
-            <div class="container setup-v1">
+        /* ------------------------------------------------------------------
+           الرسم
+           ------------------------------------------------------------------ */
+
+        function head() {
+            return `
+                <div class="setup-steps">
+                    <span class="dot ${step === 0 ? 'on' : 'done'}"></span>
+                    <span class="bar ${step === 1 ? 'on' : ''}"></span>
+                    <span class="dot ${step === 1 ? 'on' : ''}"></span>
+                    <span class="lbl">الخطوة ${step === 0 ? '١' : '٢'} من ٢</span>
+                </div>`;
+        }
+
+        function stepYou() {
+            /* مواد المعلّم أولاً ثم بقيّة القائمة — فما اختاره سابقاً لا
+               يضيع بين الجديد، وما كتبه بيده يبقى ظاهراً مختاراً. */
+            const list = S ? S.merge(pick.subjects, S.ALL) : pick.subjects;
+            return `
                 <div class="setup-hero">
                     <span class="t">🎓 أهلاً بك يا أستاذ ${escapeHtml(first)}</span>
-                    <span class="h">أخبرنا عن مدرستك — دقيقة واحدة ولن نسألك مرة أخرى.</span>
+                    <span class="h">أخبرنا عنك أولاً — دقيقة واحدة ولن نسألك مرة أخرى.</span>
                 </div>
+                ${head()}
+
+                <div class="fgrp-t">اسمك *</div>
+                <input class="setup-fld" id="su-name" type="text" maxlength="60"
+                       placeholder="الاسم الكامل" value="${escapeAttr(pick.name)}">
+
+                <div class="fgrp-t">المواد التي تدرّسها *
+                    <span class="fgrp-h">تظهر لك أول القائمة عند إضافة فصل</span>
+                </div>
+                <div class="fchips wrap" id="su-subs">
+                    ${list.map((s) => `
+                        <button type="button" class="fchip ${pick.subjects.includes(s) ? 'on' : ''}"
+                                data-sub="${escapeAttr(s)}">${escapeHtml(s)}</button>
+                    `).join('')}
+                    <button type="button" class="fchip ${other ? 'on' : ''}" data-sub-other>✎ أخرى</button>
+                </div>
+                ${other ? `
+                    <div class="setup-other">
+                        <input class="setup-fld" id="su-sub-other" type="text" maxlength="40"
+                               placeholder="اكتب اسم المادة">
+                        <button type="button" class="setup-other-go" id="su-sub-add">أضف</button>
+                    </div>` : ''}
+
+                <div class="fgrp-t">رقم الجوال <span class="fgrp-h">اختياري</span></div>
+                <input class="setup-fld" id="su-phone" type="tel" maxlength="20"
+                       placeholder="05xxxxxxxx" value="${escapeAttr(pick.phone)}">
+
+                <button type="button" class="fsave" id="su-next">التالي ←</button>`;
+        }
+
+        function stepSchool() {
+            return `
+                <div class="setup-hero">
+                    <span class="t">🏫 والآن مدرستك</span>
+                    <span class="h">تقدر تعدّلها كلها لاحقاً من الإعدادات.</span>
+                </div>
+                ${head()}
 
                 <div class="fgrp-t">اسم المدرسة *</div>
                 <input class="setup-fld" id="su-school" type="text" maxlength="80"
@@ -89,47 +157,114 @@
                 </div>
 
                 <button type="button" class="fsave" id="su-go">ابدأ ←</button>
-                <p class="setup-note">تقدر تعدّلها كلها لاحقاً من الإعدادات ← بيانات المدرسة.</p>
-            </div>
-        `;
+                <button type="button" class="setup-back" id="su-back">→ رجوع</button>`;
+        }
 
-        const chips = (wrap, attr, onPick) => {
-            container.querySelector(wrap)?.addEventListener('click', (e) => {
-                const b = e.target.closest('[' + attr + ']');
+        function paint() {
+            container.innerHTML = `<div class="container setup-v1">${step === 0 ? stepYou() : stepSchool()}</div>`;
+            bind();
+        }
+
+        /* ------------------------------------------------------------------
+           الربط — يُعاد بعد كل رسم، فلا مستمعَ يتراكم
+           ------------------------------------------------------------------ */
+
+        /** يحفظ ما في الحقول قبل أيّ إعادة رسم — وإلا ضاع ما كتبه. */
+        function harvest() {
+            const g = (id) => container.querySelector(id);
+            if (step === 0) {
+                if (g('#su-name'))  pick.name  = g('#su-name').value;
+                if (g('#su-phone')) pick.phone = g('#su-phone').value;
+            } else if (g('#su-school')) {
+                pick.school = g('#su-school').value;
+            }
+        }
+
+        function addTyped() {
+            const el = container.querySelector('#su-sub-other');
+            const v = (el ? el.value : '').trim();
+            if (!v) return global.TeacherApp.toast('اكتب اسم المادة.', 'warning', 2500);
+            if (!pick.subjects.includes(v)) pick.subjects.push(v);
+            harvest(); other = false; paint();
+        }
+
+        function bind() {
+            const q = (s) => container.querySelector(s);
+
+            q('#su-subs')?.addEventListener('click', (e) => {
+                if (e.target.closest('[data-sub-other]')) { harvest(); other = !other; return paint(); }
+                const b = e.target.closest('[data-sub]');
                 if (!b) return;
-                container.querySelectorAll(wrap + ' [' + attr + ']')
-                    .forEach((x) => x.classList.toggle('on', x === b));
-                onPick(b.getAttribute(attr));
+                const v = b.dataset.sub;
+                const i = pick.subjects.indexOf(v);
+                if (i >= 0) pick.subjects.splice(i, 1); else pick.subjects.push(v);
+                b.classList.toggle('on', i < 0);
             });
-        };
-        chips('#su-gender', 'data-gender', (v) => { pick.gender = v; });
-        chips('#su-term',   'data-term',   (v) => { pick.term = Number(v); });
-
-        container.querySelector('#su-dept-btn').addEventListener('click', () => {
-            global.DeptPicker.open(pick.dept, (full) => {
-                pick.dept = full;
-                container.querySelector('#su-dept-v').textContent = full;
-                container.querySelector('#su-dept-v').classList.remove('is-empty');
+            q('#su-sub-add')?.addEventListener('click', addTyped);
+            q('#su-sub-other')?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addTyped(); }
             });
-        });
 
-        container.querySelector('#su-go').addEventListener('click', async () => {
+            q('#su-next')?.addEventListener('click', () => {
+                harvest();
+                if (!pick.name.trim())    return global.TeacherApp.toast('اكتب اسمك.', 'warning', 3000);
+                if (!pick.subjects.length) return global.TeacherApp.toast('اختر مادةً واحدة على الأقل.', 'warning', 3000);
+                step = 1; other = false; paint();
+                global.scrollTo(0, 0);
+            });
+
+            q('#su-back')?.addEventListener('click', () => {
+                harvest(); step = 0; paint(); global.scrollTo(0, 0);
+            });
+
+            const chips = (wrap, attr, onPick) => {
+                q(wrap)?.addEventListener('click', (e) => {
+                    const b = e.target.closest('[' + attr + ']');
+                    if (!b) return;
+                    container.querySelectorAll(wrap + ' [' + attr + ']')
+                        .forEach((x) => x.classList.toggle('on', x === b));
+                    onPick(b.getAttribute(attr));
+                });
+            };
+            chips('#su-gender', 'data-gender', (v) => { pick.gender = v; });
+            chips('#su-term',   'data-term',   (v) => { pick.term = Number(v); });
+
+            q('#su-dept-btn')?.addEventListener('click', () => {
+                global.DeptPicker.open(pick.dept, (full) => {
+                    pick.dept = full;
+                    const el = q('#su-dept-v');
+                    if (el) { el.textContent = full; el.classList.remove('is-empty'); }
+                });
+            });
+
+            q('#su-go')?.addEventListener('click', finish);
+        }
+
+        /* ------------------------------------------------------------------
+           الحفظ
+           ------------------------------------------------------------------ */
+
+        async function finish() {
             if (saving) return;
-            const school = container.querySelector('#su-school').value.trim();
+            harvest();
+            const school = pick.school.trim();
             const dept   = pick.dept;
             /* المنطقة تُشتقّ من الإدارة لا يكتبها المعلم: «إدارة تعليم جدة»
                تعني منطقة مكة المكرمة — فلا حقل ثالث ولا خطأ إملائي. */
             const region = (global.EduDepts.regionOf(dept) || '');
 
-            if (!school) return global.TeacherApp.toast('اكتب اسم المدرسة.', 'warning', 3000);
-            if (!pick.gender) return global.TeacherApp.toast('اختر نوع المدرسة.', 'warning', 3000);
-            if (!dept)   return global.TeacherApp.toast('اختر إدارة التعليم.', 'warning', 3000);
+            if (!school)       return global.TeacherApp.toast('اكتب اسم المدرسة.', 'warning', 3000);
+            if (!pick.gender)  return global.TeacherApp.toast('اختر نوع المدرسة.', 'warning', 3000);
+            if (!dept)         return global.TeacherApp.toast('اختر إدارة التعليم.', 'warning', 3000);
 
             saving = true;
             const btn = container.querySelector('#su-go');
-            btn.disabled = true;
-            btn.textContent = '… جارٍ الحفظ';
+            if (btn) { btn.disabled = true; btn.textContent = '… جارٍ الحفظ'; }
 
+            teacher.name        = pick.name.trim();
+            teacher.phone       = pick.phone.trim();
+            teacher.subjects    = pick.subjects.slice();
+            teacher.subject     = pick.subjects[0] || '';
             teacher.school_name = school;
             teacher.region      = region;
             teacher.updated_at  = new Date().toISOString();
@@ -146,8 +281,7 @@
                 ]);
             } catch (err) {
                 saving = false;
-                btn.disabled = false;
-                btn.textContent = 'ابدأ ←';
+                if (btn) { btn.disabled = false; btn.textContent = 'ابدأ ←'; }
                 return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
             }
 
@@ -157,7 +291,9 @@
             }
             global.TeacherApp.toast('تمت التهيئة ✅', 'success', 1400);
             global.location.hash = '#/dashboard';
-        });
+        }
+
+        paint();
     }
 
     global.SetupView = { render, isDone };

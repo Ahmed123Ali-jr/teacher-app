@@ -1623,20 +1623,14 @@
     }
 
     async function editClass(cls, onSaved) {
-        const SUBJECTS = [
-            'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
-            'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
-            'الاجتماعيات', 'التاريخ', 'الجغرافيا',
-            'الحاسب وتقنية المعلومات', 'التربية الفنية', 'التربية البدنية'
-        ];
-        // Include the teacher's custom subjects (added via «أخرى» in البيانات)
-        // plus this class's own subject, so nothing is lost when editing.
+        /* المواد من مصدرٍ واحد، ومعها موادّ المعلّم ومادّةُ هذا الفصل —
+           فلا يضيع ما كتبه بيده حين يعدّل. */
         const me = await global.Auth.currentTeacher();
-        const mine = (me && Array.isArray(me.subjects)) ? me.subjects : [];
-        const subjectList = Array.from(new Set(
-            SUBJECTS.concat(mine).concat(cls.subject ? [cls.subject] : [])
-                .filter((s) => s && s !== 'أخرى')
-        ));
+        const subjectList = global.Subjects.merge(
+            global.Subjects.ofTeacher(me),
+            cls.subject ? [cls.subject] : [],
+            global.Subjects.ALL
+        );
         // اللون موحّد لكل الفصول (رصاصي) — لا حقل لون في التعديل.
         const form = document.createElement('form');
         form.innerHTML = `

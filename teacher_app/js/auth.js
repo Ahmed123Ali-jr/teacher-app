@@ -103,13 +103,12 @@
 
     /* ---------- public API ---------- */
 
-    async function register({ name, email, password, school_name, subjects, phone }) {
+    /* التسجيل حسابٌ فقط: المدرسة والمواد والجوال تُجمع في شاشة التهيئة
+       مرتّبةً — «عنك» ثم «مدرستك». وكانت المدرسة تُطلب في الشاشتين معاً. */
+    async function register({ name, email, password }) {
         email = normalizeEmail(email);
-        const subjectList = Array.isArray(subjects)
-            ? subjects.map((s) => String(s).trim()).filter(Boolean)
-            : [];
-        if (!name || !email || !password || !school_name || subjectList.length === 0) {
-            throw new Error('يرجى تعبئة جميع الحقول المطلوبة، واختيار مادة واحدة على الأقل.');
+        if (!name || !email || !password) {
+            throw new Error('يرجى تعبئة جميع الحقول المطلوبة.');
         }
         if (password.length < 6) {
             throw new Error('كلمة المرور يجب أن تكون ٦ أحرف على الأقل.');
@@ -129,13 +128,7 @@
         const user = data.user;
         if (!user) throw new Error('تعذّر إنشاء الحساب.');
 
-        await ensureProfile(user.id, {
-            full_name: name.trim(),
-            school: school_name.trim(),
-            subject: subjectList[0],
-            subjects: subjectList,
-            phone: (phone || '').trim()
-        });
+        await ensureProfile(user.id, { full_name: name.trim() });
 
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
