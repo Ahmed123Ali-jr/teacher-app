@@ -12,9 +12,14 @@
 
 <style>
 /* ==========================================================================
-   الفصل الدراسي مسارٌ يُقطع لا قائمةٌ تُقرأ.
-   خطٌّ رأسيّ يمشي مع الأسابيع: ما مضى مصمتٌ باهت، وأنت عقدةٌ ذهبية
-   نابضة، وما بقي مجوّف. والإجازة تكسر الخطّ فتُرى قبل أن تُقرأ.
+   الفصل كلّه في شاشةٍ واحدة.
+
+   ثلاث عشرة بطاقةً مفصّلة كانت تعني ألفاً ومئتَي بكسل من التمرير —
+   والمعلّم يفتح التقويم ليعرف لا ليقرأ. فصارت الأسابيع شبكةً مضغوطة
+   تُمسح بنظرة، والتفصيل يظهر لأسبوعٍ واحد: الذي يلمسه، أو أسبوعه هو.
+
+   وكل خليّة تحمل معلومتها بلا كلمات: رقمها، وخمس نقاطٍ هي أيامها،
+   الذهبيّ منها إجازة.
    ========================================================================== */
 * { box-sizing: border-box; }
 body {
@@ -25,6 +30,7 @@ body {
 .pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 900; text-align: center; color: var(--primary); }
 .pv-note  { margin: 0 0 14px; font-size: 11.5px; line-height: 1.85; color: var(--text-muted); text-align: center; }
 #stage { max-width: 520px; margin: 0 auto; }
+.pv-h { margin: 14px 0 6px; font-size: 11.5px; font-weight: 900; color: var(--text-muted); text-align: center; }
 
 .ghost {
     background: var(--surface); border: 1.5px solid var(--border);
@@ -52,167 +58,139 @@ body {
     border: 1.5px solid var(--border); display: grid; place-items: center; font-size: 15px;
 }
 .cal.open .cal-ic { background: #F7F1E1; border-color: #E2D3AC; }
+.cal-tx { flex: 1; min-width: 0; }
 .cal-nm { display: block; font-size: 13.5px; font-weight: 900; color: var(--primary); }
 .cal-sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
 .cal-sub b { color: #8A6E2E; font-weight: 900; }
-.cal-tx { flex: 1; min-width: 0; }
 
 /* ==========================================================================
-   اللوحة العلوية — كحليّة، فيها القوس والعدّاد
+   الشريط الكحليّ — سطرٌ واحد يحمل موضعك والعدّاد
    ========================================================================== */
-.hero {
+.band {
     position: relative; overflow: hidden;
-    background: linear-gradient(155deg, #1B3E77 0%, #0F2C5C 55%, #0A2049 100%);
-    color: #fff; padding: 16px 14px;
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px; color: #fff;
+    background: linear-gradient(155deg, #1B3E77 0%, #0F2C5C 60%, #0A2049 100%);
 }
-/* وهجٌ ذهبيّ خافت خلف القوس — عمقٌ بلا زخرفة */
-.hero::after {
-    content: ''; position: absolute; inset-inline-end: -30px; top: -40px;
-    width: 170px; height: 170px; border-radius: 50%;
+.band::after {
+    content: ''; position: absolute; inset-inline-end: -26px; top: -34px;
+    width: 130px; height: 130px; border-radius: 50%;
     background: radial-gradient(circle, rgba(201,169,97,.30) 0%, transparent 68%);
 }
-.hero-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; }
-.arc { width: 82px; height: 82px; flex: none; position: relative; }
+.arc { width: 54px; height: 54px; flex: none; position: relative; z-index: 1; }
 .arc svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.arc .mid {
-    position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
-}
-.arc .mid b { display: block; font-size: 20px; font-weight: 900; line-height: 1; }
-.arc .mid span { display: block; font-size: 9px; opacity: .75; margin-top: 3px; }
+.arc .mid { position: absolute; inset: 0; display: grid; place-items: center; }
+.arc .mid b { font-size: 16px; font-weight: 900; line-height: 1; }
 
-.hero-tx { flex: 1; min-width: 0; }
-.hero-tx .ord { font-size: 16px; font-weight: 900; line-height: 1.4; }
-.hero-tx .trm { font-size: 11.5px; opacity: .8; }
-.hero-tx .dates { font-size: 10.5px; opacity: .7; margin-top: 4px; line-height: 1.6; }
+.band-tx { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.band-tx .ord { font-size: 14px; font-weight: 900; line-height: 1.35; }
+.band-tx .sub { font-size: 10.5px; opacity: .78; }
 
-.next {
-    position: relative; z-index: 1;
-    display: flex; align-items: center; gap: 9px; margin-top: 13px;
+.cd {
+    flex: none; position: relative; z-index: 1; text-align: center;
     background: rgba(255,255,255,.10); border: 1px solid rgba(201,169,97,.45);
-    border-radius: 12px; padding: 9px 11px;
+    border-radius: 11px; padding: 6px 10px; min-width: 66px;
 }
-.next .cnt {
-    font-size: 20px; font-weight: 900; color: #E2C983; line-height: 1;
-}
-.next .cnt small { font-size: 10px; font-weight: 700; opacity: .85; margin-inline-start: 2px; }
-.next .tx { flex: 1; font-size: 11px; line-height: 1.6; }
-.next .tx b { color: #E2C983; }
+.cd b { display: block; font-size: 17px; font-weight: 900; color: #E2C983; line-height: 1.1; }
+.cd span { display: block; font-size: 8.5px; opacity: .85; line-height: 1.4; margin-top: 1px; }
 
 /* ---------- شريط الفصول ---------- */
-.trm-bar { display: flex; gap: 6px; padding: 12px 14px 0; }
+.trm-bar { display: flex; gap: 5px; padding: 11px 13px 0; }
 .trm-bar button {
-    flex: 1; padding: 8px 4px; border-radius: 11px; cursor: pointer;
-    font-family: inherit; font-size: 11.5px; font-weight: 900; line-height: 1.3;
+    flex: 1; padding: 6px 3px; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-size: 11px; font-weight: 900; line-height: 1.25;
     color: var(--primary); background: color-mix(in srgb, #ECEAE3 35%, #fff);
     border: 1.5px solid var(--border);
 }
 .trm-bar button.on { color: #fff; background: var(--primary); border-color: var(--primary); }
-.trm-bar button small { display: block; font-size: 9px; font-weight: 500; opacity: .7; margin-top: 1px; }
+.trm-bar button small { display: block; font-size: 8.5px; font-weight: 500; opacity: .7; }
 
 /* ==========================================================================
-   المسار — الخطّ الرأسي والعُقد
+   شبكة الأسابيع — الفصل كلّه في ثلاثة صفوف
    ========================================================================== */
-.path { padding: 14px 14px 16px; }
-.wk {
-    position: relative; display: flex; gap: 12px;
-    padding-bottom: 12px;
+.grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px; padding: 11px 13px 0;
 }
-/* الخيط الواصل بين العقدتين */
-/* الخيط تحت العُقد لا في جهة البطاقة: العقدة أوّل عنصرٍ في الصف،
-   فموضعها البداية — واليمين هو البداية في العربية. */
-.wk::before {
-    content: ''; position: absolute; top: 30px; bottom: -2px;
-    inset-inline-start: 14px;
-    width: 2.5px; background: var(--border); border-radius: 2px;
+.cell {
+    aspect-ratio: 1 / 1.12; border-radius: 10px; cursor: pointer; padding: 0;
+    font-family: inherit; border: 1.5px solid var(--border);
+    background: color-mix(in srgb, #ECEAE3 22%, var(--surface));
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
 }
-.wk:last-child::before { display: none; }
-.wk.past::before { background: color-mix(in srgb, var(--primary) 30%, var(--border)); }
-.wk.off-week::before { background: repeating-linear-gradient(180deg,#C9A961 0 5px,transparent 5px 10px); }
+.cell .n { font-size: 12px; font-weight: 900; color: var(--primary); line-height: 1; }
+/* خمس نقاطٍ هي أيام الأسبوع — الذهبيّ منها إجازة */
+.cell .dd { display: flex; gap: 1.5px; align-items: center; }
+.cell .dd i {
+    width: 3.5px; height: 3.5px; border-radius: 50%;
+    background: color-mix(in srgb, var(--primary) 26%, var(--border));
+}
+/* نقطة الإجازة أكبر وأغمق: الذهبيّ الفاتح على أرضيةٍ عاجية لا يُرى. */
+.cell .dd i.off { width: 5px; height: 5px; background: #A8873F; }
 
-.node {
-    width: 30px; height: 30px; flex: none; border-radius: 50%;
-    display: grid; place-items: center; position: relative; z-index: 1;
-    font-size: 12px; font-weight: 900;
-    background: var(--surface); color: var(--text-muted);
-    border: 2.5px solid var(--border);
-}
-.wk.past .node { background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-                 border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
-                 color: color-mix(in srgb, var(--primary) 70%, var(--text-muted)); }
-.wk.off-week .node { background: #F5EEDC; border-color: #C9A961; color: #7A6224; }
-
-/* أنت هنا — العقدة تكبر وتنبض */
-.wk.now .node {
-    width: 38px; height: 38px; margin-inline-start: -4px;
-    font-size: 14px; color: #fff;
+.cell.past { opacity: .5; }
+.cell.hol  { background: #F7F1E1; border-color: #E2D3AC; }
+.cell.hol .n { color: #7A6224; }
+.cell.sel  { border-color: var(--primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 28%, transparent); }
+.cell.now  {
+    opacity: 1;
     background: linear-gradient(150deg, #D9BC78 0%, #C9A961 55%, #A8873F 100%);
-    border-color: #fff;
-    box-shadow: 0 0 0 3px #C9A961, 0 4px 12px rgba(201,169,97,.5);
+    border-color: #A8873F; box-shadow: 0 3px 10px rgba(201,169,97,.4);
 }
-.wk.now::before { inset-inline-start: 14px; top: 38px; }
+.cell.now .n { color: #fff; }
+.cell.now .dd i { background: rgba(255,255,255,.55); }
+.cell.now .dd i.off { background: #fff; }
 
-/* ---------- بطاقة الأسبوع ---------- */
-.card {
-    flex: 1; min-width: 0; padding: 9px 11px; border-radius: 12px;
-    background: var(--surface); border: 1.5px solid var(--border);
+/* ==========================================================================
+   لوحة التفصيل — أسبوعٌ واحد، هو الملموس أو أسبوعك
+   ========================================================================== */
+.det {
+    margin: 11px 13px 13px; padding: 11px 12px; border-radius: 13px;
+    background: color-mix(in srgb, #ECEAE3 26%, var(--surface));
+    border: 1.5px solid var(--border);
 }
-.wk.past .card { opacity: .62; }
-.wk.now .card {
-    background: linear-gradient(150deg,
-        color-mix(in srgb, #C9A961 18%, var(--surface)),
-        color-mix(in srgb, #C9A961 6%, var(--surface)));
-    border-color: #C9A961; box-shadow: 0 3px 12px rgba(201,169,97,.24);
-}
-.wk.off-week .card { border-color: #E2D3AC; background: color-mix(in srgb, #F5EEDC 45%, var(--surface)); }
+.det.is-now { background: color-mix(in srgb, #C9A961 13%, var(--surface)); border-color: #C9A961; }
+.det.is-hol { background: color-mix(in srgb, #F5EEDC 55%, var(--surface)); border-color: #E2D3AC; }
 
-.card .ttl {
-    display: flex; align-items: baseline; gap: 7px;
-    font-size: 12.5px; font-weight: 900; color: var(--primary);
+.det-h { display: flex; align-items: baseline; gap: 7px; }
+.det-h .t { flex: 1; font-size: 13px; font-weight: 900; color: var(--primary); }
+.det-h .tag {
+    font-size: 9px; font-weight: 900; color: #fff; background: #B8963F;
+    border-radius: 20px; padding: 1px 8px;
 }
-.card .here {
-    font-size: 9px; font-weight: 900; color: #fff;
-    background: #B8963F; border-radius: 20px; padding: 1px 8px;
-}
-/* التاريخان: الهجري أولاً لأنه تقويم العمل، والميلادي تحته */
-.cal-dates { display: flex; flex-direction: column; gap: 1px; margin-top: 3px; }
-.cal-dates span { font-size: 10.5px; color: var(--text-muted); line-height: 1.65; white-space: nowrap; }
-.cal-dates i {
+.det-d { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
+.det-d span { font-size: 10.5px; color: var(--text-muted); line-height: 1.7; }
+.det-d i {
     font-style: normal; font-weight: 900; margin-inline-end: 4px;
     color: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
 }
 
-/* أيام الأسبوع — نقاطٌ تُرى قبل أن تُقرأ */
-.dots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
-.dot { text-align: center; }
-.dot .d {
-    display: block;   /* بدونه لا يقبل السطريُّ ارتفاعاً فيختفي الشريط */
-    height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--primary) 22%, var(--border));
+.det-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 8px; }
+.dy {
+    text-align: center; font-size: 9.5px; font-weight: 900;
+    border-radius: 7px; padding: 4px 2px;
+    background: color-mix(in srgb, #ECEAE3 45%, var(--surface));
+    color: var(--text-muted); border: 1px solid var(--border);
 }
-.dot.off .d { background: linear-gradient(90deg, #D9BC78, #B8963F); height: 6px; }
-.dot .l { display: block; font-size: 8.5px; color: var(--text-muted); margin-top: 3px; }
-.dot.off .l { color: #7A6224; font-weight: 900; }
+.dy.off { background: #C9A961; color: #fff; border-color: #A8873F; }
 
-.off-note {
-    display: flex; align-items: center; gap: 6px; margin-top: 8px;
-    padding-top: 7px; border-top: 1px dashed #E2D3AC;
-    font-size: 10.5px; font-weight: 900; color: #8A6E2E;
-}
-.off-note .pill {
-    font-size: 9px; background: #C9A961; color: #fff;
-    border-radius: 20px; padding: 1px 8px; font-weight: 900;
+.det-note {
+    margin-top: 7px; padding-top: 7px; border-top: 1px dashed #E2D3AC;
+    font-size: 10.5px; font-weight: 900; color: #8A6E2E; line-height: 1.65;
 }
 </style>
 </head>
 <body>
 
-<h1 class="pv-title">التقويم الدراسي — إنفوجرافيك</h1>
+<h1 class="pv-title">التقويم الدراسي — مضغوط</h1>
 <p class="pv-note">
-    الفصل مسارٌ يُقطع: ما مضى باهت، وأنت عقدةٌ ذهبية، وما بقي مجوّف.<br>
-    والإجازة تكسر الخيط فتُرى قبل أن تُقرأ.<br>
+    الفصل كلّه في شاشةٍ واحدة بلا تمرير.<br>
+    المس أيّ أسبوع فتنزل تفاصيله في اللوحة تحته.<br>
     <b>البيانات تجريبية — ستُستبدل بتقويمك</b>
 </p>
 
 <div id="stage"></div>
+<p class="pv-h" id="hgt"></p>
 
 <script>
 (function () {
@@ -222,7 +200,6 @@ body {
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    /* الهجري من المتصفّح بتقويم أم القرى — لا مكتبة ولا جدول تحويل. */
     const HIJRI = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long' });
     const GM = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
                 'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -230,16 +207,15 @@ body {
     const greg = (d) => ar(d.getDate()) + ' ' + GM[d.getMonth()];
 
     const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-    const SHORT = ['ح', 'ن', 'ث', 'ر', 'خ'];
     const ORD = ['','الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن',
-                 'التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر'];
+                 'التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر'];
 
     const D = (y, m, d) => new Date(y, m - 1, d);
     const START = D(2026, 8, 2);
     const TERMS = [
-        { n: 1, name: 'الفصل الأول',  weeks: 13 },
-        { n: 2, name: 'الفصل الثاني', weeks: 12 },
-        { n: 3, name: 'الفصل الثالث', weeks: 11 }
+        { n: 1, name: 'الأول',  weeks: 13 },
+        { n: 2, name: 'الثاني', weeks: 12 },
+        { n: 3, name: 'الثالث', weeks: 11 }
     ];
     const HOLIDAYS = [
         { name: 'اليوم الوطني',             from: D(2026, 9, 23),  to: D(2026, 9, 23)  },
@@ -260,14 +236,13 @@ body {
                 const from = new Date(START); from.setDate(START.getDate() + (n - 1) * 7);
                 const days = DAYS.map((nm, k) => {
                     const d = new Date(from); d.setDate(from.getDate() + k);
-                    return { name: nm, short: SHORT[k], date: d, hol: holidayOn(d) || null };
+                    return { name: nm, date: d, hol: holidayOn(d) || null };
                 });
                 const offs = days.filter((d) => d.hol);
                 WEEKS.push({
-                    n, term: t.n, from, to: days[4].date, days, offs,
+                    n, term: t.n, k: i + 1, from, to: days[4].date, days, offs,
                     holName: offs.length ? offs[0].hol.name : null,
-                    allOff: offs.length === 5,
-                    k: i + 1
+                    allOff: offs.length === 5
                 });
             }
         });
@@ -284,50 +259,29 @@ body {
     const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
         : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
 
-    let open = true, term = CURRENT.term;
+    let open = true, term = CURRENT.term, sel = CURRENT.n;
 
-    /* قوسٌ يقول موضعك من الفصل بلا رقمٍ يُقرأ. */
-    function arc() {
+    function band() {
         const t = TERMS[CURRENT.term - 1];
-        const pct = CURRENT.k / t.weeks;
-        const R = 34, C = 2 * Math.PI * R;
+        const R = 22, C = 2 * Math.PI * R, pct = CURRENT.k / t.weeks;
         return `
-            <div class="arc">
-                <svg viewBox="0 0 82 82" aria-hidden="true">
-                    <circle cx="41" cy="41" r="${R}" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="7"/>
-                    <circle cx="41" cy="41" r="${R}" fill="none" stroke="#C9A961" stroke-width="7"
-                            stroke-linecap="round"
-                            stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}"/>
-                </svg>
-                <span class="mid">
-                    <b>${ar(CURRENT.k)}</b>
-                    <span>من ${ar(t.weeks)} أسبوعاً</span>
-                </span>
-            </div>`;
-    }
-
-    function hero() {
-        const t = TERMS[CURRENT.term - 1];
-        return `
-            <div class="hero">
-                <div class="hero-row">
-                    ${arc()}
-                    <div class="hero-tx">
-                        <div class="ord">الأسبوع ${ORD[CURRENT.k]}</div>
-                        <div class="trm">${t.name} · العام ١٤٤٨هـ</div>
-                        <div class="dates">
-                            ${hij(CURRENT.from)} — ${hij(CURRENT.to)} هـ<br>
-                            ${greg(CURRENT.from)} — ${greg(CURRENT.to)}
-                        </div>
-                    </div>
+            <div class="band">
+                <div class="arc">
+                    <svg viewBox="0 0 54 54" aria-hidden="true">
+                        <circle cx="27" cy="27" r="${R}" fill="none" stroke="rgba(255,255,255,.20)" stroke-width="5"/>
+                        <circle cx="27" cy="27" r="${R}" fill="none" stroke="#C9A961" stroke-width="5"
+                                stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}"/>
+                    </svg>
+                    <span class="mid"><b>${ar(CURRENT.k)}</b></span>
+                </div>
+                <div class="band-tx">
+                    <div class="ord">الأسبوع ${ORD[CURRENT.k]}</div>
+                    <div class="sub">الفصل ${t.name} · ${ar(CURRENT.k)} من ${ar(t.weeks)} أسبوعاً</div>
                 </div>
                 ${nextOff ? `
-                <div class="next">
-                    <span class="cnt">${ar(daysTo)}<small>${daysTo === 2 ? 'يومان' : 'يوماً'}</small></span>
-                    <span class="tx">
-                        على <b>${esc(nextOff.hol.name)}</b><br>
-                        ${nextOff.name} ${greg(nextOff.date)} · ${hij(nextOff.date)} هـ
-                    </span>
+                <div class="cd">
+                    <b>${ar(daysTo)}</b>
+                    <span>${daysTo === 2 ? 'يومان' : 'يوماً'} على<br>${esc(nextOff.hol.name)}</span>
                 </div>` : ''}
             </div>`;
     }
@@ -336,45 +290,53 @@ body {
         return `<div class="trm-bar">
             ${TERMS.map((t) => `
                 <button type="button" data-term="${t.n}" class="${term === t.n ? 'on' : ''}">
-                    ${t.name}<small>${ar(t.weeks)} أسبوعاً</small>
+                    الفصل ${t.name}<small>${ar(t.weeks)} أسبوعاً</small>
                 </button>`).join('')}
         </div>`;
     }
 
-    function week(w) {
-        const state = w.n < CURRENT.n ? 'past' : w.n === CURRENT.n ? 'now' : 'next';
+    function grid() {
+        const list = WEEKS.filter((w) => w.term === term);
+        return `<div class="grid">
+            ${list.map((w) => {
+                const st = [w.n < CURRENT.n ? 'past' : '', w.offs.length ? 'hol' : '',
+                            w.n === CURRENT.n ? 'now' : '', w.n === sel ? 'sel' : ''].filter(Boolean).join(' ');
+                return `
+                    <button type="button" class="cell ${st}" data-w="${w.n}">
+                        <span class="n">${ar(w.k)}</span>
+                        <span class="dd">${w.days.map((d) => `<i class="${d.hol ? 'off' : ''}"></i>`).join('')}</span>
+                    </button>`;
+            }).join('')}
+        </div>`;
+    }
+
+    function detail() {
+        const w = WEEKS.find((x) => x.n === sel) || CURRENT;
+        const isNow = w.n === CURRENT.n;
         return `
-            <div class="wk ${state} ${w.offs.length ? 'off-week' : ''}">
-                <span class="node">${ar(w.k)}</span>
-                <div class="card">
-                    <div class="ttl">
-                        <span>الأسبوع ${ORD[w.k]}</span>
-                        ${state === 'now' ? '<span class="here">أنت هنا</span>' : ''}
-                    </div>
-                    <div class="cal-dates">
-                        <span><i>هـ</i>${hij(w.from)} — ${hij(w.to)}</span>
-                        <span><i>م</i>${greg(w.from)} — ${greg(w.to)}</span>
-                    </div>
-                    <div class="dots">
-                        ${w.days.map((d) => `
-                            <span class="dot ${d.hol ? 'off' : ''}">
-                                <span class="d"></span>
-                                <span class="l">${d.short}</span>
-                            </span>`).join('')}
-                    </div>
-                    ${w.offs.length ? `
-                        <div class="off-note">
-                            <span class="pill">${w.allOff ? 'الأسبوع كاملاً' : dayWord(w.offs.length)}</span>
-                            <span>${esc(w.holName)}${w.allOff ? '' : ' — ' + w.offs.map((d) => d.name).join(' و')}</span>
-                        </div>` : ''}
+            <div class="det ${isNow ? 'is-now' : ''} ${w.offs.length ? 'is-hol' : ''}">
+                <div class="det-h">
+                    <span class="t">الأسبوع ${ORD[w.k]}</span>
+                    ${isNow ? '<span class="tag">أنت هنا</span>' : ''}
                 </div>
+                <div class="det-d">
+                    <span><i>هـ</i>${hij(w.from)} — ${hij(w.to)}</span>
+                    <span><i>م</i>${greg(w.from)} — ${greg(w.to)}</span>
+                </div>
+                <div class="det-days">
+                    ${w.days.map((d) => `<span class="dy ${d.hol ? 'off' : ''}">${d.name}</span>`).join('')}
+                </div>
+                ${w.offs.length ? `
+                    <div class="det-note">
+                        ${esc(w.holName)} —
+                        ${w.allOff ? 'الأسبوع كاملاً' : dayWord(w.offs.length) + ': ' + w.offs.map((d) => d.name).join(' و')}
+                    </div>` : ''}
             </div>`;
     }
 
     const stage = document.getElementById('stage');
 
     function draw() {
-        const list = WEEKS.filter((w) => w.term === term);
         stage.innerHTML = `
             <div class="ghost">
                 <h4>📅 الجدول الأسبوعي</h4>
@@ -388,14 +350,23 @@ body {
                         <span class="cal-sub">الأسبوع ${ORD[CURRENT.k]} · <b>${nextOff ? esc(nextOff.hol.name) : ''}</b> بعد ${dayWord(daysTo)}</span>
                     </span>
                 </button>
-                ${open ? hero() + tabs() + `<div class="path">${list.map(week).join('')}</div>` : ''}
+                ${open ? band() + tabs() + grid() + detail() : ''}
             </div>`;
+        const h = document.querySelector('.cal').getBoundingClientRect().height;
+        document.getElementById('hgt').textContent = 'ارتفاع البطاقة مفتوحةً: ' + Math.round(h) + 'px';
     }
 
     stage.addEventListener('click', (e) => {
         if (e.target.closest('[data-toggle]')) { open = !open; return draw(); }
         const t = e.target.closest('[data-term]');
-        if (t) { term = Number(t.dataset.term); draw(); }
+        if (t) {
+            term = Number(t.dataset.term);
+            const first = WEEKS.find((w) => w.term === term);
+            sel = (CURRENT.term === term) ? CURRENT.n : first.n;
+            return draw();
+        }
+        const c = e.target.closest('[data-w]');
+        if (c) { sel = Number(c.dataset.w); draw(); }
     });
 
     draw();
