@@ -18,6 +18,11 @@
 
     const KEY = (name) => 'hint_' + name;
 
+    /* مذكّرةٌ لهذه الجلسة: الكتابة في الإعدادات رحلةُ شبكة، ولو انتُظرت
+       لظهر التلميح مرّتين لمن دخل الشاشة وخرج ورجع بسرعة. */
+    const shownNow = new Set();
+
+
     async function seen(name) {
         try { return !!(await global.TeacherDB.Settings.get(KEY(name))); }
         catch (e) { return true; }   /* قراءةٌ فاشلة تعني صمتاً لا إزعاجاً */
@@ -27,12 +32,22 @@
         try { await global.TeacherDB.Settings.set(KEY(name), true); } catch (e) { /* لا شيء */ }
     }
 
-    /** لنسيان تلميحٍ وإعادته — للتجربة، ومن الإعدادات لاحقاً إن أردنا. */
+    /** لنسيان تلميحٍ وإعادته — للتجربة، ومن الإعدادات لاحقاً إن أردنا.
+     *  ويُمحى من مذكّرة الجلسة أيضاً، وإلّا لم يعد إلا بعد إغلاق التطبيق. */
     async function forget(name) {
+        shownNow.delete(name);
         try { await global.TeacherDB.Settings.unset(KEY(name)); } catch (e) { /* لا شيء */ }
     }
 
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+    /** موجودٌ في الصفحة، وظاهرٌ، وله مساحة. */
+    function visible(el) {
+        if (!el || !el.isConnected) return false;
+        if (el.offsetParent === null) return false;      /* display:none أو شاشةٌ مطويّة */
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    }
 
     function place(target, hole, tip) {
         const t = target.getBoundingClientRect();
@@ -73,16 +88,31 @@
      */
     async function showOnce(name, opts) {
         opts = opts || {};
-        if (await seen(name)) return false;
+        if (shownNow.has(name)) return false;
 
+        /* المسار يُثبَّت قبل الانتظار لا بعده: القراءة رحلةُ شبكة، ومن
+           غادر خلالها كان تلميحُ الشاشة السابقة يُرسم على شاشته الجديدة —
+           والمستمع الذي يُغلقه لم يكن قد وُلد بعد. */
+        const bornAt = global.location.hash;
+        if (await seen(name)) return false;
+        if (global.location.hash !== bornAt) return false;
+
+        /* ── لا انتظارَ بعد هذا السطر ──
+           كان بين فحص الهدف ورسم الطبقة انتظارُ كتابةٍ في الإعدادات. ومن
+           انتقل بين الشاشتين بسرعة تغيّرت شاشته خلاله، فرُسمت الطبقة
+           مسنودةً إلى زرٍّ غادَره. فصار الفحص والرسم متلاصقَين، والكتابة
+           تمضي في الخلفية. */
         const target = opts.target
             || (opts.selector ? document.querySelector(opts.selector) : null);
-        /* هدفٌ غائبٌ أو بلا مساحة: لا يُعرض ولا يُسجَّل — فيُعرض في زيارةٍ
-           تاليةٍ يكون فيها الهدف موجوداً. */
-        if (!target || !target.getBoundingClientRect().width) return false;
+        /* هدفٌ غائبٌ أو مخفيٌّ أو بلا مساحة: لا يُعرض ولا يُسجَّل — فيُعرض
+           في زيارةٍ تاليةٍ يكون فيها الهدف موجوداً. */
+        if (!visible(target)) return false;
 
-        /* تُسجَّل الآن: لو أغلق التطبيق قبل «فهمت» لا يعود التلميح. */
-        await markSeen(name);
+        /* مذكّرةُ الجلسة تمنع التكرار بلا انتظار رحلة شبكة. */
+        shownNow.add(name);
+        /* والكتابة قبل «فهمت» لا بعدها: لو أُغلق التطبيق قبلها عاد التلميح
+           في كل فتحة. */
+        markSeen(name).catch(() => {});
 
         const layer = document.createElement('div');
         layer.className = 'hint-layer';
@@ -101,19 +131,32 @@
         document.body.appendChild(layer);
         place(target, hole, tip);   /* متزامن: العنصر موجودٌ فور إلحاقه */
 
+        /* الطبقة معلّقةٌ بـ`body` لا بالشاشة، فلا تزول بتغيّر الشاشة وحده.
+           فتُراقَب: إن غادر المعلّم أو اختفى الهدف أُغلقت. */
+        let ro = null;
+
         function close() {
-            global.removeEventListener('resize', onResize);
-            global.removeEventListener('scroll', onResize, true);
+            global.removeEventListener('resize', reposition);
+            global.removeEventListener('scroll', reposition, true);
+            global.removeEventListener('hashchange', close);
+            if (ro) { try { ro.disconnect(); } catch (e) { /* لا شيء */ } }
             layer.remove();
         }
-        function onResize() {
-            if (!document.body.contains(target)) return close();
+        function reposition() {
+            if (global.location.hash !== bornAt || !visible(target)) return close();
             place(target, hole, tip);
         }
         layer.addEventListener('click', close);
-        global.addEventListener('resize', onResize);
+        global.addEventListener('hashchange', close);
+        global.addEventListener('resize', reposition);
         /* التمرير يزيح الهدف والطبقة ثابتة — فيُعاد الحساب أو يُغلق. */
-        global.addEventListener('scroll', onResize, true);
+        global.addEventListener('scroll', reposition, true);
+        /* وما يُركَّب بعد الرسم (بطاقةٌ تحمَّل، خطٌّ يصل) يزيح الهدف بلا
+           تمريرٍ ولا تغيير حجم — فيُتابَع تخطيط الصفحة نفسه. */
+        if (global.ResizeObserver) {
+            ro = new global.ResizeObserver(reposition);
+            try { ro.observe(document.body); } catch (e) { ro = null; }
+        }
         return true;
     }
 
