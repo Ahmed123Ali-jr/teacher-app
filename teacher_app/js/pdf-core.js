@@ -525,10 +525,37 @@
         });
     }
 
+    /* صور الآيفون HEIC افتراضاً، ولا يقبلها النموذج. وسفاري يفكّها لأنها
+       صيغة آبل، فالمرور بلوحة رسمٍ يحوّلها JPEG على الجهاز نفسه — ويصغّرها
+       معها فلا تصطدم بسقف الحجم. وإن تعذّر الرسم تُرسل كما هي، فربّما
+       كانت صيغةً مقبولةً أصلاً. */
+    function imageToJpeg(dataUrl, maxSide) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const side = maxSide || 2000;
+                    const k = Math.min(1, side / Math.max(img.width, img.height));
+                    const c = document.createElement('canvas');
+                    c.width  = Math.max(1, Math.round(img.width  * k));
+                    c.height = Math.max(1, Math.round(img.height * k));
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    const out = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+                    c.width = c.height = 0;
+                    resolve(out ? { base64: out, mediaType: 'image/jpeg' } : null);
+                } catch (e) { resolve(null); }
+            };
+            img.onerror = () => resolve(null);
+            img.src = dataUrl;
+        });
+    }
+
     async function fileToImagePages(file, maxPages) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
             const dataUrl = await blobToDataUrl(file);
+            const norm = await imageToJpeg(dataUrl);
+            if (norm) return [norm];
             const [meta, b64] = dataUrl.split(',');
             const mediaType = (meta.match(/data:([^;]+)/) || [])[1] || file.type || 'image/jpeg';
             return [{ base64: b64, mediaType }];

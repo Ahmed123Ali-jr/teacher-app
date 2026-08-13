@@ -9,8 +9,6 @@
     'use strict';
 
     const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
-    const API_URL       = 'https://api.anthropic.com/v1/messages';
-    const API_VERSION   = '2023-06-01';
 
     /* Edge Function proxy: keeps the shared key on the server. The browser
        calls this URL with the user's Supabase JWT — no Anthropic key ever
@@ -44,69 +42,40 @@
         } catch { return false; }
     }
 
-    /** Low-level call. Prefers the user's personal key when set; otherwise
-     *  routes through the Supabase Edge Function proxy with the user's
-     *  auth token so the shared Anthropic key stays on the server. */
-    async function callClaude({ system, user, maxTokens = 4000, temperature = 0.7, kind = 'other' }) {
-        const personalKey = await getApiKey();
-        const model       = await getModel();
-        const body = JSON.stringify({
-            model,
-            max_tokens: maxTokens,
-            temperature,
-            system,
-            messages: [{ role: 'user', content: user }]
+    /** ينادي البروكسي بنيّةٍ لا بطلب: `kind` وصورٌ لا غير.
+     *
+     *  التعليماتُ والنموذجُ والقالبُ كلُّها في الخادم الآن. وكانت هنا —
+     *  أي في المكان الوحيد الذي لا يمرّ به مهاجم، فما كانت تقيّد أحداً.
+     *  والخادم يفرض شكل المخرَج بأداةٍ إجبارية ويفحصه قبل أن يعيده، فما
+     *  يصل هنا لا يكون إلا أسماءً أو حصصاً. */
+    async function callProxy(payload, kind) {
+        const { data } = await global.SB.auth.getSession();
+        const token = data?.session?.access_token;
+        if (!token) throw new Error('NO_API_KEY');
+
+        const res = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + token },
+            body: JSON.stringify(payload)
         });
 
-        let res;
-        if (personalKey) {
-            res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'content-type':                              'application/json',
-                    'x-api-key':                                 personalKey,
-                    'anthropic-version':                         API_VERSION,
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body
-            });
-        } else {
-            const { data } = await global.SB.auth.getSession();
-            const token = data?.session?.access_token;
-            if (!token) throw new Error('NO_API_KEY');
-            res = await fetch(PROXY_URL, {
-                method: 'POST',
-                headers: {
-                    'content-type':  'application/json',
-                    'authorization': 'Bearer ' + token
-                },
-                body
-            });
-        }
+        let body = null;
+        try { body = await res.json(); } catch (e) { /* يُعالَج أدناه */ }
 
         if (!res.ok) {
-            let msg = `فشل الاتصال (${res.status})`;
-            try {
-                const err = await res.json();
-                if (err?.error?.message) msg += ': ' + err.error.message;
-            } catch {}
-            throw new Error(msg);
+            throw new Error((body && body.error) || `فشل الاتصال (${res.status})`);
         }
+        if (!body) throw new Error('تعذّر قراءة استجابة الخدمة.');
 
-        const data = await res.json();
-        const text = (data.content || []).map((b) => b.text || '').join('').trim();
-
-        // Track token usage (if the API returned it)
-        if (data.usage) {
+        if (body.usage) {
             recordUsage({
-                model,
+                model: DEFAULT_MODEL,
                 kind,
-                input_tokens:  Number(data.usage.input_tokens)  || 0,
-                output_tokens: Number(data.usage.output_tokens) || 0
+                input_tokens:  Number(body.usage.input_tokens)  || 0,
+                output_tokens: Number(body.usage.output_tokens) || 0
             }).catch(() => {});
         }
-
-        return text;
+        return body;
     }
 
     /* ==========================================================================
@@ -175,28 +144,6 @@
         return { usd, sar: usd * 3.75 };
     }
 
-    /** Ask Claude for JSON and parse it (robust: strips code fences and surrounding prose). */
-    async function callClaudeJSON(opts) {
-        const raw = await callClaude({ ...opts, temperature: opts.temperature ?? 0.6 });
-        return extractJSON(raw);
-    }
-
-    function extractJSON(text) {
-        let s = String(text || '').trim();
-        // Strip markdown code fences
-        s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-        // Find first { or [
-        const first = Math.min(
-            ...[s.indexOf('{'), s.indexOf('[')].filter((i) => i >= 0)
-        );
-        if (first > 0) s = s.slice(first);
-        // Find matching last bracket
-        const last = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
-        if (last > 0) s = s.slice(0, last + 1);
-        try { return JSON.parse(s); }
-        catch (e) { throw new Error('تعذّر قراءة استجابة الذكاء الاصطناعي.'); }
-    }
-
     /* ==========================================================================
        Public generators — all return { questions: [...] } or similar shapes.
        If the API key is missing, a mock is returned so the UI still works.
@@ -206,57 +153,15 @@
         if (!Array.isArray(pages)) {
             pages = [{ base64: imageBase64, mediaType }];
         }
-        const list = (classes || []).map((c) =>
-            `- id: ${c.id} | الصف: ${c.grade} | الشعبة: ${c.section} | المادة: ${c.subject}`
-        ).join('\n') || '(لا توجد فصول مسجّلة)';
-
-        const system = `أنت مساعد لقراءة الجداول الدراسية المدرسية للمعلمين العرب.
-الأيام: الأحد=0 الاثنين=1 الثلاثاء=2 الأربعاء=3 الخميس=4
-أرقام الحصص من 1 إلى ${periodCount || 7}
-
-فصول المعلم المتاحة:
-${list}
-
-لكل خانة في الجدول، حدّد:
-- day (0-4)
-- period (1-N)
-- class_id  (يجب أن يكون من القائمة أعلاه؛ التقط أفضل تطابق)
-- topic     (الموضوع/الدرس إن وُجد، نص قصير)
-
-إذا الخانة لفصل غير موجود في القائمة، اجعل "unmatched": true وضع وصف نصي في class_text.
-
-أخرج JSON فقط دون أي شرح:
-{"cells":[
-  {"day":0,"period":1,"class_id":"<uuid>","topic":""},
-  {"day":1,"period":2,"unmatched":true,"class_text":"الأول/أ — رياضيات","topic":""}
-]}`;
-
-        const user = [
-            ...pages.map((p) => ({
-                type: 'image',
-                source: { type: 'base64', media_type: p.mediaType, data: p.base64 }
+        const body = await callProxy({
+            kind:  'schedule',
+            pages: pages.map((p) => ({ media_type: p.mediaType, data: p.base64 })),
+            classes: (classes || []).map((c) => ({
+                id: c.id, grade: c.grade, section: c.section, subject: c.subject
             })),
-            { type: 'text', text: `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} للجدول الأسبوعي. استخرج كل الحصص وأعد JSON فقط حسب الشكل المطلوب.` }
-        ];
-
-        const text = await callClaude({
-            system, user,
-            maxTokens: 4000,
-            temperature: 0.2,
-            kind: 'schedule_import'
-        });
-
-        let json;
-        try {
-            const cleaned = String(text || '')
-                .replace(/^```(?:json)?\s*/i, '')
-                .replace(/\s*```$/i, '')
-                .trim();
-            json = JSON.parse(cleaned);
-        } catch (e) {
-            throw new Error('لم أتمكن من قراءة استجابة الذكاء الاصطناعي.');
-        }
-        return Array.isArray(json.cells) ? json.cells : [];
+            periodCount: periodCount || 7
+        }, 'schedule_import');
+        return Array.isArray(body.cells) ? body.cells : [];
     }
 
     /** Extract a clean list of Arabic student names from a roster.
@@ -268,53 +173,16 @@ ${list}
         if (!Array.isArray(pages)) {
             pages = [{ base64: imageBase64, mediaType }];
         }
-
-        const system = `أنت مساعد لاستخراج أسماء الطلاب من صور كشوف الفصول العربية.
-
-مهمتك: اقرأ كل الصور المرفقة (قد تكون عدة صفحات لقائمة طلاب واحدة) واستخرج فقط أسماء الطلاب من جميع الصفحات.
-- تجاهل الترقيم، أرقام الهوية، الجنسية، تاريخ الميلاد، وأي بيانات أخرى.
-- تجاهل العناوين والترويسة وأي نص ليس اسم طالب.
-- نظّف الاسم من المسافات الزائدة لكن احتفظ به كما هو (لا تترجمه ولا تختصره).
-- اجمع الأسماء من كل الصفحات في قائمة واحدة بالترتيب.
-
-أخرج JSON فقط:
-{"names":["أحمد بن محمد","سارة بنت عبدالله", ...]}`;
-
-        const user = [
-            ...pages.map((p) => ({
-                type: 'image',
-                source: { type: 'base64', media_type: p.mediaType, data: p.base64 }
-            })),
-            { type: 'text', text: `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} لكشف الفصل. استخرج أسماء الطلاب من الكل وأعد JSON فقط.` }
-        ];
-
-        const text = await callClaude({
-            system, user,
-            maxTokens: 4000,
-            temperature: 0.1,
-            kind: 'roster_import'
-        });
-
-        let json;
-        try {
-            const cleaned = String(text || '')
-                .replace(/^```(?:json)?\s*/i, '')
-                .replace(/\s*```$/i, '')
-                .trim();
-            json = JSON.parse(cleaned);
-        } catch (e) {
-            throw new Error('لم أتمكن من قراءة استجابة الذكاء الاصطناعي.');
-        }
-        const names = Array.isArray(json.names) ? json.names : [];
-        return names
-            .map((n) => String(n || '').trim())
-            .filter((n) => n.length > 0 && n.length < 200);
+        const body = await callProxy({
+            kind:  'names',
+            pages: pages.map((p) => ({ media_type: p.mediaType, data: p.base64 }))
+        }, 'roster_import');
+        return Array.isArray(body.names) ? body.names : [];
     }
 
     global.AI = {
         getApiKey, setApiKey, hasApiKey,
         getModel, setModel,
-        callClaude, callClaudeJSON,
         extractScheduleFromImage,
         extractStudentNamesFromImage,
         getUsage, clearUsage, estimateCost, PRICES,
