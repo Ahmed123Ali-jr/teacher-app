@@ -13,42 +13,22 @@
 <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
 
 <style>
-body { padding: 14px 12px calc(88px + env(safe-area-inset-bottom)); }
+body { padding: 14px 12px 40px; }
 .pv-title { margin: 0 0 4px; font-size: 15px; font-weight: var(--fw-black); text-align: center; color: var(--primary); }
-.pv-note  { margin: 0 0 12px; font-size: 11.5px; line-height: 1.85; color: var(--text-muted); text-align: center; }
-.pv-cap   { margin: 0 0 12px; font-size: 12.5px; font-weight: var(--fw-black); text-align: center; color: var(--primary); }
-.pv-cap span { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 3px; line-height: 1.75; }
+.pv-note  { margin: 0 0 14px; font-size: 11.5px; line-height: 1.85; color: var(--text-muted); text-align: center; }
 #stage { max-width: 520px; margin: 0 auto; }
 
-.pv-bar {
-    position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
-    display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(255,255,255,.95); backdrop-filter: blur(10px);
-    border-top: 1px solid var(--border);
-}
-.pv-bar button {
-    flex: 1; min-height: 46px; border-radius: 12px; cursor: pointer;
-    font-family: inherit; font-size: 15px; font-weight: var(--fw-black); color: var(--primary);
-    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, #ECEAE3 42%, #fff) 50%, #ECEAE3 100%);
-    border: 1.5px solid color-mix(in srgb, #ECEAE3 85%, #000);
-    box-shadow: inset 0 1.5px 0 #fff, 0 3px 8px rgba(16,24,40,.09);
-}
-.pv-bar button.on {
-    color: #fff; border-color: #0A2049;
-    background: linear-gradient(150deg, #1B3E77 0%, var(--primary) 55%, #0A2049 100%);
-}
-
-/* شبح الجدول الأسبوعي — ليرى مكان البطاقة لا شكلها وحده */
+/* شبح الجدول — ليرى مكان البطاقة لا شكلها وحده */
 .ghost {
     background: var(--surface); border: 1.5px solid var(--border);
-    border-radius: 16px; padding: 14px; margin-bottom: 12px; opacity: .5;
+    border-radius: 16px; padding: 14px; margin-bottom: 12px; opacity: .45;
 }
 .ghost h4 { margin: 0 0 10px; font-size: 13px; color: var(--primary); }
 .ghost .g { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
 .ghost .g i { display: block; height: 26px; border-radius: 6px; background: color-mix(in srgb, #ECEAE3 60%, #fff); }
 
 /* ==========================================================================
-   البطاقة المطويّة — مشتركة بين التصاميم الثلاثة
+   البطاقة المطويّة
    ========================================================================== */
 .cal {
     background: var(--surface); border: 1.5px solid var(--border);
@@ -72,118 +52,114 @@ body { padding: 14px 12px calc(88px + env(safe-area-inset-bottom)); }
 .cal-nm { display: block; font-size: 13.5px; font-weight: var(--fw-black); color: var(--primary); }
 .cal-sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
 .cal-sub b { color: #8A6E2E; font-weight: var(--fw-black); }
-.cal-body { padding: 0 14px 14px; border-top: 1px solid var(--border); padding-top: 13px; }
+.cal-body { padding: 13px 14px 14px; border-top: 1px solid var(--border); }
 
-/* سطر «أين أنت» — يعلو كل التصاميم */
-.cal-now {
-    display: flex; gap: 10px; align-items: flex-start;
+/* ---------- شريط الفصول ---------- */
+.trm { display: flex; gap: 6px; margin-bottom: 13px; }
+.trm button {
+    flex: 1; min-height: 40px; border-radius: 11px; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-weight: var(--fw-black);
+    color: var(--primary); line-height: 1.35;
     background: color-mix(in srgb, #ECEAE3 35%, #fff);
-    border: 1.5px solid var(--border); border-radius: 12px;
-    padding: 10px 12px; margin-bottom: 13px;
-}
-.cal-now .n { font-size: 22px; font-weight: var(--fw-black); color: var(--primary); line-height: 1; }
-.cal-now .t { flex: 1; font-size: 11.5px; line-height: 1.7; color: var(--text); }
-.cal-now .t b { color: var(--primary); }
-
-.cal-legend {
-    display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px;
-    font-size: 10.5px; color: var(--text-muted);
-}
-.cal-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-inline-end: 5px; vertical-align: -1px; }
-.lg-1 { background: #0F2C5C; } .lg-2 { background: #3E6096; } .lg-3 { background: #7C93BC; }
-.lg-h { background: #C9A961; } .lg-n { background: #fff; border: 1.5px solid var(--primary); }
-
-/* ==========================================================================
-   أ — الخطّ الزمني: السنة شريطٌ متّصل
-   ========================================================================== */
-.tl { display: flex; flex-direction: column; gap: 14px; }
-.tl-term { }
-.tl-head {
-    display: flex; align-items: baseline; gap: 7px; margin-bottom: 6px;
-    font-size: 11.5px; font-weight: var(--fw-black); color: var(--primary);
-}
-.tl-head .rng { margin-inline-start: auto; font-size: 10.5px; font-weight: 500; color: var(--text-muted); }
-.tl-bar { display: flex; gap: 2px; height: 34px; border-radius: 8px; overflow: hidden; }
-.tl-w { flex: 1; position: relative; cursor: pointer; }
-.tl-w .fillbar { position: absolute; inset: 0; border-radius: 2px; }
-.tl-w[data-t="1"] .fillbar { background: #0F2C5C; }
-.tl-w[data-t="2"] .fillbar { background: #3E6096; }
-.tl-w[data-t="3"] .fillbar { background: #7C93BC; }
-.tl-w.hol .fillbar { background: #C9A961; }
-.tl-w.long .fillbar { background: repeating-linear-gradient(135deg,#C9A961 0 5px,#B8963F 5px 10px); }
-.tl-w.now .fillbar { box-shadow: inset 0 0 0 2.5px #fff, 0 0 0 2px var(--primary); }
-.tl-w .lbl {
-    position: absolute; inset-inline: 0; bottom: 2px; text-align: center;
-    font-size: 8px; font-weight: 700; color: rgba(255,255,255,.85);
-}
-
-/* ==========================================================================
-   ب — أعمدة الأسابيع: السنة كلّها في شاشة
-   ========================================================================== */
-.col-wrap { display: flex; align-items: flex-end; gap: 3px; height: 108px; }
-.col {
-    flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
-    gap: 3px; cursor: pointer; min-width: 0;
-}
-.col .bar { border-radius: 3px 3px 0 0; }
-.col[data-t="1"] .bar { background: #0F2C5C; height: 58px; }
-.col[data-t="2"] .bar { background: #3E6096; height: 58px; }
-.col[data-t="3"] .bar { background: #7C93BC; height: 58px; }
-.col.hol .bar { background: #C9A961; height: 34px; }
-.col.long .bar { background: repeating-linear-gradient(135deg,#C9A961 0 5px,#B8963F 5px 10px); height: 82px; }
-.col.now .bar { outline: 2px solid var(--primary); outline-offset: 1px; }
-.col .cn { font-size: 7.5px; text-align: center; color: var(--text-muted); font-weight: 700; }
-.col.now .cn { color: var(--primary); }
-
-/* ==========================================================================
-   ج — شبكة الأسابيع: ستٌّ في كل صف، كملصق السنة
-   ========================================================================== */
-.grid-w { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-.gw {
-    aspect-ratio: 1; border-radius: 9px; cursor: pointer;
-    display: grid; place-items: center; position: relative;
-    font-size: 11px; font-weight: var(--fw-black); color: #fff;
-    border: 0; font-family: inherit;
-}
-.gw[data-t="1"] { background: #0F2C5C; }
-.gw[data-t="2"] { background: #3E6096; }
-.gw[data-t="3"] { background: #7C93BC; }
-.gw.hol { background: #C9A961; color: #4A3A12; }
-.gw.long { background: repeating-linear-gradient(135deg,#C9A961 0 5px,#B8963F 5px 10px); color: #fff; }
-.gw.now { box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 4.5px var(--primary); }
-.gw .dot {
-    position: absolute; top: 4px; inset-inline-end: 4px;
-    width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.9);
-}
-
-/* تفاصيل الأسبوع الملموس — الدقّة تبقى عند اللمس */
-.wk-detail {
-    margin-top: 12px; padding: 11px 12px; border-radius: 12px;
-    background: color-mix(in srgb, #ECEAE3 30%, #fff);
     border: 1.5px solid var(--border);
-    font-size: 12px; line-height: 1.85;
 }
-.wk-detail b { color: var(--primary); }
-.wk-detail .hol { color: #8A6E2E; font-weight: var(--fw-black); }
-.wk-detail .none { color: var(--text-muted); font-size: 11.5px; }
+.trm button.on { color: #fff; background: var(--primary); border-color: var(--primary); }
+.trm button small { display: block; font-size: 9.5px; font-weight: 500; opacity: .75; }
+
+/* ---------- سطر «أين أنت» ---------- */
+.now {
+    display: flex; flex-direction: column; gap: 7px;
+    background: color-mix(in srgb, #ECEAE3 32%, #fff);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 11px 12px; margin-bottom: 13px;
+}
+.now .l1 { font-size: 13px; font-weight: var(--fw-black); color: var(--primary); }
+.now .l2 {
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: 11.5px; color: var(--text); line-height: 1.7;
+    padding-top: 7px; border-top: 1px dashed var(--border);
+}
+.now .l2 .big { font-size: 17px; font-weight: var(--fw-black); color: #8A6E2E; }
+.now .l2 .nm { color: #8A6E2E; font-weight: var(--fw-black); }
+
+/* ---------- صفوف الأسابيع ---------- */
+.wks { display: flex; flex-direction: column; gap: 7px; }
+.wk {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 9px 10px; border-radius: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+}
+.wk-n {
+    width: 34px; height: 34px; flex: none; border-radius: 9px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: var(--fw-black); color: #fff;
+}
+.wk[data-t="1"] .wk-n { background: #0F2C5C; }
+.wk[data-t="2"] .wk-n { background: #3E6096; }
+.wk[data-t="3"] .wk-n { background: #7C93BC; }
+
+.wk-b { flex: 1; min-width: 0; }
+.wk-ttl { font-size: 12.5px; font-weight: var(--fw-black); color: var(--primary); }
+/* سطرٌ لكل تقويم دائماً: الالتفاف كان يضعهما معاً حيناً ويفصلهما
+   حيناً، فيختلف ارتفاع الصفوف بلا سبب يراه المعلّم. */
+.wk-d {
+    display: flex; flex-direction: column; gap: 1px; margin-top: 2px;
+    font-size: 10.5px; color: var(--text-muted); line-height: 1.7;
+}
+.wk-d span { white-space: nowrap; }
+.wk-d i {
+    font-style: normal; font-weight: var(--fw-black);
+    color: color-mix(in srgb, var(--primary) 55%, var(--text-muted));
+    margin-inline-end: 3px;
+}
+
+/* أيام الإجازة داخل الأسبوع */
+/* خمسة أعمدة لا التفاف: أيام الأسبوع صفٌّ واحد دائماً، وإلّا نزل
+   «الخميس» وحده فبدا كأنه يومٌ من نوعٍ آخر. */
+.wk-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-top: 6px; }
+.dy {
+    font-size: 9.5px; font-weight: var(--fw-black); text-align: center;
+    border-radius: 6px; padding: 3px 2px;
+    background: color-mix(in srgb, #ECEAE3 45%, #fff);
+    color: var(--text-muted); border: 1px solid var(--border);
+}
+.dy.off { background: #F5EEDC; color: #7A6224; border-color: #E2D3AC; }
+.wk-hol {
+    margin-top: 5px; font-size: 10.5px; font-weight: var(--fw-black); color: #8A6E2E;
+}
+
+/* الأسبوع الحالي — بلونٍ مميّز لا بإطارٍ وحده */
+.wk.now-week {
+    background: linear-gradient(145deg,
+        color-mix(in srgb, #C9A961 20%, var(--surface)) 0%,
+        color-mix(in srgb, #C9A961 8%, var(--surface)) 100%);
+    border-color: #C9A961;
+    box-shadow: 0 2px 8px rgba(201,169,97,.28);
+}
+.wk.now-week .wk-n { background: #B8963F; }
+.wk.now-week .wk-ttl::after {
+    content: 'أنت هنا';
+    margin-inline-start: 7px; font-size: 9.5px; font-weight: var(--fw-black);
+    color: #fff; background: #B8963F; border-radius: 20px; padding: 1px 8px;
+    vertical-align: 1px;
+}
+
+/* أسبوع إجازته مطوّلة */
+.wk.long-off { border-inline-start: 4px solid #C9A961; }
+.wk.long-off .wk-n { background: repeating-linear-gradient(135deg,#C9A961 0 5px,#B8963F 5px 10px); }
 </style>
 </head>
 <body>
 
-<h1 class="pv-title">التقويم الدراسي</h1>
+<h1 class="pv-title">التقويم الدراسي — التصميم ج بتعديلاتك</h1>
 <p class="pv-note">
-    بطاقة مطويّة تحت الجدول — اضغطها لتنفتح.<br>
-    البيانات تجريبية، وستُستبدل بتقويمك حين ترسله.
+    فصلٌ واحد في كل مرة · كل أسبوع بتاريخيه الهجري والميلادي<br>
+    أيام الإجازة داخل الأسبوع محدّدة بأسمائها · وأسبوعك بلونٍ ذهبي<br>
+    <b>البيانات تجريبية — ستُستبدل بتقويمك</b>
 </p>
 
-<div class="pv-cap" id="cap"></div>
 <div id="stage"></div>
-
-<div class="pv-bar">
-    <button data-v="a" class="on">أ</button>
-    <button data-v="b">ب</button>
-    <button data-v="c">ج</button>
-</div>
 
 <script>
 (function () {
@@ -193,28 +169,45 @@ body { padding: 14px 12px calc(88px + env(safe-area-inset-bottom)); }
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-    const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+    /* الهجري من المتصفّح نفسه بتقويم أم القرى — لا مكتبة ولا جدول تحويل. */
+    const HIJRI = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', { day: 'numeric', month: 'long' });
+    const GREG_M = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
                     'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-    const fmt = (d) => ar(d.getDate()) + ' ' + MONTHS[d.getMonth()];
+    const hij  = (d) => HIJRI.format(d);
+    const greg = (d) => ar(d.getDate()) + ' ' + GREG_M[d.getMonth()];
+
+    const DAY_NAMES = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+    const ORD = ['', 'الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن',
+                 'التاسع','العاشر','الحادي عشر','الثاني عشر','الثالث عشر','الرابع عشر','الخامس عشر'];
 
     /* ------------------------------------------------------------------
-       بياناتٌ تجريبية بالبنية التي سيأخذها التقويم الحقيقي: أسبوعٌ أسبوع،
-       لكلٍّ فصلُه وتاريخاه، وما فيه من إجازة. الإجازة المطوّلة مميّزة عن
-       اليوم الواحد لأن المعلّم يخطّط لها لا يعلمها فقط.
+       بياناتٌ تجريبية بالبنية التي سيأخذها التقويم الحقيقي.
+       الإجازات بمداها اليومي لا بالأسبوع — لأن المطلوب تحديد الأيام
+       نفسها داخل الأسبوع لا الإشارة إلى أن فيه إجازة.
        ------------------------------------------------------------------ */
-    const START = new Date(2026, 7, 2);          // أحد
-    const TERMS = [{ n: 1, weeks: 13 }, { n: 2, weeks: 12 }, { n: 3, weeks: 11 }];
-    const HOLIDAYS = {
-        7:  { name: 'اليوم الوطني', days: 'يوم واحد', long: false },
-        13: { name: 'إجازة نهاية الفصل الأول', days: 'أسبوعان', long: true },
-        14: { name: 'إجازة نهاية الفصل الأول', days: 'أسبوعان', long: true },
-        20: { name: 'إجازة مطوّلة', days: 'يومان', long: false },
-        25: { name: 'إجازة نهاية الفصل الثاني', days: 'أسبوعان', long: true },
-        26: { name: 'إجازة نهاية الفصل الثاني', days: 'أسبوعان', long: true },
-        31: { name: 'إجازة عيد الفطر', days: 'أسبوعان', long: true },
-        32: { name: 'إجازة عيد الفطر', days: 'أسبوعان', long: true }
-    };
+    const D = (y, m, d) => new Date(y, m - 1, d);
+    const START = D(2026, 8, 2);
+    const TERMS = [
+        { n: 1, name: 'الفصل الأول',  weeks: 13 },
+        { n: 2, name: 'الفصل الثاني', weeks: 12 },
+        { n: 3, name: 'الفصل الثالث', weeks: 11 }
+    ];
+    const HOLIDAYS = [
+        { name: 'اليوم الوطني',            from: D(2026, 9, 23),  to: D(2026, 9, 23),  long: false },
+        { name: 'إجازة مطوّلة',            from: D(2026, 10, 12), to: D(2026, 10, 13), long: true  },
+        { name: 'إجازة نهاية الفصل الأول', from: D(2026, 10, 26), to: D(2026, 11, 5),  long: true  },
+        { name: 'إجازة مطوّلة',            from: D(2026, 12, 14), to: D(2026, 12, 15), long: true  },
+        { name: 'إجازة نهاية الفصل الثاني',from: D(2027, 1, 25),  to: D(2027, 2, 4),   long: true  },
+        { name: 'إجازة عيد الفطر',         from: D(2027, 3, 8),   to: D(2027, 3, 19),  long: true  }
+    ];
 
+    const sameDay = (a, b) => a.getFullYear() === b.getFullYear()
+        && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const holidayOn = (d) => HOLIDAYS.find((h) =>
+        d >= new Date(h.from.getFullYear(), h.from.getMonth(), h.from.getDate())
+     && d <= new Date(h.to.getFullYear(), h.to.getMonth(), h.to.getDate()));
+
+    /* أسبوعٌ أسبوع، ولكلٍّ أيامه الخمسة موصوفةً بحالتها. */
     const WEEKS = [];
     (function build() {
         let n = 0;
@@ -222,30 +215,49 @@ body { padding: 14px 12px calc(88px + env(safe-area-inset-bottom)); }
             for (let i = 0; i < t.weeks; i++) {
                 n += 1;
                 const from = new Date(START); from.setDate(START.getDate() + (n - 1) * 7);
-                const to = new Date(from); to.setDate(from.getDate() + 4);
-                WEEKS.push({ n, term: t.n, from, to, hol: HOLIDAYS[n] || null });
+                const days = DAY_NAMES.map((nm, k) => {
+                    const d = new Date(from); d.setDate(from.getDate() + k);
+                    return { name: nm, date: d, hol: holidayOn(d) || null };
+                });
+                const offs = days.filter((d) => d.hol);
+                WEEKS.push({
+                    n, term: t.n, from, to: days[4].date, days,
+                    offs,
+                    long: offs.some((d) => d.hol.long),
+                    holName: offs.length ? offs[0].hol.name : null,
+                    allOff: offs.length === 5
+                });
             }
         });
     })();
 
-    /* «اليوم» في المعاينة ثابت لتبقى اللقطة قابلة للمقارنة. */
-    const TODAY = new Date(2026, 7, 13);
-    const CURRENT = WEEKS.find((w) => TODAY >= w.from && TODAY <= new Date(w.to.getTime() + 2 * 864e5)) || WEEKS[1];
-    const nextHol = WEEKS.find((w) => w.n > CURRENT.n && w.hol);
-    const left = WEEKS.filter((w) => w.n > CURRENT.n && !w.hol).length;
+    /* «اليوم» ثابت في المعاينة لتبقى اللقطة قابلة للمقارنة. */
+    const TODAY = D(2026, 8, 13);
+    const CURRENT = WEEKS.find((w) => TODAY >= w.from && TODAY <= new Date(w.to.getTime() + 2 * 864e5)) || WEEKS[0];
 
-    let open = true, picked = null, current = 'a';
+    /* أقرب يوم إجازة قادم — بالأيام لا بالأسابيع، فهو ما يسأل عنه المعلّم. */
+    const nextOff = (function () {
+        for (const w of WEEKS) {
+            for (const d of w.days) {
+                if (d.hol && d.date > TODAY) return { day: d, week: w };
+            }
+        }
+        return null;
+    })();
+    const daysTo = nextOff ? Math.round((nextOff.day.date - TODAY) / 864e5) : 0;
+    const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
+        : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
 
-    const wkWord = (n) => n === 1 ? 'أسبوع واحد' : n === 2 ? 'أسبوعان'
-        : n <= 10 ? ar(n) + ' أسابيع' : ar(n) + ' أسبوعاً';
+    let open = true, term = CURRENT.term;
+    const idxInTerm = (w) => WEEKS.filter((x) => x.term === w.term).findIndex((x) => x.n === w.n) + 1;
 
-    function header() {
-        const sub = nextHol
-            ? `الأسبوع ${ar(CURRENT.n)} · القادم <b>${esc(nextHol.hol.name)}</b> بعد ${wkWord(nextHol.n - CURRENT.n)}`
-            : `الأسبوع ${ar(CURRENT.n)} من ${ar(WEEKS.length)}`;
+    function head() {
+        const sub = nextOff
+            ? `الأسبوع ${ORD[idxInTerm(CURRENT)]} · <b>${esc(nextOff.day.hol.name)}</b> بعد ${dayWord(daysTo)}`
+            : `الأسبوع ${ORD[idxInTerm(CURRENT)]}`;
         return `
             <button type="button" class="cal-top" data-toggle>
-                <span class="cal-ic">${open ? '🗓️' : '📆'}</span>
+                <span class="cal-ic">🗓️</span>
                 <span class="cal-tx">
                     <span class="cal-nm">التقويم الدراسي ١٤٤٨هـ</span>
                     <span class="cal-sub">${sub}</span>
@@ -253,124 +265,81 @@ body { padding: 14px 12px calc(88px + env(safe-area-inset-bottom)); }
             </button>`;
     }
 
-    function nowLine() {
+    function nowBox() {
+        const t = TERMS[CURRENT.term - 1];
         return `
-            <div class="cal-now">
-                <span class="n">${ar(CURRENT.n)}</span>
-                <span class="t">
-                    أنت في <b>الأسبوع ${ar(CURRENT.n)}</b> من الفصل ${['','الأول','الثاني','الثالث'][CURRENT.term]}
-                    — ${fmt(CURRENT.from)} إلى ${fmt(CURRENT.to)}.<br>
-                    بقي <b>${wkWord(left)}</b> دراسة حتى نهاية العام.
+            <div class="now">
+                <span class="l1">
+                    أنت في الأسبوع ${ORD[idxInTerm(CURRENT)]} من ${t.name}
                 </span>
+                ${nextOff ? `
+                <span class="l2">
+                    <span class="big">${ar(daysTo)}</span>
+                    <span>
+                        ${daysTo === 1 ? 'يوم' : daysTo === 2 ? 'يومان' : 'يوماً'}
+                        على <span class="nm">${esc(nextOff.day.hol.name)}</span>
+                        — ${nextOff.day.name} ${greg(nextOff.day.date)} · ${hij(nextOff.day.date)}هـ
+                    </span>
+                </span>` : ''}
             </div>`;
     }
 
-    const legend = () => `
-        <div class="cal-legend">
-            <span><i class="lg-1"></i>الفصل الأول</span>
-            <span><i class="lg-2"></i>الثاني</span>
-            <span><i class="lg-3"></i>الثالث</span>
-            <span><i class="lg-h"></i>إجازة</span>
-            <span><i class="lg-n"></i>أسبوعك</span>
+    function tabs() {
+        return `<div class="trm">
+            ${TERMS.map((t) => `
+                <button type="button" data-term="${t.n}" class="${term === t.n ? 'on' : ''}">
+                    ${t.name}
+                    <small>${ar(t.weeks)} أسبوعاً</small>
+                </button>`).join('')}
         </div>`;
+    }
 
-    function detail() {
-        if (!picked) return `<div class="wk-detail none">المس أيّ أسبوع لتفاصيله.</div>`;
-        const w = WEEKS[picked - 1];
+    function weekRow(w) {
+        const k = idxInTerm(w);
         return `
-            <div class="wk-detail">
-                <b>الأسبوع ${ar(w.n)}</b> · الفصل ${['','الأول','الثاني','الثالث'][w.term]}
-                · ${fmt(w.from)} — ${fmt(w.to)}
-                ${w.hol ? `<br><span class="hol">${esc(w.hol.name)} — ${esc(w.hol.days)}</span>` : ''}
+            <div class="wk ${w.n === CURRENT.n ? 'now-week' : ''} ${w.long ? 'long-off' : ''}" data-t="${w.term}">
+                <span class="wk-n">${ar(k)}</span>
+                <div class="wk-b">
+                    <div class="wk-ttl">الأسبوع ${ORD[k]}</div>
+                    <div class="wk-d">
+                        <span><i>هـ</i>${hij(w.from)} — ${hij(w.to)}</span>
+                        <span><i>م</i>${greg(w.from)} — ${greg(w.to)}</span>
+                    </div>
+                    ${w.offs.length ? `
+                        <div class="wk-days">
+                            ${w.days.map((d) => `<span class="dy ${d.hol ? 'off' : ''}">${d.name}</span>`).join('')}
+                        </div>
+                        <div class="wk-hol">
+                            ${w.allOff ? 'إجازة الأسبوع كاملاً' : 'إجازة'}:
+                            ${esc(w.holName)} — ${dayWord(w.offs.length)}
+                        </div>` : ''}
+                </div>
             </div>`;
     }
-
-    const cls = (w) => [w.hol ? 'hol' : '', w.hol && w.hol.long ? 'long' : '',
-                        w.n === CURRENT.n ? 'now' : ''].filter(Boolean).join(' ');
-
-    /* ---------- أ: الخطّ الزمني ---------- */
-    function viewA() {
-        let i = 0;
-        const terms = TERMS.map((t) => {
-            const ws = WEEKS.slice(i, i + t.weeks); i += t.weeks;
-            return `
-                <div class="tl-term">
-                    <div class="tl-head">
-                        <span>الفصل ${['','الأول','الثاني','الثالث'][t.n]}</span>
-                        <span class="rng">${fmt(ws[0].from)} — ${fmt(ws[ws.length - 1].to)}</span>
-                    </div>
-                    <div class="tl-bar">
-                        ${ws.map((w) => `
-                            <span class="tl-w ${cls(w)}" data-t="${w.term}" data-w="${w.n}">
-                                <span class="fillbar"></span>
-                                <span class="lbl">${ar(w.n)}</span>
-                            </span>`).join('')}
-                    </div>
-                </div>`;
-        }).join('');
-        return nowLine() + `<div class="tl">${terms}</div>` + detail() + legend();
-    }
-
-    /* ---------- ب: أعمدة الأسابيع ---------- */
-    function viewB() {
-        return nowLine() + `
-            <div class="col-wrap">
-                ${WEEKS.map((w) => `
-                    <span class="col ${cls(w)}" data-t="${w.term}" data-w="${w.n}">
-                        <span class="bar"></span>
-                        <span class="cn">${w.n % 3 === 1 ? ar(w.n) : ''}</span>
-                    </span>`).join('')}
-            </div>` + detail() + legend();
-    }
-
-    /* ---------- ج: شبكة الأسابيع ---------- */
-    function viewC() {
-        return nowLine() + `
-            <div class="grid-w">
-                ${WEEKS.map((w) => `
-                    <button type="button" class="gw ${cls(w)}" data-t="${w.term}" data-w="${w.n}">
-                        ${ar(w.n)}${w.hol ? '<span class="dot"></span>' : ''}
-                    </button>`).join('')}
-            </div>` + detail() + legend();
-    }
-
-    const VIEWS = {
-        a: [viewA, 'أ — الخطّ الزمني', 'السنة شريطٌ متّصل مقسوم بفصولها · الإجازة تكسر الشريط بلونٍ ذهبي · أسبوعك مطوّقٌ بالأبيض'],
-        b: [viewB, 'ب — أعمدة الأسابيع', 'السنة كلّها في شاشةٍ واحدة · طول العمود يقول نوعه: دراسة أم إجازةٌ قصيرة أم مطوّلة'],
-        c: [viewC, 'ج — شبكة الأسابيع', 'ستّة أسابيع في كل صف كملصق السنة · النقطة البيضاء تعني أن في الأسبوع إجازة']
-    };
 
     const stage = document.getElementById('stage');
-    const cap = document.getElementById('cap');
 
     function draw() {
-        const [fn, name, sub] = VIEWS[current];
-        cap.innerHTML = `${name}<span>${sub}</span>`;
+        const list = WEEKS.filter((w) => w.term === term);
         stage.innerHTML = `
             <div class="ghost">
                 <h4>📅 الجدول الأسبوعي</h4>
                 <div class="g">${'<i></i>'.repeat(15)}</div>
             </div>
             <div class="cal ${open ? 'open' : ''}">
-                ${header()}
-                ${open ? `<div class="cal-body">${fn()}</div>` : ''}
+                ${head()}
+                ${open ? `<div class="cal-body">
+                    ${nowBox()}
+                    ${tabs()}
+                    <div class="wks">${list.map(weekRow).join('')}</div>
+                </div>` : ''}
             </div>`;
     }
 
     stage.addEventListener('click', (e) => {
         if (e.target.closest('[data-toggle]')) { open = !open; return draw(); }
-        const w = e.target.closest('[data-w]');
-        if (w) { picked = Number(w.dataset.w); draw(); }
-    });
-
-    document.querySelectorAll('.pv-bar button').forEach((b) => {
-        b.addEventListener('click', () => {
-            document.querySelectorAll('.pv-bar button').forEach((x) => x.classList.remove('on'));
-            b.classList.add('on');
-            current = b.dataset.v;
-            draw();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        const t = e.target.closest('[data-term]');
+        if (t) { term = Number(t.dataset.term); draw(); }
     });
 
     draw();
