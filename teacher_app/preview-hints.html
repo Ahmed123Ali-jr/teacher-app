@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>معاينة التلميحات — أ أم ب</title>
+<link rel="stylesheet" href="css/fonts.css?v=1">
+<link rel="stylesheet" href="css/main.css?v=D16">
+<link rel="stylesheet" href="css/components.css?v=5">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=4">
+<style>
+    body { background: var(--bg); }
+    .pv-wrap { max-width: 520px; margin: 0 auto; padding: 18px 14px 60px; }
+    .pv-h { text-align: center; margin-bottom: 20px; }
+    .pv-h b { display: block; font-size: 22px; font-weight: var(--fw-black); color: var(--text); }
+    .pv-h span { display: block; font-size: 13px; color: var(--text-muted); margin-top: 5px; line-height: 1.7; }
+
+    .pv-sec { margin-bottom: 34px; }
+    .pv-tag {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: var(--primary); color: #fff;
+        padding: 6px 14px; border-radius: 999px;
+        font-size: 13px; font-weight: var(--fw-black); margin-bottom: 10px;
+    }
+    .pv-note { font-size: 12px; color: var(--text-muted); margin: 0 2px 12px; line-height: 1.75; }
+
+    /* لوحة تحاكي شاشة الجدول */
+    .stage {
+        position: relative; overflow: hidden;
+        background: var(--surface); border: 1.5px solid var(--border);
+        border-radius: 18px; padding: 14px 14px 122px;
+        box-shadow: 0 4px 14px rgba(16,24,40,.08);
+    }
+    .stage-bar { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+    .stage-ttl { font-size: 16px; font-weight: var(--fw-black); color: var(--text); margin-inline-end: auto; }
+    .fake-btn {
+        position: relative; z-index: 3;
+        padding: 8px 14px; border-radius: 11px;
+        border: 1.5px solid var(--border); background: var(--surface);
+        font-family: inherit; font-size: 13px; font-weight: var(--fw-black);
+        color: var(--primary); cursor: pointer; white-space: nowrap;
+    }
+    .fake-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .fake-grid div {
+        height: 42px; border-radius: 9px;
+        border: 1.5px dashed color-mix(in srgb, var(--border) 80%, transparent);
+        background: color-mix(in srgb, var(--border) 12%, transparent);
+    }
+    .fake-card {
+        position: relative; z-index: 3;
+        display: flex; align-items: center; gap: 10px;
+        padding: 13px; border-radius: 13px;
+        border: 1.5px solid var(--border); background: var(--surface);
+    }
+    .fake-card .em { font-size: 22px; }
+    .fake-card b { display: block; font-size: 14px; font-weight: var(--fw-black); color: var(--text); }
+    .fake-card span { display: block; font-size: 11.5px; color: var(--text-muted); }
+
+    /* ─────────── أ: طبقة معتمة مع سهم ─────────── */
+    .coach { position: absolute; inset: 0; z-index: 2; }
+    .coach-veil { position: absolute; inset: 0; background: rgba(10, 16, 32, .70); }
+    .coach-hole {
+        position: absolute; border-radius: 13px;
+        box-shadow: 0 0 0 9999px rgba(10, 16, 32, .70);
+    }
+    .coach-tip {
+        position: absolute; z-index: 4; box-sizing: border-box;
+        background: var(--surface); border-radius: 13px;
+        padding: 11px 13px;
+        box-shadow: 0 10px 26px rgba(0,0,0,.34);
+    }
+    .coach-tip b { display: block; font-size: 13.5px; font-weight: var(--fw-black); color: var(--text); }
+    .coach-tip span { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.65; }
+    .coach-tip::after {
+        content: ''; position: absolute; top: -7px; inset-inline-end: var(--arrow, 26px);
+        border-inline: 8px solid transparent; border-bottom: 8px solid var(--surface);
+    }
+    .coach-go {
+        margin-top: 9px; width: 100%; border: 0; border-radius: 9px;
+        background: var(--primary); color: #fff; padding: 7px;
+        font-family: inherit; font-size: 12px; font-weight: var(--fw-black); cursor: pointer;
+    }
+
+    /* ─────────── ب: فقاعة صغيرة بنبضة ─────────── */
+    .pulse { position: relative; z-index: 3; }
+    .pulse::before {
+        content: ''; position: absolute; inset: -5px; border-radius: 15px;
+        border: 2px solid var(--accent); animation: pv-pulse 1.9s ease-out infinite;
+    }
+    @keyframes pv-pulse {
+        0%   { transform: scale(.94); opacity: .95; }
+        70%  { transform: scale(1.10); opacity: 0; }
+        100% { transform: scale(1.10); opacity: 0; }
+    }
+    .bub {
+        position: absolute; z-index: 4; box-sizing: border-box;
+        display: flex; align-items: flex-start; gap: 8px;
+        background: var(--primary); color: #fff;
+        border-radius: 12px; padding: 9px 11px;
+        box-shadow: 0 8px 20px rgba(15,44,92,.32);
+    }
+    .bub b { font-size: 12.5px; font-weight: var(--fw-black); }
+    .bub span { display: block; font-size: 11px; opacity: .84; margin-top: 2px; line-height: 1.6; }
+    .bub .x {
+        flex: none; background: transparent; border: 0; color: #fff;
+        opacity: .7; font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1;
+    }
+    .bub::after {
+        content: ''; position: absolute; top: -6px; inset-inline-end: var(--arrow, 22px);
+        border-inline: 7px solid transparent; border-bottom: 7px solid var(--primary);
+    }
+
+    .pv-pick {
+        display: block; width: 100%; margin-top: 12px;
+        padding: 13px; border: 0; border-radius: 13px;
+        background: var(--primary); color: #fff;
+        font-family: inherit; font-size: 14px; font-weight: var(--fw-black); cursor: pointer;
+    }
+    .pv-replay {
+        display: block; width: 100%; margin-top: 7px; padding: 9px;
+        border: 1.5px solid var(--border); border-radius: 11px; background: transparent;
+        font-family: inherit; font-size: 12px; font-weight: var(--fw-bold);
+        color: var(--text-muted); cursor: pointer;
+    }
+    .pv-end {
+        margin-top: 26px; padding: 15px; border-radius: 14px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        border: 1.5px dashed var(--accent);
+        font-size: 13px; line-height: 1.85; color: var(--text);
+    }
+</style>
+</head>
+<body>
+<div class="pv-wrap">
+
+    <div class="pv-h">
+        <b>التلميحات — أيّهما؟</b>
+        <span>كلاهما يظهر <b>مرّةً واحدة</b> لأول مرة فقط، ثم لا يعود أبداً.<br>
+              جرّبهما بإصبعك ثم اختر بحرفٍ واحد.</span>
+    </div>
+
+    <!-- ═══════════ أ ═══════════ -->
+    <div class="pv-sec">
+        <div class="pv-tag">أ — طبقة معتمة مع سهم</div>
+        <p class="pv-note">تُعتَّم الشاشة ويُبرَز الزرّ وحده. لا يمكن تجاهله،
+            ويحتاج ضغطة «فهمت» ليُغلق.</p>
+
+        <div class="stage" id="stage-a">
+            <div class="stage-bar">
+                <span class="stage-ttl">🗓️ الجدول الأسبوعي</span>
+                <button class="fake-btn" id="btn-a">✎ تعديل</button>
+            </div>
+            <div class="fake-grid"><div></div><div></div><div></div><div></div>
+                                   <div></div><div></div><div></div><div></div></div>
+
+            <div class="coach" id="coach-a">
+                <div class="coach-hole" id="hole-a"></div>
+                <div class="coach-tip" id="tip-a">
+                    <b>لتعديل جدولك اضغط هنا</b>
+                    <span>تضيف الحصص وتغيّرها وتحذفها.</span>
+                    <button class="coach-go" data-close="a">فهمت</button>
+                </div>
+            </div>
+        </div>
+        <button class="pv-replay" data-replay="a">↻ أعِد العرض</button>
+        <button class="pv-pick" data-pick="أ">اختر «أ»</button>
+    </div>
+
+    <!-- ═══════════ ب ═══════════ -->
+    <div class="pv-sec">
+        <div class="pv-tag">ب — فقاعة صغيرة بنبضة</div>
+        <p class="pv-note">حلقةٌ تنبض حول الزرّ وفقاعةٌ بجانبه. لا تحجب شيئاً،
+            وتختفي وحدها بعد ٦ ثوانٍ أو بضغطة ✕. (هنا تبقى ظاهرةً لتقارنها.)</p>
+
+        <div class="stage" id="stage-b">
+            <div class="stage-bar">
+                <span class="stage-ttl">🗓️ الجدول الأسبوعي</span>
+                <button class="fake-btn pulse" id="btn-b">✎ تعديل</button>
+            </div>
+            <div class="fake-grid"><div></div><div></div><div></div><div></div>
+                                   <div></div><div></div><div></div><div></div></div>
+            <div class="bub" id="bub-b">
+                <span><b>لتعديل جدولك اضغط هنا</b>
+                      <span>تضيف الحصص وتغيّرها وتحذفها.</span></span>
+                <button class="x" data-close="b">✕</button>
+            </div>
+        </div>
+        <button class="pv-replay" data-replay="b">↻ أعِد العرض</button>
+        <button class="pv-pick" data-pick="ب">اختر «ب»</button>
+    </div>
+
+    <!-- ═══════════ التلميح الثاني ═══════════ -->
+    <div class="pv-sec">
+        <div class="pv-tag">والتلميح الثاني بالشكلين</div>
+        <p class="pv-note">«اضغط على الفصل ليعرض ما فيه» — على أول بطاقة فصل.</p>
+
+        <div class="stage" id="stage-c" style="margin-bottom:10px">
+            <div class="fake-card" id="card-c">
+                <span class="em">📗</span>
+                <span><b>الأول الثانوي / أ</b><span>الرياضيات · ٢٤ طالباً</span></span>
+            </div>
+            <div class="coach" id="coach-c">
+                <div class="coach-hole" id="hole-c"></div>
+                <div class="coach-tip" id="tip-c">
+                    <b>اضغط على الفصل</b>
+                    <span>يعرض لك طلابه وحضورهم ودرجاتهم.</span>
+                    <button class="coach-go" data-close="c">فهمت</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stage" id="stage-d">
+            <div class="fake-card pulse" id="card-d">
+                <span class="em">📗</span>
+                <span><b>الأول الثانوي / أ</b><span>الرياضيات · ٢٤ طالباً</span></span>
+            </div>
+            <div class="bub" id="bub-d">
+                <span><b>اضغط على الفصل</b>
+                      <span>يعرض لك طلابه وحضورهم ودرجاتهم.</span></span>
+                <button class="x" data-close="d">✕</button>
+            </div>
+        </div>
+        <button class="pv-replay" data-replay="cd">↻ أعِد العرض</button>
+    </div>
+
+    <div class="pv-end" id="pv-end">
+        اختر بحرفٍ واحد: <b>أ</b> أو <b>ب</b>.<br>
+        ولك أن تقول «أ للجدول وب للفصل» إن أردت لكلٍّ شكله.
+    </div>
+</div>
+
+<script>
+/* المواضع تُحسب من الأزرار الحقيقية — فما تراه هو ما ستراه في التطبيق. */
+/* الزرّ قد يكون في أقصى اليسار، فإسنادُ الفقاعة إلى حافّته اليمنى وحدها
+   كان يسحقها إلى أربعين بكسلاً. فيُحسب العرض أولاً ثم يُحبس الموضع داخل
+   اللوحة، ويُوجَّه السهم إلى منتصف الزرّ مهما انزاح الصندوق. */
+function put(stageEl, targetEl, boxEl, gap) {
+    const s = stageEl.getBoundingClientRect(), t = targetEl.getBoundingClientRect();
+    const w = Math.min(268, s.width - 26);
+    boxEl.style.width = w + 'px';
+    let right = s.right - t.right - 14;
+    right = Math.max(12, Math.min(right, s.width - w - 12));
+    boxEl.style.top   = (t.bottom - s.top + gap) + 'px';
+    boxEl.style.right = right + 'px';
+    /* موضع السهم داخل الصندوق: مسافة مركز الزرّ عن حافّة الصندوق اليمنى. */
+    const boxRightX = s.right - right;
+    const arrow = Math.max(14, Math.min(w - 22, boxRightX - (t.right - t.width / 2) - 8));
+    boxEl.style.setProperty('--arrow', arrow + 'px');
+}
+function place(stageId, targetId, holeId, tipId) {
+    const st = document.getElementById(stageId);
+    const tg = document.getElementById(targetId);
+    const ho = document.getElementById(holeId);
+    const tp = document.getElementById(tipId);
+    if (!st || !tg) return;
+    const s = st.getBoundingClientRect(), t = tg.getBoundingClientRect();
+    const pad = 6;
+    ho.style.top    = (t.top - s.top - pad) + 'px';
+    ho.style.right  = (s.right - t.right - pad) + 'px';
+    ho.style.width  = (t.width + pad * 2) + 'px';
+    ho.style.height = (t.height + pad * 2) + 'px';
+    put(st, tg, tp, 12);
+}
+function placeBub(stageId, targetId, bubId) {
+    const st = document.getElementById(stageId);
+    const tg = document.getElementById(targetId);
+    const bb = document.getElementById(bubId);
+    if (!st || !tg) return;
+    put(st, tg, bb, 11);
+}
+function layout() {
+    place('stage-a', 'btn-a',  'hole-a', 'tip-a');
+    place('stage-c', 'card-c', 'hole-c', 'tip-c');
+    placeBub('stage-b', 'btn-b',  'bub-b');
+    placeBub('stage-d', 'card-d', 'bub-d');
+}
+layout();
+addEventListener('resize', layout);
+addEventListener('load', layout);
+
+const EL = { a: 'coach-a', b: 'bub-b', c: 'coach-c', d: 'bub-d' };
+function hide(k) { const e = document.getElementById(EL[k]); if (e) e.style.display = 'none'; }
+function show(k) { const e = document.getElementById(EL[k]); if (e) e.style.display = ''; layout(); }
+
+document.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-close]');
+    if (c) return hide(c.dataset.close);
+
+    const r = e.target.closest('[data-replay]');
+    if (r) {
+        (r.dataset.replay === 'cd' ? ['c','d'] : [r.dataset.replay]).forEach(show);
+        return;
+    }
+    const p = e.target.closest('[data-pick]');
+    if (p) {
+        document.getElementById('pv-end').innerHTML =
+            'اخترت <b>«' + p.dataset.pick + '»</b> — أرسل الحرف في المحادثة وأنفّذه.';
+        document.getElementById('pv-end').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+
+/* في التطبيق تختفي «ب» وحدها بعد ثوانٍ. وهنا تبقى ظاهرةً كي تُقارَن —
+   فمعاينةٌ تختفي قبل أن يراها المستخدم لا تُقارَن. */
+</script>
+</body>
+</html>
