@@ -37,6 +37,35 @@
 
     const weeksOfTerm = (st, n) => st.weeks.filter((w) => w.term === n);
 
+    /* متزامنٌ لا داخل requestAnimationFrame: الرسم إسنادُ innerHTML،
+       فالعنصر الجديد موجودٌ فور عودته وقياسه يُجبر التخطيط. وrAF لا
+       يُطلق حين لا تُرسم الصفحة — وهو ما أوقعنا في قارئ الكتب. */
+    function scrollToCard(root) {
+        const card = root.querySelector('.ac-card');
+        if (!card) return;
+        const head = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('--header-height'), 10) || 64;
+        const top = Math.max(0, card.getBoundingClientRect().top + global.scrollY - head - 10);
+        const before = global.scrollY;
+        try { global.scrollTo({ top, behavior: 'smooth' }); }
+        catch (e) { global.scrollTo(0, top); }
+
+        /* شبكة أمان: لو لم يتحرّك شيء بعد ثلث ثانية — متصفّحٌ لا يدعم
+           الانسياب، أو استُهلك الاستدعاء — ننتقل قفزاً. أن يصل المعلّم
+           إلى بطاقته دون حركةٍ ناعمة خيرٌ من ألّا يصل. */
+        global.setTimeout(() => {
+            if (Math.abs(global.scrollY - before) < 4 && Math.abs(top - before) > 8) {
+                global.scrollTo(0, top);
+            }
+        }, 350);
+    }
+
+    /** يُعيد البطاقة إلى حالتها الأولى — تُستدعى عند فتح شاشة الجدول من
+     *  جديد، فلا يجدها المعلّم مفتوحةً من زيارةٍ سابقة. */
+    function reset() {
+        ui.open = false; ui.term = null; ui.sel = null; ui.swap = false;
+    }
+
     /* ------------------------------------------------------------------
        الرسم
        ------------------------------------------------------------------ */
@@ -271,9 +300,18 @@
             const term = e.target.closest('[data-ac-term]');
             if (term) { ui.term = Number(term.dataset.acTerm); ui.sel = 1; return redraw(); }
 
-            if (e.target.closest('[data-ac-toggle]')) { ui.open = !ui.open; return redraw(); }
+            if (e.target.closest('[data-ac-toggle]')) {
+                const opening = !ui.open;
+                ui.open = opening;
+                redraw();
+                /* عند الفتح ننزل بالشاشة إليها: المعلّم ضغط ليرى، لا
+                   ليسحب. والإزاحة بمقدار الشريط العلوي لأنه لاصقٌ
+                   فيغطّي رأس البطاقة لو أُهملت. */
+                if (opening) scrollToCard(root);
+                return;
+            }
         });
     }
 
-    global.CalendarCard = { html, bind, ui };
+    global.CalendarCard = { html, bind, reset, ui };
 })(window);

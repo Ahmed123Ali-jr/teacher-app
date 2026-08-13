@@ -117,6 +117,10 @@
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
+        /* دخولٌ جديد للشاشة يعني بطاقةً مطويّة: حالتها حيّة في وحدتها،
+           فبدون هذا يجدها المعلّم مفتوحةً كما تركها قبل صفحتين. */
+        if (global.CalendarCard) global.CalendarCard.reset();
+
         const classes  = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         const rawSched = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
         const schedule = cleanupExpired(rawSched);
