@@ -2,7 +2,7 @@
    views/portfolio.js — Teacher portfolio with 10 sections.
    Personal info, mission, certificates, schedules (manual).
    Exams/worksheets/homework (auto from DB).
-   Strategies & initiatives (with AI reports) — delegated to sub-modules.
+   Strategies & initiatives — سجلّات وشواهد، لا تقارير مولّدة.
    ========================================================================== */
 
 (function (global) {
