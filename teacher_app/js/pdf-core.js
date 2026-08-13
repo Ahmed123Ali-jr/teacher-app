@@ -59,7 +59,21 @@
         return Object.assign({
             cMapUrl: abs(PDFJS.cMaps),
             cMapPacked: true,
-            standardFontDataUrl: abs(PDFJS.stdFonts)
+            standardFontDataUrl: abs(PDFJS.stdFonts),
+
+            /* disableFontFace هو مفتاح العربية.
+               الوضع الافتراضي يحقن خطّ الملف عبر ‎@font-face‎ ثم يرسم النصّ
+               بـfillText — فيطبّق المتصفّح تشكيله ووصله وترتيبه من اليمين
+               على نصٍّ **سبق أن شُكِّل ورُتِّب داخل الملف**. تشكيلٌ فوق
+               تشكيل: تتباعد الحروف داخل الكلمة وتُستبدل بعضها.
+               وبإطفائه ترسم pdf.js حدود كل حرفٍ بنفسها في موضعه المذكور
+               في الملف، فلا رأي للمتصفّح في النصّ العربي. أبطأ قليلاً،
+               لكن الصواب هنا أولى من السرعة.
+
+               useSystemFonts=false يمنع استبدال خطٍّ محلّي بمقاييس مختلفة
+               حين لا يكون الخطّ مضمَّناً — وهو مصدر التباعد الآخر. */
+            disableFontFace: true,
+            useSystemFonts: false
         }, extra || {});
     }
 
