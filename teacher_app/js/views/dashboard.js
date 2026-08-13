@@ -338,16 +338,19 @@
 
     /* ---- حالات الإعداد الأولى (البدء) ---- */
 
-    /* أول فتح بلا فصول: البطاقة الرصاصية «أضف فصلك الأول» (البديل أ المعتمد) */
+    /* أول فتح بلا فصول: طريقان لا واحد — فرفعُ الجدول يبني الفصول
+       والحصص معاً، وهو أسرع من إضافة ستّة فصولٍ يدوياً. والإنشاء اليدوي
+       يبقى ظاهراً لمن جدولُه ليس بيده. */
     function startFirstClassHtml() {
         return `
             <div class="start-box">
                 <div class="start-halo"></div>
-                <div class="start-ring">🎒</div>
-                <div class="start-t">أضف فصلك الأول</div>
-                <div class="start-s">اختر المرحلة والصف والشعبة والمادة<br>وابدأ متابعة ${global.Words.students()} خلال دقيقة</div>
-                <button type="button" class="start-cta" data-add-class>+ إضافة فصل</button>
-            </div>`;
+                <div class="start-ring">📷</div>
+                <div class="start-t">ارفع جدولك</div>
+                <div class="start-s">صوّر جدولك المدرسي — تُنشأ فصولك وحصصها<br>تلقائياً، وتُعرض عليك قبل الحفظ</div>
+                <a href="#/schedule?import=1" class="start-cta">📷 ارفع جدولك</a>
+            </div>
+            <button type="button" class="start-add-class" data-add-class>أو أضف فصلاً يدوياً</button>`;
     }
 
     /* فصول موجودة بلا جدول: صندوق «أضف الجدول الأسبوعي» + زر «إضافة فصل» تحته */
@@ -648,7 +651,14 @@
             (await loadCustomSubjects()).concat(name));
     }
 
-    async function openAddClassModal(teacher) {
+    /**
+     * نافذة إضافة الفصل — نفسها من الرئيسية ومن الجدول.
+     * @param {object} teacher
+     * @param {object} [opts] — { onCreated(cls) } فمن ناداها يقرّر أين يرجع:
+     *        الرئيسية تفتح قائمة الفصول، والجدول يُسند الفصل لخانته فوراً.
+     */
+    async function openAddClassModal(teacher, opts) {
+        opts = opts || {};
         const pick = { stage: 'primary', grade: null, section: null };
         /* «أخرى» تفتح حقل كتابة بدل أن تكون قيمة تُحفظ كما هي. */
         const other = { sec: false, subj: false };
@@ -771,23 +781,18 @@
 
             saving = true;
             /* اللوحة تُغلق قبل الكتابة لا بعدها — الكتابة رحلة شبكة تقارب
-               ربع ثانية كان المعلم ينتظرها ينظر إلى لوحة جامدة. أما إعادة
-               رسم القائمة فتبقى بعد الكتابة، وإلا قرأت القائمة قبل وصول
-               الفصل الجديد فلم يظهر. */
+               ربع ثانية كان المعلم ينتظرها ينظر إلى لوحة جامدة. */
             global.Modal.close();
             global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success', 1200);
 
+            let created;
             try {
-                await global.TeacherDB.add('classes', {
+                created = await global.ClassCreate.create({
                     teacher_id: teacher.id,
-                    stage:      pick.stage,
-                    grade:      GRADES[pick.stage][pick.grade],
-                    section:    pick.section,
-                    subject,
-                    // كل الفصول بلون واحد معتمد — لا اختيار للون.
-                    color:      DEFAULT_CLASS_COLOR,
-                    student_count: 0,
-                    created_at: new Date().toISOString()
+                    stage:   pick.stage,
+                    grade:   GRADES[pick.stage][pick.grade],
+                    section: pick.section,
+                    subject
                 });
             } catch (err) {
                 saving = false;
@@ -797,12 +802,15 @@
                الفصل حُفظ فعلاً، وفشلها لا يعني فشل الإضافة. */
             if (typed) rememberSubject(subject).catch(() => {});
 
-            // نُحدّث الشاشة الظاهرة أمام المعلم ليرى فصله.
-            const hash = (global.location.hash || '').replace(/^#/, '');
-            if (hash.startsWith('/classes') && global.ClassesView) {
+            /* من ناداها يقرّر أين يرجع. وبلا ردّ نداء: تُفتح قائمة الفصول
+               ليرى المعلّم فصله مضافاً — لا يبقى في الرئيسية يتساءل.
+               وإن كان فيها أصلاً فضبطُ المسار على قيمته لا يُطلق تنقّلاً،
+               فتُعاد الشاشة يدوياً وإلا بقيت القائمة بلا الفصل الجديد. */
+            if (opts.onCreated) return opts.onCreated(created);
+            if (/^#?\/classes/.test(global.location.hash || '') && global.ClassesView) {
                 await global.ClassesView.render(document.getElementById('view-classes'));
             } else {
-                await render(document.getElementById('view-dashboard'));
+                global.location.hash = '#/classes';
             }
         });
 

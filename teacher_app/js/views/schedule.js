@@ -131,7 +131,18 @@
         const dept     = await global.TeacherDB.Settings.get('education_dept');
         const calPick  = await global.TeacherDB.Settings.get('academic_calendar');
 
-        paintView(container, { teacher, classes, schedule, periods, autofill, dept, calPick });
+        /* «ارفع جدولك» في الرئيسية يصل إلى هنا بعلامةٍ في المسار، فتُفتح
+           شاشة الاستيراد رأساً — وإلا وقف المعلّم أمام جدولٍ فارغ يبحث
+           عن الزرّ الذي وُعد به. والعلامة تُمحى فلا تُفتح مع كل رجوع. */
+        const wantsImport = /[?&]import=1/.test(global.location.hash || '');
+        const ctx = { teacher, classes, schedule, periods, autofill, dept, calPick,
+                      editing: wantsImport ? true : undefined };
+        paintView(container, ctx);
+        if (wantsImport) {
+            global.history.replaceState(null, '', '#/schedule');
+            openImport(ctx, container);
+            return;
+        }
     }
 
     /* الرسم من الحالة المحفوظة في الذاكرة وحدها — بلا أي نداء للقاعدة، فيعود
@@ -699,6 +710,10 @@
                     <span class="g">⏳ حصة انتظار</span>
                     <span class="s">اضغط لتُضاف فوراً</span>
                 </button>
+                <button type="button" class="sch-card new" data-newcls>
+                    <span class="g">＋ فصل جديد</span>
+                    <span class="s">يُضاف هنا فور إنشائه</span>
+                </button>
             </div>`;
     }
 
@@ -815,6 +830,35 @@
             if (card) return pickClass(card.dataset.cls);
 
             if (t.closest('[data-wait]')) return pickWait();
+
+            /* فصلٌ ناقص لا يُخرج المعلّم من جدوله: يُنشئه من هنا ويُسنَد
+               للخانة فوراً، فيرى الحصة مكانها بلا رحلة ذهابٍ وإياب. */
+            if (t.closest('[data-newcls]')) {
+                global.Modal.close();
+                return global.DashboardView.openAddClassModal(ctx.teacher, {
+                    onCreated: (cls) => {
+                        ctx.classes.push(cls);
+                        const row = Object.assign({
+                            teacher_id: ctx.teacher.id,
+                            created_at: existing ? existing.created_at : new Date().toISOString()
+                        }, existing || {}, {
+                            day, period, class_id: cls.id,
+                            wait_kind: null, wait_date: null, sub_class: null, sub_date: null,
+                            updated_at: new Date().toISOString()
+                        });
+                        const i = ctx.schedule.findIndex((r) => r.day === day && r.period === period);
+                        if (i >= 0) ctx.schedule[i] = row; else ctx.schedule.push(row);
+
+                        paintView(container, ctx);
+                        global.TeacherApp.toast('أُضيف الفصل وحصّته ✅', 'success', 1600);
+
+                        queueWrite(day, period, async () => {
+                            if (row.id) await global.TeacherDB.put('schedule', row);
+                            else row.id = await global.TeacherDB.add('schedule', row);
+                        }, () => render(container));
+                    }
+                });
+            }
 
             const stage = t.closest('[data-stage]');
             if (stage) { subState.stage = stage.dataset.stage; subState.grade = null; return paint(); }

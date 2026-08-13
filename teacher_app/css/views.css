@@ -5468,3 +5468,11 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     font-family: inherit; font-size: var(--fs-xs); font-weight: var(--fw-bold);
     color: var(--text);
 }
+
+/* بطاقة «فصل جديد» في محرّر الخانة — مميّزةٌ عن الفصول بلا صخب. */
+.sch-card.new {
+    border-style: dashed;
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.sch-card.new .g { color: var(--primary); }
