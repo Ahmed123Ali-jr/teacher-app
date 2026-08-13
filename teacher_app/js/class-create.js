@@ -129,6 +129,13 @@
         return hit || String(raw || '').trim();
     }
 
+    /** «الأول الثانوي / أ» أو «الأول الثانوي» حين لا شعبة — بلا شرطةٍ يتيمة. */
+    function label(grade, section) {
+        const g = String(grade || '').replace(/^\s*الصف\s+/, '').trim();
+        const s = String(section || '').trim();
+        return s ? g + ' / ' + s : g;
+    }
+
     /** هل هذا الفصل موجودٌ عند المعلّم فعلاً؟ (بلا حساسيةٍ للكتابة) */
     function findExisting(classes, grade, section, subject) {
         const g = fold(grade), s = fold(section), j = foldSubject(subject);
@@ -147,10 +154,12 @@
      */
     async function create(spec) {
         const grade   = String(spec.grade || '').trim();
+        /* الشعبة اختيارية: كثيرٌ من المدارس فصلٌ واحدٌ لكل صف، فجداولها
+           تكتب «ثاني ثانوي» بلا شعبة. واشتراطُها كان يُسقط جدولهم كلّه. */
         const section = String(spec.section || '').trim();
         const subject = String(spec.subject || '').trim();
         if (!spec.teacher_id) throw new Error('لا معلّم.');
-        if (!grade || !section || !subject) throw new Error('الصف والشعبة والمادة مطلوبة.');
+        if (!grade || !subject) throw new Error('الصف والمادة مطلوبان.');
 
         const stage = spec.stage || stageOf(grade) || 'primary';
         const id = await global.TeacherDB.add('classes', {
@@ -167,6 +176,6 @@
     global.ClassCreate = {
         GRADES, STAGE_LABELS, SECTIONS, DEFAULT_COLOR,
         fold, foldSubject, stageOf, ordinalIndex, parseGrade, gradeAt,
-        splitLabel, parseSection, normalizeSubject, findExisting, create
+        splitLabel, parseSection, normalizeSubject, findExisting, create, label
     };
 })(window);

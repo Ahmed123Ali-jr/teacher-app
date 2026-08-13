@@ -266,7 +266,8 @@
     /** «الصف الرابع الابتدائي» → «الرابع/أ» — مختصر يناسب خانة الجدول. */
     function shortCell(cls) {
         const g = String(cls.grade || '').replace(/^\s*الصف\s+/, '').split(/\s+/)[0];
-        return `${g}/${cls.section}`;
+        /* بلا شعبة: الصفُّ وحده — لا شرطةٌ يتيمة بعده. */
+        return cls.section ? `${g}/${cls.section}` : g;
     }
 
     /** «الرابع الابتدائي/أ» → «الرابع/أ» — اسم فصل الانتظار داخل الخانة الضيقة. */
@@ -459,6 +460,11 @@
             ctx.classes.forEach((c) => { byId[c.id] = c; });
             const CC = global.ClassCreate;
 
+            /* موادّ المعلّم أولاً — فما يدرّسه هو أول ما يجده. */
+            const subjectList = global.Subjects
+                ? global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL)
+                : [];
+
             /* المرحلة لا تُكتب في الجداول غالباً. فتُؤخذ من فصول المعلّم
                إن كان له فصول، وإلا سُئل عنها مرّةً في المعاينة. */
             function commonStage() {
@@ -484,14 +490,18 @@
                     const topic = String(c.topic || '').trim();
 
                     if (byId[c.class_id]) return ok.push({ day, period, class_id: c.class_id, topic });
+
+                    /* حصة انتظار: خانةٌ في الجدول بلا فصل — والتطبيق يعرفها. */
+                    if (c.wait) return ok.push({ day, period, class_id: null, wait: true, topic: '' });
                     if (!CC) return skipped.push(c);
 
                     /* «١/٣» قد يصل في حقلٍ واحد — فيُشقّ. */
                     const lab = CC.splitLabel(c.new_grade, c.new_section);
                     const parsed = lab.grade ? CC.parseGrade(lab.grade, stage) : null;
                     if (!parsed) return skipped.push(c);
+                    /* الشعبة اختيارية — مدارسُ كثيرة فصلٌ واحدٌ لكل صف،
+                       واشتراطُها كان يُسقط الجدول كلّه. */
                     const section = CC.parseSection(lab.section);
-                    if (!section) return skipped.push(c);
 
                     /* صفٌّ مقروءٌ بلا مرحلة: يُسأل عنها ولا تُهمل خانته. */
                     if (!parsed.grade) { askStage = true; return skipped.push(c); }
@@ -499,22 +509,23 @@
                     const found = CC.findExisting(ctx.classes, parsed.grade, section, c.new_subject);
                     if (found) return ok.push({ day, period, class_id: found.id, topic });
 
-                    const key = CC.fold(parsed.grade) + '|' + CC.fold(section);
+                    /* المادة جزءٌ من هُويّة الفصل: معلّمٌ يدرّس «ثالث ابتدائي»
+                       تربيةً بدنيةً وفنيةً له عندهم فصلان لا فصل — ولولاها
+                       ضاعت حصص إحدى المادّتين في الأخرى. */
+                    const subj = CC.normalizeSubject(c.new_subject, subjectList);
+                    const key = CC.fold(parsed.grade) + '|' + CC.fold(section)
+                              + '|' + CC.foldSubject(subj);
                     if (newKey[key] == null) {
                         newKey[key] = news.length;
                         news.push({
                             stage: parsed.stage, grade: parsed.grade, section,
-                            subject: String(c.new_subject || '').trim(),
+                            subject: subj,
                             take: true, cells: []
                         });
                     }
                     news[newKey[key]].cells.push({ day, period, topic });
                 });
 
-                if (global.Subjects) {
-                    const list = global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL);
-                    news.forEach((n) => { n.subject = CC.normalizeSubject(n.subject, list); });
-                }
             }
             sortCells();
 
@@ -545,10 +556,6 @@
                 return;
             }
 
-            /* موادّ المعلّم أولاً — فما يدرّسه هو أول ما يجده. */
-            const subjectList = global.Subjects
-                ? global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL)
-                : [];
 
             function paintPreview() {
                 const taken = news.filter((n) => n.take);
@@ -590,7 +597,7 @@
                                     <div class="imp-new-row ${n.take ? '' : 'off'}">
                                         <label class="imp-new-on">
                                             <input type="checkbox" data-new-take="${i}" ${n.take ? 'checked' : ''}>
-                                            <span class="nm">${escapeHtml(n.grade.replace(/^الصف\s+/, '') + ' / ' + n.section)}</span>
+                                            <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}</span>
                                             <span class="cnt">${arWord(n.cells.length)}</span>
                                         </label>
                                         <select class="imp-new-sub" data-new-subj="${i}" ${n.take ? '' : 'disabled'}>
@@ -611,7 +618,7 @@
                                     const k = byId[c.class_id];
                                     return `<li><span class="d">${DAYS[c.day].label}</span>
                                         <span class="p">الحصة ${arDigits(c.period)}</span>
-                                        <span class="c">${escapeHtml(k.grade + ' / ' + k.section)}</span>
+                                        <span class="c">${c.wait ? '⏳ انتظار' : escapeHtml(CC.label(k.grade, k.section))}</span>
                                         ${c.topic ? `<span class="t">${escapeHtml(c.topic)}</span>` : ''}</li>`;
                                 }).join('')}
                             </ul>` : ''}
@@ -651,7 +658,7 @@
                     const naked = taken.find((n) => !n.subject);
                     if (naked) {
                         return global.TeacherApp.toast(
-                            'اختر مادة ' + naked.grade.replace(/^الصف\s+/, '') + ' / ' + naked.section + '.',
+                            'اختر مادة ' + CC.label(naked.grade, naked.section) + '.',
                             'warning', 4000);
                     }
                     const b = e.currentTarget;
@@ -699,9 +706,10 @@
                 teacher_id: ctx.teacher.id,
                 created_at: prev ? prev.created_at : new Date().toISOString()
             }, prev || {}, {
-                day: c.day, period: c.period, class_id: c.class_id, topic: c.topic,
-                /* الاستيراد يُلغي حالات الانتظار والاحتياط: الخانة صارت حصةً. */
-                wait_kind: null, wait_date: null, sub_class: null, sub_date: null,
+                day: c.day, period: c.period, class_id: c.wait ? null : c.class_id, topic: c.topic,
+                /* الاستيراد يُلغي الاحتياط، ويُثبت الانتظار حيث قرأه. */
+                wait_kind: c.wait ? 'perm' : null, wait_date: null,
+                sub_class: null, sub_date: null,
                 updated_at: new Date().toISOString()
             });
             if (idx >= 0) ctx.schedule[idx] = row; else ctx.schedule.push(row);

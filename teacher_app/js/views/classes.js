@@ -76,7 +76,7 @@
         return `
             <button class="cls-row" data-class-id="${c.id}">
                 <span class="cls-tx">
-                    <span class="cls-t">${escapeHtml(shortGrade(c.grade))} / ${escapeHtml(c.section)}</span>
+                    <span class="cls-t">${escapeHtml(c.section ? shortGrade(c.grade) + ' / ' + c.section : shortGrade(c.grade))}</span>
                     <span class="cls-s">${escapeHtml(c.subject)}</span>
                 </span>
             </button>

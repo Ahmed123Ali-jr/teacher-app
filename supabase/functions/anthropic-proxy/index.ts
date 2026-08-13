@@ -80,6 +80,8 @@ const SCHEDULE_TOOL = {
                         class_id:   { type: 'string' },
                         topic:      { type: 'string' },
                         unmatched:  { type: 'boolean' },
+                        /* حصة انتظار: خانةٌ ليست فصلاً للمعلّم. */
+                        wait:       { type: 'boolean', description: 'true إن كانت الخانة انتظاراً' },
                         /* الفصل غير المعروف: حقولٌ منفصلة لا نصّاً واحداً.
                            فالنصّ «الأول/أ — علوم» كان يُقرأ عند العميل
                            بتخمينٍ هشّ، والنموذج يعرف تقسيمه أصلاً. */
@@ -121,12 +123,17 @@ ${list}
 - class_id  (يجب أن يكون من القائمة أعلاه؛ التقط أفضل تطابق)
 - topic     (الموضوع/الدرس إن وُجد، نص قصير)
 
+إذا كانت الخانة **حصة انتظار** (مكتوبٌ فيها «منتظر» أو «انتظار» أو
+«احتياط»، ولو تبعها رقم) فاجعل wait=true واترك حقول الفصل فارغة — فهي
+ليست فصلاً للمعلّم.
+
 إذا الخانة لفصل غير موجود في القائمة، اجعل unmatched=true واملأ:
 - new_grade   (الصف **حرفياً كما كُتب**. إن كُتب «١» فاكتب «١»، وإن كُتب
               «أول» فاكتب «أول». **ولا تُضف المرحلة** — ابتدائي أو متوسط
               أو ثانوي — إن لم تكن مكتوبةً في الصورة. تخمينُها يُنشئ فصولاً
               بأسماء خاطئة.)
-- new_section (الشعبة حرفياً)
+- new_section (الشعبة حرفياً، **واتركها فارغة إن لم تُكتب شعبة** — كثيرٌ
+              من الجداول تكتب «ثاني ثانوي» بلا شعبة، فلا تخترع واحدة)
 - new_subject (المادة إن كانت مكتوبة، وإلا اتركها فارغة — لا تخمّنها)
 
 سلّم النتيجة عبر الأداة submit_schedule ولا تكتب شيئاً آخر.
@@ -294,6 +301,7 @@ function cleanCells(raw: unknown): Record<string, unknown>[] {
         if (!Number.isInteger(period) || period < 1 || period > 12) continue;
         const cell: Record<string, unknown> = { day, period };
         if (typeof o.class_id === 'string' && o.class_id) cell.class_id = o.class_id.slice(0, MAX_FIELD);
+        if (o.wait === true) { cell.wait = true; out.push(cell); continue; }
         if (o.unmatched === true) {
             cell.unmatched = true;
             const f = (k: string) => String(o[k] ?? '').slice(0, MAX_FIELD).trim();
