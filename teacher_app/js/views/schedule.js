@@ -496,10 +496,25 @@
             });
 
             if (!ok.length && !news.length) {
-                resultEl.innerHTML = `
+                /* رسالةٌ واحدة لحالتين مختلفتين كانت تكذب: «لم أتعرّف على
+                   أيّ حصة» تُقال حتى لو قرأ النموذج الجدول كلّه ثم أسقطناه
+                   نحن لأننا لم نفهم أسماء صفوفه. فالمعلّم يلوم صورته وهي
+                   سليمة. */
+                const read = (cells || []).length;
+                const sample = (cells || []).slice(0, 3)
+                    .map((c) => [c.new_grade, c.new_section].filter(Boolean).join(' / '))
+                    .filter(Boolean);
+                console.warn('[schedule] لم تنجُ خانة. المقروء:', cells);
+
+                resultEl.innerHTML = read ? `
                     <div class="callout callout-warn" style="margin-top: var(--space-4);">
-                        لم أتعرّف على أيّ حصة. جرّب صورةً أوضح، أو تأكّد أن أسماء
-                        الفصول في الصورة تشبه أسماء فصولك في التطبيق.
+                        قرأتُ ${arWord(read)} من الصورة، لكن لم أفهم أسماء الفصول فيها
+                        ${sample.length ? `(مثل: <b>${escapeHtml(sample.join('، '))}</b>)` : ''}.
+                        <br>أضف فصولك يدوياً مرّةً واحدة، ثم أعِد الاستيراد — سيربطها بها.
+                    </div>` : `
+                    <div class="callout callout-warn" style="margin-top: var(--space-4);">
+                        لم أتعرّف على أيّ حصة في الصورة. جرّب صورةً أوضح للجدول كاملاً،
+                        بحيث تظهر أسماء الأيام وأرقام الحصص.
                     </div>`;
                 return;
             }
