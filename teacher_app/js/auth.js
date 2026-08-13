@@ -2,7 +2,7 @@
  * Auth — Supabase-backed.
  * Public API kept compatible with the old IndexedDB version so views
  * and other modules don't need to change:
- *     register, login, logout, currentTeacher, guestLogin, changePassword,
+ *     register, login, logout, currentTeacher, changePassword,
  *     onAuthChange, updateProfile
  *
  * Teacher object shape returned (matches the old shape):
@@ -234,25 +234,12 @@
         return _teacherCache;
     }
 
-    async function guestLogin() {
-        const { data, error } = await sb.auth.signInAnonymously();
-        if (error) {
-            throw new Error(error.message || 'تعذّر الدخول كزائر.');
-        }
-        const user = data.user;
-        await ensureProfile(user.id, {
-            full_name: 'معلم زائر',
-            school: 'مدرسة تجريبية',
-            subject: 'الرياضيات',
-            subjects: ['الرياضيات', 'العلوم']
-        });
-        if (global.TeacherDB && global.TeacherDB.hydrate) {
-            global.TeacherDB.resetHydration();
-            await global.TeacherDB.hydrate();
-        }
-        const profile = await fetchProfile(user.id);
-        return mapProfile(user, profile);
-    }
+    /* لا دخول كزائر. `signInAnonymously` كان يعطي جواز دخولٍ صالحاً من
+       طلبٍ واحدٍ بجسمٍ فارغ — بلا بريدٍ ولا كلمة مرور — وبه يُنادى البروكسي
+       الذي يحمل مفتاح Anthropic. فالبابُ الآن بريدٌ وكلمة مرور، لا غير.
+
+       وحذفُ الدالة وحده لا يكفي: الباب في الخادم لا في هذا الملف، ويُغلق
+       من إعدادات Supabase (Authentication ← Anonymous sign-ins). */
 
     async function changePassword(currentPassword, newPassword) {
         if (!newPassword || newPassword.length < 6) {
@@ -321,7 +308,7 @@
     }
 
     global.Auth = {
-        register, login, logout, deleteAccount, currentTeacher, guestLogin,
+        register, login, logout, deleteAccount, currentTeacher,
         changePassword, updateProfile, onAuthChange
     };
 })(window);

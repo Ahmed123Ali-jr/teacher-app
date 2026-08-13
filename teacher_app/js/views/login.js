@@ -50,12 +50,6 @@
                             </button>
                         </form>
 
-                        <div class="auth-divider">أو</div>
-
-                        <button type="button" class="btn btn-secondary btn-lg btn-block" id="btn-guest">
-                            👤 دخول كزائر (لتجربة التطبيق)
-                        </button>
-
                         <p class="auth-switch">
                             ليس لديك حساب؟
                             <button type="button" id="btn-switch-register">إنشاء حساب جديد</button>
@@ -140,18 +134,6 @@
             const regForm = container.querySelector('#form-register');
             if (regForm) regForm.addEventListener('submit', onRegister);
 
-            const guestBtn = container.querySelector('#btn-guest');
-            if (guestBtn) guestBtn.addEventListener('click', onGuest);
-        }
-
-        async function onGuest() {
-            try {
-                await global.Auth.guestLogin();
-                global.TeacherApp.toast('أهلاً بك كزائر 👋 (بيانات تجريبية)', 'info');
-                global.location.hash = '#/dashboard';
-            } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
-            }
         }
 
         async function onLogin(e) {
