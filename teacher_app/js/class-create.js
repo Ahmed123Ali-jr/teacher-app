@@ -56,25 +56,59 @@
         return null;
     }
 
-    /**
-     * يردّ اسم الصف إلى صيغة التطبيق.
-     * @returns {{stage:string, grade:string}|null}
-     */
-    function parseGrade(text) {
-        const stage = stageOf(text);
-        if (!stage) return null;
+    /** رقم الصف من نصّه: «١» و«1» و«أول» و«الأول» سواء. -1 إن لم يُعرف. */
+    function ordinalIndex(text) {
         const t = fold(text);
-        const max = GRADES[stage].length;
-        for (let i = 0; i < max; i++) {
-            const hit = ORDINALS[i].some((w) => new RegExp('(^|\\s|/)' + fold(w) + '($|\\s|/)').test(t));
-            if (hit) return { stage, grade: GRADES[stage][i] };
+        for (let i = 0; i < ORDINALS.length; i++) {
+            const hit = ORDINALS[i].some((w) =>
+                new RegExp('(^|[\\s/\\-])' + fold(w) + '($|[\\s/\\-])').test(t));
+            if (hit) return i;
         }
-        return null;
+        return -1;
     }
 
-    /** يُطبّع الشعبة: «شعبة أ» و«ه» و«A» كلّها تصير «أ» متى أمكن. */
+    /**
+     * يردّ اسم الصف إلى صيغة التطبيق.
+     *
+     * والمرحلة لا تُكتب في الجداول غالباً — المدرسة كلّها مرحلةٌ واحدة،
+     * فيُكتب «١/٣» لا «الأول المتوسط / ٣». وكان اشتراطُها يُسقط الجدول
+     * كلّه بلا أن يدري المعلّم لماذا. فصارت تُؤخذ من النصّ إن كُتبت، وإلا
+     * من `fallbackStage` (فصولُ المعلّم أو مرحلة مدرسته)، وإلا رُدّ الصفُّ
+     * بلا مرحلةٍ ليُسأل عنها مرّةً واحدة.
+     *
+     * @returns {{stage:string|null, index:number, grade:string|null}|null}
+     */
+    function parseGrade(text, fallbackStage) {
+        const idx = ordinalIndex(text);
+        if (idx < 0) return null;
+        const stage = stageOf(text) || fallbackStage || null;
+        if (!stage) return { stage: null, index: idx, grade: null };
+        const list = GRADES[stage];
+        if (idx >= list.length) return null;   /* «الخامس الثانوي» لا وجود له */
+        return { stage, index: idx, grade: list[idx] };
+    }
+
+    /** الصف بمرحلةٍ تُعطى لاحقاً — بعد أن يختارها المعلّم. */
+    function gradeAt(stage, index) {
+        const list = GRADES[stage];
+        return (list && index >= 0 && index < list.length) ? list[index] : null;
+    }
+
+    /** «١/٣» في حقلٍ واحد: يُشقّ إلى صفٍّ وشعبة حين تغيب الشعبة. */
+    function splitLabel(grade, section) {
+        const g = String(grade || '').trim();
+        if (section && String(section).trim()) return { grade: g, section: String(section).trim() };
+        const m = g.match(/^\s*([^\s/\-]+)\s*[/\-]\s*([^\s/\-]+)\s*$/);
+        return m ? { grade: m[1], section: m[2] } : { grade: g, section: '' };
+    }
+
+    /* أرقام الشعب تُكتب هندية أو عربية — تُوحَّد فلا تصير «٣» و«3» شعبتين. */
+    const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+    const toArDigits = (s) => String(s).replace(/[0-9]/g, (d) => AR_DIGITS[+d]);
+
+    /** يُطبّع الشعبة: «شعبة أ» و«ه» و«A» و«3» كلّها تُردّ إلى صيغةٍ واحدة. */
     function parseSection(text) {
-        let t = fold(text).replace(/^شعبه\s*/, '').trim();
+        let t = toArDigits(fold(text)).replace(/^شعبه\s*/, '').trim();
         if (!t) return '';
         const map = { 'ه': 'هـ', 'a': 'أ', 'b': 'ب', 'c': 'ج', 'd': 'د' };
         const low = t.toLowerCase();
@@ -132,7 +166,7 @@
 
     global.ClassCreate = {
         GRADES, STAGE_LABELS, SECTIONS, DEFAULT_COLOR,
-        fold, foldSubject, stageOf, parseGrade, parseSection,
-        normalizeSubject, findExisting, create
+        fold, foldSubject, stageOf, ordinalIndex, parseGrade, gradeAt,
+        splitLabel, parseSection, normalizeSubject, findExisting, create
     };
 })(window);

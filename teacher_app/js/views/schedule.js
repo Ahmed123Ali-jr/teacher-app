@@ -459,43 +459,69 @@
             ctx.classes.forEach((c) => { byId[c.id] = c; });
             const CC = global.ClassCreate;
 
-            /* ثلاثة مصائر للخانة: فصلٌ معروف، أو فصلٌ جديد يُنشأ، أو مهملة. */
-            const ok = [], skipped = [];
-            const news = [];            // فصولٌ جديدة فريدة
-            const newKey = {};          // مفتاح الفصل الجديد → موضعه في news
+            /* المرحلة لا تُكتب في الجداول غالباً. فتُؤخذ من فصول المعلّم
+               إن كان له فصول، وإلا سُئل عنها مرّةً في المعاينة. */
+            function commonStage() {
+                const n = {};
+                ctx.classes.forEach((c) => { if (c.stage) n[c.stage] = (n[c.stage] || 0) + 1; });
+                return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || null;
+            }
+            let stage = commonStage();
+
+            let ok = [], skipped = [], news = [], askStage = false;
 
             const inRange = (d, p) => d >= 0 && d < DAYS.length && p >= 1 && p <= ctx.periods.length;
 
-            (cells || []).forEach((c) => {
-                const day = Number(c.day), period = Number(c.period);
-                if (!inRange(day, period)) return skipped.push(c);
-                const topic = String(c.topic || '').trim();
+            /* يُعاد الفرز كلّما تغيّرت المرحلة — فاختيارُها يُحيي خاناتٍ
+               كانت ساقطة. */
+            function sortCells() {
+                ok = []; skipped = []; news = []; askStage = false;
+                const newKey = {};
 
-                if (byId[c.class_id]) return ok.push({ day, period, class_id: c.class_id, topic });
+                (cells || []).forEach((c) => {
+                    const day = Number(c.day), period = Number(c.period);
+                    if (!inRange(day, period)) return skipped.push(c);
+                    const topic = String(c.topic || '').trim();
 
-                /* فصلٌ لم يعرفه النموذج: يُقرأ صفُّه وشعبتُه، ويُبحث عنه عند
-                   المعلّم قبل إنشائه — فربّما كتبه بصيغةٍ أخرى. */
-                const parsed = CC && c.new_grade ? CC.parseGrade(c.new_grade) : null;
-                if (!parsed) return skipped.push(c);
-                const section = CC.parseSection(c.new_section);
-                if (!section) return skipped.push(c);
+                    if (byId[c.class_id]) return ok.push({ day, period, class_id: c.class_id, topic });
+                    if (!CC) return skipped.push(c);
 
-                const found = CC.findExisting(ctx.classes, parsed.grade, section, c.new_subject);
-                if (found) return ok.push({ day, period, class_id: found.id, topic });
+                    /* «١/٣» قد يصل في حقلٍ واحد — فيُشقّ. */
+                    const lab = CC.splitLabel(c.new_grade, c.new_section);
+                    const parsed = lab.grade ? CC.parseGrade(lab.grade, stage) : null;
+                    if (!parsed) return skipped.push(c);
+                    const section = CC.parseSection(lab.section);
+                    if (!section) return skipped.push(c);
 
-                const key = CC.fold(parsed.grade) + '|' + CC.fold(section);
-                if (newKey[key] == null) {
-                    newKey[key] = news.length;
-                    news.push({
-                        stage: parsed.stage, grade: parsed.grade, section,
-                        subject: String(c.new_subject || '').trim(),
-                        take: true, cells: []
-                    });
+                    /* صفٌّ مقروءٌ بلا مرحلة: يُسأل عنها ولا تُهمل خانته. */
+                    if (!parsed.grade) { askStage = true; return skipped.push(c); }
+
+                    const found = CC.findExisting(ctx.classes, parsed.grade, section, c.new_subject);
+                    if (found) return ok.push({ day, period, class_id: found.id, topic });
+
+                    const key = CC.fold(parsed.grade) + '|' + CC.fold(section);
+                    if (newKey[key] == null) {
+                        newKey[key] = news.length;
+                        news.push({
+                            stage: parsed.stage, grade: parsed.grade, section,
+                            subject: String(c.new_subject || '').trim(),
+                            take: true, cells: []
+                        });
+                    }
+                    news[newKey[key]].cells.push({ day, period, topic });
+                });
+
+                if (global.Subjects) {
+                    const list = global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL);
+                    news.forEach((n) => { n.subject = CC.normalizeSubject(n.subject, list); });
                 }
-                news[newKey[key]].cells.push({ day, period, topic });
-            });
+            }
+            sortCells();
 
-            if (!ok.length && !news.length) {
+            /* سؤالُ المرحلة يسبق الرسالةَ الميتة: لا خانةَ نجت، لكنّ سببها
+               معروفٌ ويُحلّ بضغطة — فلا يُقال «لم أفهم» ثم يُحرم المعلّم
+               من الجواب. */
+            if (!ok.length && !news.length && !askStage) {
                 /* رسالةٌ واحدة لحالتين مختلفتين كانت تكذب: «لم أتعرّف على
                    أيّ حصة» تُقال حتى لو قرأ النموذج الجدول كلّه ثم أسقطناه
                    نحن لأننا لم نفهم أسماء صفوفه. فالمعلّم يلوم صورته وهي
@@ -523,9 +549,6 @@
             const subjectList = global.Subjects
                 ? global.Subjects.merge(global.Subjects.ofTeacher(ctx.teacher), global.Subjects.ALL)
                 : [];
-            /* المادة المقروءة تُردّ إلى اسمها في التطبيق قبل عرضها، وإلا
-               حُفظت «رياضيات» بجانب «الرياضيات» فصارتا مادتين. */
-            news.forEach((n) => { n.subject = CC.normalizeSubject(n.subject, subjectList); });
 
             function paintPreview() {
                 const taken = news.filter((n) => n.take);
@@ -535,8 +558,22 @@
                 const overwrite = ok.filter((c) =>
                     ctx.schedule.some((r) => r.day === c.day && r.period === c.period && r.class_id)).length;
 
+                const stageRow = askStage ? `
+                    <div class="imp-stage">
+                        <div class="imp-stage-t">جدولك يكتب الصفوف بالأرقام —
+                            ${totalCells ? 'وبعضها بلا مرحلة. أيّ مرحلةٍ مدرستك؟'
+                                         : 'أيّ مرحلةٍ مدرستك؟'}</div>
+                        <div class="imp-stage-c">
+                            ${Object.keys(CC.STAGE_LABELS).map((k) => `
+                                <button type="button" class="sch-chip ${stage === k ? 'on' : ''}"
+                                        data-stage-pick="${k}">${CC.STAGE_LABELS[k]}</button>
+                            `).join('')}
+                        </div>
+                    </div>` : '';
+
                 resultEl.innerHTML = `
                     <div class="imp-box">
+                        ${stageRow}
                         <div class="imp-sum">
                             <b>قُرئت ${arWord(totalCells)}</b>
                             ${skipped.length ? `<span class="imp-skip">وتُخطّيت ${arWord(skipped.length)} لم أتعرّف على فصلها</span>` : ''}
@@ -579,7 +616,8 @@
                                 }).join('')}
                             </ul>` : ''}
 
-                        <button type="button" class="btn btn-primary btn-block" id="imp-apply">
+                        <button type="button" class="btn btn-primary btn-block" id="imp-apply"
+                                ${askStage && !totalCells ? 'disabled' : ''}>
                             ✓ اعتمد ${arWord(totalCells, true)}${taken.length ? ' و' + clsWord(taken.length, true) : ''}
                         </button>
                     </div>`;
@@ -587,6 +625,13 @@
             }
 
             function bindPreview() {
+                resultEl.querySelectorAll('[data-stage-pick]').forEach((el) => {
+                    el.addEventListener('click', () => {
+                        stage = el.dataset.stagePick;
+                        sortCells();          /* الاختيار يُحيي خاناتٍ كانت ساقطة */
+                        paintPreview();
+                    });
+                });
                 resultEl.querySelectorAll('[data-new-take]').forEach((el) => {
                     el.addEventListener('change', () => {
                         news[Number(el.dataset.newTake)].take = el.checked;

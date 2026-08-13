@@ -5445,25 +5445,28 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .imp-new-t span {
     font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-muted);
 }
+/* الاسم والمادة في سطرين: «الأول المتوسط / ٣» مع قائمة مواد لا يتّسع
+   لهما سطرٌ واحدٌ في شاشة جوال، فكان الاسم يُقصّ. */
 .imp-new-row {
-    display: flex; align-items: center; gap: var(--space-2);
-    padding: var(--space-2) 0;
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+    padding: var(--space-3) 0;
 }
 .imp-new-row + .imp-new-row { border-top: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
 .imp-new-row.off { opacity: .45; }
 .imp-new-on {
     display: flex; align-items: center; gap: var(--space-2);
-    flex: 1; min-width: 0; cursor: pointer;
+    flex: 1 1 100%; min-width: 0; cursor: pointer;
 }
 .imp-new-on input { width: 19px; height: 19px; accent-color: var(--primary); flex: none; }
 .imp-new-on .nm {
     font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text);
+    flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .imp-new-on .cnt { font-size: var(--fs-xs); color: var(--text-muted); flex: none; }
 .imp-new-sub {
-    flex: none; max-width: 44%;
-    padding: 7px 9px; border-radius: var(--radius-sm);
+    flex: 1 1 100%; min-width: 0;
+    padding: 8px 9px; border-radius: var(--radius-sm);
     border: 1.5px solid var(--border); background: var(--surface);
     font-family: inherit; font-size: var(--fs-xs); font-weight: var(--fw-bold);
     color: var(--text);
@@ -5526,3 +5529,16 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 @media (prefers-reduced-motion: reduce) {
     .hint-layer { transition: none; }
 }
+
+/* استيراد الجدول — سؤال المرحلة حين لا يذكرها الجدول */
+.imp-stage {
+    margin-bottom: var(--space-4); padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+.imp-stage-t {
+    font-size: var(--fs-sm); font-weight: var(--fw-black);
+    color: var(--text); margin-bottom: var(--space-3);
+}
+.imp-stage-c { display: flex; flex-wrap: wrap; gap: 7px; }
