@@ -40,13 +40,36 @@ body {
     color: var(--primary); background: var(--surface);
     border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 10px;
 }
-/* سطر التقويم المطبَّق — ليعرف المعلّم أيّهما يقرأ */
+/* شارة التقويم المطبَّق — وهي زرٌّ لأن للمعلّم أن يبدّله */
 .which {
-    display: flex; align-items: center; gap: 6px;
-    margin-top: 4px; font-size: 10px; font-weight: 900;
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 5px; font-family: inherit; font-size: 10px; font-weight: 900;
     color: #7A6224; background: #F7F1E1; border: 1px solid #E2D3AC;
-    border-radius: 20px; padding: 2px 9px; width: fit-content;
+    border-radius: 20px; padding: 3px 10px; cursor: pointer;
 }
+.which::after {
+    content: '⇄'; font-size: 11px; opacity: .75;
+}
+.which.manual { border-style: dashed; }
+
+/* لوحة تبديل التقويم */
+.swap { padding: 0 13px 12px; display: flex; flex-direction: column; gap: 6px; }
+.swap .hint { font-size: 10.5px; color: var(--text-muted); line-height: 1.7; }
+.swap button {
+    display: flex; align-items: center; gap: 8px; width: 100%; text-align: right;
+    padding: 9px 11px; border-radius: 11px; cursor: pointer; font-family: inherit;
+    background: var(--surface); border: 1.5px solid var(--border);
+}
+.swap button.on { border-color: #C9A961; background: color-mix(in srgb, #C9A961 12%, var(--surface)); }
+.swap .tick {
+    width: 17px; height: 17px; flex: none; border-radius: 50%;
+    border: 2px solid var(--border); display: grid; place-items: center;
+    font-size: 9px; color: #fff;
+}
+.swap button.on .tick { background: #B8963F; border-color: #B8963F; }
+.swap .lb { flex: 1; min-width: 0; }
+.swap .lb b { display: block; font-size: 12px; font-weight: 900; color: var(--primary); }
+.swap .lb span { display: block; font-size: 9.5px; color: var(--text-muted); margin-top: 1px; }
 .pv-h { margin: 14px 0 6px; font-size: 11.5px; font-weight: 900; color: var(--text-muted); text-align: center; }
 
 .ghost {
@@ -283,14 +306,20 @@ body {
     const calKeyFor = (dept) => EARLY_DEPTS.indexOf(dept) >= 0 ? 'makkah' : 'other';
 
     let dept = 'عسير';
+    /* null = اتبع إدارتك. وغيره اختيارٌ صريح من المعلّم يعلو عليها —
+       يُحفظ في الإعدادات فلا يُسأل عنه مرّتين. */
+    let override = null;
+    let swapOpen = false;
     let CAL, TERMS, WEEKS, CURRENT, nextOff, daysTo;
+    const defaultKey = () => calKeyFor(dept);
+    const activeKey  = () => override || defaultKey();
 
     const dayWord = (n) => n === 1 ? 'يوم واحد' : n === 2 ? 'يومان'
         : n <= 10 ? ar(n) + ' أيام' : ar(n) + ' يوماً';
     const TODAY = D(2026, 8, 13);
 
     function loadCalendar() {
-        CAL = CALS[calKeyFor(dept)];
+        CAL = CALS[activeKey()];
         TERMS = CAL.terms;
         const holidayOn = (d) => CAL.holidays.find((h) => d >= h.from && d <= h.to);
 
@@ -395,6 +424,26 @@ body {
             </div>`;
     }
 
+    function swap() {
+        const rows = [
+            ['makkah', CALS.makkah.label],
+            ['other',  CALS.other.label]
+        ];
+        return `<div class="swap">
+            <span class="hint">
+                تقويمك يُختار من إدارة تعليمك (${esc(dept)}). بدّله إن كانت مدرستك تتبع الآخر.
+            </span>
+            ${rows.map(([k, label]) => `
+                <button type="button" data-cal="${k}" class="${activeKey() === k ? 'on' : ''}">
+                    <span class="tick">${activeKey() === k ? '✓' : ''}</span>
+                    <span class="lb">
+                        <b>${esc(label)}</b>
+                        <span>${k === defaultKey() ? 'الافتراضي لإدارتك' : 'خلاف الافتراضي'}</span>
+                    </span>
+                </button>`).join('')}
+        </div>`;
+    }
+
     const stage = document.getElementById('stage');
 
     function draw() {
@@ -409,10 +458,15 @@ body {
                     <span class="cal-tx">
                         <span class="cal-nm">التقويم الدراسي ١٤٤٨هـ</span>
                         <span class="cal-sub">الأسبوع ${ORD[CURRENT.k]} · <b>${nextOff ? esc(nextOff.hol.name) : ''}</b> بعد ${dayWord(daysTo)}</span>
-                        <span class="which">${esc(CAL.label)}</span>
                     </span>
                 </button>
-                ${open ? band() + tabs() + grid() + detail() : ''}
+                <div style="padding:0 13px 2px">
+                    <button type="button" class="which ${override ? 'manual' : ''}" data-swap>${esc(CAL.label)}</button>
+                </div>
+                <span style="display:none">
+                    </span>
+                </button>
+                ${open ? (swapOpen ? swap() : '') + band() + tabs() + grid() + detail() : ''}
             </div>`;
         const h = document.querySelector('.cal').getBoundingClientRect().height;
         document.getElementById('hgt').textContent = 'ارتفاع البطاقة مفتوحةً: ' + Math.round(h) + 'px';
@@ -422,12 +476,24 @@ body {
     deptSel.innerHTML = DEPTS.map((d) => `<option ${d === dept ? 'selected' : ''}>${d}</option>`).join('');
     deptSel.addEventListener('change', () => {
         dept = deptSel.value;
+        override = null;
         loadCalendar();
         term = CURRENT.term; sel = CURRENT.n;
         draw();
     });
 
     stage.addEventListener('click', (e) => {
+        if (e.target.closest('[data-swap]')) { swapOpen = !swapOpen; return draw(); }
+        const pick = e.target.closest('[data-cal]');
+        if (pick) {
+            const k = pick.dataset.cal;
+            /* اختيارٌ يوافق الافتراضي ليس تجاوزاً — نمسحه ليتبع إدارته
+               لو نُقل إلى إدارةٍ أخرى لاحقاً. */
+            override = (k === defaultKey()) ? null : k;
+            loadCalendar();
+            term = CURRENT.term; sel = CURRENT.n; swapOpen = false;
+            return draw();
+        }
         if (e.target.closest('[data-toggle]')) { open = !open; return draw(); }
         const t = e.target.closest('[data-term]');
         if (t) {
