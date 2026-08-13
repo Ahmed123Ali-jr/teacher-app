@@ -102,6 +102,17 @@
                 global.location.hash = '#/class/' + el.dataset.classId;
             });
         });
+
+        /* البطاقة لا تبدو مضغوطة، فيظنّ المعلّم أنها عرضٌ لا باب. يُبرَز
+           أوّلها مرّةً واحدة — ولا شيء يُبرَز إن لم يكن له فصلٌ بعد. */
+        const first = container.querySelector('.cls-row[data-class-id]');
+        if (first && global.Hints) {
+            global.Hints.showOnce('class_open', {
+                target: first,
+                title: 'اضغط على الفصل',
+                text:  'يعرض لك ' + global.Words.students() + ' وحضورهم ودرجاتهم.'
+            }).catch(() => {});
+        }
     }
 
     global.ClassesView = { render };

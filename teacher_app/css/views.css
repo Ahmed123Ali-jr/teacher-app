@@ -5476,3 +5476,53 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 .sch-card.new .g { color: var(--primary); }
+
+/* ==========================================================================
+   التلميح — طبقةٌ معتمة تُبرز الهدف وحده (الشكل «أ» المعتمد)
+   ========================================================================== */
+
+.hint-layer { position: fixed; inset: 0; z-index: 900; }
+
+/* الثقب بلا قصٍّ ولا أقنعة: ظلٌّ هائل الانتشار يُعتِّم ما حوله. */
+.hint-hole {
+    position: absolute; border-radius: 13px;
+    box-shadow: 0 0 0 9999px rgba(10, 16, 32, .70);
+    pointer-events: none;
+}
+
+.hint-tip {
+    position: absolute; box-sizing: border-box;
+    background: var(--surface); border-radius: 13px;
+    padding: 12px 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .36);
+}
+.hint-tip b {
+    display: block; font-size: var(--fs-sm);
+    font-weight: var(--fw-black); color: var(--text);
+}
+.hint-tip span {
+    display: block; font-size: var(--fs-xs); color: var(--text-muted);
+    margin-top: 3px; line-height: 1.65;
+}
+.hint-tip::after {
+    content: ''; position: absolute; top: -7px;
+    inset-inline-end: var(--hint-arrow, 26px);
+    border-inline: 8px solid transparent;
+    border-bottom: 8px solid var(--surface);
+}
+/* حين لا يتّسع ما تحت الهدف يعلوه الصندوق، فينقلب السهم معه. */
+.hint-tip.up::after {
+    top: auto; bottom: -7px;
+    border-bottom: 0; border-top: 8px solid var(--surface);
+}
+.hint-go {
+    display: block; width: 100%; margin-top: 10px;
+    border: 0; border-radius: 9px; padding: 8px;
+    background: var(--primary); color: var(--text-inverse);
+    font-family: inherit; font-size: var(--fs-xs);
+    font-weight: var(--fw-black); cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hint-layer { transition: none; }
+}
