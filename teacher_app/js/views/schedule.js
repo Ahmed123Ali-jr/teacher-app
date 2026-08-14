@@ -603,17 +603,97 @@
                أحدهما — وحبسُها كان يُسقط الاعتماد بمرجعٍ غير معرّف. */
             let naked = [];
 
+            /* ── الخطّة: خانةٌ واحدة لكل موضع ──
+               كانت النتيجة قائمتين (فصولٌ قائمة وفصولٌ جديدة) لا تُقارَن
+               بورقة المعلّم. فصارت خريطةً واحدةً تُرسم شبكةً كجدوله، ويُعدّل
+               فيها قبل الحفظ لا بعده. */
+            let plan = {};          // 'يوم:حصة' → {kind, ni|class_id}
+            let editing = false;
+            /* لوحة اختيار الخانة داخل المعاينة لا في نافذةٍ ثانية:
+               `Modal.open` يستبدل محتوى النافذة، فكانت تمحو المعاينة
+               ولا تعود. */
+            let pickKey = null;
+
+            function buildPlan() {
+                plan = {};
+                ok.forEach((c) => {
+                    plan[c.day + ':' + c.period] = c.wait
+                        ? { kind: 'wait' }
+                        : { kind: 'have', class_id: c.class_id };
+                });
+                news.forEach((n, i) => n.cells.forEach((c) => {
+                    plan[c.day + ':' + c.period] = { kind: 'new', ni: i };
+                }));
+            }
+
+            /** كل الفصول المتاحة للاختيار: ما عنده وما سيُنشأ من الصورة. */
+            function choices() {
+                const out = news.map((n, i) => ({
+                    key: 'new:' + i, kind: 'new', ni: i,
+                    label: CC.label(n.grade, n.section), sub: n.subject
+                }));
+                const used = {};
+                ok.forEach((c) => { if (c.class_id) used[c.class_id] = true; });
+                Object.keys(used).forEach((id) => {
+                    const k = byId[id];
+                    if (k) out.push({ key: 'have:' + id, kind: 'have', class_id: id,
+                                      label: CC.label(k.grade, k.section), sub: k.subject });
+                });
+                return out;
+            }
+
+            function cellOf(e) {
+                if (!e) return null;
+                if (e.kind === 'wait') return { label: '⏳ انتظار', sub: '', cls: 'wait' };
+                if (e.kind === 'new') {
+                    const n = news[e.ni];
+                    return n ? { label: CC.label(n.grade, n.section), sub: n.subject, cls: 'new' } : null;
+                }
+                const k = byId[e.class_id];
+                return k ? { label: CC.label(k.grade, k.section), sub: k.subject, cls: '' } : null;
+            }
+
+            /** الشبكة: أيامٌ أعمدة وحصصٌ صفوف — كجدول التطبيق تماماً. */
+            function gridHtml() {
+                const P = ctx.periods.length;
+                let h = '<div class="impg' + (editing ? ' edit' : '') + '">'
+                      + '<div class="impg-row head"><span class="impg-h">الحصة</span>'
+                      + DAYS.map((d) => '<span class="impg-h">' + escapeHtml(d.label) + '</span>').join('')
+                      + '</div>';
+                for (let p = 1; p <= P; p++) {
+                    h += '<div class="impg-row"><span class="impg-p">' + arDigits(p) + '</span>';
+                    for (let d = 0; d < DAYS.length; d++) {
+                        const v = cellOf(plan[d + ':' + p]);
+                        h += '<button type="button" class="impg-c ' + (v ? v.cls : 'empty') + '"'
+                           + ' data-cell="' + d + ':' + p + '"' + (editing ? '' : ' disabled') + '>'
+                           + (v ? '<b>' + escapeHtml(v.label) + '</b>'
+                                  + (v.sub ? '<i>' + escapeHtml(v.sub) + '</i>' : '')
+                                : (editing ? '＋' : ''))
+                           + '</button>';
+                    }
+                    h += '</div>';
+                }
+                return h + '</div>';
+            }
+
             function paintPreview() {
                 /* لا اختيارَ لما يُعرف: المادة مقروءةٌ من الصورة، فسؤالُ
                    المعلّم عنها سبع مراتٍ تعطيلٌ لا تأكيد. ولا يُسأل إلا
                    عمّا لم يُقرأ. */
-                const taken = news;
-                naked = news.filter((n) => !n.subject);
-                const totalCells = ok.length + taken.reduce((a, n) => a + n.cells.length, 0);
+                /* العدّ من الشبكة لا من القراءة الأولى: المعلّم قد حذف
+                   خانةً أو أضافها، فرقمٌ لا يتبعه يكذب عليه. */
+                const keys = Object.keys(plan);
+                const totalCells = keys.length;
+                const usedNew = {};
+                keys.forEach((k) => { if (plan[k].kind === 'new') usedNew[plan[k].ni] = true; });
+                const taken = Object.keys(usedNew).map((i) => news[Number(i)]).filter(Boolean);
+                naked = taken.filter((n) => !n.subject);
 
                 /* كم خانة ستُطمس؟ المعلّم يستحقّ أن يعرف قبل أن يوافق. */
-                const overwrite = ok.filter((c) =>
-                    ctx.schedule.some((r) => r.day === c.day && r.period === c.period && r.class_id)).length;
+                const overwrite = keys.filter((k) => {
+                    const [d, p] = k.split(':').map(Number);
+                    return ctx.schedule.some((r) => r.day === d && r.period === p && r.class_id);
+                }).length;
 
                 const stageRow = askStage ? `
                     <div class="imp-stage">
@@ -637,13 +717,13 @@
                             ${overwrite ? `<span class="imp-warn">وستُستبدل ${arWord(overwrite)} موجودة في جدولك</span>` : ''}
                         </div>
 
-                        ${news.length ? `
+                        ${taken.length ? `
                             <div class="imp-new">
                                 <div class="imp-new-t">
-                                    ${news.length === 1 ? 'فصلٌ جديد سيُنشأ' : arDigits(news.length) + ' فصول ستُنشأ'}
+                                    ${taken.length === 1 ? 'فصلٌ جديد سيُنشأ' : arDigits(taken.length) + ' فصول ستُنشأ'}
                                     ${naked.length ? `<span>ينقص ${naked.length === 1 ? 'واحدٌ منها مادّته' : 'بعضها مادّته'}</span>` : ''}
                                 </div>
-                                ${news.map((n, i) => n.subject ? `
+                                ${news.map((n, i) => !usedNew[i] ? '' : n.subject ? `
                                     <div class="imp-new-row done">
                                         <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}</span>
                                         <span class="sj">${escapeHtml(n.subject)}</span>
@@ -662,30 +742,73 @@
                                 `).join('')}
                             </div>` : ''}
 
-                        ${ok.length ? `
-                            <ul class="imp-list">
-                                ${ok.map((c) => {
-                                    const k = byId[c.class_id];
-                                    return `<li><span class="d">${DAYS[c.day].label}</span>
-                                        <span class="p">الحصة ${arDigits(c.period)}</span>
-                                        <span class="c">${c.wait ? '⏳ انتظار' : escapeHtml(CC.label(k.grade, k.section))}</span>
-                                        ${c.topic ? `<span class="t">${escapeHtml(c.topic)}</span>` : ''}</li>`;
-                                }).join('')}
-                            </ul>` : ''}
+                        ${pickHtml()}
+                        ${totalCells ? `
+                            <p class="impg-hint">${editing
+                                ? 'اضغط أي خانة لتغييرها — ثم «تمّ».'
+                                : 'قارنها بجدولك. إن كانت صحيحة فاعتمدها، وإلا فعدّلها.'}</p>
+                            ${gridHtml()}` : ''}
 
-                        <button type="button" class="btn btn-primary btn-block" id="imp-apply"
-                                ${askStage && !totalCells ? 'disabled' : ''}>
-                            ✓ اعتمد ${arWord(totalCells, true)}${taken.length ? ' و' + clsWord(taken.length, true) : ''}
-                        </button>
+                        <div class="imp-acts">
+                            <button type="button" class="btn btn-primary" id="imp-apply"
+                                    ${askStage && !totalCells ? 'disabled' : ''}>
+                                ✓ اعتمد ${arWord(totalCells, true)}${taken.length ? ' و' + clsWord(taken.length, true) : ''}
+                            </button>
+                            ${totalCells ? `
+                                <button type="button" class="btn btn-secondary" id="imp-edit">
+                                    ${editing ? '✓ تمّ التعديل' : '✎ تعديل'}
+                                </button>` : ''}
+                        </div>
                     </div>`;
                 bindPreview();
             }
 
+            /** لوحةُ اختيارٍ داخل المعاينة: بمَ نملأ هذه الخانة؟ */
+            function pickHtml() {
+                if (!pickKey) return '';
+                const [d, p] = pickKey.split(':').map(Number);
+                const cur = plan[pickKey];
+                return '<div class="impg-pick">'
+                    + '<div class="impg-pick-t">' + escapeHtml(DAYS[d].label) + ' · الحصة ' + arDigits(p)
+                    + '<button type="button" class="impg-pick-x" data-pick-close>✕</button></div>'
+                    + '<div class="impg-pick-l">'
+                    + choices().map((o) => '<button type="button" class="sch-chip'
+                        + ((cur && ((o.kind === 'new' && cur.ni === o.ni) || (o.kind === 'have' && cur.class_id === o.class_id))) ? ' on' : '')
+                        + '" data-pick="' + escapeAttr(o.key) + '">' + escapeHtml(o.label)
+                        + (o.sub ? ' <small>' + escapeHtml(o.sub) + '</small>' : '') + '</button>').join('')
+                    + '<button type="button" class="sch-chip' + (cur && cur.kind === 'wait' ? ' on' : '') + '" data-pick="wait">⏳ انتظار</button>'
+                    + '<button type="button" class="sch-chip danger" data-pick="clear">✕ فارغة</button>'
+                    + '</div></div>';
+            }
+
             function bindPreview() {
+                resultEl.querySelector('#imp-edit')?.addEventListener('click', () => {
+                    editing = !editing;
+                    paintPreview();
+                });
+                resultEl.querySelectorAll('[data-cell]').forEach((el) => {
+                    el.addEventListener('click', () => { pickKey = el.dataset.cell; paintPreview(); });
+                });
+                resultEl.querySelector('[data-pick-close]')?.addEventListener('click', () => {
+                    pickKey = null; paintPreview();
+                });
+                resultEl.querySelectorAll('[data-pick]').forEach((el) => {
+                    el.addEventListener('click', () => {
+                        const v = el.dataset.pick, key = pickKey;
+                        if (!key) return;
+                        if (v === 'clear') delete plan[key];
+                        else if (v === 'wait') plan[key] = { kind: 'wait' };
+                        else if (v.startsWith('new:')) plan[key] = { kind: 'new', ni: Number(v.slice(4)) };
+                        else plan[key] = { kind: 'have', class_id: v.slice(5) };
+                        pickKey = null;
+                        paintPreview();
+                    });
+                });
                 resultEl.querySelectorAll('[data-stage-pick]').forEach((el) => {
                     el.addEventListener('click', () => {
                         stage = el.dataset.stagePick;
                         sortCells();          /* الاختيار يُحيي خاناتٍ كانت ساقطة */
+                        buildPlan();
                         paintPreview();
                     });
                 });
@@ -697,43 +820,61 @@
                 });
 
                 resultEl.querySelector('#imp-apply').addEventListener('click', async (e) => {
-                    const taken = news;
-                    /* لا فصلَ بلا مادة: الاسم وحده لا يميّز فصلين لمعلّمٍ
+                    /* يُكتب ما في الشبكة لا ما قرأه النموذج: المعلّم قد
+                       عدّل، وتجاهلُ تعديله أسوأ من ألّا نعرضه. */
+                    const keys = Object.keys(plan);
+                    const usedNew = {};
+                    keys.forEach((k) => { if (plan[k].kind === 'new') usedNew[plan[k].ni] = true; });
+
+                    /* لا فصلَ بلا مادة — والاسم وحده لا يميّز فصلين لمعلّمٍ
                        يدرّس مادتين لنفس الصف. */
-                    if (naked.length) {
+                    const missing = Object.keys(usedNew)
+                        .map((i) => news[Number(i)]).filter((n) => n && !n.subject);
+                    if (missing.length) {
                         return global.TeacherApp.toast(
-                            'اختر مادة ' + CC.label(naked[0].grade, naked[0].section) + '.',
+                            'اختر مادة ' + CC.label(missing[0].grade, missing[0].section) + '.',
                             'warning', 4000);
                     }
+
                     const b = e.currentTarget;
                     b.disabled = true;
                     b.textContent = '⏳ جارٍ الحفظ…';
                     try {
-                        const all = ok.slice();
-                        for (const n of taken) {
+                        /* تُنشأ الفصول المستعملة في الشبكة وحدها — فما حذفه
+                           المعلّم من كل خاناته لا يُنشأ له فصل. */
+                        const made = {};
+                        for (const i of Object.keys(usedNew)) {
+                            const n = news[Number(i)];
                             const cls = await CC.create({
                                 teacher_id: ctx.teacher.id,
                                 stage: n.stage, grade: n.grade, section: n.section, subject: n.subject
                             });
                             ctx.classes.push(cls);
-                            n.cells.forEach((c) => all.push({ day: c.day, period: c.period,
-                                                              class_id: cls.id, topic: c.topic }));
+                            made[i] = cls.id;
                         }
+                        const all = keys.map((k) => {
+                            const [day, period] = k.split(':').map(Number);
+                            const e2 = plan[k];
+                            if (e2.kind === 'wait') return { day, period, class_id: null, wait: true, topic: '' };
+                            return { day, period, topic: '',
+                                     class_id: e2.kind === 'new' ? made[e2.ni] : e2.class_id };
+                        });
                         await applyCells(all, ctx, container);
                         global.Modal.close();
+                        const nMade = Object.keys(made).length;
                         global.TeacherApp.toast(
                             'تم استيراد ' + arWord(all.length, true)
-                            + (taken.length ? ' وإنشاء ' + clsWord(taken.length, true) : '') + ' ✅',
+                            + (nMade ? ' وإنشاء ' + clsWord(nMade, true) : '') + ' ✅',
                             'success', 3500);
                     } catch (err) {
                         console.warn('[schedule] apply failed:', err);
                         global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 6000);
-                        b.disabled = false;
                         paintPreview();
                     }
                 });
             }
 
+            buildPlan();
             paintPreview();
         }
 

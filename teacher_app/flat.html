@@ -11,7 +11,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>تطبيق إنجاز المعلم</title>
+    <title>إنجاز المعلم — المظهر الرسمي</title>
 
     <!-- الخط مستضاف محلياً: من نطاق خارجي كان يسقط بلا إنترنت فيتغيّر
          شكل التطبيق كلّه، ومعالج الخدمة لا يخزّن الطلبات الخارجية.
@@ -26,6 +26,9 @@
     <link rel="stylesheet" href="css/views.css?v=D157">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
     <link rel="stylesheet" href="css/print.css?v=D23" media="print">
+
+    <!-- مظهرٌ رسميٌّ مسطّح فوق التطبيق نفسه — الأصل لم يُمسّ. -->
+    <link rel="stylesheet" href="css/theme-flat.css?v=3">
 </head>
 <body>
     <!-- Instant splash: pure inline HTML/CSS so it paints before any file
@@ -272,7 +275,7 @@
         }
 
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').then((reg) => {
+            false && navigator.serviceWorker.register('sw.js').then((reg) => {
                 if (reg.waiting) showUpdateBanner(reg);
                 reg.addEventListener('updatefound', () => {
                     const sw = reg.installing;

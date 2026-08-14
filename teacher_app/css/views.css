@@ -5554,3 +5554,74 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .imp-new-row.done .cnt { flex: none; }
 .imp-new-row .nm .cnt { margin-inline-start: var(--space-2); font-weight: var(--fw-medium); }
+
+/* ==========================================================================
+   معاينة الاستيراد شبكةً — تُقارَن بورقة المعلّم لا تُقرأ سطراً سطراً
+   ========================================================================== */
+
+.impg-hint {
+    font-size: var(--fs-xs); color: var(--text-muted);
+    margin: var(--space-4) 2px var(--space-2); line-height: 1.7;
+}
+.impg { display: flex; flex-direction: column; gap: 3px; }
+.impg-row { display: flex; gap: 3px; }
+.impg-row.head .impg-h {
+    flex: 1; min-width: 0; text-align: center;
+    font-size: 10px; font-weight: var(--fw-black); color: var(--text-muted);
+    padding: 3px 0;
+}
+.impg-row.head .impg-h:first-child { flex: 0 0 26px; }
+.impg-p {
+    flex: 0 0 26px; display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); background: var(--primary);
+    color: var(--text-inverse); font-size: 11px; font-weight: var(--fw-black);
+}
+.impg-c {
+    flex: 1; min-width: 0; min-height: 46px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; padding: 3px 2px;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); font-family: inherit; cursor: default;
+}
+.impg-c b {
+    font-size: 10px; font-weight: var(--fw-black); color: var(--text);
+    line-height: 1.25; overflow: hidden; text-overflow: ellipsis;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.impg-c i { font-size: 9px; font-style: normal; color: var(--text-muted); }
+/* الفصل الجديد يُميَّز: المعلّم يرى ما سيُنشأ قبل أن يوافق. */
+.impg-c.new { border-style: dashed; border-color: var(--accent);
+              background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.impg-c.wait { border-color: var(--accent);
+               background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.impg-c.wait b { color: var(--primary); }
+.impg-c.empty { background: color-mix(in srgb, var(--border) 14%, transparent);
+                border-style: dashed; }
+
+.impg.edit .impg-c { cursor: pointer; }
+.impg.edit .impg-c.empty { color: var(--text-muted); font-size: 15px; }
+.impg.edit .impg-c:active { transform: scale(.96); }
+
+.impg-pick-t { font-size: var(--fs-sm); font-weight: var(--fw-black); margin-bottom: var(--space-3); }
+.impg-pick-l { display: flex; flex-wrap: wrap; gap: 7px; }
+.impg-pick-l small { font-weight: var(--fw-medium); opacity: .75; }
+.impg-pick-l .sch-chip.danger { border-color: var(--danger, #C0392B); color: var(--danger, #C0392B); }
+
+.imp-acts { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-4); }
+.imp-acts .btn { width: 100%; }
+
+/* لوحة الخانة داخل المعاينة — لا نافذةٌ ثانية تمحو الأولى. */
+.impg-pick {
+    margin-bottom: var(--space-4); padding: var(--space-3);
+    border: 1.5px solid var(--primary); border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+.impg-pick-t {
+    display: flex; align-items: center;
+    font-size: var(--fs-sm); font-weight: var(--fw-black);
+    color: var(--text); margin-bottom: var(--space-3);
+}
+.impg-pick-x {
+    margin-inline-start: auto; border: 0; background: transparent;
+    color: var(--text-muted); font-size: 16px; cursor: pointer; line-height: 1;
+}
