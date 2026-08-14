@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-opt="a">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>معاينة — خطوط رسمية</title>
+
+<!-- الخط الحالي من ملفّ التطبيق نفسه، لا من نطاقٍ خارجي: البديل «أ» لازم
+     يكون هو ما تراه في تطبيقك حرفاً بحرف، وإلا قارنتَ وهماً بوهم. -->
+<link rel="stylesheet" href="css/fonts.css?v=1">
+
+<!-- بقيّة الخطوط من جوجل — للمعاينة وحدها. المعتمد منها يُستضاف محلياً
+     مثل تجوّل: التطبيق بلا إنترنت لا يسقط على خط النظام. -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@400;500;600;700&display=swap">
+
+<style>
+/* ==========================================================================
+   معاينة الخطوط — خمسة بدائل، كلٌّ منها نظامٌ كامل لا اسمَ خطٍّ فقط:
+   العائلة، وأوزانُ العناوين والنصّ، ومقياسُ الحجم، وتباعدُ السطر.
+
+   فالخطّان قد يتساويان اسماً ويفترقان في العين: أميري يُرسم صغيراً
+   فيحتاج زيادةً في الحجم وفسحةً في السطر، والمرعي يُرسم كبيراً فيحتاج
+   نقصاناً. ومن بدّل العائلة وحدها رأى الفرق تشويشاً لا تحسيناً.
+
+   والحكم على «الرسمي» في الورق قبل الشاشة — فلكلّ بديلٍ سطحان.
+   ========================================================================== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: #EEEDE9;
+    color: #16202E;
+    padding: 14px 12px calc(92px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+    font-family: 'Tajawal', system-ui, sans-serif;
+}
+
+/* ---------- ترويسة الصفحة ---------- */
+.pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 900; text-align: center; color: #0F2C5C; }
+.pv-note  { margin: 0 auto 14px; max-width: 480px; font-size: 11.5px; line-height: 1.9;
+            color: #5C6470; text-align: center; }
+
+/* ---------- بطاقة تعريف البديل ---------- */
+.pv-cap {
+    max-width: 480px; margin: 0 auto 10px; padding: 10px 12px;
+    background: #fff; border: 1px solid #DDDCD6; border-radius: 12px; text-align: center;
+}
+.pv-cap .nm { font-size: 14px; font-weight: 900; color: #0F2C5C; }
+.pv-cap .nm b { font-weight: 900; }
+.pv-cap .ds { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 500; color: #5C6470; line-height: 1.75; }
+.pv-cap .fx { display: block; margin-top: 6px; font-size: 10.5px; color: #8A9099; letter-spacing: .2px; }
+.pv-cap .wn {
+    display: block; margin-top: 8px; padding: 7px 9px; border-radius: 8px;
+    background: #FEF3F2; border: 1px solid #FDA29B; color: #B42318;
+    font-size: 11.5px; font-weight: 700; line-height: 1.7;
+}
+
+/* ---------- عنوان السطح ---------- */
+.pv-sec {
+    max-width: 480px; margin: 18px auto 8px; font-size: 11.5px; font-weight: 900;
+    color: #6B7280; text-align: center; letter-spacing: .3px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   البدائل: كلُّ بديلٍ يضبط رموزاً، والعيّنتان تقرآنها.
+   --k مقياسُ حجم الشاشة، --dk مقياسُ الورق — تُقاس بالعين لا بالاسم.
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+    --ui-font: 'Tajawal', system-ui, sans-serif;
+    --doc-font: 'Tajawal', system-ui, sans-serif;
+    --k: 1; --dk: 1;
+    --ui-lh: 1.7; --doc-lh: 1.75;
+    --w-title: 900; --w-mid: 700; --w-body: 400;
+    --doc-w-title: 900; --doc-w-mid: 700;
+    --track: 0px;
+}
+html[data-opt="b"] {
+    --ui-font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    --doc-font: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    --k: 1; --dk: .99;
+    --ui-lh: 1.75; --doc-lh: 1.8;
+    --w-title: 700; --w-mid: 600; --w-body: 400;
+    --doc-w-title: 700; --doc-w-mid: 600;
+}
+html[data-opt="c"] {
+    --ui-font: 'Almarai', system-ui, sans-serif;
+    --doc-font: 'Amiri', 'Noto Naskh Arabic', serif;
+    --k: .97; --dk: 1.16;
+    --ui-lh: 1.8; --doc-lh: 2;
+    --w-title: 800; --w-mid: 700; --w-body: 400;
+    --doc-w-title: 700; --doc-w-mid: 700;
+}
+html[data-opt="d"] {
+    --ui-font: 'Readex Pro', system-ui, sans-serif;
+    --doc-font: 'Noto Naskh Arabic', serif;
+    --k: .95; --dk: 1.08;
+    --ui-lh: 1.8; --doc-lh: 1.95;
+    --w-title: 700; --w-mid: 600; --w-body: 400;
+    --doc-w-title: 700; --doc-w-mid: 600;
+}
+html[data-opt="e"] {
+    --ui-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --doc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --k: 1; --dk: 1;
+    --ui-lh: 1.72; --doc-lh: 1.8;
+    --w-title: 800; --w-mid: 600; --w-body: 400;
+    --doc-w-title: 800; --doc-w-mid: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   السطح الأول: شاشة التطبيق كما هي اليوم — أرضيةٌ بيضاء وحدودٌ رمادية.
+   ══════════════════════════════════════════════════════════════════ */
+.phone {
+    max-width: 480px; margin: 0 auto; background: #fff;
+    border: 1px solid #DDDCD6; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 6px 20px rgba(16,24,40,.10);
+    font-family: var(--ui-font);
+    line-height: var(--ui-lh);
+    letter-spacing: var(--track);
+}
+.ph-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--k) * 13px) calc(var(--k) * 15px);
+    border-bottom: 1px solid #E4E6EA;
+}
+.ph-head .t { font-size: calc(var(--k) * 16px); font-weight: var(--w-title); color: #0F2C5C; }
+.ph-head .m { font-size: calc(var(--k) * 17px); color: #0F2C5C; }
+
+.ph-body { padding: calc(var(--k) * 15px); }
+.ph-greet { font-size: calc(var(--k) * 21px); font-weight: var(--w-title); color: #0F2C5C; }
+.ph-date  { font-size: calc(var(--k) * 12.5px); font-weight: var(--w-body); color: #6B6B68; margin-top: 1px; }
+
+.ph-card {
+    margin-top: calc(var(--k) * 14px); padding: calc(var(--k) * 14px);
+    border: 1px solid #E4E6EA; border-radius: 14px;
+}
+.ph-card .h  { font-size: calc(var(--k) * 15.5px); font-weight: var(--w-mid); color: #0F2C5C; }
+.ph-card .s  { font-size: calc(var(--k) * 12.5px); font-weight: var(--w-body); color: #6B6B68; margin-top: 2px; }
+
+.ph-row {
+    display: flex; align-items: center; gap: calc(var(--k) * 10px);
+    padding: calc(var(--k) * 11px) 0; border-bottom: 1px solid #EFF0F2;
+}
+.ph-row:last-child { border-bottom: 0; }
+.ph-row .n  { flex: 1; font-size: calc(var(--k) * 14.5px); font-weight: var(--w-body); }
+.ph-row .g  { font-size: calc(var(--k) * 14.5px); font-weight: var(--w-mid); color: #0F2C5C;
+              font-feature-settings: "tnum" 1; }
+.ph-row .g small { font-size: calc(var(--k) * 11.5px); font-weight: var(--w-body); color: #8A9099; }
+
+.ph-btn {
+    margin-top: calc(var(--k) * 14px); width: 100%;
+    padding: calc(var(--k) * 13px); border-radius: 12px; border: 0;
+    background: #0F2C5C; color: #fff;
+    font-family: inherit; font-size: calc(var(--k) * 15.5px); font-weight: var(--w-mid);
+}
+.ph-nav {
+    display: flex; border-top: 1px solid #E4E6EA;
+}
+.ph-nav span {
+    flex: 1; text-align: center; padding: calc(var(--k) * 10px) 0;
+    font-size: calc(var(--k) * 11px); font-weight: var(--w-mid); color: #6B6B68;
+}
+.ph-nav span.on { color: #0F2C5C; }
+
+/* ══════════════════════════════════════════════════════════════════
+   السطح الثاني: الوثيقة. تُرسم بعرض A4 الحقيقي (794px عند 96dpi) ثم
+   تُصغَّر بالتحويل — فما تراه نِسَبُ الورق لا تقريبٌ لها.
+   ══════════════════════════════════════════════════════════════════ */
+.sheet-wrap { max-width: 480px; margin: 0 auto; overflow: hidden; }
+.sheet {
+    width: 794px; padding: 54px 50px 60px;
+    background: #fff; color: #111;
+    border: 1px solid #DDDCD6;
+    transform-origin: top right;
+    font-family: var(--doc-font);
+    line-height: var(--doc-lh);
+    box-shadow: 0 6px 22px rgba(16,24,40,.14);
+}
+.dc-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.dc-head .col { font-size: calc(var(--dk) * 15px); font-weight: var(--doc-w-mid); text-align: center; line-height: 1.9; }
+.dc-head .col span { display: block; font-weight: 400; font-size: calc(var(--dk) * 14px); }
+.dc-logo {
+    width: 74px; height: 74px; border: 1px solid #C9C9C9; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: calc(var(--dk) * 11px); color: #999;
+}
+.dc-rule { height: 2px; background: #0F2C5C; margin: 18px 0 0; }
+.dc-rule + .dc-rule { height: 1px; margin: 3px 0 22px; }
+
+.dc-title {
+    text-align: center; font-size: calc(var(--dk) * 22px); font-weight: var(--doc-w-title);
+    color: #0F2C5C; margin-bottom: 6px;
+}
+.dc-sub { text-align: center; font-size: calc(var(--dk) * 15px); margin-bottom: 22px; color: #333; }
+
+.dc-meta {
+    display: flex; gap: 26px; font-size: calc(var(--dk) * 15px); margin-bottom: 16px;
+}
+.dc-meta b { font-weight: var(--doc-w-mid); }
+
+table.dc { width: 100%; border-collapse: collapse; font-size: calc(var(--dk) * 15px); }
+table.dc th, table.dc td { border: 1px solid #BFBFBF; padding: 9px 8px; text-align: center; }
+table.dc th { background: #F1F1EF; font-weight: var(--doc-w-mid); font-size: calc(var(--dk) * 14px); }
+table.dc td.nm { text-align: right; }
+table.dc td.num { font-feature-settings: "tnum" 1; }
+
+.dc-sign {
+    display: flex; justify-content: space-between; margin-top: 46px;
+    font-size: calc(var(--dk) * 15px); font-weight: var(--doc-w-mid); text-align: center;
+}
+.dc-sign span { display: block; font-weight: 400; margin-top: 34px; color: #666; font-size: calc(var(--dk) * 13px); }
+
+/* ---------- قطعةٌ من الورقة بحجمها الحقيقي ----------
+   الورقةُ أعلاه مصغّرةٌ إلى ٤٤٪ لتُرى نِسَبُها، وبهذا الحجم لا تُحكَم
+   حروفٌ ولا تُقارن. فهذه القطعة بمقاسها كما يخرج على الورق تماماً. */
+.crop {
+    max-width: 480px; margin: 0 auto; padding: 16px 15px 18px;
+    background: #fff; border: 1px solid #DDDCD6; border-radius: 12px;
+    color: #111; font-family: var(--doc-font); line-height: var(--doc-lh);
+}
+.crop .t { font-size: calc(var(--dk) * 22px); font-weight: var(--doc-w-title); color: #0F2C5C; text-align: center; }
+.crop .s { font-size: calc(var(--dk) * 15px); text-align: center; color: #333; margin-bottom: 12px; }
+.crop table { width: 100%; border-collapse: collapse; font-size: calc(var(--dk) * 15px); }
+.crop th, .crop td { border: 1px solid #BFBFBF; padding: 7px 6px; text-align: center; }
+.crop th { background: #F1F1EF; font-weight: var(--doc-w-mid); font-size: calc(var(--dk) * 14px); }
+.crop td.nm { text-align: right; }
+.crop .sg { margin-top: 18px; font-size: calc(var(--dk) * 15px); font-weight: var(--doc-w-mid); }
+
+/* ---------- شريط البدائل ---------- */
+.pv-bar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+    display: flex; gap: 7px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.95); backdrop-filter: blur(10px);
+    border-top: 1px solid #DDDCD6;
+}
+.pv-bar button {
+    flex: 1; min-height: 48px; border-radius: 12px; cursor: pointer;
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 16px; font-weight: 900; color: #0F2C5C;
+    background: #fff; border: 1.5px solid #D8D5CC;
+}
+.pv-bar button.on { color: #fff; background: #0F2C5C; border-color: #0A2049; }
+</style>
+</head>
+<body>
+
+<p class="pv-title">الخطوط — خمسة بدائل</p>
+<p class="pv-note">
+    بدّل بالحروف تحت. كلُّ بديلٍ يشمل الشاشة <b>والوثيقة المطبوعة</b> —
+    فالرسميّ يُحكم عليه في الورق أولاً.<br>
+    والأسماء والدرجات هنا وهميّة.
+</p>
+
+<div class="pv-cap">
+    <div class="nm" id="cap-nm">أ — تجوّل <b>(الحالي)</b></div>
+    <span class="ds" id="cap-ds">هندسيٌّ ودود، حروفه دائرية. مألوفٌ في التطبيقات لا في المخاطبات.</span>
+    <span class="fx" id="cap-fx">Tajawal · شاشةً وورقاً</span>
+    <span class="wn" id="cap-warn" style="display:none"></span>
+</div>
+
+<p class="pv-sec">▼ الشاشة</p>
+
+<div class="phone">
+    <div class="ph-head">
+        <div class="t">تطبيق إنجاز المعلم</div>
+        <div class="m">☰</div>
+    </div>
+    <div class="ph-body">
+        <div class="ph-greet">مساء الخير، أ. أحمد</div>
+        <div class="ph-date">السبت، ٣ ربيع الأول ١٤٤٨ هـ</div>
+
+        <div class="ph-card">
+            <div class="h">سجل الطلاب</div>
+            <div class="s">الصف الأول المتوسط — شعبة أ — ٢٨ طالباً</div>
+
+            <div class="ph-row"><div class="n">عبدالله محمد الأحمد</div><div class="g">٤٨<small>/٥٠</small></div></div>
+            <div class="ph-row"><div class="n">فيصل عبدالعزيز الشهري</div><div class="g">٤٥<small>/٥٠</small></div></div>
+            <div class="ph-row"><div class="n">إبراهيم سعد القحطاني</div><div class="g">٣٩<small>/٥٠</small></div></div>
+        </div>
+
+        <button class="ph-btn">تحضير الكل</button>
+    </div>
+    <div class="ph-nav">
+        <span class="on">الرئيسية</span><span>الفصول</span><span>الجدول</span><span>إنجاز</span><span>الإعدادات</span>
+    </div>
+</div>
+
+<p class="pv-sec">▼ الوثيقة المطبوعة</p>
+
+<div class="sheet-wrap">
+<div class="sheet" id="sheet">
+    <div class="dc-head">
+        <div class="col">المملكة العربية السعودية<span>وزارة التعليم</span><span>إدارة التعليم بمنطقة عسير</span></div>
+        <div class="dc-logo">الشعار</div>
+        <div class="col">المادة: العلوم<span>الصف: الأول المتوسط</span><span>الفصل الدراسي الأول</span></div>
+    </div>
+
+    <div class="dc-rule"></div>
+    <div class="dc-rule"></div>
+
+    <div class="dc-title">كشف رصد الدرجات</div>
+    <div class="dc-sub">العام الدراسي ١٤٤٨ هـ — الفترة الأولى</div>
+
+    <div class="dc-meta">
+        <div><b>المدرسة:</b> متوسطة الملك فهد</div>
+        <div><b>المعلم:</b> أحمد علي العسيري</div>
+        <div><b>التاريخ:</b> ١٤٤٨/٠٣/٠٣ هـ</div>
+    </div>
+
+    <table class="dc">
+        <thead>
+            <tr>
+                <th style="width:44px">م</th>
+                <th>اسم الطالب</th>
+                <th style="width:96px">المشاركة<br>١٠</th>
+                <th style="width:96px">الواجبات<br>١٠</th>
+                <th style="width:96px">الاختبار<br>٤٠</th>
+                <th style="width:96px">المجموع<br>٦٠</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="num">١</td><td class="nm">عبدالله محمد الأحمد</td><td class="num">٩</td><td class="num">١٠</td><td class="num">٢٩</td><td class="num">٤٨</td></tr>
+            <tr><td class="num">٢</td><td class="nm">فيصل عبدالعزيز الشهري</td><td class="num">٨</td><td class="num">٩</td><td class="num">٢٨</td><td class="num">٤٥</td></tr>
+            <tr><td class="num">٣</td><td class="nm">إبراهيم سعد القحطاني</td><td class="num">٧</td><td class="num">٨</td><td class="num">٢٤</td><td class="num">٣٩</td></tr>
+            <tr><td class="num">٤</td><td class="nm">ماجد ناصر الغامدي</td><td class="num">١٠</td><td class="num">١٠</td><td class="num">٣٦</td><td class="num">٥٦</td></tr>
+        </tbody>
+    </table>
+
+    <div class="dc-sign">
+        <div>معلم المادة<span>الاسم والتوقيع</span></div>
+        <div>مدير المدرسة<span>الاسم والتوقيع والختم</span></div>
+    </div>
+</div>
+</div>
+
+<p class="pv-sec">▼ قطعةٌ من الورقة بحجمها الحقيقي</p>
+
+<div class="crop">
+    <div class="t">كشف رصد الدرجات</div>
+    <div class="s">العام الدراسي ١٤٤٨ هـ — الفترة الأولى</div>
+    <table>
+        <tr><th style="width:34px">م</th><th>اسم الطالب</th><th style="width:74px">الاختبار<br>٤٠</th><th style="width:74px">المجموع<br>٦٠</th></tr>
+        <tr><td>١</td><td class="nm">عبدالله محمد الأحمد</td><td>٢٩</td><td>٤٨</td></tr>
+        <tr><td>٢</td><td class="nm">فيصل عبدالعزيز الشهري</td><td>٢٨</td><td>٤٥</td></tr>
+    </table>
+    <div class="sg">معلم المادة: أحمد علي العسيري</div>
+</div>
+
+<div class="pv-bar">
+    <button data-o="a" class="on">أ</button>
+    <button data-o="b">ب</button>
+    <button data-o="c">ج</button>
+    <button data-o="d">د</button>
+    <button data-o="e">هـ</button>
+</div>
+
+<script>
+/* وصفُ كل بديل: الاسم، وما يقوله للعين، والعائلتان. */
+const CAPS = {
+    a: ['أ — تجوّل <b>(الحالي)</b>',
+        'هندسيٌّ ودود، حروفه دائرية. مألوفٌ في التطبيقات لا في المخاطبات — وهو سببُ إحساسك أن الورق «غير رسمي».',
+        'Tajawal · شاشةً وورقاً'],
+    b: ['ب — IBM Plex Arabic',
+        'مؤسّسيٌّ محايد: حروفٌ مضبوطة بلا زخرفةٍ ولا ودّ زائد. أقربُ ما يكون لخطوط الجهات الحكومية الحديثة، ويقرأ على الجوال كما يقرأ على الورق.',
+        'IBM Plex Sans Arabic · شاشةً وورقاً'],
+    c: ['ج — المرعي + أميري',
+        'سانسٌ نظيفٌ للشاشة، ونسخيٌّ كلاسيكيٌّ للورق. الوثيقة تخرج بلغة المخاطبات الوزارية — وهو أرسمُ الخمسة على الورق، وأثقلُها قراءةً على الجوال لو استُعمل فيه.',
+        'Almarai (شاشة) · Amiri (ورق)'],
+    d: ['د — ريدكس + نسخ نوتو',
+        'وسطٌ بين ب وج: شاشةٌ حديثةٌ واسعةُ الحروف، ووثيقةٌ بنسخٍ معاصرٍ أوضحَ من أميري وأقلَّ كلاسيكيةً منه.',
+        'Readex Pro (شاشة) · Noto Naskh Arabic (ورق)'],
+    e: ['هـ — خطّ النظام',
+        'خطُّ آيفون نفسه (SF Arabic). لا يُنزَّل ولا يُخزَّن ولا يسقط بلا إنترنت — أسرعُ إقلاعاً وأخفُّ حجماً، لكنّ شكل التطبيق يتغيّر بين آيفون وأندرويد والحاسوب.',
+        'خطّ الجهاز · شاشةً وورقاً']
+};
+
+/* عائلاتُ كل بديل — تُفحص قبل عرضه.
+
+   الخطوط الأربعة تُحمَّل من جوجل (المعاينة وحدها)، والمعتمد منها
+   يُستضاف محلياً بعدُ مثل تجوّل. ولو تعذّر التحميل — إنترنتٌ ضعيف أو
+   شبكةٌ تحجب — لسقط البديل على خطّ النظام وأنت تحسبه هو، فقارنتَ شيئاً
+   بنفسه. فيُفحص ويُقال لك صراحةً. */
+const FAMS = {
+    a: ['Tajawal'],
+    b: ['IBM Plex Sans Arabic'],
+    c: ['Almarai', 'Amiri'],
+    d: ['Readex Pro', 'Noto Naskh Arabic'],
+    e: []
+};
+
+const root = document.documentElement;
+const warn = document.getElementById('cap-warn');
+
+/* `document.fonts.check` لا يصلح هنا: العائلةُ التي لا قاعدةَ لها تُعدّ
+   خطَّ نظامٍ فيُجاب بـ«موجود» — وهو بالضبط الفشلُ الذي نبحث عنه. فيُسأل
+   السجلُّ نفسه: أفيه وجهٌ محمَّلٌ بهذا الاسم؟ */
+function loadedFamily(fam) {
+    for (const f of document.fonts) {
+        if (f.family.replace(/["']/g, '') === fam && f.status === 'loaded') return true;
+    }
+    return false;
+}
+
+function checkFonts(o) {
+    const missing = FAMS[o].filter((f) => !loadedFamily(f));
+    if (!missing.length) { warn.style.display = 'none'; return; }
+    warn.style.display = 'block';
+    warn.textContent = '⚠️ لم يُحمَّل ' + missing.join(' و') + ' — ما تراه خطُّ النظام لا البديل. تأكّد من الإنترنت ثم أعد التحميل.';
+}
+
+function show(o) {
+    root.dataset.opt = o;
+    document.getElementById('cap-nm').innerHTML = CAPS[o][0];
+    document.getElementById('cap-ds').textContent = CAPS[o][1];
+    document.getElementById('cap-fx').textContent = CAPS[o][2];
+    checkFonts(o);
+    document.fonts.ready.then(() => { checkFonts(o); fitSheet(); });
+}
+
+document.querySelector('.pv-bar').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    document.querySelectorAll('.pv-bar button').forEach((x) => x.classList.toggle('on', x === b));
+    show(b.dataset.o);
+});
+
+/* تُطلب العائلات كلُّها عند الفتح، فلا ينتظر البديلُ لحظةَ الضغط. */
+['IBM Plex Sans Arabic', 'Almarai', 'Amiri', 'Readex Pro', 'Noto Naskh Arabic'].forEach((f) => {
+    ['400', '700'].forEach((w) => document.fonts.load(w + ' 16px "' + f + '"', 'كشف رصد').catch(() => {}));
+});
+
+/* الورقة تُصغَّر لعرض الجوال — بنسبةٍ تُحسب لا تُقدَّر، ويُقصّ ارتفاعها
+   بالنسبة نفسها فلا يبقى تحتها فراغٌ أبيض. */
+function fitSheet() {
+    const wrap = document.querySelector('.sheet-wrap');
+    const sheet = document.getElementById('sheet');
+    const scale = wrap.clientWidth / 794;
+    sheet.style.transform = 'scale(' + scale + ')';
+    wrap.style.height = (sheet.offsetHeight * scale) + 'px';
+}
+window.addEventListener('resize', fitSheet);
+document.fonts.ready.then(fitSheet);
+fitSheet();
+</script>
+</body>
+</html>
