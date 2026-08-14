@@ -246,7 +246,11 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
             model:       MODEL,
             max_tokens:  maxTokensFor(pages.length),
-            temperature: kind === 'names' ? 0.1 : 0.2,
+            /* صفرٌ لا غير: هذه مهمّةُ نقلٍ حرفيّ لا إنشاء. وقِيس أن الصورة
+               الواحدة كانت تُعطي ١٣٪ مرّةً و١٠٠٪ مرّة — والتذبذب أخطر من
+               النسبة، لأنه يمنع قياسَ أثر أيّ إصلاح، ويجعل معلّمَين
+               يرفعان الجدول نفسه يخرجان بنتيجتين. */
+            temperature: 0,
             system,
             tools:       [tool],
             /* الإجبار: لا مخرَج إلا نداءُ هذه الأداة. */
