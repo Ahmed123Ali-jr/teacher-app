@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>تقييم دقّة قراءة الجداول</title>
+<style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #F6F7F9; color: #111; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { font-size: 12px; color: #666; margin: 0 0 14px; line-height: 1.75; }
+    button { font-family: inherit; font-size: 14px; font-weight: 700; padding: 11px 20px;
+             border: 0; border-radius: 8px; background: #0F2C5C; color: #fff; cursor: pointer; }
+    button[disabled] { opacity: .5; cursor: default; }
+    #score { margin: 14px 0; padding: 12px; border-radius: 8px; background: #fff;
+             border: 1px solid #E2E5EA; font-size: 15px; font-weight: 800; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px;
+            overflow: hidden; font-size: 12.5px; margin-top: 10px; }
+    th, td { padding: 7px 9px; text-align: right; border-bottom: 1px solid #E8EAED; }
+    th { background: #F0F2F5; font-size: 11px; color: #555; }
+    td.n { text-align: center; width: 42px; font-variant-numeric: tabular-nums; }
+    tr.bad td { background: #FEF2F2; }
+    .det { font-size: 11px; color: #B42318; line-height: 1.6; }
+    .ok { color: #067647; } .warn { color: #B54708; }
+    canvas { display: none; }
+</style>
+</head>
+<body>
+
+<h1>تقييم دقّة قراءة الجداول</h1>
+<p class="sub">
+    ستّةُ جداولَ بتصاميم مختلفة، جوابُ كلٍّ منها مكتوبٌ يدوياً. تُقرأ بالمسار
+    الحقيقي كاملاً — الخادم ثم التطبيع ثم المطابقة — فالرقم يقيس <b>ما يصل
+    المعلّم</b> لا ما يُرجعه النموذج.<br>
+    <b>كل تشغيلةٍ تكلّف رحلاتٍ إلى الخدمة</b> — لا تُشغّلها إلا عند تغييرٍ
+    في التعليمات أو التطبيع.
+</p>
+
+<button id="go">▶ شغّل التقييم</button>
+<div id="score"></div>
+<table id="out"><thead><tr>
+    <th>الجدول</th><th class="n">المتوقّع</th><th class="n">صحيح</th>
+    <th class="n">ناقص</th><th class="n">زائد</th><th class="n">خطأ</th><th class="n">الدقّة</th>
+</tr></thead><tbody></tbody></table>
+<div id="details"></div>
+
+<canvas id="cv"></canvas>
+
+<script src="vendor/supabase.js?v=1"></script>
+<script src="js/supabase-client.js?v=S3"></script>
+<script>
+const MEM = {};
+window.TeacherDB = { Settings: { async get(k){return MEM[k];}, async set(k,v){MEM[k]=v;}, async unset(k){delete MEM[k];} } };
+</script>
+<script src="js/subjects.js?v=1"></script>
+<script src="js/class-create.js?v=4"></script>
+<script src="js/pdf-core.js?v=9"></script>
+<script src="js/ai-service.js?v=D13"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   الرسّام — تصاميمُ الجداول السعودية كما تُطبع فعلاً
+   ══════════════════════════════════════════════════════════════════════ */
+function draw(o) {
+    const { title, school, rowHead, colHead, cells, headLabel, ltr } = o;
+    const CW = o.cw || 140, CH = o.ch || 64, LW = o.lw || 104, HH = 36, TOP = school ? 72 : 44;
+    const c = document.getElementById('cv');
+    c.width = LW + CW * colHead.length + 30;
+    c.height = TOP + HH + CH * rowHead.length + 26;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    g.direction = 'rtl'; g.textAlign = 'center';
+    if (school) { g.fillStyle = '#555'; g.font = '12px system-ui'; g.fillText(school, c.width/2, 22); }
+    g.fillStyle = '#000'; g.font = 'bold 17px system-ui';
+    g.fillText(title, c.width/2, school ? 48 : 28);
+    g.strokeStyle = '#999'; g.lineWidth = 1; g.font = 'bold 12px system-ui';
+    g.strokeRect(c.width-15-LW, TOP, LW, HH);
+    g.fillText(headLabel || 'يوم / الحصة', c.width-15-LW/2, TOP+23);
+    colHead.forEach((h, i) => {
+        const k = ltr ? colHead.length - 1 - i : i;
+        const x = c.width-15-LW-CW*(k+1);
+        g.strokeRect(x, TOP, CW, HH); g.fillText(String(h), x+CW/2, TOP+23);
+    });
+    rowHead.forEach((h, r) => {
+        const y = TOP+HH+CH*r;
+        g.strokeRect(c.width-15-LW, y, LW, CH);
+        g.font = 'bold 12px system-ui'; g.fillText(String(h), c.width-15-LW/2, y+CH/2+5);
+        g.font = '11px system-ui';
+        colHead.forEach((_, i) => {
+            const k = ltr ? colHead.length - 1 - i : i;
+            const x = c.width-15-LW-CW*(k+1);
+            g.strokeRect(x, y, CW, CH);
+            const L = String((cells[r]||[])[i] || '').split('\n');
+            L.forEach((t, j) => g.fillText(t, x+CW/2, y + (L.length>1?25:38) + j*17));
+        });
+    });
+    return c.toDataURL('image/png').split(',')[1];
+}
+
+const D5 = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'];
+const W = { wait: true };
+const C = (grade, section, subject) => ({ grade, section, subject });
+
+/* ══════════════════════════════════════════════════════════════════════
+   الحالات — الجواب مكتوبٌ يدوياً: مفتاحُ «يوم:حصة» → ما يجب أن يُقرأ
+   ══════════════════════════════════════════════════════════════════════ */
+const CASES = [
+{
+    id: 'أ · مراحلٌ مختلطة بلا شعب (جدول حقيقي)',
+    school: 'مدرسة القبرة', teacher: 'مؤيد عسيري',
+    img: () => draw({ school:'مدرسة القبرة', title:'⊞ جدول المعلم مؤيد عسيري',
+        rowHead: D5.slice(0,3), colHead:[1,2,3,4,5], cw:136,
+        cells: [
+            ['ثاني ثانوي\nكيمياء','','ثاني متوسط\nالعلوم','منتظر 2','ثالث ثانوي\nكيمياء'],
+            ['منتظر 1','ثالث ابتدائي\nالتربية الفنية','','ثاني ثانوي\nكيمياء',''],
+            ['ثالث ابتدائي\nالتربية البدنية','','ثاني متوسط\nالعلوم','','منتظر 3']
+        ]}),
+    want: {
+        '0:1': C('الصف الثاني الثانوي','','الكيمياء'),
+        '0:3': C('الصف الثاني المتوسط','','العلوم'),
+        '0:4': W,
+        '0:5': C('الصف الثالث الثانوي','','الكيمياء'),
+        '1:1': W,
+        '1:2': C('الصف الثالث الابتدائي','','التربية الفنية'),
+        '1:4': C('الصف الثاني الثانوي','','الكيمياء'),
+        '2:1': C('الصف الثالث الابتدائي','','التربية البدنية'),
+        '2:3': C('الصف الثاني المتوسط','','العلوم'),
+        '2:5': W
+    }
+},
+{
+    id: 'ب · أرقامٌ فقط «١/٣» والمرحلة من اسم المدرسة',
+    school: 'متوسطة الأمير سلطان', teacher: '', stage: 'intermediate',
+    img: () => draw({ school:'متوسطة الأمير سلطان', title:'الجدول الأسبوعي — أ. سعد',
+        rowHead: D5.slice(0,3), colHead:[1,2,3,4,5],
+        cells: [
+            ['رياضيات\n١/٣','','رياضيات\n٢/١','','علوم\n٣/٢'],
+            ['','رياضيات\n٣/٢','','رياضيات\n١/٣',''],
+            ['علوم\n٢/١','','','رياضيات\n١/٣','']
+        ]}),
+    want: {
+        '0:1': C('الصف الأول المتوسط','٣','الرياضيات'),
+        '0:3': C('الصف الثاني المتوسط','١','الرياضيات'),
+        '0:5': C('الصف الثالث المتوسط','٢','العلوم'),
+        '1:2': C('الصف الثالث المتوسط','٢','الرياضيات'),
+        '1:4': C('الصف الأول المتوسط','٣','الرياضيات'),
+        '2:1': C('الصف الثاني المتوسط','١','العلوم'),
+        '2:4': C('الصف الأول المتوسط','٣','الرياضيات')
+    }
+},
+{
+    id: 'ج · مقلوب: الحصص صفوفٌ والأيام أعمدة',
+    school: 'ثانوية الملك فهد', teacher: '',
+    img: () => draw({ school:'ثانوية الملك فهد', title:'جدول المعلم',
+        headLabel:'الحصة / اليوم', rowHead:[1,2,3,4,5], colHead: D5.slice(0,4), cw:146,
+        cells: [
+            ['أول ثانوي\nفيزياء','','ثاني ثانوي\nفيزياء','منتظر'],
+            ['','ثالث ثانوي\nفيزياء','','أول ثانوي\nفيزياء'],
+            ['ثاني ثانوي\nفيزياء','','',''],
+            ['','','أول ثانوي\nفيزياء',''],
+            ['','منتظر','','ثالث ثانوي\nفيزياء']
+        ]}),
+    want: {
+        '0:1': C('الصف الأول الثانوي','','الفيزياء'),
+        '0:3': C('الصف الثاني الثانوي','','الفيزياء'),
+        '1:2': C('الصف الثالث الثانوي','','الفيزياء'),
+        '1:4': C('الصف الأول الثانوي','','الفيزياء'),
+        '2:1': C('الصف الثاني الثانوي','','الفيزياء'),
+        '2:3': W,
+        '3:3': C('الصف الأول الثانوي','','الفيزياء'),
+        '4:2': W,
+        '4:4': C('الصف الثالث الثانوي','','الفيزياء')
+    }
+},
+{
+    id: 'د · شعبٌ بالحروف وسبع حصص',
+    school: 'ثانوية الفيصل', teacher: '',
+    img: () => draw({ school:'ثانوية الفيصل', title:'جدول المعلم — أ. خالد',
+        rowHead: D5.slice(0,3), colHead:[1,2,3,4,5,6,7], cw:118,
+        cells: [
+            ['أول ثانوي/أ\nأحياء','','ثاني ثانوي/ب\nأحياء','','أول ثانوي/ج\nأحياء','',''],
+            ['','ثاني ثانوي/ب\nأحياء','','أول ثانوي/أ\nأحياء','','منتظر',''],
+            ['أول ثانوي/ج\nأحياء','','','','ثاني ثانوي/ب\nأحياء','','']
+        ]}),
+    want: {
+        '0:1': C('الصف الأول الثانوي','أ','الأحياء'),
+        '0:3': C('الصف الثاني الثانوي','ب','الأحياء'),
+        '0:5': C('الصف الأول الثانوي','ج','الأحياء'),
+        '1:2': C('الصف الثاني الثانوي','ب','الأحياء'),
+        '1:4': C('الصف الأول الثانوي','أ','الأحياء'),
+        '1:6': W,
+        '2:1': C('الصف الأول الثانوي','ج','الأحياء'),
+        '2:5': C('الصف الثاني الثانوي','ب','الأحياء')
+    }
+},
+{
+    id: 'هـ · أرقامٌ لاتينية وجدولٌ مزدحم',
+    school: 'متوسطة النور', teacher: '', stage: 'intermediate',
+    img: () => draw({ school:'متوسطة النور', title:'Weekly Schedule — جدول المعلم',
+        rowHead: D5.slice(0,2), colHead:[1,2,3,4,5,6], cw:124,
+        cells: [
+            ['1/1\nلغتي','2/2\nلغتي','3/1\nلغتي','1/2\nلغتي','2/1\nلغتي','منتظر 1'],
+            ['3/2\nلغتي','1/1\nلغتي','منتظر 2','2/2\nلغتي','3/1\nلغتي','1/2\nلغتي']
+        ]}),
+    want: {
+        '0:1': C('الصف الأول المتوسط','١','لغتي'),
+        '0:2': C('الصف الثاني المتوسط','٢','لغتي'),
+        '0:3': C('الصف الثالث المتوسط','١','لغتي'),
+        '0:4': C('الصف الأول المتوسط','٢','لغتي'),
+        '0:5': C('الصف الثاني المتوسط','١','لغتي'),
+        '0:6': W,
+        '1:1': C('الصف الثالث المتوسط','٢','لغتي'),
+        '1:2': C('الصف الأول المتوسط','١','لغتي'),
+        '1:3': W,
+        '1:4': C('الصف الثاني المتوسط','٢','لغتي'),
+        '1:5': C('الصف الثالث المتوسط','١','لغتي'),
+        '1:6': C('الصف الأول المتوسط','٢','لغتي')
+    }
+},
+{
+    id: 'و · جدولٌ خفيف: حصّتان في يومين',
+    school: 'ابتدائية الرواد', teacher: '',
+    img: () => draw({ school:'ابتدائية الرواد', title:'جدول المعلم — أ. فهد',
+        rowHead: D5.slice(0,4), colHead:[1,2,3,4,5],
+        cells: [
+            ['','','رابع ابتدائي\nرياضيات','',''],
+            ['','','','',''],
+            ['','خامس ابتدائي\nرياضيات','','',''],
+            ['','','','','']
+        ]}),
+    want: {
+        '0:3': C('الصف الرابع الابتدائي','','الرياضيات'),
+        '2:2': C('الصف الخامس الابتدائي','','الرياضيات')
+    }
+}
+];
+
+/* ══════════════════════════════════════════════════════════════════════
+   التطبيع — نفسه الذي يستعمله التطبيق، فالرقم يقيس ما يصل المعلّم
+   ══════════════════════════════════════════════════════════════════════ */
+const CC = () => window.ClassCreate;
+const SUBJ = () => window.Subjects.ALL;
+
+function normalize(cells, fallbackStage) {
+    const out = {};
+    (cells || []).forEach((c) => {
+        const key = Number(c.day) + ':' + Number(c.period);
+        if (c.wait) { out[key] = { wait: true }; return; }
+        const lab = CC().splitLabel(c.new_grade, c.new_section);
+        const g = lab.grade ? CC().parseGrade(lab.grade, fallbackStage) : null;
+        if (!g || !g.grade) { out[key] = { bad: true, raw: (c.new_grade||'') + '/' + (c.new_section||'') }; return; }
+        out[key] = { grade: g.grade,
+                     section: CC().parseSection(lab.section),
+                     subject: CC().normalizeSubject(c.new_subject, SUBJ()) };
+    });
+    return out;
+}
+
+const same = (a, b) => {
+    if (!a || !b) return false;
+    if (a.wait || b.wait) return !!a.wait === !!b.wait;
+    if (a.bad || b.bad) return false;
+    const f = CC().fold, fs = CC().foldSubject;
+    return f(a.grade) === f(b.grade) && f(a.section||'') === f(b.section||'')
+        && fs(a.subject||'') === fs(b.subject||'');
+};
+
+const show = (v) => !v ? '—' : v.wait ? '⏳' : v.bad ? '؟«' + v.raw + '»'
+    : (v.grade||'').replace(/^الصف\s+/,'') + (v.section ? '/' + v.section : '') + ' ' + (v.subject||'');
+
+/* ══════════════════════════════════════════════════════════════════════ */
+async function run() {
+    document.getElementById('go').disabled = true;
+    document.querySelector('#out tbody').innerHTML = '';
+    document.getElementById('details').innerHTML = '';
+    document.getElementById('score').textContent = '⏳ يعمل…';
+
+    await window.SB.auth.signInAnonymously();
+    let TW = 0, TR = 0, TM = 0, TE = 0, TX = 0;
+
+    for (const t of CASES) {
+        const b64 = t.img();
+        let got = {}, err = null;
+        try {
+            const cells = await window.AI.extractScheduleFromImage({
+                pages: [{ base64: b64, mediaType: 'image/png' }],
+                classes: [], periodCount: 7,
+                teacherName: t.teacher || '', schoolName: t.school || ''
+            });
+            got = normalize(cells, t.stage || null);
+        } catch (e) { err = e.message; }
+
+        const keys = new Set([...Object.keys(t.want), ...Object.keys(got)]);
+        let right = 0, missing = 0, extra = 0, wrong = 0;
+        const bad = [];
+        keys.forEach((k) => {
+            const w = t.want[k], g = got[k];
+            if (w && !g) { missing++; bad.push(k + ' ناقصة (' + show(w) + ')'); }
+            else if (!w && g) { extra++; bad.push(k + ' زائدة (' + show(g) + ')'); }
+            else if (same(w, g)) right++;
+            else { wrong++; bad.push(k + ' متوقّع ' + show(w) + ' ← قُرئ ' + show(g)); }
+        });
+        const total = Object.keys(t.want).length;
+        const acc = total ? Math.round(right / total * 100) : 0;
+        TW += total; TR += right; TM += missing; TE += wrong; TX += extra;
+
+        const tr = document.createElement('tr');
+        if (acc < 100) tr.className = 'bad';
+        tr.innerHTML = '<td>' + t.id + (err ? ' <b>✗ ' + err + '</b>' : '') + '</td>'
+            + ['<td class="n">'+total, '<td class="n">'+right, '<td class="n">'+missing,
+               '<td class="n">'+extra, '<td class="n">'+wrong,
+               '<td class="n"><b>'+acc+'٪</b>'].join('</td>') + '</td>';
+        document.querySelector('#out tbody').appendChild(tr);
+        if (bad.length) {
+            const d = document.createElement('div');
+            d.className = 'det';
+            d.innerHTML = '▸ <b>' + t.id + '</b><br>' + bad.map((x) => '&nbsp;&nbsp;' + x).join('<br>');
+            document.getElementById('details').appendChild(d);
+        }
+        document.getElementById('score').textContent =
+            '⏳ ' + document.querySelectorAll('#out tbody tr').length + ' من ' + CASES.length;
+    }
+
+    const pct = TW ? Math.round(TR / TW * 100) : 0;
+    const el = document.getElementById('score');
+    el.innerHTML = 'الدقّة الكلّية: <b class="' + (pct >= 95 ? 'ok' : pct >= 85 ? 'warn' : '') + '">'
+        + pct + '٪</b> — ' + TR + ' من ' + TW + ' خانة'
+        + '<br><span style="font-weight:500;font-size:12.5px;color:#555">'
+        + 'ناقصة ' + TM + ' · زائدة ' + TX + ' · خاطئة ' + TE + '</span>';
+    document.getElementById('go').disabled = false;
+    await window.SB.auth.signOut().catch(() => {});
+}
+document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>
