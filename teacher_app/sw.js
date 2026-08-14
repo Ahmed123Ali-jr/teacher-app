@@ -26,14 +26,14 @@ const VENDOR_FILES = [
     './vendor/pdf.min.js',
     './vendor/pdf.worker.min.js',
     './vendor/supabase.js',
-    './vendor/fonts/tajawal-400-arabic.woff2',
-    './vendor/fonts/tajawal-400-latin.woff2',
-    './vendor/fonts/tajawal-500-arabic.woff2',
-    './vendor/fonts/tajawal-500-latin.woff2',
-    './vendor/fonts/tajawal-700-arabic.woff2',
-    './vendor/fonts/tajawal-700-latin.woff2',
-    './vendor/fonts/tajawal-900-arabic.woff2',
-    './vendor/fonts/tajawal-900-latin.woff2',
+    './vendor/fonts/plex-400-arabic.woff2',
+    './vendor/fonts/plex-400-latin.woff2',
+    './vendor/fonts/plex-500-arabic.woff2',
+    './vendor/fonts/plex-500-latin.woff2',
+    './vendor/fonts/plex-600-arabic.woff2',
+    './vendor/fonts/plex-600-latin.woff2',
+    './vendor/fonts/plex-700-arabic.woff2',
+    './vendor/fonts/plex-700-latin.woff2',
 ];
 
 /* Install: cache the shell so first-paint works offline. */
@@ -56,6 +56,16 @@ self.addEventListener('install', (event) => {
                 if (!(await vendor.match(f))) missing.push(f);
             }
             if (missing.length) await vendor.addAll(missing);
+
+            /* خطٌّ قديمٌ بُدّل يبقى في المخزن إلى الأبد: اسمُ المخزن لا
+               يُرفع عند تبديله — رفعُه يمسح المكتبات معه فيُعاد تنزيل
+               ١.٩ ميجا على جوال المعلّم. فتُحذف ملفّات الخطوط المهجورة
+               وحدها، وما عداها لا يُمسّ. */
+            for (const req of await vendor.keys()) {
+                if (!req.url.includes('/vendor/fonts/')) continue;
+                const keep = VENDOR_FILES.some((f) => req.url.endsWith(f.replace('./', '/')));
+                if (!keep) await vendor.delete(req);
+            }
         } catch (e) {
             // بلا إنترنت أو ملف ناقص — التخزين وقت التشغيل يكمل لاحقاً.
         }

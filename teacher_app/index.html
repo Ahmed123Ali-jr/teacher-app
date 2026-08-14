@@ -16,12 +16,12 @@
     <!-- الخط مستضاف محلياً: من نطاق خارجي كان يسقط بلا إنترنت فيتغيّر
          شكل التطبيق كلّه، ومعالج الخدمة لا يخزّن الطلبات الخارجية.
          ما زال غير حاجب للرسم — نرسم بخط النظام ثم نبدّل عند الجهوز. -->
-    <link rel="preload" href="vendor/fonts/tajawal-400-arabic.woff2" as="font"
+    <link rel="preload" href="vendor/fonts/plex-400-arabic.woff2" as="font"
           type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="css/fonts.css?v=1" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="css/fonts.css?v=1"></noscript>
+    <link rel="stylesheet" href="css/fonts.css?v=2" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="css/fonts.css?v=2"></noscript>
 
-    <link rel="stylesheet" href="css/main.css?v=D16">
+    <link rel="stylesheet" href="css/main.css?v=D17">
     <link rel="stylesheet" href="css/components.css?v=5">
     <link rel="stylesheet" href="css/views.css?v=D159">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
@@ -30,13 +30,13 @@
          لأنه يُحيّد البيج والذهبي المكتوبين فيها. -->
     <link rel="stylesheet" href="css/theme-white.css?v=8">
 
-    <link rel="stylesheet" href="css/print.css?v=D23" media="print">
+    <link rel="stylesheet" href="css/print.css?v=D24" media="print">
 </head>
 <body>
     <!-- Instant splash: pure inline HTML/CSS so it paints before any file
          loads (kills the mobile white screen). Removed by the router after
          the first view renders; 15s failsafe fades it if boot ever hangs. -->
-    <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#FFFFFF; font-family:Tajawal,system-ui,sans-serif; transition:opacity 250ms ease;">
+    <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#FFFFFF; font-family:'IBM Plex Sans Arabic',system-ui,sans-serif; transition:opacity 250ms ease;">
         <!-- شعار التطبيق: قبعة تخرج بالأزرق الملكي والذهبي (SVG داخلي = يظهر فوراً) -->
         <svg width="104" height="104" viewBox="0 0 96 96" aria-label="شعار تطبيق إنجاز المعلم">
             <defs>
@@ -217,7 +217,7 @@
     <script src="js/question-editor.js?v=2"></script>
     <script src="js/pdf-core.js?v=9"></script>
     <script src="js/book-reader.js?v=2"></script>
-    <script src="js/print-exam.js?v=D8"></script>
+    <script src="js/print-exam.js?v=D9"></script>
     <script src="js/print-portfolio.js?v=D29"></script>
     <script src="js/print-students.js?v=D19"></script>
     <script src="js/components/modal.js?v=6"></script>
@@ -262,7 +262,7 @@
             bar.style.cssText = [
                 'position:fixed','bottom:16px','inset-inline-end:16px','z-index:9999',
                 'background:var(--brand,#1E40AF)','color:#fff','padding:10px 14px',
-                'border-radius:10px','font-family:Tajawal,system-ui,sans-serif',
+                'border-radius:10px','font-family:IBM Plex Sans Arabic,system-ui,sans-serif',
                 'box-shadow:0 6px 20px rgba(0,0,0,.18)','font-size:14px',
                 'display:flex','gap:10px','align-items:center'
             ].join(';');

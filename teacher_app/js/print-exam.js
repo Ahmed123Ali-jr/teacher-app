@@ -58,7 +58,7 @@
        ورقة الاختبار، وربطها بملفٍ مشترك يجعل أيّ تعديلٍ فيه خطراً عليها.
        ------------------------------------------------------------------ */
     const SHEET_CSS = `
-    .ex-pg { font-family: 'Tajawal', system-ui, sans-serif; color: #111; }
+    .ex-pg { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; color: #111; }
     .ex-pg h1, .ex-pg ol, .ex-pg ul, .ex-pg p { margin: 0; padding: 0; }
     .ex-pg ol, .ex-pg ul { list-style: none; }
     .ex-body > :first-child { margin-top: 0 !important; }
