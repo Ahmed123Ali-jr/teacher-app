@@ -36,7 +36,8 @@
     في التعليمات أو التطبيع.
 </p>
 
-<button id="go">▶ شغّل التقييم</button>
+<button id="go">▶ شغّل مرّة</button>
+<button id="go3" style="background:#0B7A4B;margin-inline-start:8px">▶▶ ثلاث تشغيلات ومتوسّطها</button>
 <div id="score"></div>
 <table id="out"><thead><tr>
     <th>الجدول</th><th class="n">المتوقّع</th><th class="n">صحيح</th>
@@ -331,8 +332,38 @@ async function run() {
         + 'ناقصة ' + TM + ' · زائدة ' + TX + ' · خاطئة ' + TE + '</span>';
     document.getElementById('go').disabled = false;
     await window.SB.auth.signOut().catch(() => {});
+    return pct;
 }
+
+/* ثلاثُ تشغيلاتٍ ومتوسّطها — تشغيلةٌ واحدة لا تُثبت شيئاً حين يتذبذب
+   النموذج. قِيس: الشيفرة نفسها أعطت ٨٨٪ ثم ١٣٪ في حالةٍ واحدة. */
+async function runThrice() {
+    const b3 = document.getElementById('go3');
+    b3.disabled = true;
+    const runs = [];
+    const box = document.createElement('div');
+    box.style.cssText = 'margin:12px 0;padding:12px;border-radius:8px;background:#fff;'
+                      + 'border:1px solid #E2E5EA;font-size:14px;font-weight:700';
+    document.getElementById('score').after(box);
+    for (let i = 1; i <= 3; i++) {
+        box.textContent = '⏳ التشغيلة ' + i + ' من ٣…';
+        try { runs.push(await run()); }
+        catch (e) { runs.push(null); }
+        box.textContent = 'التشغيلات: ' + runs.map((r) => r == null ? '✗' : r + '٪').join(' · ');
+    }
+    const ok = runs.filter((r) => r != null);
+    const avg = ok.length ? Math.round(ok.reduce((a, b) => a + b, 0) / ok.length) : 0;
+    const spread = ok.length > 1 ? Math.max(...ok) - Math.min(...ok) : 0;
+    box.innerHTML = 'التشغيلات: ' + runs.map((r) => r == null ? '✗' : r + '٪').join(' · ')
+        + '<br>المتوسّط: <b>' + avg + '٪</b>'
+        + '<br><span style="font-weight:500;font-size:12.5px;color:'
+        + (spread > 5 ? '#B42318' : '#067647') + '">التذبذب: ' + spread
+        + ' نقطة' + (spread > 5 ? ' — غيرُ مستقرّ، لا يُبنى عليه قرار' : ' — مستقرّ') + '</span>';
+    b3.disabled = false;
+}
+
 document.getElementById('go').addEventListener('click', run);
+document.getElementById('go3').addEventListener('click', runThrice);
 </script>
 </body>
 </html>
