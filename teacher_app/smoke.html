@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>فحص الدخان — تطبيق إنجاز المعلم</title>
+<style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px;
+           background: #F6F7F9; color: #111; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { font-size: 12px; color: #666; margin: 0 0 14px; line-height: 1.7; }
+    button { font-family: inherit; font-size: 14px; font-weight: 700;
+             padding: 11px 20px; border: 0; border-radius: 8px;
+             background: #0F2C5C; color: #fff; cursor: pointer; }
+    button[disabled] { opacity: .5; cursor: default; }
+    #bar { margin: 12px 0; font-size: 13px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 8px; overflow: hidden; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #E8EAED; }
+    th { background: #F0F2F5; font-size: 11px; color: #555; }
+    td.st { width: 34px; font-size: 16px; text-align: center; }
+    tr.bad td { background: #FEF2F2; }
+    tr.bad .why { color: #B42318; font-size: 11.5px; }
+    .why { color: #666; font-size: 11.5px; }
+    /* الإطار يجب أن يُرسم فعلاً — شاشةٌ لا تُرسم لا تُطلق مؤقّتاتها. */
+    #stage { position: fixed; bottom: 8px; left: 8px; width: 300px; height: 500px;
+             border: 1px solid #CBD5E1; border-radius: 6px; background: #fff;
+             transform: scale(.42); transform-origin: bottom left; z-index: 5; }
+    @media (max-width: 760px) { #stage { opacity: .25; pointer-events: none; } }
+</style>
+</head>
+<body>
+
+<h1>فحص الدخان</h1>
+<p class="sub">
+    يمرّ على كل شاشة ويسأل ثلاثة أسئلة: <b>هل رُسمت؟</b> <b>هل خلت من الأخطاء؟</b>
+    <b>هل فيها عناصرها الأساسية؟</b><br>
+    لا يقول إن النتيجة صحيحة — يقول إن الشاشة لم تنهَر. ويعمل بحسابٍ منفصل
+    وينظّف بعده، فبياناتك لا تُمسّ.
+</p>
+
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table id="out"><thead><tr><th class="st"></th><th>الشاشة</th><th>الملاحظة</th></tr></thead><tbody></tbody></table>
+
+<iframe id="stage" src="about:blank"></iframe>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   الشاشات: `need` عنصرٌ لا تكون الشاشة سليمةً بدونه — فالرسمُ وحده
+   لا يكفي، وشاشةٌ ترسم ترويستها وتترك جسمها فارغاً تمرّ بلا هذا.
+   ══════════════════════════════════════════════════════════════════ */
+const SCREENS = [
+    { hash: '#/dashboard',  name: 'الرئيسية',        need: '#view-dashboard' },
+    { hash: '#/classes',    name: 'الفصول',          need: '#btn-add-class' },
+    { hash: '#/class/:id',  name: 'صفحة الفصل',      need: '#view-class' },
+    { hash: '#/class/:id/students', name: 'سجل الطلاب', need: '#btn-add-students' },
+    { hash: '#/class/:id/curriculum', name: 'توزيع المنهج', need: '#view-class' },
+    { hash: '#/class/:id/exams',      name: 'الاختبارات',   need: '#view-class' },
+    { hash: '#/class/:id/worksheets', name: 'أوراق العمل',  need: '#view-class' },
+    { hash: '#/class/:id/homework',   name: 'الواجبات',     need: '#view-class' },
+    { hash: '#/class/:id/books',      name: 'الكتب',        need: '#view-class' },
+    { hash: '#/schedule',   name: 'الجدول الأسبوعي', need: '#btn-edit' },
+    { hash: '#/reminders',  name: 'التذكيرات',       need: '#view-reminders' },
+    { hash: '#/reports',    name: 'التقارير',        need: '#view-reports' },
+    { hash: '#/portfolio',  name: 'ملف الإنجاز',     need: '#view-portfolio' },
+    { hash: '#/initiatives',name: 'المبادرات',       need: '#view-initiatives' },
+    { hash: '#/shortcuts',  name: 'الاختصارات',      need: '#view-shortcuts' },
+    { hash: '#/profile',    name: 'الملف التعريفي',  need: '#view-profile' },
+    { hash: '#/settings',   name: 'الإعدادات',       need: '#view-settings' },
+    { hash: '#/help',       name: 'المساعدة',        need: '#view-help' }
+];
+
+const stage = document.getElementById('stage');
+const tbody = document.querySelector('#out tbody');
+const bar   = document.getElementById('bar');
+const wait  = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function row(ok, name, why) {
+    const tr = document.createElement('tr');
+    if (!ok) tr.className = 'bad';
+    tr.innerHTML = '<td class="st">' + (ok ? '✅' : '❌') + '</td><td>' + name
+                 + '</td><td class="why">' + (why || '') + '</td>';
+    tbody.appendChild(tr);
+}
+
+/* أخطاء الإطار تُلتقط من نافذته — لا من نافذتنا. */
+let errs = [];
+function hookErrors(win) {
+    errs = [];
+    win.addEventListener('error', (e) => errs.push(e.message || 'خطأ'));
+    win.addEventListener('unhandledrejection', (e) =>
+        errs.push('وعدٌ مرفوض: ' + ((e.reason && e.reason.message) || e.reason)));
+    const orig = win.console.error;
+    win.console.error = function () {
+        errs.push(Array.from(arguments).map(String).join(' ').slice(0, 90));
+        return orig.apply(this, arguments);
+    };
+}
+
+/** ينتظر حتى تُرسم الشاشة فعلاً — لا مهلةً ثابتة تكذب على الشبكة البطيئة. */
+async function settle(win, need, ms) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < (ms || 9000)) {
+        const el = win.document.querySelector(need);
+        if (el && el.offsetParent !== null && el.textContent.trim().length) return true;
+        await wait(180);
+    }
+    return false;
+}
+
+async function run() {
+    document.getElementById('go').disabled = true;
+    tbody.innerHTML = '';
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    /* ١) تحميل التطبيق في الإطار */
+    stage.src = 'index.html?smoke=' + Date.now();
+    await new Promise((r) => { stage.onload = r; });
+    const win = stage.contentWindow;
+    for (let i = 0; i < 60 && !win.TeacherDB; i++) await wait(200);
+    if (!win.TeacherDB) { bar.textContent = '❌ لم يُحمَّل التطبيق.'; return; }
+
+    /* ٢) حسابٌ منفصل وبياناتُ فحص — لا بيانات المعلّم */
+    let cls = null, seeded = [];
+    try {
+        await win.SB.auth.signOut().catch(() => {});
+        await win.Auth.guestLogin();
+        const S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        const me = await win.Auth.currentTeacher();
+        me.name = 'فحص الدخان'; me.school_name = 'مدرسة الفحص';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+
+        cls = await win.ClassCreate.create({ teacher_id: me.id, stage: 'intermediate',
+            grade: 'الصف الأول المتوسط', section: 'أ', subject: 'العلوم' });
+        seeded.push(['classes', cls.id]);
+        const sid = await win.TeacherDB.add('students',
+            { teacher_id: me.id, class_id: cls.id, name: 'طالب الفحص', notes: '' });
+        seeded.push(['students', sid]);
+        const rid = await win.TeacherDB.add('schedule',
+            { teacher_id: me.id, day: 0, period: 1, class_id: cls.id });
+        seeded.push(['schedule', rid]);
+    } catch (e) {
+        bar.textContent = '❌ تعذّر التجهيز: ' + e.message;
+        document.getElementById('go').disabled = false;
+        return;
+    }
+
+    /* ٣) المرور على الشاشات */
+    let pass = 0, fail = 0;
+    for (const s of SCREENS) {
+        const hash = s.hash.replace(':id', cls.id);
+        hookErrors(win);
+        win.location.hash = hash;
+        await wait(400);
+        const drew = await settle(win, s.need);
+        const why = [];
+        if (!drew) why.push('لم تُرسم أو بقيت فارغة');
+        if (errs.length) why.push('خطأ: ' + errs.slice(0, 2).join(' · '));
+        const ok = drew && !errs.length;
+        ok ? pass++ : fail++;
+        row(ok, s.name, why.join(' — '));
+        bar.textContent = '⏳ ' + (pass + fail) + ' من ' + SCREENS.length;
+    }
+
+    /* ٤) التنظيف — حذف الفصل يسحب طلابه وحصصه معه */
+    bar.textContent = '⏳ يُنظّف…';
+    try {
+        for (const [store, id] of seeded.reverse()) {
+            await win.TeacherDB.remove(store, id).catch(() => {});
+        }
+        await win.SB.auth.signOut().catch(() => {});
+    } catch (e) { /* التنظيف لا يُفشل الفحص */ }
+
+    bar.textContent = fail === 0
+        ? '✅ ' + pass + ' شاشة سليمة — لا دخان.'
+        : '❌ ' + fail + ' من ' + SCREENS.length + ' فيها خلل.';
+    bar.style.color = fail === 0 ? '#067647' : '#B42318';
+    document.getElementById('go').disabled = false;
+}
+
+document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>
