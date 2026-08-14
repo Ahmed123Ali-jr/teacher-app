@@ -107,6 +107,35 @@ html, body, body[class], #app, #app-main,
 .imp-new-t span,
 .sch-card .s,
 .setup-hero .h,
-.start-box .start-s {
+.start-box .start-s,
+
+/* ── مراجعةُ الشاشات كلِّها، لا الرئيسية وحدها ── */
+.hub-featured-sub,        /* «التحضير والغياب والمشاركة» تحت سجل الطلاب */
+.home-hero-alt .ha-s,     /* «يومك خالٍ من الحصص — وقت مناسب لـ…» */
+.mv-hint,                 /* «صياغات رسمية مبنية على المعايير…» */
+.sch-wbox .h,
+.sch-cur .h,
+.flogo .h,
+.bell-row .h,
+.source-desc,
+.rem-ss,
+.class-subtitle,
+.wiz-step,
+.qe-head .sub,            /* «اختر نوع السؤال من الأسفل…» */
+.pdates label,
+.drawer-school {
     display: none !important;
+}
+
+/* ══ ما لا يُحذف ══
+   التحذيرات ليست حشواً: `.dz-h` تقول للمعلّم إن حسابه وبياناته تُمحى ولا
+   رجعة — وإخفاؤها يجعله يضغط وهو لا يدري. و`.bell-note` تشرح سلوكاً لا
+   يظهر في الشاشة. وكذلك ما هو بيانٌ لا شرح: مادة الفصل وعدد الطلاب
+   والتواريخ والإحصاءات — تبقى كلُّها.
+
+   القاعدة: يُحذف ما يشرح الواجهة، ويبقى ما يخبر عن الواقع أو يحذّر. */
+.dz-h, .bell-note, .callout, .callout-warn, .imp-warn, .imp-skip,
+.cls-s, .class-card-subject, .stat-label, .att-stat, .home-hij,
+.reminder-meta, .file-meta, .exam-stats, .portfolio-stats {
+    display: revert !important;
 }
