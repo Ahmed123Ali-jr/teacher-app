@@ -25,13 +25,18 @@
     <link rel="stylesheet" href="css/components.css?v=5">
     <link rel="stylesheet" href="css/views.css?v=D159">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=4">
+
+    <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
+         لأنه يُحيّد البيج والذهبي المكتوبين فيها. -->
+    <link rel="stylesheet" href="css/theme-white.css?v=8">
+
     <link rel="stylesheet" href="css/print.css?v=D23" media="print">
 </head>
 <body>
     <!-- Instant splash: pure inline HTML/CSS so it paints before any file
          loads (kills the mobile white screen). Removed by the router after
          the first view renders; 15s failsafe fades it if boot ever hangs. -->
-    <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#F8FAFC; font-family:Tajawal,system-ui,sans-serif; transition:opacity 250ms ease;">
+    <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#FFFFFF; font-family:Tajawal,system-ui,sans-serif; transition:opacity 250ms ease;">
         <!-- شعار التطبيق: قبعة تخرج بالأزرق الملكي والذهبي (SVG داخلي = يظهر فوراً) -->
         <svg width="104" height="104" viewBox="0 0 96 96" aria-label="شعار تطبيق إنجاز المعلم">
             <defs>

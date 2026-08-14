@@ -1,52 +1,80 @@
 /* ==========================================================================
-   theme-white.css — التصميم الأصلي بخلفيةٍ بيضاء.
+   theme-white.css — الأرضية البيضاء: مظهر التطبيق الأساسي.
 
-   لا يُغيَّر شيءٌ غير الأرضية: الألوان والتجسيم والخطوط والأبعاد كما هي
-   في النسخة المعتمدة. فالمقارنة على متغيّرٍ واحد — وإلا لم يُعرف أيّهما
-   أحدث الفرق.
+   كان طبقةَ مقارنةٍ تُقرأ من `white.html` وحده، فاعتُمد في ١٥ أغسطس ٢٠٢٦
+   وصار يُحمَّل من `index.html` بعد ملفّات التصميم كلِّها. وبقي طبقةً فوق
+   الأساس لا نسخةً منه: مئةٌ وستّ عشرة موضعاً في `views.css` وأخواتها تكتب
+   البيج صريحاً، ومسحُها كلَّها في ملفٍّ من ٢٠٣ كيلوبايت خطرٌ لا يشتريه
+   جمالُ الشيفرة. فالحذف يأتي على مهلٍ، والمظهر يصل اليوم.
 
-   والبيج ‎#F8F6F0‎ لا يكفي تغييره في المتغيّر: بعض الشاشات تكتبه صريحاً،
-   فيُقصد بالاسم حيث كُتب.
+   ولا يُغيَّر غير الأرضية: الألوان والتجسيم والخطوط والأبعاد كما اعتُمدت.
+
+   ── الوضع الداكن ──
+   كلُّ قاعدةِ لونٍ هنا مشروطةٌ بـ‏`:where(body:not(.theme-dark))`‎ — فمن
+   يختار «داكن» في الإعدادات يبقى داكناً كما كان. ولولا الشرط لصارت
+   الكتابة البيضاء على أرضيةٍ بيضاء.
+
+   و`:where()` بلا وزنٍ في الترجيح: الشرطُ يُضاف والقواعد تبقى بقوّتها
+   التي قيست يوم اعتُمدت — فلا تتقدّم على قاعدةٍ كانت تسبقها.
    ========================================================================== */
 
-/* كلُّ أصنافِ المظهر لا بعضُها: الداكن والفاتح والتلقائي، وbody بأيّ
-   صنفٍ كان. تجاوزٌ ناقصٌ يترك المعلّم يرى البيج ولا يدري لماذا. */
-:root,
-body, body[class],
-body.theme-auto, body.theme-light, body.theme-dark, body.theme-auto.dark-active {
-    --bg: #FFFFFF !important;
-    --surface: #FFFFFF !important;
-    --surface-alt: #FFFFFF !important;
+/* الرموز: الأرضيةُ والسطحُ والحدّ.
 
-    /* ── جذر ما رآه المستخدم ──
-       `portfolio-theme.css` يُعيد تعريف رموز التطبيق كلَّها لا شاشة
-       الإنجاز وحدها، فيجعل الحدَّ ذهبياً باهتاً (‎#E8D9A8‎) والقويَّ
-       ذهبياً كاملاً. وهو مستعملٌ مئةً واثنتين وعشرين مرة — على كل بطاقةٍ
-       وحبّةٍ وحقلٍ في الشاشة.
+   ── جذر ما استعصى ──
+   `portfolio-theme.css` يُعيد تعريف رموز التطبيق كلَّها لا شاشة الإنجاز
+   وحدها، فيجعل الحدَّ ذهبياً باهتاً (‎#E8D9A8‎) والقويَّ ذهبياً كاملاً. وهو
+   مستعملٌ مئةً واثنتين وعشرين مرة — على كل بطاقةٍ وحبّةٍ وحقلٍ في الشاشة.
+   فبياضُ الخلفيات لا يُرى: المعلّم يرى شبكةً ذهبيةً تحيط كل شيء. فيُحيَّد
+   الحدُّ وحده — ويبقى `--accent` ذهبياً لما هو لمسةٌ حقاً: النقطة والحبّة
+   المختارة والقوس. */
+/* وبلا `!important` عمداً: `body:not(…)` أثقل من `:root` فيغلب
+   `portfolio-theme.css`، ويبقى أخفَّ من `#pdfcore-stage` — فمسرحُ تصدير
+   الـPDF يقرأ لوحة `print.css` كما كان: حدٌّ ‎#CCCCCC‎ وكتابةٌ سوداء. ولو
+   فُرضت هنا لخرجت السجلّات بخطوطٍ باهتةٍ على الورق. */
+body:not(.theme-dark) {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-alt: #FFFFFF;
 
-       فبياضُ الخلفيات لا يُرى: المعلّم يرى شبكةً ذهبيةً تحيط كل شيء.
-       فيُحيَّد الحدُّ وحده — ويبقى `--accent` ذهبياً لما هو لمسةٌ حقاً:
-       النقطة والحبّة المختارة والقوس. */
-    --border:        #E4E6EA !important;
-    --border-strong: #C7CBD1 !important;
+    --border:        #E4E6EA;
+    --border-strong: #C7CBD1;
+
+    /* «تلقائي» يتبع جهاز المعلّم: إن كان جهازه داكناً صار `--text` أبيضَ
+       من `main.css` — على أرضيتنا البيضاء. فيُثبَّت لونُ الكتابة هنا
+       بقيمتيه المعتمدتين في الوضع الفاتح. */
+    --text:       #2C2C2A;
+    --text-muted: #6B6B68;
 }
 
-html, body, body[class], #app, #app-main,
-#view, [id^="view-"] {
+/* الأرضيةُ نفسها. و`html` متروكٌ بلا خلفيةٍ عمداً — خلفيةُ `body` تنتشر
+   إلى لوحة الصفحة، فلو صُبغ `html` أبيضَ لظهر بياضٌ عند حافة الشاشة في
+   الوضع الداكن. */
+body:where(:not(.theme-dark)),
+:where(body:not(.theme-dark)) #app,
+:where(body:not(.theme-dark)) #app-main,
+:where(body:not(.theme-dark)) #view,
+:where(body:not(.theme-dark)) [id^="view-"] {
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
     background-image: none !important;
 }
 
 /* شاشاتٌ تكتب البيج صريحاً في خلفيّتها. */
-.container, .set-v2, .sched-v2, .setup-v1, .auth-wrap, .ac-wrap,
-[class*="-page"], [class*="view-"] {
+:where(body:not(.theme-dark)) .container,
+:where(body:not(.theme-dark)) .set-v2,
+:where(body:not(.theme-dark)) .sched-v2,
+:where(body:not(.theme-dark)) .setup-v1,
+:where(body:not(.theme-dark)) .auth-wrap,
+:where(body:not(.theme-dark)) .ac-wrap,
+:where(body:not(.theme-dark)) [class*="-page"],
+:where(body:not(.theme-dark)) [class*="view-"] {
     background: transparent !important;
 }
 
 /* البطاقة كانت بيضاء على بيج فتُرى بأرضيّتها. وقد صارت الأرضية بيضاء،
    فتُرى بحدّها الذهبي وظلّها — وكلاهما موجودٌ أصلاً في التصميم، فيُشدّ
-   الحدّ قليلاً لا يُخترع. */
+   الحدّ قليلاً لا يُخترع. (بلا شرطِ الداكن: الحدُّ يقرأ الرمز، فيتبع
+   المظهرَ من نفسه.) */
 .card, .start-box, .set-list, .cls-row, .flist, .ac-card, .imp-box {
     border: 1px solid var(--border);
 }
@@ -60,28 +88,50 @@ html, body, body[class], #app, #app-main,
    فالتجسيم مطلوبٌ والألوان معتمدة.
    ========================================================================== */
 
-.start-box, .start-add-class, .set-row, .cls-row, .frow, .fsubj, .flogo,
-.sch-card, .sch-gcell, .sch-sec, .sched-import, .sched-time-btn,
-.sched-table thead th, .bell-row, .btn-add-gray, .cls-edit-btn, .dp-item,
-.enjaz-tile, .enjaz-row, .mvs-tab, .pstg-sum, .rd-cal, .rem-card,
-.stg-card, .tf-box, .bottom-nav {
+:where(body:not(.theme-dark)) .start-box,
+:where(body:not(.theme-dark)) .start-add-class,
+:where(body:not(.theme-dark)) .set-row,
+:where(body:not(.theme-dark)) .cls-row,
+:where(body:not(.theme-dark)) .frow,
+:where(body:not(.theme-dark)) .fsubj,
+:where(body:not(.theme-dark)) .flogo,
+:where(body:not(.theme-dark)) .sch-card,
+:where(body:not(.theme-dark)) .sch-gcell,
+:where(body:not(.theme-dark)) .sch-sec,
+:where(body:not(.theme-dark)) .sched-import,
+:where(body:not(.theme-dark)) .sched-time-btn,
+:where(body:not(.theme-dark)) .sched-table thead th,
+:where(body:not(.theme-dark)) .bell-row,
+:where(body:not(.theme-dark)) .btn-add-gray,
+:where(body:not(.theme-dark)) .cls-edit-btn,
+:where(body:not(.theme-dark)) .dp-item,
+:where(body:not(.theme-dark)) .enjaz-tile,
+:where(body:not(.theme-dark)) .enjaz-row,
+:where(body:not(.theme-dark)) .mvs-tab,
+:where(body:not(.theme-dark)) .pstg-sum,
+:where(body:not(.theme-dark)) .rd-cal,
+:where(body:not(.theme-dark)) .rem-card,
+:where(body:not(.theme-dark)) .stg-card,
+:where(body:not(.theme-dark)) .tf-box,
+:where(body:not(.theme-dark)) .bottom-nav {
     background: #FFFFFF !important;
     background-image: none !important;
 }
 
-/* الهالة الذهبية خلف الرمز: تُخفَّف لا تُحذف — هي من التصميم. */
-.start-halo { background: rgba(201, 169, 97, .06) !important; }
-
 /* الهالة والحلقة الذهبيتان خلف الرمز: تُحيَّدان — كانتا تصبغان أعلى
    البطاقة كلَّه. */
-.start-halo { display: none !important; }
-.start-ring { border: 1px solid #E4E6EA !important; }
+:where(body:not(.theme-dark)) .start-halo { display: none !important; }
+:where(body:not(.theme-dark)) .start-ring { border: 1px solid #E4E6EA !important; }
 
 /* الخطّ الفاصل تحت الشريط العلوي كان ذهبياً عريضاً. */
-.app-header { border-bottom-color: #E4E6EA !important; }
+:where(body:not(.theme-dark)) .app-header { border-bottom-color: #E4E6EA !important; }
 
 /* آخرُ ما بقي ذهبياً بعد القياس: حلقة الرمز وإطار حبّة الحساب. */
-.start-ring, .avatar, [class*="ava"], .dash-ava, .idc-photo {
+:where(body:not(.theme-dark)) .start-ring,
+:where(body:not(.theme-dark)) .avatar,
+:where(body:not(.theme-dark)) [class*="ava"],
+:where(body:not(.theme-dark)) .dash-ava,
+:where(body:not(.theme-dark)) .idc-photo {
     border-color: #E4E6EA !important;
     box-shadow: none !important;
 }
@@ -92,6 +142,9 @@ html, body, body[class], #app, #app-main,
    ==========================================================================
    من يعرف زرَّه لا يقرأ وصفه، ومن لا يعرفه يجرّبه مرّةً واحدة. والسطر
    التوضيحي تحت كل عنوان يطيل الشاشة ويؤخّر العين عمّا تبحث عنه.
+
+   وهذا القسمُ بلا شرطِ الداكن: حذفُ الحشو قرارُ تخطيطٍ لا لون، فيستوي
+   فيه المظهران.
    ========================================================================== */
 
 .start-s,            /* «صوّر جدولك المدرسي — تُنشأ فصولك…» */
