@@ -9,9 +9,22 @@
    فيُقصد بالاسم حيث كُتب.
    ========================================================================== */
 
-:root, body, body.theme-auto { --bg: #FFFFFF; }
+/* كلُّ أصنافِ المظهر لا بعضُها: الداكن والفاتح والتلقائي، وbody بأيّ
+   صنفٍ كان. تجاوزٌ ناقصٌ يترك المعلّم يرى البيج ولا يدري لماذا. */
+:root,
+body, body[class],
+body.theme-auto, body.theme-light, body.theme-dark, body.theme-auto.dark-active {
+    --bg: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --surface-alt: #FFFFFF !important;
+}
 
-html, body, #app, #app-main { background: #FFFFFF !important; }
+html, body, body[class], #app, #app-main,
+#view, [id^="view-"] {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    background-image: none !important;
+}
 
 /* شاشاتٌ تكتب البيج صريحاً في خلفيّتها. */
 .container, .set-v2, .sched-v2, .setup-v1, .auth-wrap, .ac-wrap,
