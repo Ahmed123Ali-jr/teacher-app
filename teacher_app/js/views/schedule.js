@@ -397,6 +397,10 @@
        ========================================================================== */
 
     function openImport(ctx, container) {
+        /* حالةُ هذه النافذة: تُصفَّر مع كل ملفٍّ جديد. */
+        let lastPages = null;
+        let pickedName = '';
+
         const form = document.createElement('div');
         form.innerHTML = `
             <div class="field">
@@ -415,10 +419,22 @@
         `;
 
         const resultEl = form.querySelector('#imp-result');
+        form.querySelector('#sched-file').addEventListener('change', () => {
+            pickedName = '';
+            lastPages = null;
+            resultEl.innerHTML = '';
+        });
+
         const goBtn = form.querySelector('#imp-go');
 
         goBtn.addEventListener('click', async () => {
             const file = form.querySelector('#sched-file').files[0];
+            /* ملفٌّ جديد يعني بدايةً جديدة: كان اسمُ المعلّم المختار يبقى
+               من الرفعة السابقة، فتُقرأ الصورة الثانية باسم معلّمٍ اخترته
+               لصورةٍ أخرى — فيُختار هو نفسه دائماً، أو لا يُقرأ شيءٌ أصلاً
+               لأنه ليس في الصورة الجديدة. */
+            pickedName = '';
+            lastPages = null;
             const label = goBtn.textContent;
             goBtn.disabled = true;
             try {
@@ -459,8 +475,6 @@
 
         /* الملف الواحد قد يحمل جداول المدرسة كلّها، فيُعاد النداء باسمٍ
            يختاره المعلّم بدل أن تُدمج صفحات الجميع في جدوله. */
-        let lastPages = null;
-        let pickedName = '';
 
         async function rereadAs(name) {
             pickedName = name;
