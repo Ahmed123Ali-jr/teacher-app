@@ -38,3 +38,24 @@ html, body, body[class], #app, #app-main,
 .card, .start-box, .set-list, .cls-row, .flist, .ac-card, .imp-box {
     border: 1px solid var(--border);
 }
+
+/* ==========================================================================
+   البطاقات نفسها كانت بيجاء — لا الأرضية وحدها
+   ==========================================================================
+   خمسٌ وعشرون قاعدةً تحمل التدرّج نفسه: أبيضُ يتدرّج إلى ‎#ECEAE3‎. فبياضُ
+   الأرضية وحده لم يُغيّر شيئاً في عين المعلّم، لأن البطاقة هي التي تملأ
+   شاشته. فتُبيَّض هي أيضاً — ويبقى حدُّها وظلُّها وكحليُّها وذهبيُّها،
+   فالتجسيم مطلوبٌ والألوان معتمدة.
+   ========================================================================== */
+
+.start-box, .start-add-class, .set-row, .cls-row, .frow, .fsubj, .flogo,
+.sch-card, .sch-gcell, .sch-sec, .sched-import, .sched-time-btn,
+.sched-table thead th, .bell-row, .btn-add-gray, .cls-edit-btn, .dp-item,
+.enjaz-tile, .enjaz-row, .mvs-tab, .pstg-sum, .rd-cal, .rem-card,
+.stg-card, .tf-box, .bottom-nav {
+    background: #FFFFFF !important;
+    background-image: none !important;
+}
+
+/* الهالة الذهبية خلف الرمز: تُخفَّف لا تُحذف — هي من التصميم. */
+.start-halo { background: rgba(201, 169, 97, .06) !important; }
