@@ -149,7 +149,9 @@
        If the API key is missing, a mock is returned so the UI still works.
        ========================================================================== */
 
-    async function extractScheduleFromImage({ pages, imageBase64, mediaType, classes, periodCount }) {
+    /** @returns {{cells:Array, teachers:string[]}} — والأسماء لأن الملف
+     *  الواحد قد يحمل جداول المدرسة كلّها، صفحةً لكل معلّم. */
+    async function extractScheduleFromImage({ pages, imageBase64, mediaType, classes, periodCount, teacherName }) {
         if (!Array.isArray(pages)) {
             pages = [{ base64: imageBase64, mediaType }];
         }
@@ -159,9 +161,12 @@
             classes: (classes || []).map((c) => ({
                 id: c.id, grade: c.grade, section: c.section, subject: c.subject
             })),
-            periodCount: periodCount || 7
+            periodCount: periodCount || 7,
+            teacherName: teacherName || ''
         }, 'schedule_import');
-        return Array.isArray(body.cells) ? body.cells : [];
+        const cells = Array.isArray(body.cells) ? body.cells : [];
+        cells.teachers = Array.isArray(body.teachers_found) ? body.teachers_found : [];
+        return cells;
     }
 
     /** Extract a clean list of Arabic student names from a roster.

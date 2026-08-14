@@ -70,6 +70,12 @@ const SCHEDULE_TOOL = {
     input_schema: {
         type: 'object',
         properties: {
+            /* ملفٌّ واحد قد يحمل جداول المدرسة كلّها — صفحةً لكل معلّم.
+               فتُرجَع الأسماء التي رآها ليُسأل المعلّم أيّها هو. */
+            teachers_found: {
+                type: 'array', items: { type: 'string' },
+                description: 'أسماء المعلّمين التي تظهر عناوينَ للجداول في الصفحات'
+            },
             cells: {
                 type: 'array',
                 items: {
@@ -108,9 +114,24 @@ const NAMES_SYSTEM = `أنت مساعد لاستخراج أسماء الطلاب
 سلّم النتيجة عبر الأداة submit_names ولا تكتب شيئاً آخر.
 وإن لم تكن الصور كشف أسماء، سلّم قائمة فارغة.`;
 
-function scheduleSystem(list: string, periodCount: number): string {
+function scheduleSystem(list: string, periodCount: number, who: string): string {
     return `أنت مساعد لقراءة الجداول الدراسية المدرسية للمعلمين العرب.
 لا تخمّن ما ليس في الصورة. انقل ما تراه حرفياً.
+
+**مهمّ جداً — الصفحات قد تحمل جداول معلّمين مختلفين:** الملف الواحد قد
+يكون جداول المدرسة كلّها، صفحةً لكل معلّم، وعنوانُ كل صفحة «جدول المعلم
+<اسمه>».${who ? `
+
+جدول المعلّم المطلوب هو: **${who}**
+استخرج حصص صفحته وحدها، وتجاهل صفحات المعلّمين الآخرين تماماً. ولا تدمج
+صفحتين لمعلّمَين مختلفين أبداً.
+إن لم تجد صفحةً بهذا الاسم، أعِد cells فارغة واملأ teachers_found بأسماء
+من وجدت.` : `
+
+إن حملت الصفحات أكثر من معلّم، أعِد cells فارغة واملأ teachers_found
+بأسمائهم — ولا تدمجهم.`}
+
+واملأ teachers_found دائماً بأسماء المعلّمين التي رأيتها في العناوين.
 الأيام: الأحد=0 الاثنين=1 الثلاثاء=2 الأربعاء=3 الخميس=4
 أرقام الحصص من 1 إلى ${periodCount}
 
@@ -128,10 +149,10 @@ ${list}
 ليست فصلاً للمعلّم.
 
 إذا الخانة لفصل غير موجود في القائمة، اجعل unmatched=true واملأ:
-- new_grade   (الصف **حرفياً كما كُتب**. إن كُتب «١» فاكتب «١»، وإن كُتب
-              «أول» فاكتب «أول». **ولا تُضف المرحلة** — ابتدائي أو متوسط
-              أو ثانوي — إن لم تكن مكتوبةً في الصورة. تخمينُها يُنشئ فصولاً
-              بأسماء خاطئة.)
+- new_grade   (الصف **حرفياً كما كُتب، كاملاً**. إن كُتب «ثالث ابتدائي»
+              فاكتب «ثالث ابتدائي» بكلمة المرحلة — لا تحذفها. وإن كُتب «١»
+              فاكتب «١». **ولا تُضف** مرحلةً غير مكتوبة: لا تحوّل «١» إلى
+              «الأول الثانوي». انقل، ولا تزد، ولا تنقص.)
 - new_section (الشعبة حرفياً، **واتركها فارغة إن لم تُكتب شعبة** — كثيرٌ
               من الجداول تكتب «ثاني ثانوي» بلا شعبة، فلا تخترع واحدة)
 - new_subject (المادة إن كانت مكتوبة، وإلا اتركها فارغة — لا تخمّنها)
@@ -195,7 +216,8 @@ Deno.serve(async (req) => {
         ask    = `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} لكشف الفصل. استخرج أسماء الطلاب من الكل.`;
     } else {
         const periodCount = clampInt(body.periodCount, 1, 12, 7);
-        system = scheduleSystem(classList(body.classes), periodCount);
+        const who = String(body.teacherName ?? '').slice(0, MAX_FIELD).replace(/[\r\n]+/g, ' ').trim();
+        system = scheduleSystem(classList(body.classes), periodCount, who);
         tool   = SCHEDULE_TOOL;
         ask    = `هذه ${pages.length === 1 ? 'صورة' : pages.length + ' صفحة'} للجدول الأسبوعي. استخرج كل الحصص.`;
     }
@@ -245,7 +267,11 @@ Deno.serve(async (req) => {
     if (kind === 'names') {
         return json({ names: cleanNames(input.names), usage });
     }
-    return json({ cells: cleanCells(input.cells), usage });
+    const found = Array.isArray(input.teachers_found)
+        ? input.teachers_found.slice(0, 40).map((n: unknown) => String(n ?? '').slice(0, MAX_FIELD).trim())
+            .filter(Boolean)
+        : [];
+    return json({ cells: cleanCells(input.cells), teachers_found: found, usage });
 });
 
 /* ==========================================================================

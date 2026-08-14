@@ -436,6 +436,7 @@
                    وإن تجاوزه، يُقال صراحةً — فإهمالُ صفحةٍ بصمتٍ يُقرأ
                    نجاحاً وهو نقص. */
                 const pages = await global.PdfCore.fileToImagePages(file);
+                lastPages = pages;
                 if (pages.skipped > 0) {
                     global.TeacherApp.toast(
                         'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
@@ -443,7 +444,8 @@
                         'warning', 7000);
                 }
                 const cells = await global.AI.extractScheduleFromImage({
-                    pages, classes: ctx.classes, periodCount: ctx.periods.length
+                    pages, classes: ctx.classes, periodCount: ctx.periods.length,
+                    teacherName: pickedName || ctx.teacher.name || ''
                 });
                 showPreview(cells);
             } catch (err) {
@@ -454,6 +456,25 @@
                 goBtn.textContent = label;
             }
         });
+
+        /* الملف الواحد قد يحمل جداول المدرسة كلّها، فيُعاد النداء باسمٍ
+           يختاره المعلّم بدل أن تُدمج صفحات الجميع في جدوله. */
+        let lastPages = null;
+        let pickedName = '';
+
+        async function rereadAs(name) {
+            pickedName = name;
+            resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة جدولك…</div>';
+            try {
+                const cells = await global.AI.extractScheduleFromImage({
+                    pages: lastPages, classes: ctx.classes,
+                    periodCount: ctx.periods.length, teacherName: name
+                });
+                showPreview(cells);
+            } catch (err) {
+                global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
+            }
+        }
 
         function showPreview(cells) {
             const byId = {};
@@ -528,6 +549,27 @@
 
             }
             sortCells();
+
+            /* الملف فيه جداول معلّمين: لا يُدمجون، بل يُسأل أيّهم هو.
+               وكان يدمجهم فيخرج المعلّم بجدولٍ ليس جدوله. */
+            /* ولا يُسأل مرّتين: بعد اختياره اسماً، سببُ الفراغ شيءٌ آخر
+               (مرحلةٌ مجهولة مثلاً) — وإعادة السؤال دورةٌ لا تنتهي. */
+            const who = (cells && cells.teachers) || [];
+            if (!pickedName && !ok.length && !news.length && who.length > 1) {
+                resultEl.innerHTML = `
+                    <div class="imp-stage">
+                        <div class="imp-stage-t">الملف فيه ${who.length === 1 ? 'جدول معلّم' : 'جداول ' + arDigits(who.length) + ' معلّمين'} — أيّهم أنت؟</div>
+                        <div class="imp-stage-c">
+                            ${who.map((n) => `
+                                <button type="button" class="sch-chip" data-who="${escapeAttr(n)}">${escapeHtml(n)}</button>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                resultEl.querySelectorAll('[data-who]').forEach((el) => {
+                    el.addEventListener('click', () => rereadAs(el.dataset.who));
+                });
+                return;
+            }
 
             /* سؤالُ المرحلة يسبق الرسالةَ الميتة: لا خانةَ نجت، لكنّ سببها
                معروفٌ ويُحلّ بضغطة — فلا يُقال «لم أفهم» ثم يُحرم المعلّم
