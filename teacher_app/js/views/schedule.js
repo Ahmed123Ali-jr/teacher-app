@@ -461,7 +461,12 @@
                 }
                 const cells = await global.AI.extractScheduleFromImage({
                     pages, classes: ctx.classes, periodCount: ctx.periods.length,
-                    teacherName: pickedName || ctx.teacher.name || ''
+                    /* لا يُرسل اسمٌ في الرفعة الأولى: الغالب أن المعلّم
+                       يرفع جدوله وحده، فيُقرأ كما هو. وإرسالُ اسم حسابه
+                       كان يُفشل الصورة المفردة حين يختلف عن الاسم المطبوع
+                       في جدوله — يبحث النموذج عمّن لا يجده فيعيدها فارغة.
+                       ولا يُسأل عن الاسم إلا إن حمل الملفُّ عدّة معلّمين. */
+                    teacherName: pickedName || ''
                 });
                 showPreview(cells);
             } catch (err) {
