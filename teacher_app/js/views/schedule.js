@@ -557,8 +557,16 @@
             }
 
 
+            /* «الناقصة» يقرؤها الرسمُ والحارس معاً، فلا تُحبس في نطاق
+               أحدهما — وحبسُها كان يُسقط الاعتماد بمرجعٍ غير معرّف. */
+            let naked = [];
+
             function paintPreview() {
-                const taken = news.filter((n) => n.take);
+                /* لا اختيارَ لما يُعرف: المادة مقروءةٌ من الصورة، فسؤالُ
+                   المعلّم عنها سبع مراتٍ تعطيلٌ لا تأكيد. ولا يُسأل إلا
+                   عمّا لم يُقرأ. */
+                const taken = news;
+                naked = news.filter((n) => !n.subject);
                 const totalCells = ok.length + taken.reduce((a, n) => a + n.cells.length, 0);
 
                 /* كم خانة ستُطمس؟ المعلّم يستحقّ أن يعرف قبل أن يوافق. */
@@ -590,23 +598,23 @@
                         ${news.length ? `
                             <div class="imp-new">
                                 <div class="imp-new-t">
-                                    ${news.length === 1 ? 'فصلٌ جديد سيُنشأ' : 'فصول جديدة ستُنشأ'}
-                                    <span>اختر مادة كلٍّ منها</span>
+                                    ${news.length === 1 ? 'فصلٌ جديد سيُنشأ' : arDigits(news.length) + ' فصول ستُنشأ'}
+                                    ${naked.length ? `<span>ينقص ${naked.length === 1 ? 'واحدٌ منها مادّته' : 'بعضها مادّته'}</span>` : ''}
                                 </div>
-                                ${news.map((n, i) => `
-                                    <div class="imp-new-row ${n.take ? '' : 'off'}">
-                                        <label class="imp-new-on">
-                                            <input type="checkbox" data-new-take="${i}" ${n.take ? 'checked' : ''}>
-                                            <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}</span>
-                                            <span class="cnt">${arWord(n.cells.length)}</span>
-                                        </label>
-                                        <select class="imp-new-sub" data-new-subj="${i}" ${n.take ? '' : 'disabled'}>
+                                ${news.map((n, i) => n.subject ? `
+                                    <div class="imp-new-row done">
+                                        <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}</span>
+                                        <span class="sj">${escapeHtml(n.subject)}</span>
+                                        <span class="cnt">${arWord(n.cells.length)}</span>
+                                    </div>` : `
+                                    <div class="imp-new-row">
+                                        <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}
+                                            <span class="cnt">${arWord(n.cells.length)}</span></span>
+                                        <select class="imp-new-sub" data-new-subj="${i}">
                                             <option value="">— اختر المادة —</option>
                                             ${subjectList.map((s) => `
-                                                <option value="${escapeAttr(s)}" ${n.subject === s ? 'selected' : ''}>${escapeHtml(s)}</option>
+                                                <option value="${escapeAttr(s)}">${escapeHtml(s)}</option>
                                             `).join('')}
-                                            ${n.subject && !subjectList.includes(n.subject)
-                                                ? `<option value="${escapeAttr(n.subject)}" selected>${escapeHtml(n.subject)}</option>` : ''}
                                         </select>
                                     </div>
                                 `).join('')}
@@ -639,26 +647,20 @@
                         paintPreview();
                     });
                 });
-                resultEl.querySelectorAll('[data-new-take]').forEach((el) => {
-                    el.addEventListener('change', () => {
-                        news[Number(el.dataset.newTake)].take = el.checked;
-                        paintPreview();
-                    });
-                });
                 resultEl.querySelectorAll('[data-new-subj]').forEach((el) => {
                     el.addEventListener('change', () => {
                         news[Number(el.dataset.newSubj)].subject = el.value;
+                        paintPreview();   /* اكتملت مادّته فيخرج من قائمة الناقص */
                     });
                 });
 
                 resultEl.querySelector('#imp-apply').addEventListener('click', async (e) => {
-                    const taken = news.filter((n) => n.take);
+                    const taken = news;
                     /* لا فصلَ بلا مادة: الاسم وحده لا يميّز فصلين لمعلّمٍ
                        يدرّس مادتين لنفس الصف. */
-                    const naked = taken.find((n) => !n.subject);
-                    if (naked) {
+                    if (naked.length) {
                         return global.TeacherApp.toast(
-                            'اختر مادة ' + CC.label(naked.grade, naked.section) + '.',
+                            'اختر مادة ' + CC.label(naked[0].grade, naked[0].section) + '.',
                             'warning', 4000);
                     }
                     const b = e.currentTarget;

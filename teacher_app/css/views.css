@@ -5542,3 +5542,15 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     color: var(--text); margin-bottom: var(--space-3);
 }
 .imp-stage-c { display: flex; flex-wrap: wrap; gap: 7px; }
+
+/* الفصول المعروفة مادّتها تُعرض ولا تُسأل — سطرٌ واحدٌ لا حقول. */
+.imp-new-row.done { flex-wrap: nowrap; padding: var(--space-2) 0; }
+.imp-new-row.done .nm { flex: 1; min-width: 0; }
+.imp-new-row.done .sj {
+    flex: none; font-size: var(--fs-xs); font-weight: var(--fw-bold);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
+    padding: 3px 8px; border-radius: 999px;
+}
+.imp-new-row.done .cnt { flex: none; }
+.imp-new-row .nm .cnt { margin-inline-start: var(--space-2); font-weight: var(--fw-medium); }
