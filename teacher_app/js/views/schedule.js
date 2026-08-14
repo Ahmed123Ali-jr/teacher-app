@@ -737,23 +737,21 @@
                     <div class="imp-box">
                         ${stageRow}
                         <div class="imp-sum">
-                            <b>قُرئت ${arWord(totalCells)}</b>
+                            <b>قُرئت ${arWord(totalCells)}${taken.length ? ' · ' + clsWord(taken.length) + ' جديدة' : ''}</b>
                             ${skipped.length ? `<span class="imp-skip">وتُخطّيت ${arWord(skipped.length)} لم أتعرّف على فصلها</span>` : ''}
                             ${overwrite ? `<span class="imp-warn">وستُستبدل ${arWord(overwrite)} موجودة في جدولك</span>` : ''}
                         </div>
 
-                        ${taken.length ? `
+                        ${/* الفصول المعروفة مادّتها لا تُسرد: كلُّ واحدٍ منها
+                              مكتوبٌ في خاناته داخل الشبكة، وسردُها ثمانيةَ
+                              أسطرٍ يدفع الشبكة تحت الطيّ. ولا يُسأل إلا
+                              عمّا لا تقوله الشبكة: مادةٌ لم تُقرأ. */''}
+                        ${naked.length ? `
                             <div class="imp-new">
                                 <div class="imp-new-t">
-                                    ${taken.length === 1 ? 'فصلٌ جديد سيُنشأ' : arDigits(taken.length) + ' فصول ستُنشأ'}
-                                    ${naked.length ? `<span>ينقص ${naked.length === 1 ? 'واحدٌ منها مادّته' : 'بعضها مادّته'}</span>` : ''}
+                                    ${naked.length === 1 ? 'فصلٌ ينقصه مادّته' : arDigits(naked.length) + ' فصولٍ تنقصها موادّها'}
                                 </div>
-                                ${news.map((n, i) => !usedNew[i] ? '' : n.subject ? `
-                                    <div class="imp-new-row done">
-                                        <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}</span>
-                                        <span class="sj">${escapeHtml(n.subject)}</span>
-                                        <span class="cnt">${arWord(n.cells.length)}</span>
-                                    </div>` : `
+                                ${news.map((n, i) => (!usedNew[i] || n.subject) ? '' : `
                                     <div class="imp-new-row">
                                         <span class="nm">${escapeHtml(CC.label(n.grade, n.section))}
                                             <span class="cnt">${arWord(n.cells.length)}</span></span>
@@ -769,9 +767,7 @@
 
                         ${pickHtml()}
                         ${totalCells ? `
-                            <p class="impg-hint">${editing
-                                ? 'اضغط أي خانة لتغييرها — ثم «تمّ».'
-                                : 'قارنها بجدولك. إن كانت صحيحة فاعتمدها، وإلا فعدّلها.'}</p>
+                            ${editing ? '<p class="impg-hint">اضغط أي خانة لتغييرها — ثم «تمّ».</p>' : ''}
                             ${gridHtml()}` : ''}
 
                         <div class="imp-acts">

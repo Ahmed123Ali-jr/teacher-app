@@ -5629,3 +5629,6 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* أدوات التعديل خارج شبكة الجدول — داخلها كانت تقصّ الحصة السابعة. */
 .sched-tools { padding-top: var(--space-3); padding-bottom: var(--space-2); }
 .sched-tools .sched-import { margin-top: 0; }
+
+/* شرحُ الرفع يختفي بعد القراءة — لا معنى له وقد قُرئ الجدول. */
+.imp-has-result .imp-file-hint { display: none; }
