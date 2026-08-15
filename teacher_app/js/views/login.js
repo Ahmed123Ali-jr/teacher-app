@@ -110,19 +110,19 @@
             if (guestBtn) guestBtn.addEventListener('click', onGuest);
         }
 
-        /* الضغطةُ تُجاب فوراً: الدخولُ ينتظر الخادم قرابةَ ثانية، وزرٌّ لا
-           يتغيّر في هذه الثانية يُقرأ «لم يستجب» فيُضغط مرّتين. */
+        /* الزرّ يُعطَّل حتى يعود الخادم — بلا كلمةٍ تُكتب ولا رمزٍ يظهر.
+           التعطيلُ يمنع ضغطتين تفتحان حسابين، والنصُّ يبقى كما هو فلا
+           يشعر المعلّم أن شيئاً «يُحمَّل». */
         async function onGuest(e) {
             const btn = e && e.currentTarget;
-            const label = btn ? btn.innerHTML : '';
-            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
+            if (btn) btn.disabled = true;
             try {
                 await global.Auth.guestLogin();
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 global.TeacherApp.toast(err.message, 'error');
             } finally {
-                if (btn) { btn.disabled = false; btn.innerHTML = label; }
+                if (btn) btn.disabled = false;
             }
         }
 

@@ -162,6 +162,24 @@
         return mapProfile(data.user, profile);
     }
 
+    /** خروجٌ محلّيٌّ سريع: يمسح الجلسة من الجهاز بلا ذهابٍ إلى الخادم.
+     *  لشاشة التهيئة — المعلّم لم يبدأ بعد، ورجوعُه إلى شاشة الدخول يجب
+     *  أن يكون فورياً. والخروجُ الكامل (`logout`) يبقى للإعدادات: هو الذي
+     *  يُبطل الجلسة في الخادم أيضاً. */
+    async function logoutLocal() {
+        invalidateTeacher();
+        if (global.TeacherDB) {
+            try { global.TeacherDB.clearLocalCache().catch(() => {}); } catch (e) {}
+            try { global.TeacherDB.resetHydration(); } catch (e) {}
+        }
+        try {
+            await sb.auth.signOut({ scope: 'local' });
+        } catch (e) {
+            /* نسخةٌ لا تعرف `scope` — يُخرَج بالطريقة الكاملة. */
+            try { await sb.auth.signOut(); } catch (e2) {}
+        }
+    }
+
     async function logout() {
         invalidateTeacher();
         if (global.TeacherDB) {
@@ -239,24 +257,25 @@
             throw new Error(error.message || 'تعذّر الدخول كزائر.');
         }
         const user = data.user;
-        /* الزائرُ يُنشأ باسمٍ وحده — لا مدرسةٍ ولا موادّ.
-           كانت تُزرع له «مدرسة تجريبية» و«الرياضيات والعلوم»، فيصل شاشةَ
-           التهيئة وقد اختيرت له مادّتان لم يخترهما ومدرسةٌ ليست مدرسته.
-           فإن لم ينتبه مضت معه إلى فصوله وملفّ إنجازه وأوراقه المطبوعة.
 
-           والزرعُ لم يكن يوفّر عليه شيئاً أصلاً: التهيئةُ إلزاميةٌ تسأله
-           عنها كلِّها قبل أن يرى التطبيق. */
-        await ensureProfile(user.id, { full_name: 'معلم زائر' });
-        /* الترطيبُ يُطلق ولا يُنتظر: كان الدخولُ يقف حتى تصل جداولُ الطبقة
-           الأولى (٦٣٣ ملّي ثانية مقيسة) قبل أن يرى المعلّم شيئاً. وكلُّ
-           قراءةٍ تنتظر مخزنَها بنفسها (`awaitStore` في database.js)، فلا
-           شاشةَ تُرسم بفراغ. */
+        /* ══════════════════════════════════════════════════════════════
+           دخولُ الزائر: طلبٌ واحدٌ ينتظره المعلّم لا أربعة.
+
+           كان ينتظر: تسجيلاً، ثم إنشاءَ ملفٍّ، ثم ترطيبَ الجداول، ثم
+           قراءةَ الملفّ — أربعةَ ذهاباتٍ إلى الخادم قبل أن يرى شيئاً.
+
+           وثلاثةٌ منها لا يحتاجها: الحسابُ جديدٌ فارغٌ لا بيانات فيه
+           تُقرأ، وملفُّه يُنشأ في الخلفية (ثم تكتبه التهيئةُ على أي حال
+           حين يحفظ اسمه)، والجداولُ فارغةٌ كلُّها.
+
+           فبقي التسجيلُ وحده، والباقي يمضي خلفه.
+           ══════════════════════════════════════════════════════════════ */
+        ensureProfile(user.id, { full_name: 'معلم زائر' }).catch(() => {});
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
             global.TeacherDB.hydrate();
         }
-        const profile = await fetchProfile(user.id);
-        return mapProfile(user, profile);
+        return mapProfile(user, { full_name: 'معلم زائر' });
     }
 
     async function changePassword(currentPassword, newPassword) {
@@ -326,7 +345,7 @@
     }
 
     global.Auth = {
-        register, login, logout, deleteAccount, currentTeacher, guestLogin,
+        register, login, logout, logoutLocal, deleteAccount, currentTeacher, guestLogin,
         changePassword, updateProfile, onAuthChange
     };
 })(window);
