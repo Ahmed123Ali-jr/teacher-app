@@ -35,10 +35,6 @@
         const today = todayISO();
 
         panel.innerHTML = `
-            <div class="section-header">
-                <button class="btn btn-primary" id="btn-new-hw">+ واجب جديد</button>
-            </div>
-
             ${rows.length === 0 ? empty() : list(rows, today)}
         `;
 
@@ -65,10 +61,8 @@
     function empty() {
         return `
             <div class="empty-state">
-                <div class="icon">📚</div>
-                <h3>لا توجد واجبات</h3>
-                <p>أضف واجباً مع تاريخ التسليم لمتابعته بسهولة.</p>
-                <button class="btn btn-primary" data-empty-add>+ واجب جديد</button>
+                <p>حدّد مواعيد تسليم الواجبات لمتابعتها بسهولة.</p>
+                <button class="btn btn-primary" data-empty-add>+ إضافة موعد تسليم واجب</button>
             </div>
         `;
     }

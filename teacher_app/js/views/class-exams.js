@@ -42,10 +42,6 @@
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
         panel.innerHTML = `
-            <div class="section-header">
-                <button class="btn btn-primary" id="btn-manual-exam">+ اختبار جديد</button>
-            </div>
-
             ${exams.length === 0 ? emptyState() : listHtml(exams)}
         `;
 
@@ -93,8 +89,6 @@
     function emptyState() {
         return `
             <div class="empty-state">
-                <div class="icon">📝</div>
-                <h3>لم تنشئ أي اختبار بعد</h3>
                 <p>اكتب أسئلتك بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
                 <button class="btn btn-primary" data-empty-add>+ اختبار جديد</button>
             </div>
@@ -167,19 +161,11 @@
         panel.innerHTML = `
             <div class="wizard">
                 <div class="wizard-header">
-                    <button class="btn btn-ghost btn-sm" id="wiz-back-list">← قائمة الاختبارات</button>
                     ${stepDots(s.step)}
                 </div>
                 <div id="wiz-body"></div>
             </div>
         `;
-
-        panel.querySelector('#wiz-back-list').addEventListener('click', async () => {
-            if (s.step === 3 && !s.exam?.id &&
-                !global.confirm('سيتم فقدان الأسئلة غير المحفوظة. متابعة؟')) return;
-            delete state[cls.id];
-            await render(panel, cls);
-        });
 
         const body = panel.querySelector('#wiz-body');
         if (s.step === 4) step4(body, cls);
@@ -213,7 +199,6 @@
             })}
 
             <div class="wizard-footer">
-                <button class="btn btn-ghost" id="btn-back">← رجوع</button>
                 <button class="btn btn-secondary" id="btn-save">💾 حفظ</button>
                 <button class="btn btn-primary" id="btn-to-print">الطباعة ←</button>
             </div>
@@ -221,15 +206,8 @@
 
         bindQuestions(body, cls);
 
-        body.querySelector('#btn-back').addEventListener('click', async () => {
-            /* ليس خلف هذه الخطوة خطوة — الرجوع خروجٌ إلى القائمة، وما لم
-               يُحفظ يُنبَّه عليه. */
-            const dirty = exam.questions.length && !exam.id;
-            if (dirty && !global.confirm('سيتم فقدان الأسئلة غير المحفوظة. متابعة؟')) return;
-            const panel = body.closest('#tab-panel');
-            delete state[cls.id];
-            return render(panel, cls);
-        });
+        /* لا زرَّ رجوعٍ في هذه الشاشة: سهمُ الشريط العلوي يخرج بها، وهو
+           مكانٌ واحدٌ للرجوع في التطبيق كلِّه. */
         body.querySelector('#btn-save').addEventListener('click', async (e) => {
             await guard(e.currentTarget, async () => {
                 await saveExam(exam);

@@ -229,7 +229,7 @@
             <div class="container">
                 <div class="class-topbar">
                     <button type="button" id="btn-class-edit" class="cls-edit-btn"
-                            aria-label="إدارة الفصل">✏️</button>
+                            aria-label="إدارة الفصل">✎ تعديل</button>
                 </div>
 
                 <div class="class-hero-split" style="--cls-color:${heroColor(cls)}">

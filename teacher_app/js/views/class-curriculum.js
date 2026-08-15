@@ -43,14 +43,10 @@
         const files = ensureList(cls);
 
         panel.innerHTML = `
-            <div class="section-header">
-                <button class="btn btn-primary" id="btn-upload">+ رفع ملف</button>
-            </div>
-
             ${files.length === 0 ? empty() : list(files)}
 
             <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
-                <h4 style="margin-top:0">💡 ملاحظة</h4>
+                <h4 style="margin-top:0">ملاحظة</h4>
                 <p style="margin: 0; font-size: var(--fs-sm);">
                     ارفع ملف التوزيع كما هو من الإدارة أو الإشراف التربوي (PDF / صورة / Word).
                     الملفات تظهر تلقائياً في ملف الإنجاز عند الطباعة.
@@ -108,8 +104,6 @@
     function empty() {
         return `
             <div class="empty-state">
-                <div class="icon">🗓️</div>
-                <h3>لا يوجد توزيع منهج بعد</h3>
                 <p>ارفع ملف التوزيع الرسمي للفصل (PDF أو صورة أو Word).</p>
                 <button class="btn btn-primary" data-empty-add>+ رفع ملف</button>
             </div>

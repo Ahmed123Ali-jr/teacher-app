@@ -346,11 +346,10 @@
             <div class="start-box">
                 <div class="start-halo"></div>
                 <div class="start-ring">📷</div>
-                <div class="start-t">ارفع جدولك</div>
-                <div class="start-s">صوّر جدولك المدرسي — تُنشأ فصولك وحصصها<br>تلقائياً، وتُعرض عليك قبل الحفظ</div>
-                <a href="#/schedule?import=1" class="start-cta">📷 ارفع جدولك</a>
+                <div class="start-t">ارفع جدولك <span class="start-t-n">(تُنشأ فصولك تلقائياً)</span></div>
+                <a href="#/schedule?import=1" class="start-cta">ارفع جدولك</a>
             </div>
-            <button type="button" class="start-add-class" data-add-class>أو أضف فصلاً يدوياً</button>`;
+            <button type="button" class="start-add-class" data-add-class>أضف فصولك يدوياً</button>`;
     }
 
     /* فصول موجودة بلا جدول: صندوق «أضف الجدول الأسبوعي» + زر «إضافة فصل» تحته */
@@ -471,7 +470,7 @@
             <div class="container home-v2">
                 <div class="home-hd">
                     <div class="home-hd-tt">
-                        <h2>${greet()}، ${firstName} 👋</h2>
+                        <h2>${greet()}، ${firstName}</h2>
                         <div class="home-hij">${hijriToday()}</div>
                     </div>
                     <a href="#/profile" class="home-av" aria-label="بياناتي">${avatarHtml}</a>
@@ -486,10 +485,8 @@
     function emptyState() {
         return `
             <div class="empty-state" style="grid-column: 1 / -1;">
-                <div class="icon">🏫</div>
-                <h3>لا توجد فصول بعد</h3>
-                <p>ابدأ بإضافة فصلك الأول لتنظيم ${global.Words.students()} ومتابعتهم.</p>
-                <button class="btn btn-primary" data-empty-add>+ إضافة فصلي الأول</button>
+                <h3>لا توجد لديك فصول بعد</h3>
+                <button class="btn btn-primary" data-empty-add>+ إضافة فصل جديد</button>
             </div>
         `;
     }
@@ -634,7 +631,9 @@
     }
 
     /* ---------- Add class modal ---------- */
-    const SECTIONS = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
+    /* أربعُ شُعبٍ و«أخرى»: المعلّم يكتب ما بعدها بيده. ثمانيةُ أزرارٍ كانت
+       تملأ سطرين ولا تُستعمل إلا أوّلُها. */
+    const SECTIONS = ['أ', 'ب', 'ج', 'د'];
 
     /* لوحة إضافة الفصل باللمس — نفس أسلوب لوحة الجدول: مرحلة ← صف ← شعبة ←
        مادة، بلا قوائم منسدلة ولا زر حفظ؛ اختيار المادة هو الحفظ. */
@@ -659,7 +658,11 @@
      */
     async function openAddClassModal(teacher, opts) {
         opts = opts || {};
-        const pick = { stage: 'primary', grade: null, section: null };
+        /* المادةُ تبدأ بتخصّص المعلّم — هو الغالبُ في فصوله، فلا يختار شيئاً. */
+        const pick = {
+            stage: 'primary', grade: null, section: null,
+            subject: (teacherSubjects(teacher) || [])[0] || ''
+        };
         /* «أخرى» تفتح حقل كتابة بدل أن تكون قيمة تُحفظ كما هي. */
         const other = { sec: false, subj: false };
         let custom = await loadCustomSubjects();
@@ -669,28 +672,30 @@
         body.className = 'sch-sheet';
         paint();
 
-        function subjectChips() {
+        /* المادةُ منسدلةٌ لا مربّعاتٍ مبعثرة، وافتراضُها تخصّصُ المعلّم —
+           فأكثرُ فصوله بمادّته، ولا يختار في الغالب شيئاً.
+
+           وكان اختيارُ المادة يحفظ الفصلَ بلمسته، فصار الحفظُ زرّاً صريحاً:
+           المنسدلةُ تُغيَّر ولا تُنشئ، والقرارُ يبقى للمعلّم. */
+        function subjectPickHtml() {
             const mine = teacherSubjects(teacher).concat(custom)
-                .filter((s, i, a) => s && a.indexOf(s) === i);
-            /* مواد المرحلة المختارة وحدها. «موادك» تظهر دائماً مهما كانت
-               المرحلة — المعلم قد يدرّس مادة خارج القائمة الرسمية. */
+                .filter((x, i, a) => x && a.indexOf(x) === i);
             const stageList = STAGE_SUBJECTS[pick.stage] || SUBJECTS;
-            const rest = stageList.filter((s) => s !== 'أخرى' && !mine.includes(s));
-            const chip = (s) => `<button type="button" class="sch-chip ${pick.subject === s ? 'on' : ''}"
-                                         data-subj="${escapeAttr(s)}">${escapeHtml(s)}</button>`;
-            return (mine.length ? `<div class="sch-lbl">موادك</div><div class="sch-chips">${mine.map(chip).join('')}</div>` : '')
-                + `<div class="sch-lbl">${mine.length ? 'مواد ' + (STAGE_LABELS[pick.stage] || '') : 'مواد ' + (STAGE_LABELS[pick.stage] || '')}</div>`
-                + `<div class="sch-chips">
-                       ${rest.map(chip).join('')}
-                       <button type="button" class="sch-chip ${other.subj ? 'on' : ''}" data-subj-other>✎ أخرى</button>
-                   </div>`
-                + (other.subj
-                    ? `<div class="sch-other">
-                           <input type="text" class="input" id="subj-other" maxlength="40"
-                                  placeholder="اكتب اسم المادة" value="${escapeAttr(pick.subject || '')}">
-                           <button type="button" class="sch-other-go" data-subj-save>حفظ الفصل</button>
-                       </div>`
-                    : '');
+            const rest = stageList.filter((x) => x !== 'أخرى' && !mine.includes(x));
+            const opt = (x) => `<option value="${escapeAttr(x)}" ${pick.subject === x ? 'selected' : ''}>${escapeHtml(x)}</option>`;
+            return `
+                <div class="sch-lbl">المادة</div>
+                <select class="subp-select" id="subj-select">
+                    ${mine.length ? `<optgroup label="موادك">${mine.map(opt).join('')}</optgroup>` : ''}
+                    ${rest.length ? `<optgroup label="مواد ${escapeHtml(STAGE_LABELS[pick.stage] || '')}">${rest.map(opt).join('')}</optgroup>` : ''}
+                    <option value="__other__" ${other.subj ? 'selected' : ''}>✎ أخرى — اكتبها بنفسك</option>
+                </select>
+                ${other.subj ? `
+                    <div class="sch-other" style="margin-top:9px">
+                        <input type="text" class="input" id="subj-other" maxlength="40"
+                               placeholder="اكتب اسم المادة" value="${escapeAttr(pick.subject || '')}">
+                    </div>` : ''}
+                <button type="button" class="fsave" style="margin-top:13px" data-subj-save>+ إضافة الفصل</button>`;
         }
 
         function paint() {
@@ -730,7 +735,7 @@
                 <div id="subj-wrap" style="margin-top:15px; ${ready ? '' : 'opacity:.45; pointer-events:none;'}">
                     <div class="sch-hint" id="subj-lock"
                          style="margin:0 0 9px; ${ready ? 'display:none' : ''}">اختر الصف والشعبة أولاً</div>
-                    ${subjectChips()}
+                    ${subjectPickHtml()}
                 </div>
             `;
             /* الكتابة تُحدّث الاختيار مباشرةً بلا إعادة رسم كي لا يقفز المؤشر. */
@@ -744,6 +749,11 @@
             });
             body.querySelector('#subj-other')?.addEventListener('input', (e) => {
                 pick.subject = e.target.value.trim();
+            });
+            body.querySelector('#subj-select')?.addEventListener('change', (e) => {
+                if (e.target.value === '__other__') { other.subj = true; pick.subject = ''; return paint(); }
+                other.subj = false;
+                pick.subject = e.target.value;
             });
             if (other.sec)  body.querySelector('#sec-other')?.focus();
             if (other.subj) body.querySelector('#subj-other')?.focus();
@@ -764,17 +774,10 @@
             const sec = t.closest('[data-sec]');
             if (sec) { other.sec = false; pick.section = sec.dataset.sec; return paint(); }
 
-            if (t.closest('[data-subj-other]')) {
-                other.subj = true; pick.subject = ''; return paint();
-            }
-
-            /* المادة المكتوبة تحتاج ضغطة حفظ صريحة؛ المادة الجاهزة تُحفظ بلمستها. */
-            const typed = t.closest('[data-subj-save]');
-            const subj  = t.closest('[data-subj]');
-            if ((!subj && !typed) || saving) return;
+            if (!t.closest('[data-subj-save]') || saving) return;
             if (pick.grade === null || !pick.section) return;
 
-            const subject = typed ? String(pick.subject || '').trim() : subj.dataset.subj;
+            const subject = String(pick.subject || '').trim();
             if (!subject) {
                 return global.TeacherApp.toast('اكتب اسم المادة أولاً.', 'error', 3000);
             }

@@ -42,9 +42,6 @@
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
         panel.innerHTML = `
-            <div class="section-header">
-                <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة جديدة</button>
-            </div>
             ${sheets.length === 0 ? empty() : list(sheets)}
         `;
 
@@ -90,10 +87,8 @@
     function empty() {
         return `
             <div class="empty-state">
-                <div class="icon">📄</div>
-                <h3>لا توجد أوراق بعد</h3>
-                <p>اكتب أسئلتك بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
-                <button class="btn btn-primary" data-empty-add>+ ورقة جديدة</button>
+                <p>اكتب أوراق العمل بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
+                <button class="btn btn-primary" data-empty-add>+ إضافة ورقة عمل</button>
             </div>
         `;
     }

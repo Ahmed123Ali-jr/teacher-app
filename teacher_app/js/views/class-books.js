@@ -33,10 +33,6 @@
         const books = await global.TeacherDB.getAllByIndex('books', 'class_id', cls.id);
 
         panel.innerHTML = `
-            <div class="section-header">
-                <button class="btn btn-primary" id="btn-add-book">+ رفع كتاب</button>
-            </div>
-
             ${books.length === 0 ? emptyState() : bookGrid(books)}
         `;
 
@@ -89,10 +85,7 @@
     function emptyState() {
         return `
             <div class="empty-state">
-                <div class="icon">📚</div>
-                <h3>لا توجد كتب بعد</h3>
-                <p>ارفع كتاب الطالب أو كتاب النشاط كملف PDF، وتصفّحه داخل التطبيق متى شئت.</p>
-                <button class="btn btn-primary" data-empty-add>+ رفع كتاب</button>
+                <button class="btn btn-primary" data-empty-add>+ ارفع الكتاب</button>
             </div>
         `;
     }
@@ -102,7 +95,6 @@
             <div class="grid grid-3">
                 ${books.map((b) => `
                     <div class="card book-card">
-                        <div class="book-icon">📘</div>
                         <div class="book-body">
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(b.title || 'كتاب')}</h4>
                             <div class="text-muted" style="font-size: var(--fs-sm);">

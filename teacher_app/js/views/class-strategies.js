@@ -117,7 +117,6 @@
         return `
             <div class="stg-card ${open ? 'open' : ''}" data-key="${s.key}">
                 <button type="button" class="stg-top" data-toggle>
-                    <span class="ic">${s.icon}</span>
                     <span class="tx">
                         <span class="nm">${esc(s.name)}</span>
                         <span class="sub">${esc(s.brief)}</span>
