@@ -342,14 +342,28 @@
        والحصص معاً، وهو أسرع من إضافة ستّة فصولٍ يدوياً. والإنشاء اليدوي
        يبقى ظاهراً لمن جدولُه ليس بيده. */
     function startFirstClassHtml() {
+        /* ── طريقان متساويان لا خطوتان ──
+           كان الأولُ في بطاقةٍ مضيئةٍ والثاني زرّاً وحيداً تحتها، فيُقرأ
+           خطوةً ثانيةً لا اختياراً آخر. وكان العنوانُ والزرُّ يقولان الشيء
+           نفسه: «ارفع جدولك» مرّتين.
+
+           فصارا صفَّين متساويي الحجم، لكلٍّ رمزُه وعنوانُه. والإضافةُ
+           اليدوية أوّلاً — هي مبدأ من ليس جدولُه بيده. */
         return `
-            <div class="start-box">
-                <div class="start-halo"></div>
-                <div class="start-ring">📷</div>
-                <div class="start-t">ارفع جدولك <span class="start-t-n">(تُنشأ فصولك تلقائياً)</span></div>
-                <a href="#/schedule?import=1" class="start-cta">ارفع جدولك</a>
-            </div>
-            <button type="button" class="start-add-class" data-add-class>أضف فصولك يدوياً</button>`;
+            <div class="start-two">
+                <button type="button" class="start-card main" data-add-class>
+                    <span class="ic">✍️</span>
+                    <span class="tx"><span class="t">أضف فصلاً بنفسك</span></span>
+                    <span class="chev">❮</span>
+                </button>
+                <a href="#/schedule?import=1" class="start-card">
+                    <span class="ic">📷</span>
+                    <span class="tx">
+                        <span class="t">ارفع جدولك <span class="n">(تُنشأ فصولك تلقائياً)</span></span>
+                    </span>
+                    <span class="chev">❮</span>
+                </a>
+            </div>`;
     }
 
     /* فصول موجودة بلا جدول: صندوق «أضف الجدول الأسبوعي» + زر «إضافة فصل» تحته */
