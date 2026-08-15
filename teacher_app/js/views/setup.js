@@ -157,7 +157,9 @@
 
                 <div class="fgrp-t">إدارة التعليم *</div>
                 <button type="button" class="dept-pick" id="su-dept-btn">
-                    <span class="v" id="su-dept-v">${pick.dept ? escapeHtml(pick.dept) : 'اختر إدارة التعليم'}</span>
+                    <!-- فارغٌ حتى يختار: عنوانُ الحقل فوقه يقول ما هو، فكتابةُ
+                         «اختر إدارة التعليم» داخله تكرارٌ يملأ الفراغ بلا معنى. -->
+                    <span class="v" id="su-dept-v">${pick.dept ? escapeHtml(pick.dept) : ''}</span>
                     <span class="chev">❯</span>
                 </button>
 
