@@ -110,13 +110,19 @@
             if (guestBtn) guestBtn.addEventListener('click', onGuest);
         }
 
-        async function onGuest() {
+        /* الضغطةُ تُجاب فوراً: الدخولُ ينتظر الخادم قرابةَ ثانية، وزرٌّ لا
+           يتغيّر في هذه الثانية يُقرأ «لم يستجب» فيُضغط مرّتين. */
+        async function onGuest(e) {
+            const btn = e && e.currentTarget;
+            const label = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
             try {
                 await global.Auth.guestLogin();
-                global.TeacherApp.toast('أهلاً بك كزائر 👋 (بيانات تجريبية)', 'info');
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 global.TeacherApp.toast(err.message, 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = label; }
             }
         }
 

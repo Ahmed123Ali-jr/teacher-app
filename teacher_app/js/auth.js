@@ -150,9 +150,13 @@
             }
             throw new Error(error.message || 'تعذّر تسجيل الدخول.');
         }
+        /* الترطيبُ يُطلق ولا يُنتظر: كان الدخولُ يقف حتى تصل جداولُ الطبقة
+           الأولى (٦٣٣ ملّي ثانية مقيسة) قبل أن يرى المعلّم شيئاً. وكلُّ
+           قراءةٍ تنتظر مخزنَها بنفسها (`awaitStore` في database.js)، فلا
+           شاشةَ تُرسم بفراغ. */
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
-            await global.TeacherDB.hydrate();
+            global.TeacherDB.hydrate();
         }
         const profile = await fetchProfile(data.user.id);
         return mapProfile(data.user, profile);
@@ -161,7 +165,9 @@
     async function logout() {
         invalidateTeacher();
         if (global.TeacherDB) {
-            try { await global.TeacherDB.clearLocalCache(); } catch (e) {}
+            /* المسحُ المحلّي لا يُنتظر: لا شاشةَ بعد الخروج تقرأ منه،
+               والدخولُ التالي يمسح كل مخزنٍ قبل ملئه على أي حال. */
+            try { global.TeacherDB.clearLocalCache().catch(() => {}); } catch (e) {}
             try { global.TeacherDB.resetHydration(); } catch (e) {}
         }
         await sb.auth.signOut();
@@ -241,9 +247,13 @@
            والزرعُ لم يكن يوفّر عليه شيئاً أصلاً: التهيئةُ إلزاميةٌ تسأله
            عنها كلِّها قبل أن يرى التطبيق. */
         await ensureProfile(user.id, { full_name: 'معلم زائر' });
+        /* الترطيبُ يُطلق ولا يُنتظر: كان الدخولُ يقف حتى تصل جداولُ الطبقة
+           الأولى (٦٣٣ ملّي ثانية مقيسة) قبل أن يرى المعلّم شيئاً. وكلُّ
+           قراءةٍ تنتظر مخزنَها بنفسها (`awaitStore` في database.js)، فلا
+           شاشةَ تُرسم بفراغ. */
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
-            await global.TeacherDB.hydrate();
+            global.TeacherDB.hydrate();
         }
         const profile = await fetchProfile(user.id);
         return mapProfile(user, profile);

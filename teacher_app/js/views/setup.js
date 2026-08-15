@@ -215,6 +215,9 @@
                     harvest(); step = 0; paint(); global.scrollTo(0, 0);
                     return;
                 }
+                /* الخروجُ يمرّ بالخادم، فيُعلَم المعلّم أن ضغطته وصلت. */
+                const b = q('#su-top-back');
+                if (b) { b.disabled = true; b.textContent = '⏳'; }
                 try { await global.Auth.logout(); } catch (e) { /* لا يمنع الخروج */ }
                 global.location.hash = '#/login';
             });
