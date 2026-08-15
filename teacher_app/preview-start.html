@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-opt="0">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>معاينة — صندوق البداية</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+
+<style>
+/* ==========================================================================
+   معاينةُ صندوق البداية — أولُ ما يراه المعلّم بعد التهيئة.
+
+   وظيفتُه واحدة: أن يختار أحد طريقين — يصوّر جدوله فتُنشأ فصولُه كلُّها،
+   أو يضيف فصلاً بيده. فالحكمُ على كل بديلٍ سؤالٌ واحد: **أيّهما يُرى
+   أوّلاً، وهل يُفهم أنهما طريقان لا خطوتان؟**
+
+   الألوانُ والخطُّ والأبعادُ منقولةٌ من التطبيق كما هي.
+   ========================================================================== */
+:root {
+    --ink: #0F2C5C; --ink2: #24498A; --muted: #6B6B68;
+    --border: #E4E6EA; --gold: #C9A961; --surface: #FFFFFF;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    background: #EEEDE9; color: #16202E;
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    padding: 14px 12px calc(150px + env(safe-area-inset-bottom));
+    -webkit-text-size-adjust: 100%;
+}
+.pv-title { margin: 0 0 4px; font-size: 15px; font-weight: 700; text-align: center; color: var(--ink); }
+.pv-note  { margin: 0 auto 12px; max-width: 470px; font-size: 11.5px; line-height: 1.9; color: #5C6470; text-align: center; }
+.pv-cap {
+    max-width: 470px; margin: 0 auto 12px; padding: 11px 13px;
+    background: #fff; border: 1px solid #DDDCD6; border-radius: 12px; text-align: center;
+}
+.pv-cap .nm { font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.pv-cap .ds { display: block; margin-top: 4px; font-size: 11.5px; color: #5C6470; line-height: 1.85; }
+
+/* ── إطار الجوال ── */
+.phone {
+    max-width: 470px; margin: 0 auto; background: #fff;
+    border: 1px solid #DDDCD6; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 6px 20px rgba(16,24,40,.10);
+}
+.ph-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 15px; border-bottom: 1px solid var(--border);
+}
+.ph-head .t { font-size: 16px; font-weight: 700; color: var(--ink); }
+.ph-body { padding: 14px; }
+.greet { font-size: 20px; font-weight: 700; color: var(--ink); }
+.date  { font-size: 12px; color: var(--muted); margin-top: 1px; margin-bottom: 12px; }
+
+/* ══ عناصرُ التطبيق الحقيقية ══ */
+.start-box {
+    border-radius: 26px; padding: 30px 21px; text-align: center; position: relative;
+    background: #fff; border: 1.5px solid var(--border);
+    box-shadow: 0 6px 14px rgba(16,24,40,.10);
+}
+.start-ring {
+    width: 92px; height: 92px; margin: 0 auto; border-radius: 50%;
+    border: 1px solid var(--border); display: grid; place-items: center; font-size: 34px;
+}
+.start-t { font-size: 23px; font-weight: 700; color: var(--ink); margin-top: 15px; }
+.start-t-n { display: block; margin-top: 3px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.start-cta {
+    display: block; margin-top: 15px; padding: 15px; border-radius: 14px;
+    background: linear-gradient(150deg, #1B3E77, #0F2C5C); color: #fff;
+    font-size: 16px; font-weight: 700; text-decoration: none;
+}
+.start-add-class {
+    display: block; width: 100%; margin-top: 11px; padding: 15px; border-radius: 14px;
+    background: #fff; border: 1.5px solid var(--border); cursor: pointer;
+    font-family: inherit; font-size: 15.5px; font-weight: 700; color: var(--ink);
+}
+
+/* ── ب: خياران متساويان ── */
+.two { display: flex; flex-direction: column; gap: 11px; }
+.two-card {
+    display: flex; align-items: center; gap: 13px; text-align: start;
+    padding: 17px 15px; border-radius: 18px; cursor: pointer;
+    background: #fff; border: 1.5px solid var(--border);
+    box-shadow: 0 3px 10px rgba(16,24,40,.07); font-family: inherit;
+}
+.two-card.main { border-color: var(--ink); box-shadow: 0 4px 14px rgba(15,44,92,.16); }
+.two-card .ic {
+    width: 46px; height: 46px; flex: none; border-radius: 14px; display: grid; place-items: center;
+    font-size: 21px; background: #F4F6F9; border: 1px solid var(--border);
+}
+.two-card.main .ic { background: linear-gradient(150deg, #1B3E77, #0F2C5C); }
+.two-card .tx { flex: 1; min-width: 0; }
+.two-card .t { display: block; font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.two-card .s { display: block; margin-top: 2px; font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+.two-card .chev { color: var(--muted); font-size: 13px; font-weight: 700; }
+
+/* ── ج: خطوةٌ واحدة، والثاني رابطٌ هادئ ── */
+.solo-t { font-size: 21px; font-weight: 700; color: var(--ink); text-align: center; }
+.solo-s { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 5px; line-height: 1.8; }
+.solo-link {
+    display: block; text-align: center; margin-top: 15px;
+    font-size: 13.5px; font-weight: 700; color: var(--ink); text-decoration: underline;
+}
+
+/* ── د: بطاقتان متجاورتان ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.g2-card {
+    padding: 19px 12px; border-radius: 18px; text-align: center; cursor: pointer;
+    background: #fff; border: 1.5px solid var(--border); font-family: inherit;
+    box-shadow: 0 3px 10px rgba(16,24,40,.07);
+}
+.g2-card.main { border-color: var(--ink); }
+.g2-card .ic { font-size: 27px; }
+.g2-card .t { display: block; margin-top: 9px; font-size: 14.5px; font-weight: 700; color: var(--ink); }
+.g2-card .s { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); line-height: 1.65; }
+
+/* ── هـ: بطاقةٌ كحلية ── */
+.navy {
+    border-radius: 24px; padding: 26px 20px; text-align: center; color: #fff;
+    background: linear-gradient(150deg, #16386F 0%, #0F2C5C 60%, #0A2049 100%);
+    box-shadow: 0 8px 20px rgba(10,32,73,.28), inset 0 -2px 0 var(--gold);
+}
+.navy .ic { font-size: 32px; }
+.navy .t { font-size: 21px; font-weight: 700; margin-top: 10px; }
+.navy .s { font-size: 12.5px; color: rgba(255,255,255,.78); margin-top: 5px; line-height: 1.75; }
+.navy .cta {
+    display: block; margin-top: 16px; padding: 14px; border-radius: 13px;
+    background: #fff; color: var(--ink); font-size: 15.5px; font-weight: 700; text-decoration: none;
+}
+.navy-alt {
+    display: block; width: 100%; margin-top: 11px; padding: 14px; border-radius: 13px;
+    background: transparent; border: 1.5px solid var(--border); cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: 700; color: var(--ink);
+}
+
+/* ── و: بلا صندوق ── */
+.bare-t { font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.bare-s { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.8; }
+.bare-cta {
+    display: block; margin-top: 17px; padding: 16px; border-radius: 14px; text-align: center;
+    background: linear-gradient(150deg, #1B3E77, #0F2C5C); color: #fff;
+    font-size: 16px; font-weight: 700; text-decoration: none;
+}
+.bare-link {
+    display: block; text-align: center; margin-top: 13px;
+    font-size: 13.5px; font-weight: 700; color: var(--ink); text-decoration: underline;
+}
+
+/* ── شريط البدائل ── */
+.pv-bar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+    padding: 9px 10px calc(9px + env(safe-area-inset-bottom));
+    background: rgba(255,255,255,.96); backdrop-filter: blur(10px);
+    border-top: 1px solid #DDDCD6; display: flex; gap: 6px;
+}
+.pv-bar button {
+    flex: 1; min-height: 46px; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: 700; color: var(--ink);
+    background: #fff; border: 1.5px solid #D8D5CC;
+}
+.pv-bar button.on { color: #fff; background: var(--ink); border-color: #0A2049; }
+</style>
+</head>
+<body>
+
+<p class="pv-title">صندوق البداية — ستة بدائل</p>
+<p class="pv-note">
+    أوّلُ ما يراه المعلّم بعد التهيئة. وظيفتُه أن يختار طريقاً:
+    <b>يصوّر جدوله فتُنشأ فصولُه كلُّها</b>، أو <b>يضيف فصلاً بيده</b>.
+</p>
+
+<div class="pv-cap">
+    <div class="nm" id="cap-nm"></div>
+    <span class="ds" id="cap-ds"></span>
+</div>
+
+<div class="phone">
+    <div class="ph-head"><div class="t">الرئيسية</div><div>☰</div></div>
+    <div class="ph-body">
+        <div class="greet">مساء الخير، أحمد</div>
+        <div class="date">السبت، ٣ ربيع الأول ١٤٤٨ هـ</div>
+        <div id="slot"></div>
+    </div>
+</div>
+
+<div class="pv-bar">
+    <button data-o="0" class="on">الحالي</button>
+    <button data-o="a">أ</button>
+    <button data-o="b">ب</button>
+    <button data-o="c">ج</button>
+    <button data-o="d">د</button>
+    <button data-o="e">هـ</button>
+</div>
+
+<script>
+const OPTS = {
+    '0': {
+        nm: 'الحالي',
+        ds: 'بطاقةٌ فيها حلقةٌ وكاميرا وعنوانٌ وقوسٌ وزرّ، وتحتها زرٌّ ثانٍ خارجها. الطريقان غيرُ متساويين: الأول في بطاقةٍ مضيئة والثاني زرٌّ وحيدٌ تحتها — فقد لا يُقرأ أنه طريقٌ آخر.',
+        html: `
+            <div class="start-box">
+                <div class="start-ring">📷</div>
+                <div class="start-t">ارفع جدولك <span class="start-t-n">(تُنشأ فصولك تلقائياً)</span></div>
+                <a class="start-cta">ارفع جدولك</a>
+            </div>
+            <button class="start-add-class">أضف فصولك يدوياً</button>`
+    },
+
+    a: {
+        nm: 'أ — الحالي بلا تكرار',
+        ds: 'البطاقةُ نفسها، لكنّ العنوان صار «ابدأ بجدولك» فلا يتكرّر مع الزرّ. تعديلٌ أصغرُ ما يكون: كلمتان تتغيّران ولا شيء غيرهما.',
+        html: `
+            <div class="start-box">
+                <div class="start-ring">📷</div>
+                <div class="start-t">ابدأ بجدولك <span class="start-t-n">(تُنشأ فصولك تلقائياً)</span></div>
+                <a class="start-cta">ارفع جدولك</a>
+            </div>
+            <button class="start-add-class">أضف فصولك يدوياً</button>`
+    },
+
+    b: {
+        nm: 'ب — طريقان في صفّين',
+        ds: 'كلُّ طريقٍ بطاقةٌ فيها رمزٌ وعنوانٌ وسطرٌ يشرحه. الأولُ مميّزٌ بحدٍّ كحليّ لأنه الأسرع، والثاني مساوٍ له في الحجم — فيُقرأ أنهما اختيارٌ لا خطوتان.',
+        html: `
+            <div class="two">
+                <button class="two-card main">
+                    <span class="ic">📷</span>
+                    <span class="tx">
+                        <span class="t">صوّر جدولك</span>
+                        <span class="s">تُنشأ فصولك وحصصها تلقائياً</span>
+                    </span>
+                    <span class="chev">❮</span>
+                </button>
+                <button class="two-card">
+                    <span class="ic">✍️</span>
+                    <span class="tx">
+                        <span class="t">أضف فصلاً بنفسك</span>
+                        <span class="s">صفّ وشعبةٌ ومادة — أقلُّ من دقيقة</span>
+                    </span>
+                    <span class="chev">❮</span>
+                </button>
+            </div>`
+    },
+
+    c: {
+        nm: 'ج — طريقٌ واحدٌ ظاهر',
+        ds: 'التصويرُ وحده هو المعروض، واليدويُّ رابطٌ هادئٌ تحته. أنظفُ شاشةٍ وأقلُّها تردّداً — بشرط أن يكون التصويرُ هو ما نريده للأغلب.',
+        html: `
+            <div class="start-box">
+                <div class="start-ring">📷</div>
+                <div class="solo-t" style="margin-top:15px">صوّر جدولك المدرسي</div>
+                <div class="solo-s">تُنشأ فصولك وحصصها تلقائياً،<br>وتُعرض عليك قبل الحفظ</div>
+                <a class="start-cta">ارفع الجدول</a>
+            </div>
+            <a class="solo-link">أو أضف فصلاً بنفسك</a>`
+    },
+
+    d: {
+        nm: 'د — بطاقتان متجاورتان',
+        ds: 'الطريقان جنباً إلى جنبٍ في صفٍّ واحد. أقصرُ الشاشات ارتفاعاً، والاختيارُ يُرى كلُّه بنظرةٍ واحدة — بثمن مساحةٍ أضيق لكلٍّ منهما.',
+        html: `
+            <div class="grid2">
+                <button class="g2-card main">
+                    <div class="ic">📷</div>
+                    <span class="t">صوّر جدولك</span>
+                    <span class="s">فصولك تُنشأ تلقائياً</span>
+                </button>
+                <button class="g2-card">
+                    <div class="ic">✍️</div>
+                    <span class="t">أضف فصلاً</span>
+                    <span class="s">بنفسك في دقيقة</span>
+                </button>
+            </div>`
+    },
+
+    e: {
+        nm: 'هـ — بطاقةٌ كحلية',
+        ds: 'هُويّةُ التطبيق في أول شاشة: كحليٌّ متدرّجٌ وخيطٌ ذهبيٌّ تحته. أقواها حضوراً وأكثرُها «ترحيباً» — وأثقلُها بصرياً على شاشةٍ بيضاء.',
+        html: `
+            <div class="navy">
+                <div class="ic">📷</div>
+                <div class="t">صوّر جدولك</div>
+                <div class="s">تُنشأ فصولك وحصصها تلقائياً</div>
+                <a class="cta">ارفع الجدول</a>
+            </div>
+            <button class="navy-alt">أضف فصلاً بنفسك</button>`
+    }
+};
+
+const slot = document.getElementById('slot');
+function show(o) {
+    const d = OPTS[o];
+    document.getElementById('cap-nm').textContent = d.nm;
+    document.getElementById('cap-ds').textContent = d.ds;
+    slot.innerHTML = d.html;
+    document.documentElement.dataset.opt = o;
+}
+document.querySelector('.pv-bar').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    document.querySelectorAll('.pv-bar button').forEach((x) => x.classList.toggle('on', x === b));
+    show(b.dataset.o);
+});
+show('0');
+</script>
+</body>
+</html>
