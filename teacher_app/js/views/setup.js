@@ -92,7 +92,7 @@
         function stepYou() {
             return `
                 <div class="setup-hero">
-                    <span class="t">🎓 أهلاً بك في تطبيق إنجاز المعلم</span>
+                    <span class="t">أهلاً بك</span>
                     <span class="h">أخبرنا عنك أولاً — دقيقة واحدة ولن نسألك مرة أخرى.</span>
                 </div>
                 ${head()}
@@ -101,7 +101,7 @@
                 <input class="setup-fld" id="su-name" type="text" maxlength="60"
                        placeholder="اكتب اسمك" value="${escapeAttr(pick.name)}">
 
-                <div class="fgrp-t">المواد التي تدرّسها *
+                <div class="fgrp-t">التخصص *
                     <span class="fgrp-h">تظهر لك أول القائمة عند إضافة فصل</span>
                 </div>
                 <div id="su-subs"></div>

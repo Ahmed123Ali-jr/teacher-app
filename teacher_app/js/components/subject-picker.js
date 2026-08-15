@@ -51,7 +51,7 @@
                 <div class="subp">
                     <select class="subp-select" data-subp-select
                             aria-label="اختر مادة">
-                        <option value="">${state.chosen.length ? '+ أضف مادة أخرى…' : 'اختر مادتك…'}</option>
+                        <option value=""></option>
                         ${rest.map((s) => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('')}
                         <option value="${OTHER}">✎ أخرى — اكتبها بنفسك</option>
                     </select>
