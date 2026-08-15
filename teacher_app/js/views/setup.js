@@ -129,7 +129,7 @@
             return `
                 ${backBar()}
                 <div class="setup-hero">
-                    <span class="t">🏫 والآن مدرستك</span>
+                    <span class="t">والآن مدرستك</span>
                     <span class="h">تقدر تعدّلها كلها لاحقاً من الإعدادات.</span>
                 </div>
                 ${head()}

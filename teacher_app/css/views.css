@@ -3554,17 +3554,17 @@ body.drawer-open { overflow: hidden; }
    ========================================================================== */
 .setup-v1 { max-width: 480px; padding-bottom: var(--space-10); }
 
+/* الترحيب: كتابةٌ كحلية لا صندوق. كان لوحاً كحلياً بظلٍّ وبريقٍ يملأ أعلى
+   الشاشة — والشاشةُ الأولى يجب أن تبدو خفيفةً لا مُعلَنة. */
 .setup-hero {
     display: flex; flex-direction: column;
-    padding: 16px 18px; margin: var(--space-6) 0 var(--space-5);
-    border-radius: 18px; color: #fff;
-    background: linear-gradient(150deg, #24498A 0%, var(--primary) 60%, #0B2148 100%);
-    box-shadow: 0 6px 16px rgba(15, 44, 92, .3), inset 0 1.5px 0 rgba(255, 255, 255, .18);
+    margin: var(--space-6) 0 var(--space-5);
+    color: var(--ink-primary);
 }
-.setup-hero .t { font-size: 17px; font-weight: var(--fw-black); }
+.setup-hero .t { font-size: 22px; font-weight: var(--fw-black); }
 .setup-hero .h {
-    font-size: 12.5px; font-weight: var(--fw-bold); line-height: 1.75;
-    color: rgba(255, 255, 255, .75); margin-top: 5px;
+    font-size: 12.5px; font-weight: var(--fw-medium); line-height: 1.75;
+    color: var(--text-muted); margin-top: 5px;
 }
 
 .setup-fld {
