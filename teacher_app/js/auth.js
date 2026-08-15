@@ -233,12 +233,14 @@
             throw new Error(error.message || 'تعذّر الدخول كزائر.');
         }
         const user = data.user;
-        await ensureProfile(user.id, {
-            full_name: 'معلم زائر',
-            school: 'مدرسة تجريبية',
-            subject: 'الرياضيات',
-            subjects: ['الرياضيات', 'العلوم']
-        });
+        /* الزائرُ يُنشأ باسمٍ وحده — لا مدرسةٍ ولا موادّ.
+           كانت تُزرع له «مدرسة تجريبية» و«الرياضيات والعلوم»، فيصل شاشةَ
+           التهيئة وقد اختيرت له مادّتان لم يخترهما ومدرسةٌ ليست مدرسته.
+           فإن لم ينتبه مضت معه إلى فصوله وملفّ إنجازه وأوراقه المطبوعة.
+
+           والزرعُ لم يكن يوفّر عليه شيئاً أصلاً: التهيئةُ إلزاميةٌ تسأله
+           عنها كلِّها قبل أن يرى التطبيق. */
+        await ensureProfile(user.id, { full_name: 'معلم زائر' });
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
             await global.TeacherDB.hydrate();
