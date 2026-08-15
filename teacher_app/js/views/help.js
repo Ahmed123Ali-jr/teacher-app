@@ -93,14 +93,6 @@
     function render(container) {
         container.innerHTML = `
             <div class="container" style="max-width: 880px;">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <div>
-                        <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
-                        <h2 class="section-title" style="display:inline-block; margin-right:var(--space-3);">
-                            ❓ المساعدة والدليل
-                        </h2>
-                    </div>
-                </div>
 
                 <div class="card help-intro">
                     <h3 style="margin-top: 0;">أهلاً بك في تطبيق إنجاز المعلم 🎓</h3>

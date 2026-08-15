@@ -281,6 +281,44 @@ small { font-size: var(--fs-sm); }
     color: var(--ink-primary);
 }
 
+/* ==========================================================================
+   عنوانُ الشاشة ورجوعُها
+   ==========================================================================
+   حلّا محلَّ اسم التطبيق في الشريط. والرجوعُ في الشريط لا في المحتوى:
+   مكانٌ واحدٌ ثابتٌ في الشاشات كلِّها، فلا يبحث عنه المعلّم في كل صفحة.
+   ========================================================================== */
+.hdr-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: var(--fw-bold);
+    color: var(--ink-primary);
+    /* عنوانٌ طويلٌ يُقصّ ولا يكسر الشريط سطرين. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 60px);
+}
+
+.hdr-back {
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 21px;
+    line-height: 1;
+    color: var(--ink-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hdr-back:hover,
+.hdr-back:active { background: var(--surface-alt); }
+.hdr-back[hidden] { display: none; }
+
 /* Main */
 .app-main {
     flex: 1 0 auto;

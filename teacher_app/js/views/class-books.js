@@ -34,7 +34,6 @@
 
         panel.innerHTML = `
             <div class="section-header">
-                <h3 class="section-title">📖 كتب الفصل</h3>
                 <button class="btn btn-primary" id="btn-add-book">+ رفع كتاب</button>
             </div>
 

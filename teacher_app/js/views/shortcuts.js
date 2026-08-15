@@ -114,8 +114,6 @@
 
         container.innerHTML = `
             <div class="container enjaz-v1">
-                <div class="enjaz-hd"><h2>📁 إنجاز</h2></div>
-
                 <a href="#/portfolio" class="enjaz-band">
                     <span class="em">📁</span>
                     <span class="tx">

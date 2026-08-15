@@ -169,7 +169,6 @@
         container.innerHTML = `
             <div class="container sched-v2${editing ? ' is-editing' : ''}">
                 <div class="sched-head">
-                    <h2>📅 الجدول الأسبوعي</h2>
                     <button type="button" class="sched-time-btn" id="btn-times">توقيت الحصص</button>
                     <button type="button" class="sched-time-btn sched-edit-btn${editing ? ' on' : ''}"
                             id="btn-edit" aria-pressed="${editing}">

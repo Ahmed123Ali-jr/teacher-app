@@ -79,12 +79,6 @@
             container.innerHTML = `
                 <div class="container">
                     <div class="section-header" style="margin-top: var(--space-6);">
-                        <div>
-                            <a href="#/dashboard" class="btn-back-box" aria-label="الرجوع إلى الرئيسية"></a>
-                            <h2 class="section-title" style="display:inline-block; margin-right: var(--space-3);">
-                                🔔 تذكيراتي
-                            </h2>
-                        </div>
                         <button class="btn btn-primary" id="btn-add-reminder">+ إضافة تذكير</button>
                     </div>
 

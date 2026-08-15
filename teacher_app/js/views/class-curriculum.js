@@ -44,7 +44,6 @@
 
         panel.innerHTML = `
             <div class="section-header">
-                <h3 class="section-title">🗓️ توزيع المنهج</h3>
                 <button class="btn btn-primary" id="btn-upload">+ رفع ملف</button>
             </div>
 

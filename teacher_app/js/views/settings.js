@@ -190,8 +190,6 @@
     function renderMenu(container) {
         container.innerHTML = `
             <div class="container set-v2">
-                <h2 class="set-title">⚙️ الإعدادات</h2>
-
                 ${MENU_GROUPS.map(groupHtml).join('')}
 
                 <button type="button" class="set-logout" id="btn-logout-settings">🚪 تسجيل الخروج</button>

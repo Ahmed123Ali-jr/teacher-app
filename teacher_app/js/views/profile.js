@@ -99,10 +99,6 @@
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
                 <div class="section-header" style="margin-top: var(--space-6);">
-                    <button type="button" class="btn-back-box" id="btn-profile-back" aria-label="رجوع"></button>
-                    <h2 class="section-title" style="display:inline-block; margin-right: var(--space-3);">
-                        👤 بياناتي
-                    </h2>
                 </div>
 
                 <div class="idc">
@@ -222,11 +218,6 @@
 
     function bind(container, teacher) {
         bindFieldRows(container, () => saveAll(container, teacher));
-
-        container.querySelector('#btn-profile-back')?.addEventListener('click', () => {
-            if (global.history.length > 1) global.history.back();
-            else global.location.hash = '#/dashboard';
-        });
 
         // Photo upload — saves immediately (binary action, doesn't fit form-flow)
         const photoInput = container.querySelector('#photo-input');

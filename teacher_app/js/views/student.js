@@ -32,7 +32,10 @@
     async function render(container, studentId) {
         const student = await global.TeacherDB.get('students', studentId);
         if (!student) {
-            container.innerHTML = `
+            /* عنوانُ الشريط اسمُ الطالب — «الطالب» وحدها لا تقول أيَّهم. */
+        if (global.Router && global.Router.setTitle) global.Router.setTitle(student.name);
+
+        container.innerHTML = `
                 <div class="container"><div class="empty-state">
                     <div class="icon">⚠️</div><h3>الطالب غير موجود</h3>
                     <a href="#/dashboard" class="btn btn-primary">الرئيسية</a>

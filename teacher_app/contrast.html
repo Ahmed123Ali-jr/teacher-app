@@ -280,7 +280,19 @@ async function run() {
         await wait(340);
         await settle(win, s.need);
         await wait(140);
-        const fails = auditIn(win);
+        /* شاشةٌ تُعطب القياسَ لا تُسقط الفحص كلَّه: كان الخطأُ يوقف الحلقة
+           صامتاً فيظنّ القارئُ أن البقيّة سليمة، وهي لم تُقَس أصلاً. */
+        let fails;
+        try {
+            fails = auditIn(win);
+        } catch (err) {
+            const tr = document.createElement('tr');
+            tr.className = 'head';
+            tr.innerHTML = '<td colspan="4">⚠️ ' + s.name + ' — تعذّر القياس: ' +
+                           String(err && err.message || err).slice(0, 120) + '</td>';
+            tbody.appendChild(tr);
+            continue;
+        }
         total += fails.length;
         if (fails.length) screens++;
 

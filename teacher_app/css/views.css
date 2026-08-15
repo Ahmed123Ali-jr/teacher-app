@@ -267,6 +267,9 @@ body.drawer-open { overflow: hidden; }
 @media (max-width: 768px) {
     .header-actions { display: none; }
     .hamburger-btn  { display: inline-flex; }
+    /* الجذورُ وحدها تحمل القائمة، وما عداها يحمل سهم الرجوع — والسمة
+       `hidden` وحدها لا تكفي أمام `display` صريح. */
+    .hamburger-btn[hidden] { display: none; }
     .bottom-nav     { display: flex; }
 
     /* Keep brand compact on small screens */

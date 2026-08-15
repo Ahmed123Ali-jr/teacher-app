@@ -11,24 +11,46 @@
 (function (global) {
     'use strict';
 
+    /* ══════════════════════════════════════════════════════════════════
+       العنوانُ والجذر — لماذا هما في جدول المسارات
+
+       الشريطُ العلويّ كان يكتب اسم التطبيق في الشاشات كلِّها: يُخبر
+       المعلّم بما يعرف ولا يقول له أين هو. فصار يحمل **عنوان الشاشة**،
+       ومصدرُ العنوان هنا لا في كل شاشةٍ على حدة — وإلّا افترق الاسمُ في
+       الشريط عنه في الصفحة.
+
+       و`root` تعني: شاشةٌ يُوصل إليها من الشريط السفلي، فلا رجوعَ منها —
+       مكانُ الرجوع فيها زرُّ القائمة. وما عداها يحمل سهمَ رجوع.
+       ══════════════════════════════════════════════════════════════════ */
     const routes = [
         { pattern: /^\/login$/,                    view: 'login',     auth: false, chrome: false },
         { pattern: /^\/setup$/,                    view: 'setup',     auth: true,  chrome: false },
-        { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true  },
-        { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true  },
-        { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true },
-        { pattern: /^\/class\/([\w-]+)\/(\w+)$/, keys: ['id', 'tab'], view: 'class', auth: true, chrome: true },
-        { pattern: /^\/student\/([\w-]+)$/, keys: ['id'], view: 'student', auth: true, chrome: true },
-        { pattern: /^\/settings$/,                 view: 'settings',  auth: true, chrome: true },
-        { pattern: /^\/portfolio$/,                view: 'portfolio', auth: true, chrome: true },
-        { pattern: /^\/schedule$/,                 view: 'schedule',  auth: true, chrome: true },
-        { pattern: /^\/help$/,                     view: 'help',      auth: true, chrome: true },
-        { pattern: /^\/reports$/,                  view: 'reports',   auth: true, chrome: true },
-        { pattern: /^\/classes$/,                  view: 'classes',   auth: true, chrome: true },
-        { pattern: /^\/shortcuts$/,                view: 'shortcuts', auth: true, chrome: true },
-        { pattern: /^\/initiatives$/,              view: 'initiatives', auth: true, chrome: true },
-        { pattern: /^\/profile$/,                  view: 'profile',   auth: true, chrome: true }
+        { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true, title: 'الرئيسية',        root: true },
+        { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true, title: 'التذكيرات' },
+        { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true, title: 'الفصل' },
+        { pattern: /^\/class\/([\w-]+)\/(\w+)$/, keys: ['id', 'tab'], view: 'class', auth: true, chrome: true, title: 'الفصل' },
+        { pattern: /^\/student\/([\w-]+)$/, keys: ['id'], view: 'student', auth: true, chrome: true, title: 'الطالب' },
+        { pattern: /^\/settings$/,                 view: 'settings',  auth: true, chrome: true, title: 'الإعدادات',       root: true },
+        { pattern: /^\/portfolio$/,                view: 'portfolio', auth: true, chrome: true, title: 'ملف الإنجاز' },
+        { pattern: /^\/schedule$/,                 view: 'schedule',  auth: true, chrome: true, title: 'الجدول الأسبوعي', root: true },
+        { pattern: /^\/help$/,                     view: 'help',      auth: true, chrome: true, title: 'المساعدة' },
+        { pattern: /^\/reports$/,                  view: 'reports',   auth: true, chrome: true, title: 'التقارير' },
+        { pattern: /^\/classes$/,                  view: 'classes',   auth: true, chrome: true, title: 'الفصول',          root: true },
+        { pattern: /^\/shortcuts$/,                view: 'shortcuts', auth: true, chrome: true, title: 'إنجاز',           root: true },
+        { pattern: /^\/initiatives$/,              view: 'initiatives', auth: true, chrome: true, title: 'المبادرات' },
+        { pattern: /^\/profile$/,                  view: 'profile',   auth: true, chrome: true, title: 'الملف التعريفي' }
     ];
+
+    /* تبويباتُ الفصل: عنوانُ الشريط هو اسم التبويب لا اسم الفصل. */
+    const TAB_TITLES = {
+        students:   'سجل الطلاب',
+        curriculum: 'توزيع المنهج',
+        exams:      'الاختبارات',
+        worksheets: 'أوراق العمل',
+        homework:   'الواجبات',
+        books:      'الكتب',
+        strategies: 'الاستراتيجيات'
+    };
 
     function parse() {
         const raw  = (global.location.hash || '').replace(/^#/, '');
@@ -82,9 +104,43 @@
         if (footer) footer.hidden = !show;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       الشريطُ العلوي: العنوان، والرجوع.
+
+       العنوانُ افتراضيّه من الجدول، وللشاشة أن تُدقّقه ببياناتها —
+       صفحةُ الطالب تكتب اسمه، وصفحةُ الفصل اسمَ الفصل. فتُنادي
+       `Router.setTitle(...)` بعد أن تجلب بياناتها.
+
+       والرجوعُ `history.back()` لا مسارٌ ثابت: من دخل «سجل الطلاب» من
+       الرئيسية يعود إليها، ومن دخله من الفصول يعود إلى الفصول. وإن لم
+       يكن خلفه شيء (فُتح التطبيق على رابطٍ مباشر) فالرئيسية.
+       ══════════════════════════════════════════════════════════════════ */
+    function paintChrome(route, params) {
+        const titleEl = document.getElementById('hdr-title');
+        const backEl  = document.getElementById('hdr-back');
+        const burger  = document.getElementById('btn-open-drawer');
+        if (!titleEl) return;
+
+        let title = route.title || '';
+        if (route.view === 'class' && params && params.tab) {
+            title = TAB_TITLES[params.tab] || title;
+        }
+        titleEl.textContent = title;
+
+        const isRoot = !!route.root;
+        if (backEl)  backEl.hidden = isRoot;
+        if (burger)  burger.hidden = !isRoot;
+    }
+
+    function setTitle(text) {
+        const el = document.getElementById('hdr-title');
+        if (el && text) el.textContent = text;
+    }
+
     async function render(route, params) {
         if (global.Modal) global.Modal.close();
         setChrome(!!route.chrome);
+        if (route.chrome) paintChrome(route, params);
         document.querySelectorAll('.view').forEach((v) => { v.hidden = true; });
 
         const updateHeaderName = async () => {
@@ -227,8 +283,20 @@
 
     function start() {
         global.addEventListener('hashchange', resolve);
+
+        /* الرجوعُ خطوةٌ في التاريخ لا مسارٌ ثابت: من فتح «سجل الطلاب» من
+           الرئيسية يعود إليها، ومن فتحه من الفصول يعود إلى الفصول. وإن
+           فُتح التطبيق على رابطٍ مباشر فلا خلفَه شيء — فالرئيسية. */
+        const back = document.getElementById('hdr-back');
+        if (back) {
+            back.addEventListener('click', () => {
+                if (global.history.length > 1) global.history.back();
+                else global.location.hash = '#/dashboard';
+            });
+        }
+
         resolve();
     }
 
-    global.Router = { start, resolve };
+    global.Router = { start, resolve, setTitle };
 })(window);

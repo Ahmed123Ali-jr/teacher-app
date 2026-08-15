@@ -219,10 +219,15 @@
             { key: 'strategies', icon: '🎯', label: 'الاستراتيجيات', count: strategyCount,     tint: '#BE185D', bg: '#FDF2F8' }
         ];
 
+        /* عنوانُ الشريط اسمُ الفصل لا كلمة «الفصل»: المعلّم عنده فصولٌ
+           عدّة، فالاسمُ يقول أيَّها فتح. */
+        if (global.Router && global.Router.setTitle) {
+            global.Router.setTitle(cls.grade + (cls.section ? ' / ' + cls.section : ''));
+        }
+
         container.innerHTML = `
             <div class="container">
                 <div class="class-topbar">
-                    <button type="button" id="btn-class-back" class="btn-back-box" aria-label="الرجوع إلى الفصول"></button>
                     <button type="button" id="btn-class-edit" class="cls-edit-btn"
                             aria-label="إدارة الفصل">✏️</button>
                 </div>
@@ -270,10 +275,6 @@
             </div>
         `;
 
-        container.querySelector('#btn-class-back')?.addEventListener('click', () => {
-            global.location.hash = '#/classes';
-        });
-
         /* إدارة الفصل: كانت لوحةً تُفتح من «تعديل» في صفحة الفصول، ونُقلت
            هنا لأن الصفّ هناك صار للفتح وحده. تحمل الإجراءين معاً — التعديل
            والحذف — فكلاهما لا مدخل له في التطبيق سواها. */
@@ -292,14 +293,6 @@
 
         container.innerHTML = `
             <div class="container">
-                <div class="section-page-bar">
-                    <a class="btn-back-box" href="#/class/${cls.id}" aria-label="الرجوع إلى الفصل"></a>
-                    ${state.activeTab === 'students' ? '' : `
-                    <div class="section-page-title">
-                        <span class="section-page-icon">${tab.icon}</span>
-                        <span>${tab.label || ('سجل متابعة ' + global.Words.students())}</span>
-                    </div>`}
-                </div>
                 <div class="tab-panel" id="tab-panel"></div>
             </div>
         `;

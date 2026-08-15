@@ -43,7 +43,6 @@
 
         panel.innerHTML = `
             <div class="section-header">
-                <h3 class="section-title">📄 أوراق عمل الفصل</h3>
                 <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة جديدة</button>
             </div>
             ${sheets.length === 0 ? empty() : list(sheets)}

@@ -36,7 +36,6 @@
 
         panel.innerHTML = `
             <div class="section-header">
-                <h3 class="section-title">📚 واجبات الفصل</h3>
                 <button class="btn btn-primary" id="btn-new-hw">+ واجب جديد</button>
             </div>
 
