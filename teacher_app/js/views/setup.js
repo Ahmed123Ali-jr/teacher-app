@@ -49,13 +49,22 @@
         } catch { return true; }   // خطأ في القراءة لا يحبس المعلم خارج تطبيقه
     }
 
+    /* أسماءٌ ليست أسماء: حسابُ الزائر يُنشأ باسم «معلم زائر»، فيرى المعلّم
+       حقلَ الاسم مملوءاً بما ليس اسمَه — فإمّا حفظه وإمّا مسحه بيده. فيبدأ
+       الحقلُ فارغاً بتلميحٍ يدلّه، ومن سجّل باسمه الحقيقي يجده كما كتبه. */
+    const PLACEHOLDER_NAMES = ['معلم زائر', 'معلّم زائر', 'معلم', 'معلّم'];
+    function realName(n) {
+        const v = String(n || '').trim();
+        return PLACEHOLDER_NAMES.indexOf(v) >= 0 ? '' : v;
+    }
+
     async function render(container) {
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         const S = global.Subjects;
         const pick = {
-            name:     teacher.name || '',
+            name:     realName(teacher.name),
             subjects: S ? S.ofTeacher(teacher).slice() : [],
             phone:    teacher.phone || '',
             school:   teacher.school_name || '',
@@ -64,10 +73,7 @@
             term:     (await global.TeacherDB.Settings.get('academic_term')) || 1
         };
         let step = 0;          // 0 = عنك · 1 = مدرستك
-        let other = false;     // حقل «مادة أخرى» مفتوح؟
         let saving = false;
-
-        const first = String(teacher.name || '').trim().split(/\s+/)[0] || 'معلّم';
 
         /* ------------------------------------------------------------------
            الرسم
@@ -84,36 +90,21 @@
         }
 
         function stepYou() {
-            /* مواد المعلّم أولاً ثم بقيّة القائمة — فما اختاره سابقاً لا
-               يضيع بين الجديد، وما كتبه بيده يبقى ظاهراً مختاراً. */
-            const list = S ? S.merge(pick.subjects, S.ALL) : pick.subjects;
             return `
                 <div class="setup-hero">
-                    <span class="t">🎓 أهلاً بك يا أستاذ ${escapeHtml(first)}</span>
+                    <span class="t">🎓 أهلاً بك في تطبيق إنجاز المعلم</span>
                     <span class="h">أخبرنا عنك أولاً — دقيقة واحدة ولن نسألك مرة أخرى.</span>
                 </div>
                 ${head()}
 
                 <div class="fgrp-t">اسمك *</div>
                 <input class="setup-fld" id="su-name" type="text" maxlength="60"
-                       placeholder="الاسم الكامل" value="${escapeAttr(pick.name)}">
+                       placeholder="اكتب اسمك" value="${escapeAttr(pick.name)}">
 
                 <div class="fgrp-t">المواد التي تدرّسها *
                     <span class="fgrp-h">تظهر لك أول القائمة عند إضافة فصل</span>
                 </div>
-                <div class="fchips wrap" id="su-subs">
-                    ${list.map((s) => `
-                        <button type="button" class="fchip ${pick.subjects.includes(s) ? 'on' : ''}"
-                                data-sub="${escapeAttr(s)}">${escapeHtml(s)}</button>
-                    `).join('')}
-                    <button type="button" class="fchip ${other ? 'on' : ''}" data-sub-other>✎ أخرى</button>
-                </div>
-                ${other ? `
-                    <div class="setup-other">
-                        <input class="setup-fld" id="su-sub-other" type="text" maxlength="40"
-                               placeholder="اكتب اسم المادة">
-                        <button type="button" class="setup-other-go" id="su-sub-add">أضف</button>
-                    </div>` : ''}
+                <div id="su-subs"></div>
 
                 <div class="fgrp-t">رقم الجوال <span class="fgrp-h">اختياري</span></div>
                 <input class="setup-fld" id="su-phone" type="tel" maxlength="20"
@@ -180,36 +171,25 @@
             }
         }
 
-        function addTyped() {
-            const el = container.querySelector('#su-sub-other');
-            const v = (el ? el.value : '').trim();
-            if (!v) return global.TeacherApp.toast('اكتب اسم المادة.', 'warning', 2500);
-            if (!pick.subjects.includes(v)) pick.subjects.push(v);
-            harvest(); other = false; paint();
-        }
-
         function bind() {
             const q = (s) => container.querySelector(s);
 
-            q('#su-subs')?.addEventListener('click', (e) => {
-                if (e.target.closest('[data-sub-other]')) { harvest(); other = !other; return paint(); }
-                const b = e.target.closest('[data-sub]');
-                if (!b) return;
-                const v = b.dataset.sub;
-                const i = pick.subjects.indexOf(v);
-                if (i >= 0) pick.subjects.splice(i, 1); else pick.subjects.push(v);
-                b.classList.toggle('on', i < 0);
-            });
-            q('#su-sub-add')?.addEventListener('click', addTyped);
-            q('#su-sub-other')?.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); addTyped(); }
-            });
+            /* المكوّن يملك عرض المواد وحالتَها، ويردّ إلينا النتيجة — فلا
+               تُعاد الشاشةُ كلُّها عند كل اختيار. */
+            const subsEl = q('#su-subs');
+            if (subsEl) {
+                global.SubjectPicker.mount(subsEl, {
+                    chosen: pick.subjects,
+                    all: S ? S.merge(pick.subjects, S.ALL) : pick.subjects,
+                    onChange: (arr) => { pick.subjects = arr; }
+                });
+            }
 
             q('#su-next')?.addEventListener('click', () => {
                 harvest();
                 if (!pick.name.trim())    return global.TeacherApp.toast('اكتب اسمك.', 'warning', 3000);
                 if (!pick.subjects.length) return global.TeacherApp.toast('اختر مادةً واحدة على الأقل.', 'warning', 3000);
-                step = 1; other = false; paint();
+                step = 1; paint();
                 global.scrollTo(0, 0);
             });
 

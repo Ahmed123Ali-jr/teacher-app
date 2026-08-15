@@ -5635,3 +5635,65 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 
 /* شرحُ الرفع يختفي بعد القراءة — لا معنى له وقد قُرئ الجدول. */
 .imp-has-result .imp-file-hint { display: none; }
+
+/* ==========================================================================
+   منتقي المواد — قائمةٌ منسدلة وصفُّ مختار (js/components/subject-picker.js)
+   ==========================================================================
+   حلَّ محلَّ عشرين مربّعاً مبعثرة. والمنسدلةُ بمظهر الحقل نفسه فتُقرأ حقلاً،
+   والمختارُ تحتها حبّاتٌ قليلةٌ تُحذف بضغطة.
+   ========================================================================== */
+.subp { margin-bottom: var(--space-4); }
+
+.subp-select {
+    width: 100%; min-height: 48px;
+    padding: 0 14px; border-radius: 12px;
+    font-family: inherit; font-size: 14px; font-weight: var(--fw-bold);
+    color: var(--ink-primary); background: var(--surface);
+    border: 1.5px solid var(--border); outline: none;
+    /* سهمُ النظام يختلف بين آيفون وأندرويد والحاسوب، فيُطفأ ويُرسم واحدٌ
+       ثابت — ومكانُه بدايةُ السطر (يسارُه في العربية). */
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%236B6B68' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 14px center;
+    padding-inline-start: 36px;
+}
+.subp-select:focus { border-color: #C9A961; }
+
+.subp-other { display: flex; gap: 7px; margin-top: 9px; }
+.subp-other-fld {
+    flex: 1; min-height: 46px; padding: 0 14px; border-radius: 12px;
+    font-family: inherit; font-size: 14px; font-weight: var(--fw-bold);
+    color: var(--ink-primary); background: var(--surface);
+    border: 1.5px solid var(--border); outline: none;
+}
+.subp-other-fld:focus { border-color: #C9A961; }
+.subp-other-fld::placeholder { color: #C0BAA8; font-weight: var(--fw-medium); }
+.subp-other-go {
+    min-height: 46px; padding: 0 18px; border-radius: 12px; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: var(--fw-bold);
+    color: #fff; border: 1.5px solid var(--primary);
+    background: linear-gradient(180deg, #24498A, var(--primary));
+}
+
+.subp-chosen { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.subp-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 11px; padding: 7px 12px;
+    font-size: 12.5px; font-weight: var(--fw-bold); color: #fff;
+    background: linear-gradient(180deg, #24498A, var(--primary));
+    border: 1.5px solid var(--primary);
+}
+.subp-x {
+    border: 0; background: transparent; cursor: pointer; padding: 0;
+    font-family: inherit; font-size: 16px; line-height: 1; color: #fff; opacity: .75;
+}
+.subp-x:hover, .subp-x:active { opacity: 1; }
+
+/* صفُّ المنتقي في الملف التعريفي: عنوانٌ فوق وحقلٌ تحته — لا صفُّ ضغط. */
+.frow-picker {
+    display: block; width: 100%; text-align: start;
+    padding: 12px 13px; cursor: default;
+}
+.frow-picker .lb { display: block; margin-bottom: 8px; }
+.frow-picker .subp { margin-bottom: 0; }

@@ -26,10 +26,10 @@
                 { key: 'specialization',   label: 'التخصص',       type: 'text',   ph: 'رياضيات' },
                 { key: 'qualification',    label: 'المؤهل',       type: 'text',   ph: 'بكالوريوس' },
                 { key: 'experience_years', label: 'سنوات الخبرة', type: 'number', ph: '٠' },
-                /* المواد يكتبها المعلّم بنفسه — قائمة الاختيار كانت تطول الشاشة
-                   ولا تسع ما يدرّسه فعلاً. تُفصل بفاصلة وتُخزَّن مصفوفةً كما كانت. */
-                { key: 'subjects', label: 'المواد', type: 'text', list: true, required: true,
-                  ph: 'الرياضيات، العلوم' }
+                /* المواد ليست حقلَ نصّ: كانت تُكتب بفواصل هنا وتُختار
+                   بمربّعاتٍ في التهيئة — أسلوبان لبيانٍ واحد. فصارت المنتقي
+                   نفسه في الشاشتين (`components/subject-picker.js`). */
+                { key: 'subjects', label: 'المواد', picker: true, required: true }
             ]
         }
     ];
@@ -161,7 +161,16 @@
     /* صف يعرض قيمته، وضغطه يحوّله إلى حقل كتابة — والنقطة الذهبية تعني حقلاً
        مطلوباً ما زال فارغاً. */
     function fieldRowHtml(f, teacher) {
-        const raw   = f.list ? subjectsOf(teacher).join('، ') : teacher[f.key];
+        /* المنتقي حقلٌ مفتوحٌ دائماً لا صفٌّ يُضغط: الاختيار من قائمةٍ
+           لا يحتمل حالتَي «عرض» و«تحرير». */
+        if (f.picker) {
+            return `
+                <div class="frow frow-picker">
+                    <span class="lb">${f.label}</span>
+                    <div class="subp-host" id="pf-subjects"></div>
+                </div>`;
+        }
+        const raw   = teacher[f.key];
         const value = (raw === null || raw === undefined || raw === '') ? '' : String(raw);
         return `
             <button type="button" class="frow" data-field="${f.key}" data-type="${f.type}"
@@ -174,6 +183,21 @@
     }
 
     /* تحويل الصف إلى حقل كتابة والعكس. */
+    /* مرجعُ المنتقي: تُقرأ منه القيمةُ عند الحفظ. يُعاد تركيبه بعد كل رسم. */
+    let subjectPicker = null;
+
+    function mountSubjectPicker(scope, teacher) {
+        const host = scope.querySelector('#pf-subjects');
+        if (!host || !global.SubjectPicker) return;
+        const S = global.Subjects;
+        const chosen = subjectsOf(teacher);
+        subjectPicker = global.SubjectPicker.mount(host, {
+            chosen: chosen,
+            all: S ? S.merge(chosen, S.ALL) : chosen,
+            onChange: () => {}
+        });
+    }
+
     function bindFieldRows(scope, onEnter) {
         scope.querySelectorAll('.frow[data-field]').forEach((row) => {
             row.addEventListener('click', () => {
@@ -218,6 +242,7 @@
 
     function bind(container, teacher) {
         bindFieldRows(container, () => saveAll(container, teacher));
+        mountSubjectPicker(container, teacher);
 
         // Photo upload — saves immediately (binary action, doesn't fit form-flow)
         const photoInput = container.querySelector('#photo-input');
@@ -268,18 +293,17 @@
         const draft = {};
 
         for (const field of TEXT_FIELDS) {
-            const raw = readRow(container, field.key);
-            let v;
-
-            if (field.list) {
-                v = raw.split(/[,،]/).map((s) => s.trim()).filter(Boolean);
-                v = Array.from(new Set(v));
+            if (field.picker) {
+                const v = subjectPicker ? subjectPicker.value() : subjectsOf(teacher);
                 if (field.required && !v.length) {
                     return global.TeacherApp.toast(field.label + ' مطلوبة.', 'warning');
                 }
                 draft[field.key] = v;
                 continue;
             }
+
+            const raw = readRow(container, field.key);
+            let v;
 
             if (field.type === 'number') {
                 if (raw === '') { v = null; }
