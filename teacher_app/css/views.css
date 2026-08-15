@@ -5740,11 +5740,8 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     box-shadow: inset 0 1.5px 0 var(--sheen), 0 3px 10px rgba(16, 24, 40, .07);
     font-family: inherit; text-decoration: none;
 }
-/* الأولُ مميّزٌ بحدّه لا بلونه — فالتمييزُ ترتيبٌ لا إعلان. */
-.start-card.main {
-    border-color: var(--primary);
-    box-shadow: inset 0 1.5px 0 var(--sheen), 0 4px 14px rgba(15, 44, 92, .16);
-}
+/* حدٌّ واحدٌ للبطاقتين: الترتيبُ وحده يقول أيُّهما أوّلاً، فلا حاجة إلى
+   حدٍّ كحليٍّ يقولها مرّةً ثانية. */
 .start-card:active { transform: scale(.995); }
 
 .start-card .ic {
