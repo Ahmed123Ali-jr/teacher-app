@@ -145,6 +145,21 @@
 
     async function render(route, params) {
         if (global.Modal) global.Modal.close();
+
+        /* شاشاتٌ تُنزَّل عند أول طلبٍ لها لا عند فتح التطبيق. والوعدُ يُنتظر
+           هنا وحده: بعده تُنادى الشاشةُ كما كانت تماماً. */
+        if (global.ViewLoader) {
+            try {
+                await global.ViewLoader.ensure(route.view);
+            } catch (e) {
+                console.error('[Router]', e.message);
+                if (global.TeacherApp) {
+                    global.TeacherApp.toast('تعذّر تحميل الشاشة — تحقّق من الإنترنت.', 'error', 5000);
+                }
+                return;
+            }
+        }
+
         setChrome(!!route.chrome);
         if (route.chrome) paintChrome(route, params);
         document.querySelectorAll('.view').forEach((v) => { v.hidden = true; });
@@ -248,7 +263,6 @@
                 el.innerHTML = `
                     <div class="container">
                         <div class="section-header classes-header" style="margin-top: var(--space-6);">
-                            <h2 class="section-title">المبادرات</h2>
                             <a href="#/shortcuts" class="btn-add-gray">← إنجاز</a>
                         </div>
                         <div id="ini-panel"></div>

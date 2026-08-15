@@ -295,15 +295,19 @@
             teacher.region      = region;
             teacher.updated_at  = new Date().toISOString();
 
+            /* ── يُكتب محلّياً، ثم يمضي، ثم يُدفع إلى الخادم ──
+               خمسُ كتاباتٍ في الخادم — وإن كانت متوازيةً — رحلةٌ كاملة إلى
+               فرانكفورت يقفها المعلّم على آخر زرٍّ في التهيئة. والمحلّيُّ
+               يكفي ليعمل التطبيق: الموجّه يقرأ `onboarded` من المخبأ، وكذلك
+               الشاشات. فيُكتب المحلّيُّ أولاً ويُفتح التطبيق، والدفعُ يجري
+               خلفه — فإن فشل أُعيد إلى هنا ولم يضع شيء. */
             try {
-                /* كلها معاً لا واحدةً تلو الأخرى: خمس رحلات متتابعة تعني
-                   ثانيةً ونصفاً ينتظرها المعلم على أول شاشة يراها. */
                 await Promise.all([
-                    global.TeacherDB.put('teachers', teacher),
-                    global.TeacherDB.Settings.set('education_dept', dept),
-                    global.TeacherDB.Settings.set('school_gender',  pick.gender),
-                    global.TeacherDB.Settings.set('academic_term',  pick.term),
-                    global.TeacherDB.Settings.set('onboarded',      true)
+                    global.TeacherDB.putLocal('teachers', teacher),
+                    global.TeacherDB.Settings.setLocal('education_dept', dept),
+                    global.TeacherDB.Settings.setLocal('school_gender',  pick.gender),
+                    global.TeacherDB.Settings.setLocal('academic_term',  pick.term),
+                    global.TeacherDB.Settings.setLocal('onboarded',      true)
                 ]);
             } catch (err) {
                 saving = false;
@@ -311,12 +315,27 @@
                 return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
             }
 
-            if (global.Words) await global.Words.reload();
+            if (global.TeacherDB.Term && global.TeacherDB.Term.forget) global.TeacherDB.Term.forget();
+            if (global.Words) global.Words.reload().catch(() => {});
             if (global.SettingsView && global.SettingsView.refreshPrintCache) {
                 global.SettingsView.refreshPrintCache().catch(() => {});
             }
-            global.TeacherApp.toast('تمت التهيئة ✅', 'success', 1400);
             global.location.hash = '#/dashboard';
+
+            Promise.all([
+                global.TeacherDB.put('teachers', teacher),
+                global.TeacherDB.Settings.set('education_dept', dept),
+                global.TeacherDB.Settings.set('school_gender',  pick.gender),
+                global.TeacherDB.Settings.set('academic_term',  pick.term),
+                global.TeacherDB.Settings.set('onboarded',      true)
+            ]).catch((err) => {
+                /* لم يصل الخادمَ: تُمحى العلامةُ المحلّية فلا يظنّ التطبيقُ
+                   نفسَه مهيّأً ببياناتٍ لم تُحفظ، ويُعاد المعلّم ليضغط ثانية. */
+                global.TeacherDB.Settings.setLocal('onboarded', false).catch(() => {});
+                global.TeacherApp.toast('تعذّر حفظ التهيئة: ' + (err && err.message ? err.message : 'تحقّق من الإنترنت'),
+                                        'error', 7000);
+                global.location.hash = '#/setup';
+            });
         }
 
         paint();

@@ -631,6 +631,21 @@
         return rows;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       كتابةٌ محلّيةٌ فورية
+
+       `put` يكتب في الخادم أولاً ثم في المخبأ — وهو الصواب: ما لم يصل
+       الخادمَ لم يُحفظ. لكنّ شاشةً واحدةً لا تحتمل هذا الانتظار: التهيئة.
+       المعلّم يضغط «ابدأ» فينتظر خمسَ كتاباتٍ قبل أن يرى تطبيقه.
+
+       فتُكتب محلّياً أولاً — فيمضي هو — ثم تُدفع إلى الخادم خلفه. وإن
+       فشلت أُعيد وأُخبِر. ولا تُستعمل هذه إلا حيث يُحرَس الفشلُ صراحةً.
+       ══════════════════════════════════════════════════════════════════ */
+    async function putLocal(storeName, value) {
+        if (!TABLE[storeName]) throw new Error('Unknown store: ' + storeName);
+        return Cache.put(storeName, value);
+    }
+
     /** كلّ الفصول بلا تصفية — لشاشة التبديل وحدها، فهي تعرض ما ليس فيه. */
     async function allClasses() {
         await awaitStore('classes');
@@ -717,6 +732,8 @@
             return row ? row.value : undefined;
         },
         async set(key, value) { return put('settings', { key, value }); },
+        /** محلّيٌّ فوريّ — للتهيئة وحدها، ويُتبع بكتابةٍ حقيقيةٍ في الخلفية. */
+        async setLocal(key, value) { return Cache.put('settings', { key, value }); },
         async unset(key) { return remove('settings', key); }
     };
 
@@ -776,7 +793,7 @@
 
     global.TeacherDB = {
         open,
-        add, put, get, getAll, getAllByIndex, remove, clear, count,
+        add, put, putLocal, get, getAll, getAllByIndex, remove, clear, count,
         bulkPut, bulkRemove,
         destroy, exportAll, importAll,
         Settings,
