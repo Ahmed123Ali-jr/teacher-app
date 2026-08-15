@@ -5702,6 +5702,6 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    والزرُّ نفسه المستعمل في التطبيق (`.hdr-back`)، وموضعُه موضعُه: بداية
    السطر عند الحافّة اليسرى في العربية. */
 .setup-topbar {
-    display: flex; justify-content: flex-end;
+    display: flex; justify-content: flex-start;
     margin: calc(var(--space-3) * -1) calc(var(--space-2) * -1) var(--space-2);
 }

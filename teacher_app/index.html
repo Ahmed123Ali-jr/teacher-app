@@ -21,9 +21,9 @@
     <link rel="stylesheet" href="css/fonts.css?v=2" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="css/fonts.css?v=2"></noscript>
 
-    <link rel="stylesheet" href="css/main.css?v=D21">
+    <link rel="stylesheet" href="css/main.css?v=D23">
     <link rel="stylesheet" href="css/components.css?v=6">
-    <link rel="stylesheet" href="css/views.css?v=D166">
+    <link rel="stylesheet" href="css/views.css?v=D167">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=5">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -70,10 +70,15 @@
         <!-- Header is hidden on the auth view -->
         <header class="app-header" id="app-header" hidden>
             <div class="container header-inner">
-                <!-- عنوانُ الشاشة لا اسمُ التطبيق: المعلّم يعرف أيَّ تطبيقٍ
-                     فتح، ولا يعرف أين هو إن لم يُكتب له. يملؤه `router.js`
-                     من جدول المسارات، وتُدقّقه الشاشةُ ببياناتها. -->
-                <h1 class="hdr-title" id="hdr-title">الرئيسية</h1>
+                <!-- الرجوعُ ثم العنوان، وكلاهما في بداية السطر — أي يمينه في
+                     العربية. والرجوعُ يسبق العنوان لأن اليد تبلغه أولاً.
+                     العنوانُ يملؤه `router.js` من جدول المسارات، وتُدقّقه
+                     الشاشةُ ببياناتها. -->
+                <div class="hdr-start">
+                    <button type="button" class="hdr-back" id="hdr-back"
+                            aria-label="رجوع" hidden>→</button>
+                    <h1 class="hdr-title" id="hdr-title">الرئيسية</h1>
+                </div>
 
                 <!-- Desktop actions (≥ 768px) -->
                 <div class="header-actions">
@@ -84,11 +89,6 @@
                         تسجيل الخروج
                     </button>
                 </div>
-
-                <!-- الرجوع: يظهر في الشاشات الداخلية، والقائمةُ في الجذور
-                     الخمسة — لا يجتمعان، فالمكان واحد. -->
-                <button type="button" class="hdr-back" id="hdr-back"
-                        aria-label="رجوع" hidden>→</button>
 
                 <!-- Mobile hamburger (< 768px) -->
                 <button type="button" class="hamburger-btn" id="btn-open-drawer"
