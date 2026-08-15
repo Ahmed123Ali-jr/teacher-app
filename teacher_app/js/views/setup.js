@@ -59,8 +59,17 @@
     }
 
     async function render(container) {
-        const teacher = await global.Auth.currentTeacher();
-        if (!teacher) { global.location.hash = '#/login'; return; }
+        /* قد تُفتح والتسجيلُ لم يتمّ بعد (زائرٌ ضغط للتوّ): تُرسم بحقولٍ
+           فارغة — وهي حالُ الحساب الجديد على أي حال — ويُنتظر الحساب عند
+           الحفظ. */
+        let teacher = await global.Auth.currentTeacher();
+        if (!teacher) {
+            if (!(global.Auth.guestPending && global.Auth.guestPending())) {
+                global.location.hash = '#/login';
+                return;
+            }
+            teacher = { name: '', subjects: [], phone: '', school_name: '' };
+        }
 
         const S = global.Subjects;
         const pick = {
@@ -264,6 +273,19 @@
             saving = true;
             const btn = container.querySelector('#su-go');
             if (btn) { btn.disabled = true; btn.textContent = '… جارٍ الحفظ'; }
+
+            /* إن كان التسجيلُ ما يزال جارياً فهذا موضعُ انتظاره — وقد تمّ
+               غالباً وهو يكتب اسمه ومدرسته. وإن فشل فلا حساب يُحفظ فيه. */
+            if (global.Auth.whenGuestReady) await global.Auth.whenGuestReady();
+            const me = await global.Auth.currentTeacher();
+            if (!me) {
+                saving = false;
+                if (btn) { btn.disabled = false; btn.textContent = 'ابدأ ←'; }
+                global.TeacherApp.toast('تعذّر إنشاء الحساب — تحقّق من الإنترنت.', 'error', 6000);
+                global.location.hash = '#/login';
+                return;
+            }
+            teacher = Object.assign(me, teacher, { id: me.id });
 
             teacher.name        = pick.name.trim();
             teacher.phone       = pick.phone.trim();

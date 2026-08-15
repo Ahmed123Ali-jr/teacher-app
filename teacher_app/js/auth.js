@@ -251,6 +251,33 @@
         return _teacherCache;
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       الزائر بلا انتظار
+
+       التسجيلُ ذهابٌ إلى فرانكفورت — قرابةَ ١٥٠ ملّي ثانية في أحسن حال،
+       ومئاتٌ في الشبكات الضعيفة. ولا سبيل إلى إنقاصه؛ السبيلُ ألّا يحبس
+       الشاشة: تُفتح شاشةُ التهيئة فوراً — وهي لا تحتاج حساباً لتُرسم،
+       حقولُها فارغةٌ لحسابٍ جديد على أي حال — والتسجيلُ يمضي خلفها.
+
+       والحسابُ يُنتظر عند **الحفظ** وحده (`whenGuestReady`)، وقد تمّ
+       قبله بزمنٍ طويل: المعلّم يكتب اسمه ومدرسته أولاً.
+       ══════════════════════════════════════════════════════════════════ */
+    let _guestPending = null;
+
+    function beginGuest() {
+        if (_guestPending) return _guestPending;
+        _guestPending = guestLogin().finally(() => { _guestPending = null; });
+        return _guestPending;
+    }
+
+    /** هل تسجيلُ زائرٍ جارٍ الآن؟ — يقرؤها الموجّه فلا يطرد شاشةً تنتظر. */
+    function guestPending() { return !!_guestPending; }
+
+    /** ينتظر تمامَ تسجيل الزائر إن كان جارياً — للحفظ وما يحتاج حساباً. */
+    async function whenGuestReady() {
+        if (_guestPending) { try { await _guestPending; } catch (e) { /* يُبلَّغ في مكانه */ } }
+    }
+
     async function guestLogin() {
         const { data, error } = await sb.auth.signInAnonymously();
         if (error) {
@@ -346,6 +373,7 @@
 
     global.Auth = {
         register, login, logout, logoutLocal, deleteAccount, currentTeacher, guestLogin,
+        beginGuest, guestPending, whenGuestReady,
         changePassword, updateProfile, onAuthChange
     };
 })(window);

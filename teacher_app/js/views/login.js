@@ -113,17 +113,14 @@
         /* الزرّ يُعطَّل حتى يعود الخادم — بلا كلمةٍ تُكتب ولا رمزٍ يظهر.
            التعطيلُ يمنع ضغطتين تفتحان حسابين، والنصُّ يبقى كما هو فلا
            يشعر المعلّم أن شيئاً «يُحمَّل». */
-        async function onGuest(e) {
-            const btn = e && e.currentTarget;
-            if (btn) btn.disabled = true;
-            try {
-                await global.Auth.guestLogin();
-                global.location.hash = '#/dashboard';
-            } catch (err) {
-                global.TeacherApp.toast(err.message, 'error');
-            } finally {
-                if (btn) btn.disabled = false;
-            }
+        /* لا انتظارَ بين الضغطة والشاشة: التسجيلُ يبدأ وتُفتح التهيئةُ في
+           النَّفَس نفسه. وإن فشل التسجيل رجع المعلّم إلى هنا مع سبب. */
+        function onGuest() {
+            global.Auth.beginGuest().catch((err) => {
+                global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
+                global.location.hash = '#/login';
+            });
+            global.location.hash = '#/setup';
         }
 
         async function onLogin(e) {

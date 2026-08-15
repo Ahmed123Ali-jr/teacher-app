@@ -80,6 +80,12 @@
 
         if (hit.route.auth) {
             const me = await global.Auth.currentTeacher();
+            /* تسجيلُ الزائر جارٍ: شاشةُ التهيئة تُرسم الآن ولا تنتظره —
+               حقولُها فارغةٌ لحسابٍ جديد، والحسابُ يُنتظر عند الحفظ. */
+            if (!me && path === '/setup' && global.Auth.guestPending && global.Auth.guestPending()) {
+                render(hit.route, hit.params);
+                return;
+            }
             if (!me) { global.location.hash = '#/login'; return; }
             /* التهيئة إلزامية: أي شاشة قبل إكمالها تُحوّل إليها — وإلا رأى
                المعلم تطبيقاً لا يعرف مدرسته ولا نوعها. */
