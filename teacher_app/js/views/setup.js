@@ -79,6 +79,17 @@
            الرسم
            ------------------------------------------------------------------ */
 
+        /* زرُّ الرجوع نفسه المستعمل في شريط التطبيق (`.hdr-back`) — شكلٌ
+           واحدٌ للرجوع في كل مكان. وشاشةُ التهيئة بلا شريطٍ علويّ (لا قائمةَ
+           ولا تنقّلَ قبل إكمالها)، فيُوضع في صفٍّ خاصٍّ أعلاها. */
+        function backBar() {
+            return `
+                <div class="setup-topbar">
+                    <button type="button" class="hdr-back" id="su-top-back"
+                            aria-label="${step === 0 ? 'رجوع إلى صفحة الدخول' : 'رجوع إلى الخطوة السابقة'}">→</button>
+                </div>`;
+        }
+
         function head() {
             return `
                 <div class="setup-steps">
@@ -91,6 +102,7 @@
 
         function stepYou() {
             return `
+                ${backBar()}
                 <div class="setup-hero">
                     <span class="t">أهلاً بك</span>
                     <span class="h">أخبرنا عنك أولاً — دقيقة واحدة ولن نسألك مرة أخرى.</span>
@@ -115,6 +127,7 @@
 
         function stepSchool() {
             return `
+                ${backBar()}
                 <div class="setup-hero">
                     <span class="t">🏫 والآن مدرستك</span>
                     <span class="h">تقدر تعدّلها كلها لاحقاً من الإعدادات.</span>
@@ -147,8 +160,7 @@
                     `).join('')}
                 </div>
 
-                <button type="button" class="fsave" id="su-go">ابدأ ←</button>
-                <button type="button" class="setup-back" id="su-back">→ رجوع</button>`;
+                <button type="button" class="fsave" id="su-go">ابدأ ←</button>`;
         }
 
         function paint() {
@@ -193,8 +205,18 @@
                 global.scrollTo(0, 0);
             });
 
-            q('#su-back')?.addEventListener('click', () => {
-                harvest(); step = 0; paint(); global.scrollTo(0, 0);
+            /* الرجوع: من الخطوة الثانية إلى الأولى، ومن الأولى إلى صفحة
+               الدخول. والخروجُ من الحساب لازمٌ لا زائد: الموجّه يُحوّل كلَّ
+               داخلٍ لم يُكمل تهيئته إلى هذه الشاشة — فالعودةُ إلى الدخول
+               بجلسةٍ قائمة تُعيده إليها في الحال. ولا بيانات تضيع: لم يُحفظ
+               بعدُ شيء. */
+            q('#su-top-back')?.addEventListener('click', async () => {
+                if (step === 1) {
+                    harvest(); step = 0; paint(); global.scrollTo(0, 0);
+                    return;
+                }
+                try { await global.Auth.logout(); } catch (e) { /* لا يمنع الخروج */ }
+                global.location.hash = '#/login';
             });
 
             const chips = (wrap, attr, onPick) => {

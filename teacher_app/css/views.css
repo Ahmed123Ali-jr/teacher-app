@@ -5697,3 +5697,11 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .frow-picker .lb { display: block; margin-bottom: 8px; }
 .frow-picker .subp { margin-bottom: 0; }
+
+/* صفُّ الرجوع في شاشة التهيئة — الشاشةُ بلا شريطٍ علويّ، فيقوم مقامه.
+   والزرُّ نفسه المستعمل في التطبيق (`.hdr-back`)، وموضعُه موضعُه: بداية
+   السطر عند الحافّة اليسرى في العربية. */
+.setup-topbar {
+    display: flex; justify-content: flex-end;
+    margin: calc(var(--space-3) * -1) calc(var(--space-2) * -1) var(--space-2);
+}
