@@ -318,52 +318,89 @@
     /* ---------- hydration ---------- */
 
     let _hydratePromise = null;
+    const _storeHydration = {};   // اسم المخزن → وعدُ ترطيبه (أو null)
 
-    /** Pull all of the current teacher's rows from Supabase into the cache.
-     *  Idempotent: subsequent calls during the same login return the same Promise. */
-    async function hydrate() {
+    /* ══════════════════════════════════════════════════════════════════
+       الترطيب على طبقتين — لماذا
+
+       كان الدخولُ ينتظر **ثمانية عشر طلباً** إلى الخادم قبل أن يرى المعلّم
+       شيئاً: مخزناً لكل جدول. وقِيست على شبكةٍ سريعة فبلغت ١٧٨٨ ملّي ثانية،
+       وستةَ عشرَ منها جداولُ فارغة — اختباراتٌ وأوراقٌ وكتبٌ ومبادراتٌ
+       لحسابٍ جديد. وعلى شبكة الجوال تصير ثوانيَ يقف فيها أمام شاشةٍ بيضاء.
+
+       والشاشةُ الأولى لا تقرأ منها إلا أربعة: المعلّم، والإعدادات، والفصول،
+       والجدول، والتذكيرات. فتُنتظر هذه وحدها، ويمضي الباقي في الخلفية.
+
+       ── وكيف لا تُعرض شاشةٌ فارغة ──
+       كلُّ قراءةٍ من مخزنٍ تنتظر ترطيبَ **مخزنها هو** إن كان جارياً
+       (`awaitStore`). فمن فتح «الاختبارات» قبل أن يصل جدولُها انتظرها
+       وحدها — لا الثمانيةَ عشر. وإن كانت قد وصلت فلا انتظار أصلاً.
+       ══════════════════════════════════════════════════════════════════ */
+    const FIRST_PAINT_STORES = ['teachers', 'settings', 'classes', 'schedule', 'reminders'];
+
+    async function hydrateStore(storeName, uid) {
+        const table = TABLE[storeName];
+        let rows;
+        try {
+            if (storeName === 'teachers') {
+                const { data } = await sb.from(table).select('*').eq('id', uid);
+                rows = (data || []).map(teachersIn);
+            } else if (storeName === 'portfolio') {
+                const { data } = await sb.from(table).select('*').eq('teacher_id', uid);
+                rows = data || [];
+            } else if (storeName === 'settings') {
+                const { data } = await sb.from(table).select('key,value').eq('teacher_id', uid);
+                rows = data || [];
+            } else {
+                const { data } = await sb.from(table).select('*');
+                rows = data || [];
+            }
+        } catch (e) {
+            console.warn('[TeacherDB] hydrate ' + storeName + ' failed:', e.message);
+            return;
+        }
+        await Cache.clearStore(storeName);
+        if (rows.length) await Cache.putMany(storeName, rows);
+    }
+
+    /** Pull the current teacher's rows from Supabase into the cache.
+     *  Resolves once the first screen's stores are in; the rest keep loading. */
+    function hydrate() {
         if (_hydratePromise) return _hydratePromise;
-        _hydratePromise = (async () => {
-            const uid = await currentUid();
-            if (!uid) return;
-            const t0 = performance.now();
+        const t0 = performance.now();
 
-            // Run fetches in parallel for speed.
-            const fetches = STORE_NAMES.map(async (storeName) => {
-                const table = TABLE[storeName];
-                let rows;
-                try {
-                    if (storeName === 'teachers') {
-                        const { data } = await sb.from(table).select('*').eq('id', uid);
-                        rows = (data || []).map(teachersIn);
-                    } else if (storeName === 'portfolio') {
-                        const { data } = await sb.from(table).select('*').eq('teacher_id', uid);
-                        rows = data || [];
-                    } else if (storeName === 'settings') {
-                        const { data } = await sb.from(table).select('key,value').eq('teacher_id', uid);
-                        rows = data || [];
-                    } else {
-                        const { data } = await sb.from(table).select('*');
-                        rows = data || [];
-                    }
-                } catch (e) {
-                    console.warn('[TeacherDB] hydrate ' + storeName + ' failed:', e.message);
-                    return;
-                }
-                await Cache.clearStore(storeName);
-                if (rows.length) await Cache.putMany(storeName, rows);
-            });
+        /* الوعودُ تُحجز **قبل أيّ انتظار**: لو حُجزت بعد `await currentUid()`
+           لوجدت شاشةٌ سبقتنا مخزنَها بلا وعدٍ فقرأته فارغاً وظنّته فارغاً.
+           فتُبنى كلُّها الآن، وكلٌّ منها ينتظر المعرّف بنفسه. */
+        const uidP = currentUid();
+        const start = (s) => {
+            const p = uidP.then((uid) => (uid ? hydrateStore(s, uid) : null));
+            _storeHydration[s] = p;
+            p.finally(() => { if (_storeHydration[s] === p) _storeHydration[s] = null; });
+            return p;
+        };
 
-            await Promise.all(fetches);
-            console.info('[TeacherDB] hydrated in ' + Math.round(performance.now() - t0) + 'ms');
-        })();
+        const first = FIRST_PAINT_STORES.filter((s) => TABLE[s]).map(start);
+        STORE_NAMES.filter((s) => FIRST_PAINT_STORES.indexOf(s) < 0).forEach(start);
+
+        _hydratePromise = Promise.all(first).then(() => {
+            console.info('[TeacherDB] first paint in ' + Math.round(performance.now() - t0)
+                       + 'ms (' + first.length + ' من ' + STORE_NAMES.length + ')');
+        });
         return _hydratePromise;
+    }
+
+    /** ينتظر ترطيبَ مخزنٍ واحدٍ إن كان جارياً — وإلا يعود فوراً. */
+    async function awaitStore(storeName) {
+        const p = _storeHydration[storeName];
+        if (p) { try { await p; } catch (e) { /* الفشل لا يحبس القراءة */ } }
     }
 
     function resetHydration() {
         _hydratePromise = null;
         _cachedUid = null;
         _term = null;
+        for (const k in _storeHydration) _storeHydration[k] = null;
     }
 
     /* ---------- الفصل الدراسي ----------
@@ -545,6 +582,7 @@
 
     async function get(storeName, key) {
         if (!TABLE[storeName]) throw new Error('Unknown store: ' + storeName);
+        await awaitStore(storeName);
 
         if (storeName === 'portfolio') {
             const cached = await Cache.get('portfolio', key);
@@ -565,6 +603,7 @@
 
     async function getAll(storeName) {
         if (!TABLE[storeName]) throw new Error('Unknown store: ' + storeName);
+        await awaitStore(storeName);
 
         const rows = await Cache.getAll(storeName);
         if (storeName === 'portfolio') return rows.map(portfolioIn);
@@ -574,6 +613,7 @@
 
     async function getAllByIndex(storeName, indexName, value) {
         if (!TABLE[storeName]) throw new Error('Unknown store: ' + storeName);
+        await awaitStore(storeName);
 
         if (storeName === 'teachers' && indexName === 'email') return [];
 
@@ -593,6 +633,7 @@
 
     /** كلّ الفصول بلا تصفية — لشاشة التبديل وحدها، فهي تعرض ما ليس فيه. */
     async function allClasses() {
+        await awaitStore('classes');
         return Cache.getAll('classes');
     }
 
