@@ -736,7 +736,7 @@
                 const meta = status ? ATTENDANCE[status] : null;
                 const card = btn.closest('.st-card');
                 if (card) {
-                    card.style.setProperty('--stripe', meta ? meta.color : '#D8DEE9');
+                    card.style.setProperty('--stripe', meta ? meta.color : 'var(--stripe-none)');
                     const sw = card.querySelector('.stc-status');
                     if (sw) {
                         sw.textContent = meta ? meta.label : 'بلا تحضير';
@@ -986,7 +986,7 @@
         const cards = students.map((s, i) => {
             const att    = attToday[i];
             const meta   = att && ATTENDANCE[att.status];
-            const stripe = meta ? meta.color : '#D8DEE9';
+            const stripe = meta ? meta.color : 'var(--stripe-none)';
             const word   = meta ? meta.label : 'بلا تحضير';
             const values = readValues(evalToday[i]);
             const letter = escapeHtml((s.name || '؟').trim().charAt(0));
@@ -1014,7 +1014,7 @@
        on the student page; saved in the background, no re-render). */
     function studentsNotesCards(students) {
         const cards = students.map((s) => `
-            <div class="st-card st-card-note st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:#D8DEE9;">
+            <div class="st-card st-card-note st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:var(--stripe-none);">
                 <div class="stc-av">${escapeHtml((s.name || '؟').trim().charAt(0))}</div>
                 <div class="stc-info">
                     <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>

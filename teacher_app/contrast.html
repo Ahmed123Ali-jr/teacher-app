@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>فحص التباين — تطبيق إنجاز المعلم</title>
+<style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px;
+           background: #F6F7F9; color: #111; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { font-size: 12px; color: #666; margin: 0 0 14px; line-height: 1.8; }
+    button { font-family: inherit; font-size: 14px; font-weight: 700;
+             padding: 11px 20px; border: 0; border-radius: 8px;
+             background: #0F2C5C; color: #fff; cursor: pointer; }
+    button[disabled] { opacity: .5; cursor: default; }
+    select { font-family: inherit; font-size: 14px; padding: 10px; border-radius: 8px;
+             border: 1px solid #CBD5E1; margin-inline-start: 8px; }
+    #bar { margin: 12px 0; font-size: 14px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 8px; overflow: hidden; font-size: 12.5px; }
+    th, td { padding: 7px 9px; text-align: right; border-bottom: 1px solid #E8EAED;
+             vertical-align: top; }
+    th { background: #F0F2F5; font-size: 11px; color: #555; }
+    tr.head td { background: #EEF2F7; font-weight: 700; }
+    tr.bad td.r { color: #B42318; font-weight: 700; }
+    tr.warn td.r { color: #B54708; font-weight: 700; }
+    code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+    .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px;
+          border: 1px solid #0002; vertical-align: -1px; margin-inline-end: 3px; }
+    #stage { position: fixed; bottom: 8px; left: 8px; width: 390px; height: 720px;
+             border: 1px solid #CBD5E1; border-radius: 6px; background: #fff;
+             transform: scale(.34); transform-origin: bottom left; z-index: 5; }
+    @media (max-width: 900px) { #stage { opacity: .2; pointer-events: none; } }
+</style>
+</head>
+<body>
+
+<h1>فحص التباين</h1>
+<p class="sub">
+    يمشي على الشاشات كلِّها ويقيس <b>كل نصٍّ مرئي</b>: لونَه، ولونَ أرضيّته
+    الفعلية بعد تركيب الطبقات الشفافة، ثم نسبةَ التباين بمعيار WCAG.<br>
+    العتبة ‎4.5:1‎ للنصّ العادي و‎3:1‎ للكبير. ويعمل بحسابٍ منفصل وينظّف بعده.
+</p>
+
+<button id="go">▶ ابدأ الفحص</button>
+<select id="mode">
+    <option value="dark">الوضع الداكن</option>
+    <option value="light">الوضع الفاتح</option>
+</select>
+<div id="bar"></div>
+<table id="out">
+    <thead><tr><th>الشاشة / العنصر</th><th>النصّ</th><th>الألوان</th><th style="width:52px">النسبة</th></tr></thead>
+    <tbody></tbody>
+</table>
+
+<iframe id="stage" src="about:blank"></iframe>
+
+<script>
+const SCREENS = [
+    { hash: '#/dashboard',  name: 'الرئيسية',        need: '#view-dashboard' },
+    { hash: '#/classes',    name: 'الفصول',          need: '#btn-add-class' },
+    { hash: '#/class/:id',  name: 'صفحة الفصل',      need: '#view-class' },
+    { hash: '#/class/:id/students', name: 'سجل الطلاب', need: '#btn-add-students' },
+    { hash: '#/class/:id/curriculum', name: 'توزيع المنهج', need: '#view-class' },
+    { hash: '#/class/:id/exams',      name: 'الاختبارات',   need: '#view-class' },
+    { hash: '#/class/:id/worksheets', name: 'أوراق العمل',  need: '#view-class' },
+    { hash: '#/class/:id/homework',   name: 'الواجبات',     need: '#view-class' },
+    { hash: '#/class/:id/books',      name: 'الكتب',        need: '#view-class' },
+    { hash: '#/schedule',   name: 'الجدول الأسبوعي', need: '#btn-edit' },
+    { hash: '#/reminders',  name: 'التذكيرات',       need: '#view-reminders' },
+    { hash: '#/reports',    name: 'التقارير',        need: '#view-reports' },
+    { hash: '#/portfolio',  name: 'ملف الإنجاز',     need: '#view-portfolio' },
+    { hash: '#/initiatives',name: 'المبادرات',       need: '#view-initiatives' },
+    { hash: '#/shortcuts',  name: 'الاختصارات',      need: '#view-shortcuts' },
+    { hash: '#/profile',    name: 'الملف التعريفي',  need: '#view-profile' },
+    { hash: '#/settings',   name: 'الإعدادات',       need: '#view-settings' },
+    { hash: '#/help',       name: 'المساعدة',        need: '#view-help' }
+];
+
+const stage = document.getElementById('stage');
+const tbody = document.querySelector('#out tbody');
+const bar   = document.getElementById('bar');
+const wait  = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ══════════════════════════════════════════════════════════════════════
+   القياس — يُحقن في نافذة التطبيق.
+
+   الأرضيةُ لا تُقرأ من العنصر وحده: أكثرُ العناصر شفافةٌ، فتُركَّب
+   الطبقاتُ صعوداً حتى أول لونٍ صلب. ومن قاس لونَ العنصر وحده قاس
+   `rgba(0,0,0,0)` وحسبها سوداء، فأبلغ عن أعطالٍ لا وجود لها.
+
+   والنصُّ المباشر وحده يُنسب للعنصر — لا نصُّ أبنائه، وإلّا نُسب اللونُ
+   لأبٍ لا يرسم شيئاً.
+   ══════════════════════════════════════════════════════════════════════ */
+function auditIn(win) {
+    const doc = win.document;
+    const parse = (c) => {
+        const m = c.match(/rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s\/]+([\d.]+))?/);
+        return m ? [ +m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4] ] : null;
+    };
+    const lum = (c) => {
+        const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+        return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]);
+    };
+    const over = (f, b) => [ f[0]*f[3] + b[0]*(1-f[3]), f[1]*f[3] + b[1]*(1-f[3]), f[2]*f[3] + b[2]*(1-f[3]), 1 ];
+    const ratio = (a, b) => {
+        const l1 = lum(a), l2 = lum(b);
+        return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05);
+    };
+    /* طبقةٌ زائفة تغطّي الصندوق: حبّةُ التنقّل السفلي مرسومةٌ بـ‏::before‎
+       لا بخلفية العنصر. ومن قرأ خلفية العنصر وحده رأى الكتابة البيضاء
+       على أرضيةٍ بيضاء وأبلغ عن عطبٍ لا وجود له. فيُقبل الزائفُ سريراً
+       إن كان مطلقَ الموضع ملتصقاً بالحواف الأربع. */
+    function coveringPseudo(node, which) {
+        const cs = win.getComputedStyle(node, which);
+        if (!cs || cs.content === 'none' || cs.position !== 'absolute') return null;
+        for (const side of ['top', 'right', 'bottom', 'left']) {
+            const v = cs[side];
+            if (!v.endsWith('px')) return null;
+            if (parseFloat(v) > 16) return null;
+        }
+        const c = parse(cs.backgroundColor);
+        return c && c[3] > 0 ? c : null;
+    }
+
+    /* ── لماذا التذكّر ──
+       الحسابُ صعوديّ: لونُ عنصرٍ يحتاج لونَ أبيه. فلو حُسب لكل نصٍّ من
+       جديدٍ لصار العملُ (عدد العناصر × عمق الشجرة)، وشاشةُ توزيع المنهج
+       فيها آلافُ الخلايا بعمق اثني عشر — فالفحصُ يقف دقائقَ ويُظنّ معطّلاً.
+       فيُحفظ لونُ كل عقدةٍ حين يُحسب، فيصير العملُ على قدر العناصر. */
+    const bedCache = new WeakMap();
+    let htmlBase = null;
+
+    /* اللونُ الفعليّ عند العقدة، شاملاً خلفيّتها هي. */
+    function bedAt(node) {
+        if (!node || node === doc.documentElement || node === doc) {
+            if (!htmlBase) {
+                const h = parse(win.getComputedStyle(doc.documentElement).backgroundColor);
+                htmlBase = (h && h[3] === 1) ? h : [255, 255, 255, 1];
+            }
+            return { base: htmlBase, grad: null };
+        }
+        if (bedCache.has(node)) return bedCache.get(node);
+
+        const up = bedAt(node.parentElement);
+        const cs = win.getComputedStyle(node);
+        let base = up.base;
+        let grad = up.grad;
+
+        const c = parse(cs.backgroundColor);
+        if (c && c[3] > 0) base = c[3] === 1 ? c : over(c, base);
+
+        if (cs.backgroundImage && cs.backgroundImage !== 'none'
+            && cs.backgroundImage.indexOf('gradient') >= 0) {
+            /* التدرّج له لونان: يُحفظان ويُقاس النصُّ على أسوئهما. */
+            const cols = (cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(parse).filter(Boolean);
+            if (cols.length) grad = cols;
+        }
+        /* الزائفُ المغطّي يُرسم فوق خلفية عنصره، فيحلّ محلّها سريراً. */
+        for (const w of ['::before', '::after']) {
+            const p = coveringPseudo(node, w);
+            if (p) base = p[3] === 1 ? p : over(p, base);
+        }
+
+        const res = { base: base, grad: grad };
+        bedCache.set(node, res);
+        return res;
+    }
+
+    function bgOf(el) { return bedAt(el); }
+
+    const out = [];
+    for (const el of doc.querySelectorAll('body *')) {
+        const cs = win.getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
+        if (!el.offsetParent && cs.position !== 'fixed') continue;
+        if (!el.getClientRects().length) continue;
+        let txt = '';
+        for (const n of el.childNodes) if (n.nodeType === 3) txt += n.nodeValue;
+        txt = txt.replace(/[‎‏]/g, '').trim();
+        if (!txt) continue;
+        /* الرموزُ التعبيرية تُرسم بألوانها لا بلون النصّ، فقياسُ تباينها
+           قياسٌ لشيءٍ لا يوجد. يُشترط حرفٌ أو رقم. */
+        if (!/[؀-ۿ A-Za-z0-9٠-٩]/.test(txt.replace(/\s/g, ''))) continue;
+        const fg0 = parse(cs.color);
+        if (!fg0) continue;
+        const bg = bgOf(el);
+        /* التدرّج: يُقاس على طرفيه ويُؤخذ الأسوأ — فالنصّ يمرّ عليهما. */
+        const beds = bg.grad && bg.grad.length ? bg.grad.map((g) => g[3] < 1 ? over(g, bg.base) : g) : [bg.base];
+        let worst = null;
+        for (const bed of beds) {
+            const fg = fg0[3] < 1 ? over(fg0, bed) : fg0;
+            const r = ratio(fg, bed);
+            if (!worst || r < worst.r) worst = { r: r, bed: bed };
+        }
+        const size = parseFloat(cs.fontSize), w = +cs.fontWeight || 400;
+        const need = (size >= 24 || (size >= 18.66 && w >= 700)) ? 3 : 4.5;
+        if (worst.r < need) {
+            out.push({
+                sel: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
+                     (typeof el.className === 'string' && el.className.trim()
+                        ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.') : ''),
+                txt: txt.slice(0, 26),
+                r: Math.round(worst.r * 100) / 100,
+                need: need,
+                fg: cs.color,
+                bg: 'rgb(' + worst.bed.slice(0, 3).map(Math.round).join(',') + ')'
+            });
+        }
+    }
+    const map = new Map();
+    for (const o of out) {
+        const k = o.sel + '|' + o.fg + '|' + o.bg;
+        if (!map.has(k)) map.set(k, Object.assign({ n: 0 }, o));
+        map.get(k).n++;
+    }
+    return [...map.values()].sort((a, b) => a.r - b.r);
+}
+
+function sw(c) { return '<span class="sw" style="background:' + c + '"></span>'; }
+
+async function settle(win, need, ms) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < (ms || 9000)) {
+        const el = win.document.querySelector(need);
+        if (el && el.offsetParent !== null && el.textContent.trim().length) return true;
+        await wait(160);
+    }
+    return false;
+}
+
+async function run() {
+    const mode = document.getElementById('mode').value;
+    document.getElementById('go').disabled = true;
+    tbody.innerHTML = '';
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    stage.src = 'index.html?contrast=' + Date.now();
+    await new Promise((r) => { stage.onload = r; });
+    const win = stage.contentWindow;
+    for (let i = 0; i < 60 && !win.TeacherDB; i++) await wait(200);
+    if (!win.TeacherDB) { bar.textContent = '❌ لم يُحمَّل التطبيق.'; return; }
+
+    let cls = null, seeded = [];
+    try {
+        await win.SB.auth.signOut().catch(() => {});
+        await win.Auth.guestLogin();
+        const S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        const me = await win.Auth.currentTeacher();
+        me.name = 'فحص التباين'; me.school_name = 'مدرسة الفحص';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+        cls = await win.ClassCreate.create({ teacher_id: me.id, stage: 'intermediate',
+            grade: 'الصف الأول المتوسط', section: 'أ', subject: 'العلوم' });
+        seeded.push(['classes', cls.id]);
+        const sid = await win.TeacherDB.add('students',
+            { teacher_id: me.id, class_id: cls.id, name: 'طالب الفحص', notes: '' });
+        seeded.push(['students', sid]);
+        const rid = await win.TeacherDB.add('schedule',
+            { teacher_id: me.id, day: 0, period: 1, class_id: cls.id });
+        seeded.push(['schedule', rid]);
+    } catch (e) {
+        bar.textContent = '❌ تعذّر التجهيز: ' + e.message;
+        document.getElementById('go').disabled = false;
+        return;
+    }
+
+    win.document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
+    win.document.body.classList.add('theme-' + mode);
+
+    let total = 0, screens = 0;
+    for (const s of SCREENS) {
+        win.location.hash = s.hash.replace(':id', cls.id);
+        await wait(340);
+        await settle(win, s.need);
+        await wait(140);
+        const fails = auditIn(win);
+        total += fails.length;
+        if (fails.length) screens++;
+
+        const tr = document.createElement('tr');
+        tr.className = 'head';
+        tr.innerHTML = '<td colspan="4">' + (fails.length ? '❌ ' : '✅ ') + s.name +
+                       ' — ' + (fails.length ? fails.length + ' عيباً' : 'سليمة') + '</td>';
+        tbody.appendChild(tr);
+
+        for (const f of fails.slice(0, 12)) {
+            const r = document.createElement('tr');
+            r.className = f.r < 3 ? 'bad' : 'warn';
+            r.innerHTML = '<td><code>' + f.sel + '</code>' + (f.n > 1 ? ' ×' + f.n : '') + '</td>' +
+                          '<td>' + f.txt.replace(/</g, '&lt;') + '</td>' +
+                          '<td>' + sw(f.fg) + '<code>' + f.fg + '</code><br>' +
+                                   sw(f.bg) + '<code>' + f.bg + '</code></td>' +
+                          '<td class="r">' + f.r + '<br><small>يلزم ' + f.need + '</small></td>';
+            tbody.appendChild(r);
+        }
+        bar.textContent = '⏳ ' + (SCREENS.indexOf(s) + 1) + ' من ' + SCREENS.length +
+                          ' — ' + total + ' عيباً حتى الآن';
+    }
+
+    try {
+        for (const [store, id] of seeded.reverse()) {
+            await win.TeacherDB.remove(store, id).catch(() => {});
+        }
+        await win.SB.auth.signOut().catch(() => {});
+    } catch (e) { /* التنظيف لا يُفشل الفحص */ }
+
+    bar.textContent = total === 0
+        ? '✅ لا عيب — كل نصٍّ فوق العتبة في ' + SCREENS.length + ' شاشة.'
+        : '❌ ' + total + ' عيباً في ' + screens + ' شاشة من ' + SCREENS.length;
+    bar.style.color = total === 0 ? '#067647' : '#B42318';
+    document.getElementById('go').disabled = false;
+}
+
+document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>

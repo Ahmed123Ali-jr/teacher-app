@@ -31,6 +31,32 @@
     --border-strong:   #CBD5E1;
 
     /* ======================================================================
+       رموزُ الحبر والمرساة — شقٌّ لازمٌ للوضع الداكن
+       ======================================================================
+       الرمزُ الواحد لا يصلح للأمرين: `--primary` أرضيةُ زرٍّ في ٩٧ موضعاً
+       وكتابةٌ في ١٠٧. فلو فُتّح ليُقرأ على أرضيةٍ داكنة انقلبت الأزرار،
+       ولو بقي غامقاً اختفت الكتابة. فيُشقّ: هذا للحبر وذاك للسطح.
+
+       و`--mix-base` مرساةُ الخلطات التي تبني سطحاً شبه أبيض
+       (`color-mix(… , var(--mix-base))`)، و`--beige` مرساةُ خمسٍ وسبعين
+       خلطةً أخرى. تبديلُ المرساتين يقلب الأسطح كلَّها بلا لمسِ قاعدةٍ
+       واحدةٍ منها.
+
+       وفي الوضع الفاتح كلُّها مساويةٌ لما كانت — فلا يتغيّر شيء.
+       ====================================================================== */
+    --ink-primary:     var(--primary);
+    --mix-base:        #FFFFFF;
+    --beige:           #ECEAE3;
+
+    /* البريقُ العلويّ: خطٌّ أبيضُ داخل حافّة كل بطاقةٍ وزرّ — هو تجسيمُ
+       التصميم. عشرون موضعاً. وعلى أرضيةٍ داكنة يصير خيطاً ناصعاً يقطع
+       البطاقة، فيُخفَّف هناك ولا يُحذف. */
+    --sheen:           #FFFFFF;
+
+    /* شريطُ حالة الطالب حين لا تحضيرَ بعد — محايدٌ يقرأ على أرضيته. */
+    --stripe-none:     #D8DEE9;
+
+    /* ======================================================================
        Fibonacci design system
        Spacing ladder: 3 · 5 · 8 · 13 · 21 · 34 · 55 · 89
        (each step = sum of the two before it → ratios converge on φ 1.618)
@@ -160,7 +186,7 @@ h4 { font-size: var(--fs-lg); }
 p { margin: 0 0 var(--space-4); }
 
 a {
-    color: var(--primary);
+    color: var(--ink-primary);
     text-decoration: none;
     transition: color var(--dur-fast) var(--ease);
 }
@@ -186,93 +212,13 @@ small { font-size: var(--fs-sm); }
 #print-root { display: none; }
 
 /* ==========================================================================
-   Theme — auto (device preference) + manual overrides
-   Basic dark-mode that flips surfaces, text and borders. Accents stay.
+   الوضع الداكن
+   ==========================================================================
+   نُقل كلُّه إلى `css/theme-dark.css` — ملفٌّ واحدٌ يملك المظهر الداكن:
+   رموزَه وأسطحَه وحبرَه. وكان هنا مقلوباً على عجل: قاعدةٌ تصبغ كلَّ نصٍّ
+   بالأبيض (`* { color: white }`) فوق أسطحٍ بقيت بيضاء — فثلاثةٌ وخمسون
+   موضعاً كان النصُّ فيها أبيضَ على أبيض.
    ========================================================================== */
-body.theme-dark,
-body.theme-auto.dark-active {
-    --bg:            #07080B;
-    --surface:       #14172A;
-    --surface-alt:   #1C2038;
-    --text:          #FFFFFF;
-    --text-muted:    #B8C2D9;
-    --border:        #1F2540;
-    --border-strong: #2A3252;
-    color: var(--text);
-    background: var(--bg);
-}
-
-/* Force every text element white in dark mode (overrides hardcoded colors
-   like --primary headings, brand-name, etc.). Primary blue is reserved for
-   links/buttons explicitly. */
-body.theme-dark *:not(input):not(textarea):not(select),
-body.theme-auto.dark-active *:not(input):not(textarea):not(select) {
-    color: var(--text);
-}
-body.theme-dark .text-muted,
-body.theme-auto.dark-active .text-muted,
-body.theme-dark .stat-label,
-body.theme-auto.dark-active .stat-label,
-body.theme-dark .field-hint,
-body.theme-auto.dark-active .field-hint,
-body.theme-dark .settings-item-chev,
-body.theme-auto.dark-active .settings-item-chev {
-    color: var(--text-muted) !important;
-}
-/* Keep primary buttons / badges colored */
-body.theme-dark .btn-primary,
-body.theme-auto.dark-active .btn-primary { color: #fff; }
-body.theme-dark .btn-danger,
-body.theme-auto.dark-active .btn-danger { color: #fff; }
-/* Numbers / stat values: white in dark mode */
-body.theme-dark .stat-value,
-body.theme-auto.dark-active .stat-value,
-body.theme-dark .num,
-body.theme-auto.dark-active .num { color: var(--text) !important; }
-body.theme-dark .card,
-body.theme-auto.dark-active .card,
-body.theme-dark .stat-card,
-body.theme-auto.dark-active .stat-card { background: var(--surface); }
-
-body.theme-dark .app-header,
-body.theme-auto.dark-active .app-header,
-body.theme-dark .bottom-nav,
-body.theme-auto.dark-active .bottom-nav,
-body.theme-dark .drawer,
-body.theme-auto.dark-active .drawer,
-body.theme-dark .modal,
-body.theme-auto.dark-active .modal {
-    background: var(--surface);
-    border-color: var(--border);
-}
-
-body.theme-dark .input,
-body.theme-auto.dark-active .input,
-body.theme-dark .select,
-body.theme-auto.dark-active .select,
-body.theme-dark .textarea,
-body.theme-auto.dark-active .textarea {
-    background: var(--surface-alt);
-    color: var(--text);
-    border-color: var(--border);
-}
-
-/* Auto dark via device preference */
-@media (prefers-color-scheme: dark) {
-    body.theme-auto { --bg: #07080B; --surface: #14172A; --surface-alt: #1C2038;
-                      --text: #FFFFFF; --text-muted: #B8C2D9;
-                      --border: #1F2540; --border-strong: #2A3252;
-                      color: var(--text); background: var(--bg); }
-    body.theme-auto .card,
-    body.theme-auto .stat-card { background: var(--surface); }
-    body.theme-auto .app-header,
-    body.theme-auto .bottom-nav,
-    body.theme-auto .drawer,
-    body.theme-auto .modal { background: var(--surface); border-color: var(--border); }
-    body.theme-auto .input,
-    body.theme-auto .select,
-    body.theme-auto .textarea { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
-}
 
 .sr-only {
     position: absolute;
@@ -332,7 +278,7 @@ body.theme-auto.dark-active .textarea {
     margin: 0;
     font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
-    color: var(--primary);
+    color: var(--ink-primary);
 }
 
 /* Main */

@@ -1,0 +1,429 @@
+/* ==========================================================================
+   theme-dark.css — الوضع الداكن.
+
+   ليس قلباً للألوان: القلبُ يجعل الأبيضَ أسودَ ويترك الكحليَّ كحلياً،
+   فتختفي الكتابة. وهذه لوحةٌ مبنيّة — أسطحٌ متدرّجةٌ بميلٍ كحليّ تحفظ
+   هُويّة التطبيق، وحبرٌ يُقرأ عليها كلِّها.
+
+   ── القياس لا الذوق ──
+   كلُّ لونٍ هنا مقيسٌ بمعيار WCAG على السطح الذي يقع عليه: ‎4.5:1‎ للنصّ
+   العادي و‎3:1‎ للكبير. و`contrast.html` يمشي على الشاشات الثماني عشرة
+   ويقيس كلَّ نصٍّ مرئي — فما يُقال هنا مُثبتٌ هناك.
+
+   ── لماذا لا `* { color: white }` ──
+   كانت هذه حيلةَ النسخة السابقة: صبغُ كلِّ نصٍّ بالأبيض. وهي تفشل من
+   طرفيها — الأسطحُ المكتوبةُ حرفياً في `views.css` تبقى بيضاء فيصير
+   الأبيضُ على الأبيض، والقواعدُ الأخصُّ منها (لونٌ كحليٌّ صريح) لا
+   تتأثّر بها فيصير الكحليُّ على الداكن. فالعلاج قلبُ **الأسطح**، ثم
+   الحبرُ يتبعها من رموزه.
+
+   ── هذا الملفّ يقرأ من الشقّ ──
+   `--ink-primary` و`--mix-base` و`--beige` في `main.css`: تبديلُها هنا
+   يقلب مئةً وسبعةً وخمسين موضعاً بلا لمسِ قاعدةٍ منها.
+   ========================================================================== */
+
+/* ══════════════════════════════════════════════════════════════════════
+   ١) الرموز
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-dark,
+body.theme-auto.dark-active {
+    /* الأسطح: أربعُ درجاتٍ بميلٍ كحليّ خفيف — لا رماديٌّ ميّت ولا أسودُ
+       حادّ. والأسودُ الخالص يُجهد العين على الشاشات المضيئة. */
+    --bg:            #0D1117;
+    --surface:       #161C27;
+    --surface-alt:   #1E2634;
+    --surface-high:  #273040;
+
+    --border:        #2C3545;
+    --border-strong: #3D4859;
+
+    /* الحبر: أبيضُ مكسورٌ لا خالص — الخالصُ يهتزّ على الداكن (halation).
+       ‎#E8ECF3‎ على ‎#161C27‎ = ‎13.4:1‎، والخافتُ ‎7.1:1‎. */
+    --text:          #E8ECF3;
+    --text-muted:    #A3AEC0;
+    /* «المعكوس» ليس عكسَ المظهر بل عكسُ السطح: هو لونُ الكتابة فوق
+       الأسطح الملوّنة الصلبة — الكحليّ والأحمر. وهذه تبقى ملوّنةً في
+       الداكن، فيبقى معكوسُها أبيض. وقلبُه إلى داكنٍ يجعل «فهمت» في
+       التلميح داكناً على كحليّ: ‎1.38:1‎. */
+    --text-inverse:  #FFFFFF;
+
+    /* الكحليُّ سطحاً: يُفتَّح خطوةً ليُرى على الأرضية الداكنة، ويبقى
+       أغمقَ من أن تُقرأ عليه كتابةٌ بيضاء بأقلّ من ‎7:1‎. */
+    --primary:       #24498A;
+    --primary-dark:  #1B3768;
+
+    /* الكحليُّ يبقى سطحاً (‎--primary‎) ويُفتَّح حبراً (‎--ink-primary‎).
+       ‎#8FB4F5‎ على السطح = ‎8.1:1‎. */
+    --ink-primary:   #8FB4F5;
+    --primary-light: #4C7FE0;
+
+    /* مرساةُ الخلطات: كانت بيضاء فتبني أسطحاً شبه بيضاء، فصارت داكنة —
+       وانقلبت الأسطح كلُّها معها. */
+    --mix-base:      #161C27;
+    --beige:         #1E2634;
+
+    /* حبرُ ملفّ الإنجاز: `portfolio-theme.css` يكتب بالرمز الخام
+       (`--pf-charcoal` و`--pf-gray`) لا بالرمز العام، فلا يبلغه الشقّ.
+       وقِيسا: كلاهما حبرٌ خالص لا يُستعمل خلفيةً ولا حدّاً — فتبديلُهما
+       آمن. */
+    --pf-charcoal:   #E8ECF3;
+    --pf-gray:       #A3AEC0;
+
+    /* البريقُ الأبيض على الداكن خيطٌ ناصعٌ يقطع البطاقة من أعلى. يُخفَّف
+       إلى وميضٍ يُحسّ ولا يُرى، فيبقى التجسيم ويذهب الشقّ. */
+    --sheen:         rgba(255, 255, 255, .06);
+
+    /* شريطُ حالة الطالب حين لا تحضيرَ بعد: خمسةُ بكسلاتٍ رماديةٌ فاتحة على
+       حافّة كل بطاقة — على الداكن عمودٌ ناصعٌ يشدّ العين إلى لا شيء.
+       يُغمَّق ويبقى محايداً، وألوانُ الحضور والغياب على حالها. */
+    --stripe-none:   #3D4859;
+
+    /* الحالات: تُفتَّح لتُقرأ على الداكن، وتبقى هُويّتها اللونية. */
+    --success:       #34D399;
+    --warning:       #FBBF24;
+    --danger:        #F87171;
+    --info:          #7FB4FF;
+
+    color: var(--text);
+    background: var(--bg);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٢) الأرضية والقشرة
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-dark,
+body.theme-auto.dark-active,
+body.theme-dark #app,
+body.theme-auto.dark-active #app,
+body.theme-dark #app-main,
+body.theme-auto.dark-active #app-main,
+body.theme-dark [id^="view-"],
+body.theme-auto.dark-active [id^="view-"] {
+    background: var(--bg) !important;
+    background-image: none !important;
+}
+
+body.theme-dark .app-header,
+body.theme-auto.dark-active .app-header,
+body.theme-dark .drawer,
+body.theme-auto.dark-active .drawer,
+body.theme-dark .modal,
+body.theme-auto.dark-active .modal {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٣) الأسطح المكتوبة حرفياً
+   ══════════════════════════════════════════════════════════════════════
+   مئةٌ وثلاثٌ وثلاثون قاعدةً في `views.css` تكتب خلفيةً فاتحةً بالاسم لا
+   بالرمز. هذه هي التي تُقلب — وبعدها يصير الحبرُ الفاتح مقروءاً.
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-dark .card,
+body.theme-auto.dark-active .card,
+body.theme-dark .stat-card,
+body.theme-auto.dark-active .stat-card,
+body.theme-dark .start-box,
+body.theme-auto.dark-active .start-box,
+body.theme-dark .start-add-class,
+body.theme-auto.dark-active .start-add-class,
+body.theme-dark .set-list,
+body.theme-auto.dark-active .set-list,
+body.theme-dark .set-row,
+body.theme-auto.dark-active .set-row,
+body.theme-dark .cls-row,
+body.theme-auto.dark-active .cls-row,
+body.theme-dark .flist,
+body.theme-auto.dark-active .flist,
+body.theme-dark .frow,
+body.theme-auto.dark-active .frow,
+body.theme-dark .fsubj,
+body.theme-auto.dark-active .fsubj,
+body.theme-dark .flogo,
+body.theme-auto.dark-active .flogo,
+body.theme-dark .ac-card,
+body.theme-auto.dark-active .ac-card,
+body.theme-dark .imp-box,
+body.theme-auto.dark-active .imp-box,
+body.theme-dark .sch-card,
+body.theme-auto.dark-active .sch-card,
+body.theme-dark .sch-sec,
+body.theme-auto.dark-active .sch-sec,
+body.theme-dark .sched-import,
+body.theme-auto.dark-active .sched-import,
+body.theme-dark .rem-card,
+body.theme-auto.dark-active .rem-card,
+body.theme-dark .rd-cal,
+body.theme-auto.dark-active .rd-cal,
+body.theme-dark .stg-card,
+body.theme-auto.dark-active .stg-card,
+body.theme-dark .tf-box,
+body.theme-auto.dark-active .tf-box,
+body.theme-dark .pstg-sum,
+body.theme-auto.dark-active .pstg-sum,
+body.theme-dark .enjaz-tile,
+body.theme-auto.dark-active .enjaz-tile,
+body.theme-dark .enjaz-row,
+body.theme-auto.dark-active .enjaz-row,
+body.theme-dark .dp-item,
+body.theme-auto.dark-active .dp-item,
+body.theme-dark .hub-featured,
+body.theme-auto.dark-active .hub-featured,
+body.theme-dark .hub-tile,
+body.theme-auto.dark-active .hub-tile,
+body.theme-dark .portfolio-item,
+body.theme-auto.dark-active .portfolio-item,
+body.theme-dark .class-card,
+body.theme-auto.dark-active .class-card {
+    background: var(--surface) !important;
+    background-image: none !important;
+    border-color: var(--border) !important;
+}
+
+/* الأسطحُ المرفوعة: ما يعلو البطاقة — حبّاتٌ وأزرارٌ ورؤوسُ جداول. */
+body.theme-dark .bottom-nav,
+body.theme-auto.dark-active .bottom-nav,
+body.theme-dark .chs-chip,
+body.theme-auto.dark-active .chs-chip,
+body.theme-dark .hub-tile-icon,
+body.theme-auto.dark-active .hub-tile-icon,
+body.theme-dark .hub-featured-icon,
+body.theme-auto.dark-active .hub-featured-icon,
+body.theme-dark .hf-stat,
+body.theme-auto.dark-active .hf-stat,
+body.theme-dark .btn-add-gray,
+body.theme-auto.dark-active .btn-add-gray,
+body.theme-dark .cls-edit-btn,
+body.theme-auto.dark-active .cls-edit-btn,
+body.theme-dark .btn-back-box,
+body.theme-auto.dark-active .btn-back-box,
+body.theme-dark .sched-time-btn,
+body.theme-auto.dark-active .sched-time-btn,
+body.theme-dark .sched-table thead th,
+body.theme-auto.dark-active .sched-table thead th,
+body.theme-dark .sched-corner,
+body.theme-auto.dark-active .sched-corner,
+body.theme-dark .bell-row,
+body.theme-auto.dark-active .bell-row,
+body.theme-dark .mvs-tab,
+body.theme-auto.dark-active .mvs-tab,
+body.theme-dark .col-chip,
+body.theme-auto.dark-active .col-chip,
+body.theme-dark .att-stat,
+body.theme-auto.dark-active .att-stat,
+body.theme-dark .popt,
+body.theme-auto.dark-active .popt,
+body.theme-dark .pseg,
+body.theme-auto.dark-active .pseg,
+body.theme-dark .badge,
+body.theme-auto.dark-active .badge,
+body.theme-dark .input,
+body.theme-auto.dark-active .input,
+body.theme-dark .select,
+body.theme-auto.dark-active .select,
+body.theme-dark .textarea,
+body.theme-auto.dark-active .textarea,
+body.theme-dark table thead th,
+body.theme-auto.dark-active table thead th {
+    background: var(--surface-alt) !important;
+    background-image: none !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+}
+
+/* أسطحُ ملفّ الإنجاز والتقويم والتقارير — مسحُها بأداةِ «أين بقي البياض»
+   بعد الجولة الأولى، لا بالتخمين. */
+body.theme-dark .portfolio-section,
+body.theme-auto.dark-active .portfolio-section,
+body.theme-dark .portfolio-section.is-open,
+body.theme-auto.dark-active .portfolio-section.is-open,
+body.theme-dark .pf-id-card,
+body.theme-auto.dark-active .pf-id-card,
+body.theme-dark .portfolio-avatar,
+body.theme-auto.dark-active .portfolio-avatar,
+body.theme-dark .btn-secondary,
+body.theme-auto.dark-active .btn-secondary,
+body.theme-dark .stg-btn.ghost,
+body.theme-auto.dark-active .stg-btn.ghost,
+body.theme-dark .box,
+body.theme-auto.dark-active .box,
+body.theme-dark table tr,
+body.theme-auto.dark-active table tr,
+body.theme-dark tbody td,
+body.theme-auto.dark-active tbody td {
+    background: var(--surface) !important;
+    background-image: none !important;
+    border-color: var(--border) !important;
+}
+
+body.theme-dark .portfolio-section-body,
+body.theme-auto.dark-active .portfolio-section-body,
+body.theme-dark .pf-id-photo,
+body.theme-auto.dark-active .pf-id-photo,
+body.theme-dark .pf-id-photo-empty,
+body.theme-auto.dark-active .pf-id-photo-empty,
+body.theme-dark .rem-ic,
+body.theme-auto.dark-active .rem-ic,
+body.theme-dark .ac-which,
+body.theme-auto.dark-active .ac-which,
+body.theme-dark .ac-cell,
+body.theme-auto.dark-active .ac-cell,
+body.theme-dark .ac-span,
+body.theme-auto.dark-active .ac-span {
+    background: var(--surface-alt) !important;
+    background-image: none !important;
+    border-color: var(--border) !important;
+}
+
+/* عناوينُ ملفّ الإنجاز تقرأ الكحليَّ الخام (‎--pf-royal‎) لا الرمزَ العام،
+   فلا يبلغها الشقّ. وهي ثلاثةَ عشرَ موضعاً. */
+body.theme-dark #view-portfolio .section-title,
+body.theme-auto.dark-active #view-portfolio .section-title,
+body.theme-dark #view-portfolio h1,
+body.theme-auto.dark-active #view-portfolio h1,
+body.theme-dark #view-portfolio h2,
+body.theme-auto.dark-active #view-portfolio h2,
+body.theme-dark #view-portfolio h3,
+body.theme-auto.dark-active #view-portfolio h3,
+body.theme-dark .portfolio-title,
+body.theme-auto.dark-active .portfolio-title {
+    color: var(--ink-primary) !important;
+}
+
+/* «تحضير الكل»: أبيضُ على أخضرَ ‎#059669‎ = ‎3.77:1‎ — دون العتبة في
+   المظهرين. يُغمَّق الأخضرُ هنا فيبلغ ‎5.9:1‎. (وفي الفاتح كما هو —
+   تبديلُه هناك قرارُ تصميمٍ لا إصلاحُ داكن.) */
+body.theme-dark .mark-bar-btn,
+body.theme-auto.dark-active .mark-bar-btn {
+    background: #0B6B4A !important;
+    color: #FFFFFF !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٤) الحبر
+   ══════════════════════════════════════════════════════════════════════
+   خمسةٌ وأربعون موضعاً تكتب لونَ نصٍّ داكناً بالاسم — تُقلب إلى نظيرها
+   الفاتح مع حفظ العائلة اللونية: الكهرماني كهرماني والأحمر أحمر.
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-dark,
+body.theme-auto.dark-active { color: var(--text); }
+
+/* الرصاصيّ (‎#475467‎ وأخواته) */
+body.theme-dark .btn-back-box,
+body.theme-auto.dark-active .btn-back-box,
+body.theme-dark .chs-chip,
+body.theme-auto.dark-active .chs-chip,
+body.theme-dark .hub-tile-count,
+body.theme-auto.dark-active .hub-tile-count,
+body.theme-dark .text-muted,
+body.theme-auto.dark-active .text-muted,
+body.theme-dark .stat-label,
+body.theme-auto.dark-active .stat-label,
+body.theme-dark .field-hint,
+body.theme-auto.dark-active .field-hint,
+body.theme-dark .settings-item-chev,
+body.theme-auto.dark-active .settings-item-chev,
+body.theme-dark .chev,
+body.theme-auto.dark-active .chev,
+body.theme-dark .cls-s,
+body.theme-auto.dark-active .cls-s,
+body.theme-dark .vl.is-empty,
+body.theme-auto.dark-active .vl.is-empty,
+body.theme-dark .lb,
+body.theme-auto.dark-active .lb {
+    color: var(--text-muted) !important;
+}
+
+/* الكهرمانيّ: الانتظار والتنبيه (‎#B45309‎ ‎#8A5A10‎ ‎#92400e‎ ‎#7A6224‎) */
+body.theme-dark .sched-box.wait,
+body.theme-auto.dark-active .sched-box.wait,
+body.theme-dark .sch-note .t,
+body.theme-auto.dark-active .sch-note .t,
+body.theme-dark .sch-card.wait .g,
+body.theme-auto.dark-active .sch-card.wait .g,
+body.theme-dark .sch-card.wait .s,
+body.theme-auto.dark-active .sch-card.wait .s,
+body.theme-dark .sch-card.wait .chev,
+body.theme-auto.dark-active .sch-card.wait .chev,
+body.theme-dark .sch-cur .t,
+body.theme-auto.dark-active .sch-cur .t,
+body.theme-dark .sch-cur .x,
+body.theme-auto.dark-active .sch-cur .x,
+body.theme-dark .sch-subbtn,
+body.theme-auto.dark-active .sch-subbtn,
+body.theme-dark .rd-past,
+body.theme-auto.dark-active .rd-past,
+body.theme-dark .callout-warn,
+body.theme-auto.dark-active .callout-warn {
+    color: var(--warning) !important;
+}
+
+/* الأحمر: الحذف والنقص. ‎#DC2626‎ على الداكن ‎3.5:1‎ — يُفتَّح إلى
+   ‎#F87171‎ فيبلغ ‎6.4:1‎ ويبقى أحمرَ يُفهم أنه خطر. */
+body.theme-dark .sch-del,
+body.theme-auto.dark-active .sch-del,
+body.theme-dark .sched-clear,
+body.theme-auto.dark-active .sched-clear,
+body.theme-dark .mark-bar-miss,
+body.theme-auto.dark-active .mark-bar-miss,
+body.theme-dark .dz-btn,
+body.theme-auto.dark-active .dz-btn,
+body.theme-dark .set-logout,
+body.theme-auto.dark-active .set-logout,
+body.theme-dark .set-row.is-danger .t,
+body.theme-auto.dark-active .set-row.is-danger .t,
+body.theme-dark .dz-title,
+body.theme-auto.dark-active .dz-title {
+    color: var(--danger) !important;
+}
+
+/* حبرُ بطاقة الهُويّة في ملفّ الإنجاز: كحليٌّ خامٌّ على سطحٍ داكن. */
+body.theme-dark .pf-id-value,
+body.theme-auto.dark-active .pf-id-value,
+body.theme-dark .portfolio-avatar,
+body.theme-auto.dark-active .portfolio-avatar,
+body.theme-dark .btn-secondary,
+body.theme-auto.dark-active .btn-secondary,
+body.theme-dark #view-portfolio a,
+body.theme-auto.dark-active #view-portfolio a {
+    color: var(--ink-primary) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٥) ما يبقى كما هو
+   ══════════════════════════════════════════════════════════════════════
+   الأسطحُ الملوّنة الصلبة — الكحليُّ والذهبيُّ والأخضر — تبقى بلونها،
+   وكتابتُها البيضاء عليها مقروءةٌ أصلاً. وهي هُويّة التطبيق: لو قُلبت
+   لصار مظهراً آخر لا مظهراً داكناً.
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-dark .btn-primary,
+body.theme-auto.dark-active .btn-primary,
+body.theme-dark .btn-danger,
+body.theme-auto.dark-active .btn-danger,
+body.theme-dark .btn-success,
+body.theme-auto.dark-active .btn-success {
+    color: #FFFFFF !important;
+}
+
+/* الذهبيُّ سطحاً: كتابتُه تبقى داكنة — وهو أفتحُ من أن يُكتب عليه بالأبيض. */
+body.theme-dark .badge-warning,
+body.theme-auto.dark-active .badge-warning,
+body.theme-dark .chip-gold,
+body.theme-auto.dark-active .chip-gold {
+    background: #C9A961 !important;
+    color: #1A1508 !important;
+}
+
+/* حقولُ الإدخال: الكتابةُ فيها من الحبر لا من لون المتصفّح. */
+body.theme-dark input, body.theme-auto.dark-active input,
+body.theme-dark textarea, body.theme-auto.dark-active textarea,
+body.theme-dark select, body.theme-auto.dark-active select {
+    color: var(--text);
+    background: var(--surface-alt);
+    border-color: var(--border);
+}
+body.theme-dark ::placeholder,
+body.theme-auto.dark-active ::placeholder { color: var(--text-muted); opacity: 1; }
+
+/* شريطُ التمرير ولونُ واجهة المتصفّح يتبعان المظهر. */
+body.theme-dark, body.theme-auto.dark-active { color-scheme: dark; }

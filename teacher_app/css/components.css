@@ -48,7 +48,7 @@
 
 .btn-secondary {
     background: var(--surface);
-    color: var(--primary);
+    color: var(--ink-primary);
     border-color: var(--border-strong);
 }
 .btn-secondary:hover:not(:disabled) {
@@ -175,7 +175,7 @@
     line-height: 1.4;
 }
 
-.badge-info    { background: rgba(59, 130, 246, 0.12); color: var(--primary); }
+.badge-info    { background: rgba(59, 130, 246, 0.12); color: var(--ink-primary); }
 .badge-success { background: rgba(16, 185, 129, 0.12); color: var(--success); }
 .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
 .badge-danger  { background: rgba(239, 68, 68, 0.12);  color: var(--danger);  }
@@ -188,7 +188,7 @@
 
 .hero-title {
     margin-top: 0;
-    color: var(--primary);
+    color: var(--ink-primary);
 }
 
 .hero-subtitle {

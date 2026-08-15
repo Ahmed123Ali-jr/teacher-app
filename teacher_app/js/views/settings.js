@@ -1171,10 +1171,39 @@
        Theme / font application (exposed so app.js can apply on boot)
        ========================================================================== */
 
+    /* «تلقائي» كان اسماً بلا فعل: التنسيق يسأل عن `theme-auto.dark-active`
+       وما كان أحدٌ يضع `dark-active`. فالمعلّم يختار «تلقائي» وجهازه داكن
+       ثم لا يرى شيئاً — أو يرى نصفَ مظهرٍ إن أدركته قاعدةُ الوسائط.
+
+       فيُوضع الصنفُ هنا، ويُستمع لتبدّل تفضيل الجهاز: من يبدّل جهازه ليلاً
+       يتبدّل تطبيقه معه بلا إعادة فتح. */
+    let _darkMq = null;
+    function syncAuto() {
+        document.body.classList.toggle(
+            'dark-active',
+            document.body.classList.contains('theme-auto') && _darkMq && _darkMq.matches
+        );
+    }
     function applyTheme(theme) {
         const body = document.body;
         body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
         body.classList.add('theme-' + (theme || 'light'));
+
+        if (!_darkMq && global.matchMedia) {
+            _darkMq = global.matchMedia('(prefers-color-scheme: dark)');
+            /* addEventListener لا يعمل على سفاري القديم، وaddListener مهجورٌ
+               على الحديث — فيُجرَّب الأول ويُسقط على الثاني. */
+            if (_darkMq.addEventListener) _darkMq.addEventListener('change', syncAuto);
+            else if (_darkMq.addListener) _darkMq.addListener(syncAuto);
+
+            /* وحزامٌ ثانٍ: حدثُ التبدّل لا يصل دائماً إلى صفحةٍ في الخلفية —
+               والمعلّم يترك التطبيق مفتوحاً ويبدّل جهازه عند المغرب. فيُعاد
+               السؤال كلَّما عادت الشاشة إليه. */
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) syncAuto();
+            });
+        }
+        syncAuto();
     }
     async function applyStoredPrefs() {
         try {
