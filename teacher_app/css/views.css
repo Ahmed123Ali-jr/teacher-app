@@ -5771,7 +5771,9 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .classes-fab {
     position: fixed;
     inset-inline: 0;
-    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    /* يرتفع عن الشريط السفلي بمسافةٍ تُرى: كان يلتصق به فيُقرآن شريطاً
+       واحداً. */
+    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-4));
     z-index: 40;
     padding: 10px var(--mobile-padding) 12px;
     /* تدرّجٌ يذوب في الأرضية: الزرُّ يطفو ولا يقطع الصفحة بخطّ. */
@@ -5784,7 +5786,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 /* والمحتوى يترك له مكاناً فلا تختفي آخرُ بطاقةٍ تحته. */
-.classes-v2 { padding-bottom: 78px; }
+.classes-v2 { padding-bottom: 91px; }
 
 /* حالةُ الفراغ: نصٌّ في الوسط بلا إطار. */
 .empty-classes {
@@ -5793,7 +5795,8 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .empty-classes h3 {
     margin: 0;
-    font-size: 19px; font-weight: var(--fw-black); color: var(--ink-primary);
+    /* بلا ثقل: العبارةُ خبرٌ لا عنوان — تقول «لا شيء هنا» ولا تنادي. */
+    font-size: 19px; font-weight: var(--fw-medium); color: var(--ink-primary);
 }
 
 /* على الحاسوب لا شريطَ سفليّاً، فيهبط الزرُّ إلى الحافّة. */
