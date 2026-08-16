@@ -3030,6 +3030,10 @@ body.drawer-open { overflow: hidden; }
     gap: var(--space-2);
     margin: var(--space-4) 0 var(--space-2);
     flex: none;
+    /* الزرّان إلى نهاية السطر — يسارِه في العربية. كانا في بدايته يوم كان
+       العنوانُ معهما يدفعهما، فلمّا انتقل العنوانُ إلى الشريط العلويّ بقيا
+       حيث كانا بلا ما يدفعهما. */
+    justify-content: flex-end;
 }
 .sched-head h2 {
     flex: 1;
