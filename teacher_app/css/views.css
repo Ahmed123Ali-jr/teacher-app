@@ -4078,11 +4078,14 @@ body.drawer-open { overflow: hidden; }
     padding: var(--space-4);
     margin-bottom: var(--space-5);
 }
+/* والفاصلُ بين الأربعة أوسعُ من الفاصل داخل السطر الواحد: بثمانيةٍ كانت
+   تُقرأ كتلةً واحدة، فتُرفع إلى ثلاثة عشر لتنفصل كلُّ فقرةٍ عن جارتها
+   بلا أن ينتفخ الصندوق. */
 .tf-row {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
 }
 /* العنوانُ ملاصقٌ لحقله لا مدفوعٌ إلى الطرف الآخر: كان `flex: 1` يفرد
    بينهما عرضَ الصندوق كلَّه، فتقطع العينُ المسافة في كل سطر. */
@@ -4098,7 +4101,7 @@ body.drawer-open { overflow: hidden; }
     align-items: center;
     gap: var(--space-2);
     flex-wrap: wrap;
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
 }
 .tf-chips:last-child { margin-bottom: 0; }
 .tf-chip {
