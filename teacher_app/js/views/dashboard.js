@@ -496,11 +496,12 @@
         bind(container, teacher);
     }
 
+    /* نصٌّ وحده: الزرُّ صار عريضاً في أسفل الشاشة، والإطارُ المتقطّع كان
+       يرسم صندوقاً حول لا شيء. */
     function emptyState() {
         return `
-            <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-classes">
                 <h3>لا توجد لديك فصول بعد</h3>
-                <button class="btn btn-primary" data-empty-add>+ إضافة فصل جديد</button>
             </div>
         `;
     }

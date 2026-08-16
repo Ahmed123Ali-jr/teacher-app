@@ -16,14 +16,18 @@
         if (global.StageColors?.normalizeAll) await global.StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
 
+        /* ── زرٌّ واحدٌ عريضٌ في أسفل الشاشة ──
+           كان زرّان يفتحان النافذة نفسها: واحدٌ أعلى الصفحة وآخرُ في وسط
+           حالة الفراغ. فبقي واحدٌ في مكانٍ يبلغه الإبهام، ولا يتنقّل بين
+           الحالتين: هو نفسُه قبل أول فصلٍ وبعد العشرين. */
         container.innerHTML = `
-            <div class="container">
-                <div class="section-header classes-header" style="margin-top: var(--space-6);">
-                    <button class="btn-add-gray" id="btn-add-class">+ إضافة فصل</button>
-                </div>
+            <div class="container classes-v2">
                 ${classes.length === 0
                     ? global.DashboardView.emptyClassesState()
                     : groupedHtml(classes)}
+            </div>
+            <div class="classes-fab">
+                <button type="button" class="btn btn-primary" id="btn-add-class">+ إضافة فصل جديد</button>
             </div>
         `;
 

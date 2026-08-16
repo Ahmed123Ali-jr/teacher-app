@@ -5761,3 +5761,42 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* القوسُ يشرح ولا ينافس: أصغرُ وأخفت، ويلتفّ مع العنوان حين يضيق. */
 .start-card .t .n { font-size: 12px; font-weight: var(--fw-medium); color: var(--text-muted); }
 .start-card .chev { color: var(--text-muted); font-size: 13px; font-weight: var(--fw-black); }
+
+/* ==========================================================================
+   الفصول — زرُّ الإضافة العريض
+   ==========================================================================
+   كان زرّان يفتحان النافذة نفسها: واحدٌ أعلى الصفحة وآخرُ في وسط حالة
+   الفراغ. فبقي واحدٌ حيث يبلغه الإبهام، ثابتٌ لا يتنقّل بين الحالتين.
+   ========================================================================== */
+.classes-fab {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    z-index: 40;
+    padding: 10px var(--mobile-padding) 12px;
+    /* تدرّجٌ يذوب في الأرضية: الزرُّ يطفو ولا يقطع الصفحة بخطّ. */
+    background: linear-gradient(180deg, rgba(255,255,255,0), var(--bg) 45%);
+    pointer-events: none;
+}
+.classes-fab .btn {
+    display: block; width: 100%; max-width: var(--container-max);
+    margin-inline: auto; pointer-events: auto;
+}
+
+/* والمحتوى يترك له مكاناً فلا تختفي آخرُ بطاقةٍ تحته. */
+.classes-v2 { padding-bottom: 78px; }
+
+/* حالةُ الفراغ: نصٌّ في الوسط بلا إطار. */
+.empty-classes {
+    padding: 55px 21px 0;
+    text-align: center;
+}
+.empty-classes h3 {
+    margin: 0;
+    font-size: 19px; font-weight: var(--fw-black); color: var(--ink-primary);
+}
+
+/* على الحاسوب لا شريطَ سفليّاً، فيهبط الزرُّ إلى الحافّة. */
+@media (min-width: 769px) {
+    .classes-fab { bottom: 0; }
+}
