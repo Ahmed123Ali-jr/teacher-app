@@ -5788,9 +5788,20 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* والمحتوى يترك له مكاناً فلا تختفي آخرُ بطاقةٍ تحته. */
 .classes-v2 { padding-bottom: 91px; }
 
-/* حالةُ الفراغ: نصٌّ في الوسط بلا إطار. */
+/* حالةُ الفراغ: نصٌّ في وسط الشاشة بلا إطار.
+
+   والوسطُ يُحسب لا يُقدَّر: ارتفاعُ الشاشة ناقصَ الشريطين العلويّ والسفليّ
+   وحشوِ المحتوى وموضعِ الزرّ — فتقع العبارةُ في منتصف الفراغ الباقي بين
+   الشريط والزرّ، مهما كان طولُ الجهاز. و`dvh` لا `vh`: شريطُ المتصفّح على
+   الجوال يتمدّد وينكمش، و`vh` لا يراه فتنزل العبارةُ تحت الطيّة. */
 .empty-classes {
-    padding: 55px 21px 0;
+    min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height)
+                     - var(--safe-bottom) - var(--space-5) - 91px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 21px;
     text-align: center;
 }
 .empty-classes h3 {
