@@ -120,15 +120,15 @@
                         <span class="t">ملف الإنجاز</span>
                         <span class="h">${escapeHtml(sectionsWord(s.sections))} · ${escapeHtml(evidenceWord(s.evidence))}</span>
                     </a>
-                    <a href="#/reports" class="enjaz-tile">
-                        <span class="ic">📊</span>
-                        <span class="t">التقارير</span>
-                        <span class="h">الحضور والتقييمات</span>
-                    </a>
                     <a href="#/initiatives" class="enjaz-tile">
                         <span class="ic">🌟</span>
                         <span class="t">المبادرات</span>
                         <span class="h">${escapeHtml(initiativesWord(s.initiatives))}</span>
+                    </a>
+                    <a href="#/reports" class="enjaz-tile">
+                        <span class="ic">📊</span>
+                        <span class="t">التقارير</span>
+                        <span class="h">الحضور والتقييمات</span>
                     </a>
                     <a href="#/reminders" class="enjaz-tile">
                         <span class="ic">🔔</span>
