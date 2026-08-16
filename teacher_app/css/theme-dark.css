@@ -199,6 +199,8 @@ body.theme-dark .btn-back-box,
 body.theme-auto.dark-active .btn-back-box,
 body.theme-dark .sched-time-btn:not(.on),
 body.theme-auto.dark-active .sched-time-btn:not(.on),
+body.theme-dark .tf-chip:not(.on),
+body.theme-auto.dark-active .tf-chip:not(.on),
 body.theme-dark .sched-table thead th,
 body.theme-auto.dark-active .sched-table thead th,
 body.theme-dark .sched-corner,
@@ -308,7 +310,14 @@ body.theme-auto.dark-active .mark-bar-btn {
 body.theme-dark,
 body.theme-auto.dark-active { color: var(--text); }
 
-/* الرصاصيّ (‎#475467‎ وأخواته) */
+/* الرصاصيّ (‎#475467‎ وأخواته)
+
+   و`.btn-ghost` منها: `components.css` يكتبه بالرمز الرصاصيّ فيتبع المظهر،
+   لكن `portfolio-theme.css` يعيده كحلياً خالصاً (‎#0F2C5C‎) في كل التطبيق —
+   وهو على الداكن ‎1.25:1‎، أي «إلغاء» لا يكاد يُرى. وأربعةٌ وأربعون موضعاً
+   يستعمله، أكثرُها في اللوحات التي لا تبلغها أداةُ التباين. */
+body.theme-dark .btn-ghost,
+body.theme-auto.dark-active .btn-ghost,
 body.theme-dark .btn-back-box,
 body.theme-auto.dark-active .btn-back-box,
 body.theme-dark .chs-chip,

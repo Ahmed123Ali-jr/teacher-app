@@ -4078,30 +4078,32 @@ body.drawer-open { overflow: hidden; }
     padding: var(--space-4);
     margin-bottom: var(--space-5);
 }
-.tf-title {
-    font-size: 14px;
-    font-weight: var(--fw-black);
-    color: var(--ink-primary);
-    margin-bottom: var(--space-3);
-}
 .tf-row {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
 }
-.tf-lbl  { flex: 1; font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text); }
-.tf-lbl2 {
-    font-size: 11.5px;
-    font-weight: var(--fw-black);
-    color: var(--text-muted);
-    margin: var(--space-3) 0 var(--space-2);
+/* العنوانُ ملاصقٌ لحقله لا مدفوعٌ إلى الطرف الآخر: كان `flex: 1` يفرد
+   بينهما عرضَ الصندوق كلَّه، فتقطع العينُ المسافة في كل سطر. */
+.tf-lbl {
+    flex: 0 0 auto;
+    font-size: 12.5px;
+    font-weight: var(--fw-bold);
+    color: var(--text);
 }
 .tf-time, .tf-sel { min-height: 38px; width: auto; font-feature-settings: "tnum" 1; }
-.tf-chips { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.tf-chips {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+}
+.tf-chips:last-child { margin-bottom: 0; }
 .tf-chip {
     min-height: 38px;
-    padding: 0 14px;
+    padding: 0 12px;
     border-radius: 11px;
     border: 1.5px solid color-mix(in srgb, var(--beige) 88%, #000);
     background: #fff;
@@ -4116,7 +4118,19 @@ body.drawer-open { overflow: hidden; }
     border-color: var(--primary);
     color: #fff;
 }
-.tf-num { width: 70px; min-height: 38px; text-align: center; font-feature-settings: "tnum" 1; }
+.tf-num { width: 62px; min-height: 38px; text-align: center; font-feature-settings: "tnum" 1; }
+/* «أخرى» باهتةٌ تدلّ على الحقل ولا تُقرأ قيمةً فيه. */
+.tf-num::placeholder { color: var(--text-muted); font-size: 12px; font-weight: var(--fw-medium); opacity: 1; }
+
+/* «حفظ» و«إلغاء» فوق قائمة الحصص — لا في ذيل اللوحة خلف تمريرة. */
+.times-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+/* «حفظ» يأخذ السطر و«إلغاء» بقدر كلمته: تساويهما يجعل الإلغاء دعوةً
+   مثله، وليس هو ما جاء المعلّم من أجله. */
+.times-actions .btn-primary { flex: 1; }
 
 .times-list {
     display: flex;

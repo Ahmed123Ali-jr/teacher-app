@@ -1298,30 +1298,32 @@
         const form = document.createElement('div');
         paint();
 
+        /* حقلُ «أخرى» يبقى فارغاً ما دامت الحبّةُ المضيئة تقول المدّة —
+           كتابةُ الرقم مرّتين حشوٌ يشغل العين. ولا يُملأ إلا بمدّةٍ لا حبّةَ
+           لها، فهو حينئذٍ الموضعُ الوحيد الذي يحفظها. */
+        function otherVal(list, v) { return list.includes(v) ? '' : v; }
+
         function autofillHtml() {
             return `
                 <div class="tf-box">
-                    <div class="tf-title">⚡ تعبئة تلقائية</div>
-
                     <div class="tf-row">
                         <span class="tf-lbl">بداية الحصة الأولى</span>
                         <input type="time" class="input input-sm tf-time" id="tf-start" value="${cfg.start}">
                     </div>
 
-                    <div class="tf-lbl2">مدة الحصة</div>
                     <div class="tf-chips">
+                        <span class="tf-lbl">مدة الحصة</span>
                         ${DURATIONS.map((d) => `
                             <button type="button" class="tf-chip ${cfg.dur === d ? 'on' : ''}" data-dur="${d}">
                                 ${d} د
                             </button>
                         `).join('')}
                         <input type="number" class="input input-sm tf-num" id="tf-dur" min="20" max="90"
-                               value="${cfg.dur}" aria-label="مدة أخرى">
+                               value="${otherVal(DURATIONS, cfg.dur)}" placeholder="أخرى" aria-label="مدة أخرى">
                     </div>
 
-                    <div class="tf-lbl2">الفسحة</div>
                     <div class="tf-row">
-                        <span class="tf-lbl">بعد الحصة</span>
+                        <span class="tf-lbl">الفسحة بعد الحصة</span>
                         <select class="input input-sm tf-sel" id="tf-after">
                             <option value="0" ${cfg.breakAfter === 0 ? 'selected' : ''}>بلا فسحة</option>
                             ${rows.map((r) => `
@@ -1329,14 +1331,17 @@
                             `).join('')}
                         </select>
                     </div>
+
                     <div class="tf-chips">
+                        <span class="tf-lbl">مدة الفسحة</span>
                         ${BREAK_LENGTHS.map((d) => `
                             <button type="button" class="tf-chip ${cfg.breakDur === d ? 'on' : ''}" data-brk="${d}">
                                 ${d} د
                             </button>
                         `).join('')}
                         <input type="number" class="input input-sm tf-num" id="tf-brk" min="5" max="90"
-                               value="${cfg.breakDur}" aria-label="مدة أخرى للفسحة">
+                               value="${otherVal(BREAK_LENGTHS, cfg.breakDur)}" placeholder="أخرى"
+                               aria-label="مدة أخرى للفسحة">
                     </div>
 
                 </div>`;
@@ -1364,21 +1369,16 @@
             bindRows();
         }
 
+        /* «حفظ» فوق القائمة لا تحتها: كان في ذيل اللوحة فيمرّ المعلّم بسبع
+           حصصٍ قبل أن يبلغه، وأكثرُ ما يفعله ضبطُ البداية والمدّة ثم الحفظ. */
         function paint() {
             form.innerHTML = autofillHtml() + `
-                <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                    تُحسب فوراً — وتقدر تعدّل أي حصة يدوياً:
-                </p>
-                <div class="times-list" id="times-list">${rowsHtml()}</div>
-
-                <div class="flex gap-2" style="margin-top: var(--space-3);">
-                    <button type="button" class="btn btn-ghost btn-sm" id="reset-defaults">⟲ القيم الافتراضية</button>
-                </div>
-
-                <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <div class="times-actions">
                     <button type="button" class="btn btn-primary" id="save-times">حفظ</button>
                     <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
                 </div>
+
+                <div class="times-list" id="times-list">${rowsHtml()}</div>
             `;
             bindInner();
         }
@@ -1416,10 +1416,12 @@
                 form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', Number(b.dataset.brk) === v));
                 recalc();
             });
+            /* واختيارُ حبّةٍ يُفرغ «أخرى»: الحبّةُ صارت هي التي تقول المدّة،
+               فلو بقي الرقمُ فيه لتناقض الاثنان في عين المعلّم. */
             form.querySelectorAll('[data-dur]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     cfg.dur = Number(btn.dataset.dur);
-                    form.querySelector('#tf-dur').value = cfg.dur;
+                    form.querySelector('#tf-dur').value = '';
                     form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', b === btn));
                     recalc();
                 });
@@ -1427,18 +1429,13 @@
             form.querySelectorAll('[data-brk]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     cfg.breakDur = Number(btn.dataset.brk);
-                    form.querySelector('#tf-brk').value = cfg.breakDur;
+                    form.querySelector('#tf-brk').value = '';
                     form.querySelectorAll('[data-brk]').forEach((b) => b.classList.toggle('on', b === btn));
                     recalc();
                 });
             });
 
             bindRows();
-            form.querySelector('#reset-defaults')?.addEventListener('click', () => {
-                Object.assign(cfg, AUTOFILL_DEFAULT);
-                rows.splice(0, rows.length, ...DEFAULT_PERIODS.map((p) => ({ ...p })));
-                paint();
-            });
             form.querySelector('#save-times')?.addEventListener('click', () => {
                 const saved = rows.map((r) => ({ ...r }));
                 ctx.periods  = saved;
