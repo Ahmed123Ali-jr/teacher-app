@@ -3070,6 +3070,54 @@ body.drawer-open { overflow: hidden; }
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .18), 0 3px 9px rgba(15, 44, 92, .3);
 }
 
+/* ── «+ حصة انتظار اليوم» ──
+   يُسنَد للمعلّم انتظارٌ صباحَ يومه، فيسجّله بضغطتين بلا أن يفتح التعديل
+   ويبحث عن الخانة ويختار نوعها. وهو كهرمانيٌّ كالحصة التي يصنعها، وفي صدر
+   السطر — يمينِه في العربية — فلا يزاحم زرّي الجدول في نهايته. */
+.sched-wait-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    border-radius: 11px;
+    padding: 0 12px;
+    margin-inline-end: auto;
+    font-family: inherit;
+    font-weight: var(--fw-black);
+    font-size: 12.5px;
+    color: #B45309;
+    white-space: nowrap;
+    cursor: pointer;
+    background: color-mix(in srgb, #F59E0B 12%, var(--mix-base));
+    border: 1.5px solid color-mix(in srgb, #F59E0B 34%, var(--mix-base));
+    box-shadow: inset 0 1.5px 0 var(--sheen), 0 3px 8px rgba(16, 24, 40, .1);
+}
+.sched-wait-btn:active { transform: scale(.98); }
+
+/* وهو مفتوحٌ على وضع الاختيار: يمتلئ لونه ويصير «إلغاء» — الجدولُ ينتظر
+   ضغطةً، وهذا يجب أن يُرى بلا تأمّل كما في زرّ التعديل. */
+/* والتدرّج يبدأ من ‎#B45309‎ لا من أفتحَ منه: الأفتحُ يحمل كتابةً بيضاء
+   بنسبة ‎3.2:1‎ — دون العتبة، فيخفت أعلى الزرّ. وهو من ‎#B45309‎ نازلاً
+   ‎5.05:1‎ في أضعف موضعِه. */
+.sched-wait-btn.on {
+    color: #fff;
+    background: linear-gradient(150deg, #B45309 0%, #9A4507 55%, #7C2D12 100%);
+    border-color: #7C2D12;
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .18), 0 3px 9px rgba(180, 83, 9, .3);
+}
+
+/* وضعُ الاختيار: الشاغرُ من عمود اليوم وحده هدفٌ — إطارٌ كهرمانيٌّ متقطّع
+   و«+»، وما عداه يخفت فلا تتردّد العين أين تضغط. */
+.sched-v2.is-picking .sched-cell.is-pick { cursor: pointer; }
+/* والحدُّ يقرأ `currentColor`: فيتبع حبرَ الخانة نفسه — كهرمانيٌّ داكنٌ
+   على الأبيض، وفاتحٌ على الداكن حين يبدّله `theme-dark` — بلا قاعدةٍ
+   ثانيةٍ تُنسى عند التعديل. */
+.sched-v2.is-picking .sched-cell.is-pick .sched-box.empty {
+    border: 1.5px dashed currentColor;
+    background: color-mix(in srgb, #F59E0B 12%, var(--mix-base));
+    color: #B45309;
+}
+.sched-v2.is-picking .sched-cell:not(.is-pick) { opacity: .45; }
+
 /* خارج وضع التعديل الخانة ليست هدفاً للضغط، فلا مؤشّر ولا استجابة لمس. */
 .sched-v2:not(.is-editing) .sched-cell {
     cursor: default;

@@ -334,9 +334,16 @@ body.theme-auto.dark-active .lb {
     color: var(--text-muted) !important;
 }
 
-/* الكهرمانيّ: الانتظار والتنبيه (‎#B45309‎ ‎#8A5A10‎ ‎#92400e‎ ‎#7A6224‎) */
+/* الكهرمانيّ: الانتظار والتنبيه (‎#B45309‎ ‎#8A5A10‎ ‎#92400e‎ ‎#7A6224‎)
+
+   و`:not(.on)` على زرّ الانتظار: حالتُه المفتوحة كهرمانيةٌ ممتلئةٌ بكتابةٍ
+   بيضاء، فلو فُتّح حبرُها لصارت بيضاءَ على كهرمان. */
 body.theme-dark .sched-box.wait,
 body.theme-auto.dark-active .sched-box.wait,
+body.theme-dark .sched-wait-btn:not(.on),
+body.theme-auto.dark-active .sched-wait-btn:not(.on),
+body.theme-dark .sched-v2.is-picking .sched-cell.is-pick .sched-box.empty,
+body.theme-auto.dark-active .sched-v2.is-picking .sched-cell.is-pick .sched-box.empty,
 body.theme-dark .sch-note .t,
 body.theme-auto.dark-active .sch-note .t,
 body.theme-dark .sch-card.wait .g,

@@ -64,23 +64,42 @@
        قاعدة البيانات في الخلفية — الكتابة تستغرق مئات الأجزاء من الثانية. */
     function cleanupExpired(rows) {
         const today = todayKey();
-        return rows.map((r) => {
-            /* «انتظار لهذا اليوم» أُلغي كمفهوم — الصفوف القديمة تُحوَّل لانتظار
-               عادي بدل حذفها حتى لا يفقد المعلم حصصاً أضافها سابقاً. */
+        const out = [];
+        rows.forEach((r) => {
             if (!r.class_id && r.wait_kind === 'today') {
-                const norm = { ...r, wait_kind: 'perm', wait_date: null,
-                               updated_at: new Date().toISOString() };
-                bgSave(() => global.TeacherDB.put('schedule', norm));
-                return norm;
+                /* صفوفٌ قديمةٌ من عهدٍ كان فيه «انتظار اليوم» بلا تاريخ:
+                   تُحوَّل إلى انتظارٍ دائم بدل حذفها، فلا يفقد المعلّم حصصاً
+                   أضافها قبل أن يعود التاريخ إلى الصفّ. */
+                if (!r.wait_date) {
+                    const norm = { ...r, wait_kind: 'perm', wait_date: null,
+                                   updated_at: new Date().toISOString() };
+                    bgSave(() => global.TeacherDB.put('schedule', norm));
+                    out.push(norm);
+                    return;
+                }
+                /* وانتظارُ اليوم يمضي مع يومه: صفُّ الأمس يُحذف من نفسه صباحاً
+                   قبل أن يُرسم — فلا يجد المعلّم في جدوله انتظاراً انتهى. */
+                if (r.wait_date !== today) {
+                    if (r.id) bgSave(() => global.TeacherDB.remove('schedule', r.id));
+                    return;
+                }
             }
             if (!r.class_id && r.sub_class && r.sub_date !== today) {
                 const clean = { ...r, sub_class: null, sub_date: null,
                                 updated_at: new Date().toISOString() };
                 bgSave(() => global.TeacherDB.put('schedule', clean));
-                return clean;
+                out.push(clean);
+                return;
             }
-            return r;
+            out.push(r);
         });
+        return out;
+    }
+
+    /* يومُ الأسبوع كما يفهمه الجدول: الأحد ٠ … الخميس ٤، و‎-1‎ في العطلة. */
+    function todayIndex() {
+        const d = new Date().getDay();
+        return (d >= 0 && d <= 4) ? d : -1;
     }
 
     /* كل كتابة تمرّ من هنا: تنطلق في الخلفية، وإن فشلت أُبلغ المعلم بدل أن
@@ -159,16 +178,22 @@
        الجدول فوراً بعد كل تعديل بدل انتظار الشبكة. */
     function paintView(container, ctx) {
         const grid = buildGrid(ctx.schedule, ctx.periods.length);
-        const todayIdx = (() => {
-            const d = new Date().getDay();
-            return (d >= 0 && d <= 4) ? d : -1;
-        })();
+        const todayIdx = todayIndex();
 
         const editing = !!ctx.editing;
+        /* وضعُ الاختيار لا يعيش إلا في يومٍ دراسيّ وخارج التعديل: لو تُرك
+           قائماً بعد فتح التعديل لتزاحم حارسان على الخانة الواحدة. */
+        const picking = !!ctx.picking && todayIdx >= 0 && !editing;
+        ctx.picking = picking;
 
         container.innerHTML = `
-            <div class="container sched-v2${editing ? ' is-editing' : ''}">
+            <div class="container sched-v2${editing ? ' is-editing' : ''}${picking ? ' is-picking' : ''}">
                 <div class="sched-head">
+                    ${todayIdx >= 0 && !editing ? `
+                        <button type="button" class="sched-wait-btn${picking ? ' on' : ''}"
+                                id="btn-wait" aria-pressed="${picking}">
+                            ${picking ? '✕ إلغاء' : '+ حصة انتظار اليوم'}
+                        </button>` : ''}
                     <button type="button" class="sched-time-btn" id="btn-times">توقيت الحصص</button>
                     <button type="button" class="sched-time-btn sched-edit-btn${editing ? ' on' : ''}"
                             id="btn-edit" aria-pressed="${editing}">
@@ -178,11 +203,13 @@
 
                 ${ctx.classes.length === 0 ? classesEmptyHint() : ''}
 
-                ${renderGrid(grid, ctx.periods, ctx.classes, todayIdx, editing)}
+                ${renderGrid(grid, ctx.periods, ctx.classes, todayIdx, editing, picking)}
 
-                <p class="sched-hint">${editing
-                    ? 'اضغط أي خانة لإضافة حصة أو تعديلها'
-                    : 'الجدول مقفول — اضغط «تعديل» لتغييره'}</p>
+                <p class="sched-hint">${picking
+                    ? 'اضغط حصةً من عمود اليوم لتصير انتظاراً'
+                    : editing
+                        ? 'اضغط أي خانة لإضافة حصة أو تعديلها'
+                        : 'الجدول مقفول — اضغط «تعديل» لتغييره'}</p>
 
             </div>
 
@@ -289,7 +316,7 @@
 
     /* الشبكة المعتمدة (البديل ب): الحصص صفوفٌ على اليمين والأيام أعمدة أعلى،
        الأيام الخمسة كلها ظاهرة بلا تمرير أفقي، وعمود اليوم الحالي ذهبي. */
-    function renderGrid(grid, periods, classes, todayIdx, editing) {
+    function renderGrid(grid, periods, classes, todayIdx, editing, picking) {
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
         return `
             <div class="sched-wrap">
@@ -316,9 +343,11 @@
                                     if (!cell) {
                                         /* الخانة الفارغة بلا علامة خارج وضع التعديل:
                                            «+» دعوةٌ للضغط، وهي ما جعلت الجدول يتغيّر
-                                           بلمسة عابرة. */
-                                        return `<td class="sched-cell${tc}" ${attrs}>
-                                            <div class="sched-box empty">${editing ? '+' : ''}</div>
+                                           بلمسة عابرة. وفي وضع اختيار الانتظار تُعرض
+                                           «+» في خانات اليوم وحدها — هي وحدها الهدف. */
+                                        const pk = picking && d.index === todayIdx;
+                                        return `<td class="sched-cell${tc}${pk ? ' is-pick' : ''}" ${attrs}>
+                                            <div class="sched-box empty">${editing || pk ? '+' : ''}</div>
                                         </td>`;
                                     }
                                     const cls = classById[cell.class_id];
@@ -348,6 +377,50 @@
         `;
     }
 
+    /* ---------- زرّ «حصة انتظار اليوم» ----------
+       المعلّم يُسنَد إليه انتظارٌ صباحَ يومه، فيريد تسجيله في حصّته بضغطتين
+       بلا أن يفتح وضع التعديل ويبحث عن الخانة ويختار نوعها. */
+
+    function hasFreePeriodToday(ctx) {
+        const day = todayIndex();
+        if (day < 0) return false;
+        return ctx.periods.some((p) =>
+            !ctx.schedule.some((r) => r.day === day && r.period === p.n));
+    }
+
+    function addWaitToday(period, ctx, container) {
+        const day = todayIndex();
+        if (day < 0) return;
+        /* حارسٌ على الخانة نفسها: بين الرسم والضغط قد تكون امتلأت من نافذةٍ
+           أخرى للمعلّم، والكتابة فوقها تمحو حصةً حقيقية. */
+        if (ctx.schedule.some((r) => r.day === day && r.period === period)) {
+            ctx.picking = false;
+            paintView(container, ctx);
+            return;
+        }
+
+        const now = new Date().toISOString();
+        const row = {
+            teacher_id: ctx.teacher.id,
+            day, period,
+            class_id: null,
+            wait_kind: 'today',
+            wait_date: todayKey(),
+            sub_class: null, sub_date: null,
+            topic: '',
+            created_at: now, updated_at: now
+        };
+        ctx.schedule.push(row);
+        ctx.picking = false;
+        paintView(container, ctx);
+        global.TeacherApp.toast('أُضيفت حصة انتظار اليوم ✅', 'success', 1400);
+
+        queueWrite(day, period, async () => {
+            if (row.id) await global.TeacherDB.put('schedule', row);
+            else row.id = await global.TeacherDB.add('schedule', row);
+        }, () => render(container));
+    }
+
     function bind(container, ctx) {
         /* الخانات لا تفتح المحرّر إلا في وضع التعديل — الحارس هنا لا في
            الرسم وحده، حتى لا يفتحه ضغط على خانة معبّأة أيضاً. */
@@ -364,8 +437,28 @@
             });
         }
 
+        /* وضعُ اختيار الانتظار: الخانات الفارغة من عمود اليوم وحدها تستقبل
+           الضغط، فلا يفتح المعلّم محرّراً ولا يبدّل حصةً قائمة بالخطأ. */
+        if (ctx.picking) {
+            container.querySelectorAll('.sched-cell.is-pick').forEach((td) => {
+                td.addEventListener('click', () => {
+                    addWaitToday(Number(td.dataset.period), ctx, container);
+                });
+            });
+        }
+
+        container.querySelector('#btn-wait')?.addEventListener('click', () => {
+            if (!ctx.picking && !hasFreePeriodToday(ctx)) {
+                global.TeacherApp.toast('حصص اليوم كلها مشغولة.', 'info', 1600);
+                return;
+            }
+            ctx.picking = !ctx.picking;
+            paintView(container, ctx);
+        });
+
         container.querySelector('#btn-edit')?.addEventListener('click', () => {
             ctx.editing = !ctx.editing;
+            ctx.picking = false;
             paintView(container, ctx);
         });
 
