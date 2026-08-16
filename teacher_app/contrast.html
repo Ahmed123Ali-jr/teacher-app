@@ -221,6 +221,74 @@ function auditIn(win) {
 
 function sw(c) { return '<span class="sw" style="background:' + c + '"></span>'; }
 
+/* ── إعادةُ التنسيق قسراً ──
+   المظهرُ يُبدَّل هنا بصنفٍ يُكتب على `body` بعد أن أقلع التطبيق ورُسم
+   بألوان المظهر الآخر. وبعضُ العناصر — الشريطُ السفليّ منها — تحتفظ
+   بلونها المحسوب القديم حتى يُجبَر المتصفّح على إعادة الحساب، فتُقاس
+   بألوانٍ ليست ألوانَها: أبلغَ الفحصُ عن أحدَ عشرَ عيباً في `.bn-label`
+   لا وجودَ لها عند فتحٍ عاديٍّ في الوضع الداكن (‎7.1:1‎ مقيسة).
+
+   وإخفاءُ الجذرِ لحظةً ثم إظهارُه يُبطل التنسيق كلَّه ويُعاد بناؤه. */
+function forceRestyle(win) {
+    const r = win.document.documentElement;
+    const prev = r.style.display;
+    r.style.display = 'none';
+    void r.offsetHeight;
+    r.style.display = prev;
+    void r.offsetHeight;
+}
+
+/* ── الحالاتُ المضغوطة ──
+   الفحصُ يمشي على الشاشات في حالتها الأولى: لا يفتح وضعَ تعديلٍ ولا يختار
+   حبّة — فلا يرى `.on` قطّ. وهناك يسكن أخطرُ عيبٍ في هذا التطبيق: ملفّا
+   المظهر يُبيّضان الزرَّ بكلّ حالاته، والحالةُ المختارة كحليّةٌ بكتابةٍ
+   بيضاء — فتصير بيضاءَ على بيضاء. وقعت خمسَ مرّات قبل أن تُمسك بالعين.
+
+   فيُضاف صنفُ الحالة إلى كل عنصرٍ من هؤلاء، ويُقاس، ثم يُنزع.
+   **كلُّ مكوّنٍ جديدٍ له حالةٌ نشطة يُضاف هنا.** */
+const STATES = [
+    ['.sch-gcell',      'on'],        // الصف في «إضافة فصل»
+    ['.sch-sec',        'on'],        // الشعبة
+    ['.sch-chip',       'on'],        // المرحلة
+    ['.sch-card',       'on'],        // بطاقة الفصل في لوحة الجدول
+    ['.sched-edit-btn', 'on'],        // «✓ تم»
+    ['.sched-wait-btn', 'on'],        // «حصة انتظار اليوم»
+    /* ولا `.sched-time-btn`: هي الصنفُ الأساسُ لزرَّي «توقيت الحصص»
+       و«تعديل»، و«توقيت الحصص» لا يأخذ `.on` أبداً. وإلباسُها إيّاه يصنع
+       حالةً لا وجودَ لها في التطبيق فيُبلَّغ عنها عيباً كاذباً — فالقائمةُ
+       تُحاكي ما تلبسه المكوّنات فعلاً لا ما يقبله المُحدِّد. */
+    ['.tf-chip',        'on'],        // مدد الحصص والفسحة
+    ['.mvs-tab',        'on'],        // تبويبا الرسالة والرؤية
+    ['.dp-item',        'on'],        // إدارة التعليم
+    ['.popt',           'on'],
+    ['.pseg',           'on'],
+    ['.col-chip',       'active'],
+    ['.att-stat',       'active'],
+    ['.hf-stat',        'active'],
+    ['.bn-item',        'is-active']
+];
+
+/** يقيس الشاشة مرّةً أخرى وكلُّ عنصرٍ ذي حالةٍ مضغوط. */
+function auditPressed(win) {
+    const doc = win.document;
+    const touched = [];
+    for (const [sel, state] of STATES) {
+        doc.querySelectorAll(sel).forEach((el) => {
+            if (el.classList.contains(state)) return;
+            el.classList.add(state);
+            touched.push([el, state]);
+        });
+    }
+    if (!touched.length) return [];
+    forceRestyle(win);
+    let fails = [];
+    try { fails = auditIn(win); } finally {
+        for (const [el, state] of touched) el.classList.remove(state);
+        forceRestyle(win);
+    }
+    return fails.map((f) => Object.assign({}, f, { sel: '⌁ ' + f.sel }));
+}
+
 async function settle(win, need, ms) {
     const t0 = Date.now();
     while (Date.now() - t0 < (ms || 9000)) {
@@ -273,6 +341,7 @@ async function run() {
 
     win.document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
     win.document.body.classList.add('theme-' + mode);
+    forceRestyle(win);
 
     let total = 0, screens = 0;
     for (const s of SCREENS) {
@@ -284,7 +353,7 @@ async function run() {
            صامتاً فيظنّ القارئُ أن البقيّة سليمة، وهي لم تُقَس أصلاً. */
         let fails;
         try {
-            fails = auditIn(win);
+            fails = auditIn(win).concat(auditPressed(win));
         } catch (err) {
             const tr = document.createElement('tr');
             tr.className = 'head';
