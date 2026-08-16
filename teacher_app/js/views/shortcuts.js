@@ -1,7 +1,11 @@
 /* ==========================================================================
    views/shortcuts.js — شاشة «إنجاز» في الشريط السفلي.
-   ملخّص كحليّ لملف الإنجاز، ثم مربّعان رصاصيان وصفّ التذكيرات — بنفس
-   مواد صفحتي الفصول والرئيسية.
+   أربعةُ مربّعاتٍ رصاصيةٍ في شبكةٍ واحدة — بنفس مواد صفحتي الفصول
+   والرئيسية.
+
+   وكان فوقها شريطٌ كحليٌّ عريض «ملف إنجازك» يذهب حيث يذهب أوّلُ مربّع:
+   بابان إلى غرفةٍ واحدة، فحُذف الأعرض. وصفُّ «تذكيراتي» كان وحده بشكلٍ
+   مخالف، فصار مربّعاً رابعاً — والشبكة تُقرأ صفّاً واحداً من الشكل.
    ========================================================================== */
 
 (function (global) {
@@ -18,19 +22,6 @@
         return d.getFullYear() + '-' +
                String(d.getMonth() + 1).padStart(2, '0') + '-' +
                String(d.getDate()).padStart(2, '0');
-    }
-
-    /** «قبل يومين» أوضح للمعلم من تاريخ مجرّد في سطر ملخّص. */
-    function sinceLabel(iso) {
-        if (!iso) return 'لم تُضف شواهد بعد';
-        const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-        if (!isFinite(days) || days < 0) return 'آخر إضافة: اليوم';
-        if (days === 0) return 'آخر إضافة: اليوم';
-        if (days === 1) return 'آخر إضافة: أمس';
-        if (days === 2) return 'آخر إضافة: قبل يومين';
-        if (days < 11)  return `آخر إضافة: قبل ${days} أيام`;
-        if (days < 31)  return `آخر إضافة: قبل ${days} يوماً`;
-        return 'آخر إضافة: قبل أكثر من شهر';
     }
 
     function sectionsWord(n) {
@@ -55,6 +46,16 @@
         if (n === 2) return 'شاهدان';
         if (n <= 10) return `${n} شواهد`;
         return `${n} شاهداً`;
+    }
+
+    /* «قادم» لأن المعدود ما لم يُنجَز بعدُ وتاريخه اليوم أو بعده — الرقم
+       وحده كان حبّةً على الصفّ، وقد صار المربّعُ يقرأه سطراً. */
+    function remindersWord(n) {
+        if (n === 0) return 'لا تذكيرات قادمة';
+        if (n === 1) return 'تذكير واحد قادم';
+        if (n === 2) return 'تذكيران قادمان';
+        if (n <= 10) return `${n} تذكيرات قادمة`;
+        return `${n} تذكيراً قادماً`;
     }
 
     /* الشواهد موزّعة على مخازن عدّة: بعضها في صف ملف الإنجاز وبعضها يُجمع
@@ -96,7 +97,6 @@
         return {
             evidence: buckets.reduce((a, b) => a + b, 0),
             sections: filled,
-            updated:  p.updated_at || null,
             reminders: reminders.filter((r) => !r.done && r.date >= today).length,
             /* المبادرات المختلفة لا عدد مرات التنفيذ — المهم التنوّع. */
             initiatives: new Set(initiatives.map((r) =>
@@ -114,18 +114,6 @@
 
         container.innerHTML = `
             <div class="container enjaz-v1">
-                <a href="#/portfolio" class="enjaz-band">
-                    <span class="em">📁</span>
-                    <span class="tx">
-                        <span class="t">ملف إنجازك</span>
-                        <span class="h">${escapeHtml(sinceLabel(s.updated))}</span>
-                    </span>
-                    <span class="n">
-                        <b class="num">${s.evidence}</b>
-                        <span>شاهداً</span>
-                    </span>
-                </a>
-
                 <div class="enjaz-grid">
                     <a href="#/portfolio" class="enjaz-tile">
                         <span class="ic">📁</span>
@@ -142,14 +130,12 @@
                         <span class="t">المبادرات</span>
                         <span class="h">${escapeHtml(initiativesWord(s.initiatives))}</span>
                     </a>
+                    <a href="#/reminders" class="enjaz-tile">
+                        <span class="ic">🔔</span>
+                        <span class="t">تذكيراتي</span>
+                        <span class="h">${escapeHtml(remindersWord(s.reminders))}</span>
+                    </a>
                 </div>
-
-                <a href="#/reminders" class="enjaz-row">
-                    <span class="ic">🔔</span>
-                    <span class="t">تذكيراتي</span>
-                    ${s.reminders ? `<span class="b num">${s.reminders}</span>` : ''}
-                    <span class="chev">›</span>
-                </a>
             </div>
         `;
     }
