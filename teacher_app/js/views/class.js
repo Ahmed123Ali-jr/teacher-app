@@ -265,7 +265,7 @@
                             <div class="hub-tile-icon" style="background:${g.bg}">${g.icon}</div>
                             <div class="hub-tile-body">
                                 <div class="hub-tile-label">${g.label}</div>
-                                <div class="hub-tile-count" style="color:${g.count ? g.tint : '#B6BFCC'}">
+                                <div class="hub-tile-count" style="color:${g.count ? g.tint : '#6B7686'}">
                                     ${g.count === null ? 'الخطة' : (g.count || '—')}
                                 </div>
                             </div>

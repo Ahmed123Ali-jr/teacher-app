@@ -341,6 +341,10 @@ body.theme-dark .cls-s,
 body.theme-auto.dark-active .cls-s,
 body.theme-dark .vl.is-empty,
 body.theme-auto.dark-active .vl.is-empty,
+/* وحبرُ «لم تُنفَّذ» صار مكتوباً صريحاً في `views.css` ليعبر العتبة على
+   أرضيّته الفاتحة — فيُعاد هنا إلى الرمز، وإلّا بقي داكناً على داكن. */
+body.theme-dark .stg-top .badge.none,
+body.theme-auto.dark-active .stg-top .badge.none,
 body.theme-dark .lb,
 body.theme-auto.dark-active .lb {
     color: var(--text-muted) !important;

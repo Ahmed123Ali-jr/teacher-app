@@ -1694,7 +1694,9 @@ body.drawer-open { overflow: hidden; }
     min-height: 38px;
     border: 0;
     border-radius: 11px;
-    background: #059669;
+    /* الأبيضُ على ‎#059669‎ = ‎3.77:1‎ — دون العتبة. و‎#0B6B4A‎ يبلغ ‎5.9:1‎
+       ويبقى أخضرَ يُفهم أنه تأكيد. (وهو نفسُه المعتمد في الداكن.) */
+    background: #0B6B4A;
     color: #fff;
     font-family: inherit;
     font-weight: var(--fw-black);
@@ -3562,7 +3564,10 @@ body.drawer-open { overflow: hidden; }
     flex: 1; min-width: 0; font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.frow .vl.is-empty { color: #C0BAA8; font-weight: var(--fw-medium); }
+/* ‎#C0BAA8‎ كان ‎1.94:1‎ على الأبيض — خافتٌ إلى حدّ الاختفاء. و‎#7A756A‎
+   يبلغ ‎4.59:1‎ ويبقى خافتاً في عين الناظر: الفرقُ يُقرأ ولا يُلاحَظ.
+   (قِيس لا حُسب: ‎#8A8474‎ الذي قُدّر أوّلاً لم يبلغ غير ‎3.73‎.) */
+.frow .vl.is-empty { color: #7A756A; font-weight: var(--fw-medium); }
 /* النقطة الذهبية = حقل مطلوب ما زال فارغاً */
 .frow .dot { width: 7px; height: 7px; border-radius: 50%; background: #C9A961; flex-shrink: 0; }
 .frow-input {
@@ -4643,7 +4648,9 @@ body.drawer-open { overflow: hidden; }
     background: color-mix(in srgb, #10B981 14%, var(--mix-base)); color: #047857;
     border: 1px solid color-mix(in srgb, #10B981 34%, var(--mix-base));
 }
-.stg-top .badge.none { background: #ECEAE3; color: var(--text-muted); }
+/* الحبرُ الخافت (‎#6B6B68‎) على ‎#ECEAE3‎ = ‎4.44:1‎ — تحت العتبة بشعرة.
+   ودرجةٌ واحدة تكفي، فيُكتب صريحاً هنا لا من الرمز. */
+.stg-top .badge.none { background: #ECEAE3; color: #63635F; }
 
 /* ==========================================================================
    مكتبة المبادرات — تشارك أصناف الاستراتيجيات (.stg-*) وتزيد ثلاثة

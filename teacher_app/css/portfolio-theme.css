@@ -147,7 +147,7 @@ body {
 }
 .badge-warning {
     background: var(--pf-gold-light);
-    color: #8C7027;                /* darker gold for legibility on light bg */
+    color: #6B5416;                /* ‎4.8:1‎ على الذهبيّ الباهت — كان ‎3.34‎ */
 }
 .badge-muted {
     background: var(--pf-ivory);
