@@ -145,10 +145,15 @@ body.theme-dark .ac-card,
 body.theme-auto.dark-active .ac-card,
 body.theme-dark .imp-box,
 body.theme-auto.dark-active .imp-box,
-body.theme-dark .sch-card,
-body.theme-auto.dark-active .sch-card,
-body.theme-dark .sch-sec,
-body.theme-auto.dark-active .sch-sec,
+body.theme-dark .sch-card:not(.on),
+body.theme-auto.dark-active .sch-card:not(.on),
+/* و`.sch-gcell` هنا لأن تدرّجه يكتب `#fff` و`#ECEAE3` صريحين ولا يقرؤهما
+   من رمز: فبقي شريطاً أبيضَ في الوضع الداكن، وحبرُه الكحليُّ الفاتح عليه
+   ‎1.74:1‎ — «الصف» يُقرأ بالكاد. */
+body.theme-dark .sch-gcell:not(.on),
+body.theme-auto.dark-active .sch-gcell:not(.on),
+body.theme-dark .sch-sec:not(.on),
+body.theme-auto.dark-active .sch-sec:not(.on),
 body.theme-dark .sched-import,
 body.theme-auto.dark-active .sched-import,
 body.theme-dark .rem-card,
@@ -163,8 +168,8 @@ body.theme-dark .pstg-sum,
 body.theme-auto.dark-active .pstg-sum,
 body.theme-dark .enjaz-tile,
 body.theme-auto.dark-active .enjaz-tile,
-body.theme-dark .dp-item,
-body.theme-auto.dark-active .dp-item,
+body.theme-dark .dp-item:not(.on),
+body.theme-auto.dark-active .dp-item:not(.on),
 body.theme-dark .hub-featured,
 body.theme-auto.dark-active .hub-featured,
 body.theme-dark .hub-tile,
@@ -205,8 +210,8 @@ body.theme-dark .sched-corner,
 body.theme-auto.dark-active .sched-corner,
 body.theme-dark .bell-row,
 body.theme-auto.dark-active .bell-row,
-body.theme-dark .mvs-tab,
-body.theme-auto.dark-active .mvs-tab,
+body.theme-dark .mvs-tab:not(.on),
+body.theme-auto.dark-active .mvs-tab:not(.on),
 body.theme-dark .col-chip,
 body.theme-auto.dark-active .col-chip,
 body.theme-dark .att-stat,
@@ -436,12 +441,18 @@ body.theme-auto.dark-active .subp-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%23A3AEC0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
 }
 
-/* حقولُ الإدخال: الكتابةُ فيها من الحبر لا من لون المتصفّح. */
+/* حقولُ الإدخال: الكتابةُ فيها من الحبر لا من لون المتصفّح.
+
+   و`background-color` لا `background`: المختصرُ يمحو أخواته كلَّها —
+   `repeat` و`position` و`size` — ولو لم تُذكر. ومنتقي المواد يرسم سهمه
+   صورةً بموضعٍ وبلا تكرار، فكان المختصرُ يُعيدهما إلى الأصل فينتشر
+   السهمُ مكرَّراً على عرض الحقل: زخرفةٌ متعرّجةٌ تُغطّي اسم المادة.
+   واللونُ وحده هو المقصود هنا، فيُكتب وحده. */
 body.theme-dark input, body.theme-auto.dark-active input,
 body.theme-dark textarea, body.theme-auto.dark-active textarea,
 body.theme-dark select, body.theme-auto.dark-active select {
     color: var(--text);
-    background: var(--surface-alt);
+    background-color: var(--surface-alt);
     border-color: var(--border);
 }
 body.theme-dark ::placeholder,
