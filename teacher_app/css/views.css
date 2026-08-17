@@ -1857,9 +1857,15 @@ body.drawer-open { overflow: hidden; }
     background: rgba(255, 255, 255, .75);
     display: grid; place-items: center; font-size: 16px;
 }
+/* ══ حبرُ الذهبيّ كحليٌّ مثبَّتٌ لا رمزٌ يتبع المظهر ══
+   الذهبيُّ ‎#C9A961‎ سطحٌ فاتحٌ **لا يتبدّل** بين المظهرين، فحبرُه لا يجوز
+   أن يتبدّل: كان `var(--ink-primary)` فصار في الداكن كحلياً فاتحاً
+   (‎#8FB4F5‎) على ذهبيّ — نسبةٌ لا تُقرأ، **قبل أي تعديلٍ اليوم**. والفحصُ
+   لم يمسكه لأن هذه الحالاتِ لا تُرى إلا بحدث: حصةٌ جاريةٌ الآن، وبطاقةٌ
+   مختارة، وعمودُ يومٍ في الجدول. فيُكتب الكحليُّ صريحاً ويستوي المظهران. */
 .rem-head b { font-size: var(--fs-sm); color: var(--ink-primary); }
 .rem-bd {
-    background: #C9A961; color: var(--ink-primary);
+    background: #C9A961; color: #0F2C5C;
     font-weight: var(--fw-black); font-size: 12px;
     min-width: 22px; height: 22px; border-radius: 50%;
     display: grid; place-items: center;
@@ -1964,8 +1970,8 @@ body.drawer-open { overflow: hidden; }
     transform: scale(1.05);
     box-shadow: 0 3px 13px rgba(201, 169, 97, .5);
 }
-.pchip.live .pc-n, .pchip.live .pc-t, .pchip.live .pc-c { color: var(--ink-primary); font-weight: var(--fw-black); }
-.pchip.live .pc-s { color: color-mix(in srgb, var(--ink-primary) 78%, transparent); font-weight: var(--fw-black); }
+.pchip.live .pc-n, .pchip.live .pc-t, .pchip.live .pc-c { color: #0F2C5C; font-weight: var(--fw-black); }
+.pchip.live .pc-s { color: rgba(15, 44, 92, .78); font-weight: var(--fw-black); }
 .pchip.wait { background: rgba(231, 200, 123, .15); border-color: rgba(231, 200, 123, .45); }
 .pchip.wait .pc-c { color: #E7C87B; }
 
@@ -1985,7 +1991,7 @@ body.drawer-open { overflow: hidden; }
 }
 .hh-badge {
     position: absolute; top: 15px; left: 15px;
-    background: #C9A961; color: var(--ink-primary);
+    background: #C9A961; color: #0F2C5C;
     font-weight: var(--fw-black); font-size: 12px;
     border-radius: 8px; padding: 3px 9px;
     display: flex; align-items: center; gap: 5px;
@@ -2023,7 +2029,7 @@ body.drawer-open { overflow: hidden; }
     margin-top: 18px;
     min-height: 55px;
     border-radius: 13px;
-    background: #C9A961; color: var(--ink-primary);
+    background: #C9A961; color: #0F2C5C;
     font-weight: var(--fw-black); font-size: 17px;
     text-decoration: none;
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .4), 0 4px 10px rgba(0, 0, 0, .2);
@@ -3172,7 +3178,7 @@ body.drawer-open { overflow: hidden; }
 /* عمود اليوم الحالي */
 .sched-table thead th.is-today {
     background: linear-gradient(180deg, #D6B96F, #C9A961);
-    color: var(--ink-primary);
+    color: #0F2C5C;
     border-bottom-color: color-mix(in srgb, #C9A961 70%, #000);
 }
 /* رأس «الحصة» رصاصي كرؤوس الأيام؛ الكحليّ لخلايا الأرقام تحته فقط. */
@@ -3360,7 +3366,7 @@ body.drawer-open { overflow: hidden; }
 .sch-card.on::after {
     content: "✓"; position: absolute; top: 8px; left: 10px;
     width: 20px; height: 20px; border-radius: 50%;
-    background: #C9A961; color: var(--ink-primary);
+    background: #C9A961; color: #0F2C5C;
     font-size: 12px; font-weight: var(--fw-black);
     display: grid; place-items: center;
 }
@@ -3600,6 +3606,10 @@ body.drawer-open { overflow: hidden; }
     background: #fff; border: 1.5px dashed #C9A961;
 }
 .flogo .box img { width: 100%; height: 100%; object-fit: cover; }
+/* الحبرُ من الرمز: المربّعُ يبدو أبيضَ مثبَّتاً هنا، لكنّ
+   `body.theme-dark .box` قاعدةٌ عامّةٌ تقلب **أيَّ** ‎.box‎ — فيُقلب
+   معها ويتبعه حبرُه. (ثُبِّت خطأً ثم رُدّ بعد القياس: كحليٌّ على
+   داكنٍ = ‎1.25:1‎.) */
 .flogo .box span { font-size: 16px; font-weight: var(--fw-black); color: var(--ink-primary); }
 .flogo .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .flogo .t { font-size: 13px; font-weight: var(--fw-black); color: var(--ink-primary); }
@@ -4855,7 +4865,8 @@ body.drawer-open { overflow: hidden; }
     display: block; font-size: 10.5px; font-weight: var(--fw-black);
     color: #B8963F; margin-bottom: 3px;
 }
-.mv-item .tx { display: block; font-size: 13px; line-height: 1.85; color: var(--text); }
+/* والمِثل: بطاقةُ الصياغة أرضيّتها `#fff` صريحةٌ في المظهرين. */
+.mv-item .tx { display: block; font-size: 13px; line-height: 1.85; color: #2C2C2A; }
 
 /* ==========================================================================
    محرّر الأسئلة (question-editor.js) — التصميم ب.
@@ -5075,7 +5086,8 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .br-retry {
     display: block; margin: 16px auto 0; min-height: 44px; padding: 0 20px;
     border-radius: 12px; cursor: pointer; font-family: inherit;
-    font-size: 13px; font-weight: var(--fw-black); color: var(--ink-primary);
+    /* أرضيّةٌ بيجٌ مثبَّتةٌ في المظهرين، فحبرُها صريح. */
+    font-size: 13px; font-weight: var(--fw-black); color: #0F2C5C;
     background: #ECEAE3; border: 1.5px solid #D8D5CC;
 }
 
@@ -5101,7 +5113,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     font-family: inherit; font-size: 13px; font-weight: var(--fw-black);
 }
 .br-jump-row .go { color: #fff; background: var(--primary); border: 1.5px solid #0A2049; }
-.br-jump-row .no { color: var(--ink-primary); background: #ECEAE3; border: 1.5px solid #D8D5CC; }
+.br-jump-row .no { color: #0F2C5C; background: #ECEAE3; border: 1.5px solid #D8D5CC; }
 
 /* ---------- استيراد الجدول من صورة ---------- */
 .sched-import {
