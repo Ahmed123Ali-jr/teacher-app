@@ -5777,22 +5777,22 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    حدٍّ كحليٍّ يقولها مرّةً ثانية. */
 .start-card:active { transform: scale(.995); }
 
-.start-card .ic {
-    width: 46px; height: 46px; flex: none; border-radius: 14px;
-    display: grid; place-items: center; font-size: 21px;
-    background: var(--surface-alt); border: 1px solid var(--border);
-}
-.start-card.main .ic {
-    background: linear-gradient(150deg, #1B3E77, var(--primary));
-    border-color: var(--primary);
-}
+/* بلا مربّعِ رمز: حُذف الرمزان فحُذف مربّعُهما — كان يأخذ ستّةً وأربعين
+   بكسلاً من صدر كل بطاقة، والعنوانُ يقول ما تقوله الصورة. */
 .start-card .tx { flex: 1; min-width: 0; }
 .start-card .t {
     display: block; font-size: 15.5px; font-weight: var(--fw-black);
     color: var(--ink-primary); line-height: 1.6;
 }
-/* القوسُ يشرح ولا ينافس: أصغرُ وأخفت، ويلتفّ مع العنوان حين يضيق. */
-.start-card .t .n { font-size: 12px; font-weight: var(--fw-medium); color: var(--text-muted); }
+/* الشرحُ سطرٌ ثانٍ لا قوسٌ داخل العنوان: كان ‎12px‎ خافتاً ملتفّاً مع
+   العنوان فيُقرأ حاشيةً تُتخطّى، وهو أهمُّ ما في البطاقة — يقول للمعلّم
+   إن رفعَ الجدول يبني فصولَه وحصصَه معاً. فنزل سطراً مستقلاً وكبر
+   وأخذ لونَ الحبر الخافت لا الأخفت. */
+.start-card .n {
+    display: block; margin-top: 3px;
+    font-size: 13px; font-weight: var(--fw-bold);
+    color: var(--text-muted); line-height: 1.5;
+}
 .start-card .chev { color: var(--text-muted); font-size: 13px; font-weight: var(--fw-black); }
 
 /* ==========================================================================

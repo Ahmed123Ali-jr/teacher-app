@@ -355,24 +355,27 @@
         /* ── طريقان متساويان لا خطوتان ──
            كان الأولُ في بطاقةٍ مضيئةٍ والثاني زرّاً وحيداً تحتها، فيُقرأ
            خطوةً ثانيةً لا اختياراً آخر. وكان العنوانُ والزرُّ يقولان الشيء
-           نفسه: «ارفع جدولك» مرّتين.
+           نفسه: «ارفع جدولك» مرّتين. فصارا صفَّين متساويي الحجم.
 
-           فصارا صفَّين متساويي الحجم، لكلٍّ رمزُه وعنوانُه. والإضافةُ
-           اليدوية أوّلاً — هي مبدأ من ليس جدولُه بيده. */
+           و«ارفع جدولك» أوّلاً بقرار المستخدم (١٧ أغسطس ٢٠٢٦): هو الطريقُ
+           الذي يبني الفصولَ والحصصَ معاً، فالبدءُ به أسرعُ من إضافة ستّة
+           فصولٍ بيده. والإضافةُ اليدوية تبقى ظاهرةً لمن ليس جدولُه بيده.
+
+           وبلا رمزين: مربّعُ الرمز كان يأخذ ستّةً وأربعين بكسلاً من صدر
+           كل بطاقة، والعنوانُ يقول ما تقوله الصورةُ وأدقَّ منها. */
         return `
             <div class="start-two">
-                <button type="button" class="start-card main" data-add-class>
-                    <span class="ic">✍️</span>
-                    <span class="tx"><span class="t">أضف فصلاً بنفسك</span></span>
-                    <span class="chev">❮</span>
-                </button>
                 <a href="#/schedule?import=1" class="start-card">
-                    <span class="ic">📷</span>
                     <span class="tx">
-                        <span class="t">ارفع جدولك <span class="n">(تُنشأ فصولك تلقائياً)</span></span>
+                        <span class="t">ارفع جدولك</span>
+                        <span class="n">تُنشأ فصولك وحصصك تلقائياً</span>
                     </span>
                     <span class="chev">❮</span>
                 </a>
+                <button type="button" class="start-card" data-add-class>
+                    <span class="tx"><span class="t">أضف فصلاً بنفسك</span></span>
+                    <span class="chev">❮</span>
+                </button>
             </div>`;
     }
 
