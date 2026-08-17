@@ -260,6 +260,14 @@
         return `${g}/${cls.section}`;
     }
 
+    /* المرحلةُ سطرٌ ثانٍ تحت الاسم: «الأول/ب» وحدَها لا تكفي من يدرّس أولَ
+       ابتدائيٍّ وأولَ متوسطٍ وأولَ ثانويٍّ في اليوم نفسه — ثلاثُ حبّاتٍ
+       متطابقةٍ لا يميّزها. وخانةُ الجدول تفعل هذا أصلاً، فتتّحد القراءتان. */
+    function chipStage(cls) {
+        const m = String(cls.grade || '').match(/(ابتدائي|متوسط|ثانوي)/);
+        return m ? m[1] : '';
+    }
+
     /* بطاقة التذكيرات المطويّة — تُخفى كلياً عند صفر تذكيرات */
     /* البطاقة كانت تختفي تماماً بلا تذكيرات، فلا يجد المعلم من أين يضيف
        واحداً. صارت تظهر دائماً ومعها زرّ الإضافة. */
@@ -318,10 +326,12 @@
             else if (start !== null && end !== null && now >= start && now < end) st = 'live';
             const wait = !cls;
             const name = wait ? 'انتظار' : esc(chipName(cls));
+            const stage = wait ? '' : esc(chipStage(cls));
             const inner = `
                 <span class="pc-n num">${r.period}</span>
                 <span class="pc-t num">${p ? esc(p.start) : ''}</span>
-                <span class="pc-c">${name}</span>`;
+                <span class="pc-c">${name}</span>
+                ${stage ? `<span class="pc-s">${stage}</span>` : ''}`;
             return wait
                 ? `<div class="pchip wait ${st === 'past' ? 'past' : ''}">${inner}</div>`
                 : `<a href="#/class/${cls.id}" class="pchip ${st}">${inner}</a>`;

@@ -1947,9 +1947,17 @@ body.drawer-open { overflow: hidden; }
 .pchip .pc-n { font-weight: var(--fw-black); font-size: var(--fs-sm); color: #fff; }
 .pchip .pc-t { font-size: 11px; color: rgba(255, 255, 255, .6); }
 .pchip .pc-c { font-size: 11px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .85); }
+/* المرحلةُ سطرٌ تحت الاسم: «الأول/ب» وحدَها لا تميّز أوّلَ ابتدائيٍّ من
+   أوّلِ متوسطٍ من أوّلِ ثانويّ. أصغرُ وأخفتُ فلا تزاحم الاسم — و‎5.87:1‎
+   على الكحليّ. */
+.pchip .pc-s {
+    font-size: 9px; font-weight: var(--fw-bold);
+    color: rgba(255, 255, 255, .6); margin-top: -1px;
+}
 .pchip.past { background: rgba(255, 255, 255, .05); border-color: transparent; }
 .pchip.past .pc-n,
-.pchip.past .pc-c { color: rgba(255, 255, 255, .45); }
+.pchip.past .pc-c,
+.pchip.past .pc-s { color: rgba(255, 255, 255, .45); }
 .pchip.past .pc-n::after { content: " ✓"; font-size: 11px; }
 .pchip.live {
     background: #C9A961; border-color: transparent;
@@ -1957,6 +1965,7 @@ body.drawer-open { overflow: hidden; }
     box-shadow: 0 3px 13px rgba(201, 169, 97, .5);
 }
 .pchip.live .pc-n, .pchip.live .pc-t, .pchip.live .pc-c { color: var(--ink-primary); font-weight: var(--fw-black); }
+.pchip.live .pc-s { color: color-mix(in srgb, var(--ink-primary) 78%, transparent); font-weight: var(--fw-black); }
 .pchip.wait { background: rgba(231, 200, 123, .15); border-color: rgba(231, 200, 123, .45); }
 .pchip.wait .pc-c { color: #E7C87B; }
 
