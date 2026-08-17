@@ -403,6 +403,9 @@ body.theme-auto.dark-active .dz-title {
 /* حبرُ بطاقة الهُويّة في ملفّ الإنجاز: كحليٌّ خامٌّ على سطحٍ داكن. */
 body.theme-dark .pf-id-value,
 body.theme-auto.dark-active .pf-id-value,
+/* وسطرُ «المملكة العربية السعودية» صار كحلياً مثلَه، فيلحق به هنا. */
+body.theme-dark .pf-id-country,
+body.theme-auto.dark-active .pf-id-country,
 body.theme-dark .portfolio-avatar,
 body.theme-auto.dark-active .portfolio-avatar,
 body.theme-dark .btn-secondary,

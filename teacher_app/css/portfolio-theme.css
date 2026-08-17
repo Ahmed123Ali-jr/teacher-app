@@ -227,10 +227,13 @@ a:hover {
     margin-bottom: 24px;
 }
 
+/* كان ذهبياً: ‎2.25:1‎ على الأبيض — لا يُقرأ. وهو اللونُ الثالثُ الوحيد
+   في بطاقةٍ لونُها لونان، ويخرج من الطابعة الأحادية رماديّاً باهتاً يكاد
+   يختفي. فصار كحليّاً كالعنوان تحته: ترويسةٌ بلونٍ واحد. */
 #view-portfolio .pf-id-country {
     font-size: 12px;
     font-weight: 500;
-    color: var(--pf-gold);
+    color: var(--pf-royal);
     letter-spacing: 0;
     margin-bottom: 8px;
 }

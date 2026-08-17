@@ -794,10 +794,12 @@
         margin-bottom: 6mm;
     }
 
+    /* كحليٌّ لا ذهبيّ — كالشاشة سواءً بسواء. والذهبيُّ كان يخرج من
+       الطابعة الأحادية رماديّاً باهتاً. */
     .print-id-country {
         font-size: 10pt;
         font-weight: 500;
-        color: #C9A961;
+        color: #0F2C5C;
         letter-spacing: 0;
         margin-bottom: 2mm;
     }
