@@ -13,8 +13,21 @@
  *   in index.html.
  */
 
-const BUILD_ID   = '__BUILD_ID__';   // replaced at deploy time
-const CACHE_NAME = 'teacher-app-' + BUILD_ID;
+const BUILD_ID = '__BUILD_ID__';   // replaced at deploy time
+
+/* ── مخزنان لا واحد ──
+   كان مخزنٌ واحدٌ باسم النشر يحمل القشرةَ والأصولَ معاً، و`activate` يمسحه
+   كلَّه عند كل نشر. فيفتح المعلّم التطبيق بعد نشرٍ جديد: القشرةُ تأتي من
+   المخزن فوراً، وكلُّ ملفّ شيفرةٍ فيها يجب أن يُجلب من الشبكة من جديد —
+   فإن كانت ضعيفةً أو منقطعةً ظهرت الشاشةُ بيضاء. (بلاغُ المعلّم، ١٧ أغسطس
+   ٢٠٢٦.)
+
+   والأصولُ لا تحتاج مسحاً أصلاً: عنوانُها يحمل رقمَه (`?v=`) فهو ثابتُ
+   المحتوى إلى الأبد — نسخةٌ قديمةٌ في المخزن لا تُقرأ لأن القشرةَ الجديدة
+   تطلب رقماً جديداً. فصار لها مخزنُها الذي يعبر النشرات، والقشرةُ وحدها
+   هي التي تُجدَّد. */
+const SHELL_CACHE = 'teacher-app-' + BUILD_ID;
+const ASSET_CACHE = 'teacher-app-assets-1';
 
 /* مكتبات vendor مثبّتة الإصدار، فمحتواها لا يتغيّر أبداً. لها مخزنها
    المستقل الذي لا يُمسح مع كل نشر — وإلا أعاد المعلم تنزيل ١.٩ ميجا
@@ -36,10 +49,23 @@ const VENDOR_FILES = [
     './vendor/fonts/plex-700-latin.woff2',
 ];
 
+/* الأصلُ يُحفظ وتُحذف نسخُه القديمة: المخزنُ لا يُمسح مع النشر، فلولا
+   التقليم لتراكمت فيه كلُّ نسخةٍ من كل ملفٍّ منذ أوّل يوم. ويُطابَق
+   بالمسار: `views.css?v=D190` تذهب حين تصل `views.css?v=D191`. */
+async function putVersioned(cache, req, res) {
+    await cache.put(req, res);
+    const path = new URL(req.url).pathname;
+    const search = new URL(req.url).search;
+    for (const k of await cache.keys()) {
+        const u = new URL(k.url);
+        if (u.pathname === path && u.search !== search) await cache.delete(k);
+    }
+}
+
 /* Install: cache the shell so first-paint works offline. */
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
-        const cache = await caches.open(CACHE_NAME);
+        const cache = await caches.open(SHELL_CACHE);
         try {
             await cache.addAll(['./', './index.html']);
         } catch (e) {
@@ -77,7 +103,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil((async () => {
         const keys = await caches.keys();
         await Promise.all(keys
-            .filter((k) => k !== CACHE_NAME && k !== VENDOR_CACHE)
+            .filter((k) => k !== SHELL_CACHE && k !== ASSET_CACHE && k !== VENDOR_CACHE)
             .map((k) => caches.delete(k)));
         await self.clients.claim();
     })());
@@ -113,7 +139,7 @@ self.addEventListener('fetch', (event) => {
             try {
                 const fresh = await fetch(req);
                 if (fresh && fresh.ok) {
-                    const cache = await caches.open(CACHE_NAME);
+                    const cache = await caches.open(SHELL_CACHE);
                     await cache.put('./index.html', fresh.clone());
                 }
                 return fresh;
@@ -121,7 +147,7 @@ self.addEventListener('fetch', (event) => {
         })();
         event.waitUntil(networkPromise);
         event.respondWith((async () => {
-            const cache  = await caches.open(CACHE_NAME);
+            const cache  = await caches.open(SHELL_CACHE);
             const cached = await cache.match('./index.html');
             if (cached) return cached;
             const fresh = await networkPromise;
@@ -148,11 +174,11 @@ self.addEventListener('fetch', (event) => {
     // Cache-first for immutable versioned assets — the mobile white-screen fix.
     if (url.searchParams.has('v')) {
         event.respondWith((async () => {
-            const cache  = await caches.open(CACHE_NAME);
+            const cache  = await caches.open(ASSET_CACHE);
             const cached = await cache.match(req);
             if (cached) return cached;
             const fresh = await fetch(req);
-            if (fresh && fresh.ok) cache.put(req, fresh.clone()).catch(() => {});
+            if (fresh && fresh.ok) putVersioned(cache, req, fresh.clone()).catch(() => {});
             return fresh;
         })());
         return;
@@ -162,12 +188,12 @@ self.addEventListener('fetch', (event) => {
         try {
             const fresh = await fetch(req);
             if (fresh && fresh.ok) {
-                const cache = await caches.open(CACHE_NAME);
+                const cache = await caches.open(SHELL_CACHE);
                 cache.put(req, fresh.clone()).catch(() => {});
             }
             return fresh;
         } catch (e) {
-            const cache  = await caches.open(CACHE_NAME);
+            const cache  = await caches.open(SHELL_CACHE);
             const cached = await cache.match(req);
             if (cached) return cached;
             // الملاذ الأخير: قشرة التطبيق للتنقّل إلى جذره وحده — لا لأي
