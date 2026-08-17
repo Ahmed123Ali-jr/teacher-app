@@ -247,7 +247,6 @@
     async function renderPage(container, teacher, page) {
         const prefs = await loadAllPrefs();
 
-        let title = '';
         let body  = '';
         let bindFn = null;
         /* صفحة تحمل بطاقاتها بنفسها لا تُلفّ ببطاقة أخرى — إطاران متداخلان. */
@@ -255,30 +254,25 @@
 
         switch (page) {
             case 'password':
-                title = '🔐 تغيير كلمة المرور'; body = passwordBody(); bindFn = bindPassword; break;
+                body = passwordBody(); bindFn = bindPassword; break;
             case 'school':
-                title = '🏫 بيانات المدرسة';
                 body = schoolBody(teacher, prefs); bindFn = bindSchool; bare = true; break;
             case 'term':
-                title = '📚 الفصل الدراسي';
                 body = await termBody(teacher); bindFn = bindTerm; break;
             case 'appearance':
-                title = '🎨 مظهر التطبيق'; body = appearanceBody(prefs); bindFn = bindAppearance; break;
+                body = appearanceBody(prefs); bindFn = bindAppearance; break;
             case 'bell':
-                title = '🔔 منبّه الحصص';
                 body = bellBody(await global.Bell.loadPrefs());
                 bindFn = bindBell;
                 break;
             case 'backup':
-                title = '💾 النسخ الاحتياطي';
                 body = backupBody(prefs) + storageNote(await computeQuickStats(teacher));
                 bindFn = bindBackup;
                 break;
             case 'invite':
-                title = '👥 دعوة معلم'; body = inviteBody(); bindFn = bindInvite; break;
+                body = inviteBody(); bindFn = bindInvite; break;
             /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
             case 'about':
-                title = 'ℹ️ عن التطبيق';
                 body = aboutBody()
                      + `<details class="set-fold"><summary>📜 الخصوصية والقانون</summary>
                             ${legalBody(await computeQuickStats(teacher))}
@@ -289,16 +283,18 @@
                 bindFn = bindAbout;
                 break;
             case 'danger':
-                title = '🔥 حذف البيانات أو الحساب'; body = dangerBody(); bindFn = bindDanger; break;
+                body = dangerBody(); bindFn = bindDanger; break;
             default:
                 state.page = null; render(container); return;
         }
 
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
+                <!-- سهمُ الرجوع وحدَه بلا اسم القسم: الشاشةُ تقول نفسَها —
+                     حقولُ المدرسة مدرسةٌ، وخياراتُ المظهر مظهر. والاسمُ
+                     فوقها سطرٌ يُقرأ مرّةً ثم لا يُنظر إليه ثانيةً. -->
                 <div class="settings-page-header">
                     <button type="button" class="btn-back-box" id="btn-back-settings" aria-label="رجوع"></button>
-                    <h2 class="section-title" style="margin: 0 var(--space-3);">${title}</h2>
                 </div>
 
                 ${bare
