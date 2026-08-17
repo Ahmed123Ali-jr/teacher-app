@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>إنعاشُ التطبيق</title>
+<!--
+    reset.html — صفحةُ إنعاشٍ للشاشة البيضاء.
+
+    قاعدتُها: **لا تعتمد على شيءٍ من التطبيق**. لا خطَّ ولا تنسيقاً ولا
+    شيفرةً مخبّأة — فهي تُفتح حين يكون كلُّ ذلك معطوباً. كلُّ ما فيها
+    مكتوبٌ داخلها، وخطُّها خطُّ النظام.
+
+    وهي **لا تلمس بياناتك**: تمسح عاملَ الخدمة والملفّاتَ المخبّأة وحدها.
+    الفصولُ والطلابُ والدرجاتُ في Supabase، وتُسترجَع بعد الدخول.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 20px 40px; direction: rtl;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    line-height: 1.8; background: #F4F6F9; color: #111A2B;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0A0E16; color: #E7ECF4; }
+    .card { background: #141A25 !important; border-color: #25303F !important; }
+    .step { color: #A3AEC0 !important; }
+    code { background: #0E141E !important; border-color: #25303F !important; }
+  }
+  .wrap { max-width: 34rem; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; line-height: 1.3; }
+  .sub { margin: 0 0 22px; color: #4A5568; font-size: 0.95rem; }
+  @media (prefers-color-scheme: dark) { .sub { color: #A3AEC0; } }
+  .card {
+    background: #fff; border: 1px solid #DCE2EA; border-radius: 16px;
+    padding: 18px; margin-bottom: 14px;
+  }
+  button {
+    display: block; width: 100%; min-height: 54px; margin: 0;
+    font-family: inherit; font-size: 1.05rem; font-weight: 700;
+    color: #fff; background: #123A6B; border: 0; border-radius: 13px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: scale(.99); }
+  button[disabled] { opacity: .55; }
+  .step {
+    font-size: 0.9rem; color: #4A5568; padding: 7px 0;
+    border-top: 1px solid #DCE2EA; display: flex; gap: 9px; align-items: flex-start;
+  }
+  .step:first-child { border-top: 0; }
+  .step .m { flex: none; width: 1.3rem; text-align: center; }
+  #log { margin-top: 6px; }
+  .safe {
+    font-size: 0.88rem; background: #E6F3EE; color: #0B6B4A;
+    border: 1px solid rgba(11,107,74,.28); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .safe { background: #0D2A20; color: #34D399; border-color: rgba(52,211,153,.3); }
+  }
+  code {
+    font-family: ui-monospace, Menlo, monospace; font-size: 0.85em;
+    background: #EDF0F5; border: 1px solid #DCE2EA;
+    padding: 1px 5px; border-radius: 4px; direction: ltr; display: inline-block;
+  }
+  a.back {
+    display: block; text-align: center; margin-top: 18px;
+    color: #123A6B; font-weight: 600; text-decoration: none; font-size: 0.95rem;
+  }
+  @media (prefers-color-scheme: dark) { a.back { color: #8FB4F5; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>إنعاشُ التطبيق</h1>
+  <p class="sub">إن ظهرت لك شاشةٌ بيضاء ولم يفتح التطبيق — هذه الصفحةُ تُصلحها.</p>
+
+  <div class="safe">
+    <b>بياناتُك لا تُمسّ.</b> فصولُك وطلابُك ودرجاتُك وملفُّ إنجازك محفوظةٌ في
+    الخادم، وتعود كما هي بعد الدخول. هذه الصفحةُ تمسح <b>الملفّاتَ المخبّأة
+    في الجهاز فقط</b>.
+  </div>
+
+  <div class="card">
+    <button id="go">🔄 أنعِش التطبيق الآن</button>
+    <div id="log"></div>
+  </div>
+
+  <a class="back" href="./index.html">← رجوعٌ إلى التطبيق بلا إنعاش</a>
+</div>
+
+<script>
+/* بلا وحداتٍ ولا مكتبات: كلُّ خطوةٍ مستقلّةٌ، وفشلُ إحداها لا يوقف البقية —
+   فالجهازُ المعطوب قد يمنع بعضَها. */
+var logEl = document.getElementById('log');
+var btn = document.getElementById('go');
+
+function step(mark, text) {
+  var d = document.createElement('div');
+  d.className = 'step';
+  d.innerHTML = '<span class="m">' + mark + '</span><span>' + text + '</span>';
+  logEl.appendChild(d);
+}
+
+btn.addEventListener('click', function () {
+  btn.disabled = true;
+  btn.textContent = '… جارٍ الإنعاش';
+  logEl.innerHTML = '';
+  run();
+});
+
+function run() {
+  var jobs = [];
+
+  /* ١) إلغاءُ تسجيل عوامل الخدمة كلِّها */
+  jobs.push(function () {
+    if (!('serviceWorker' in navigator)) { step('—', 'لا عاملَ خدمةٍ في هذا المتصفّح'); return Promise.resolve(); }
+    return navigator.serviceWorker.getRegistrations().then(function (regs) {
+      if (!regs.length) { step('✓', 'لا عاملَ خدمةٍ مسجّلاً'); return; }
+      return Promise.all(regs.map(function (r) { return r.unregister(); })).then(function () {
+        step('✓', 'أُلغي تسجيلُ ' + regs.length + ' عاملِ خدمة');
+      });
+    }).catch(function (e) { step('⚠️', 'تعذّر إلغاءُ العامل: ' + e.message); });
+  });
+
+  /* ٢) مسحُ كلِّ المخازن المخبّأة */
+  jobs.push(function () {
+    if (!('caches' in window)) { step('—', 'لا مخازنَ مخبّأة'); return Promise.resolve(); }
+    return caches.keys().then(function (keys) {
+      if (!keys.length) { step('✓', 'لا مخازنَ لتُمسح'); return; }
+      return Promise.all(keys.map(function (k) { return caches.delete(k); })).then(function () {
+        step('✓', 'مُسحت ' + keys.length + ' مخازن: ' + keys.join('، '));
+      });
+    }).catch(function (e) { step('⚠️', 'تعذّر المسح: ' + e.message); });
+  });
+
+  /* ٣) الجلسةُ تبقى — فلا يُطلب منه الدخولُ من جديدٍ بلا داعٍ.
+        وإن كان العطبُ في الجلسة نفسِها فزرُّ «الخروج الكامل» أدناه. */
+  jobs.push(function () {
+    step('✓', 'جلسةُ دخولك <b>باقية</b> — لن تُطلب كلمةُ المرور');
+    return Promise.resolve();
+  });
+
+  var p = Promise.resolve();
+  jobs.forEach(function (j) { p = p.then(j); });
+
+  p.then(function () {
+    step('✓', 'تمّ. يُعاد فتحُ التطبيق بعد ثانيتين…');
+    btn.textContent = '✓ تمّ الإنعاش';
+    var hard = document.createElement('button');
+    hard.style.marginTop = '12px';
+    hard.style.background = 'transparent';
+    hard.style.color = '#B45309';
+    hard.style.border = '1.5px solid rgba(180,83,9,.4)';
+    hard.textContent = 'لم ينفع؟ اضغط هنا لخروجٍ كاملٍ وبدءٍ من الصفر';
+    hard.addEventListener('click', function () {
+      try { localStorage.clear(); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      if (window.indexedDB && indexedDB.databases) {
+        indexedDB.databases().then(function (dbs) {
+          dbs.forEach(function (d) { try { indexedDB.deleteDatabase(d.name); } catch (e) {} });
+        }).catch(function () {});
+      }
+      step('✓', 'مُسح كلُّ شيءٍ محليّاً — ستُطلب كلمةُ المرور، وبياناتُك تنزل من الخادم');
+      setTimeout(function () { location.replace('./index.html?fresh=' + Date.now()); }, 1400);
+    });
+    logEl.appendChild(hard);
+    setTimeout(function () { location.replace('./index.html?fresh=' + Date.now()); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
