@@ -338,26 +338,38 @@
        ══════════════════════════════════════════════════════════════════ */
     const FIRST_PAINT_STORES = ['teachers', 'settings', 'classes', 'schedule', 'reminders'];
 
+    /* ══ الفشلُ لا يمحو المخبأ ══
+       كانت تقرأ `{ data }` وحده وتتجاهل `error`. ومكتبةُ Supabase لا ترمي
+       عند فشل الشبكة — تُعيد `{ data: null, error }`. فكانت `rows` تصير
+       مصفوفةً فارغةً، ثم يُمحى المخزنُ ولا يُملأ: يفتح المعلّم التطبيق في
+       فصلٍ بلا واي-فاي فتفرغ شاشاتُه كلُّها. (بلاغ ١٧ أغسطس ٢٠٢٦.)
+
+       والحرزُ هو نفسُه المستعمل في `remove()` و`clear()` أدناه: يُقرأ
+       `error` ويُخرَج قبل لمس المخبأ. */
     async function hydrateStore(storeName, uid) {
         const table = TABLE[storeName];
-        let rows;
+        let rows, err;
         try {
             if (storeName === 'teachers') {
-                const { data } = await sb.from(table).select('*').eq('id', uid);
-                rows = (data || []).map(teachersIn);
+                const { data, error } = await sb.from(table).select('*').eq('id', uid);
+                err = error; rows = (data || []).map(teachersIn);
             } else if (storeName === 'portfolio') {
-                const { data } = await sb.from(table).select('*').eq('teacher_id', uid);
-                rows = data || [];
+                const { data, error } = await sb.from(table).select('*').eq('teacher_id', uid);
+                err = error; rows = data || [];
             } else if (storeName === 'settings') {
-                const { data } = await sb.from(table).select('key,value').eq('teacher_id', uid);
-                rows = data || [];
+                const { data, error } = await sb.from(table).select('key,value').eq('teacher_id', uid);
+                err = error; rows = data || [];
             } else {
-                const { data } = await sb.from(table).select('*');
-                rows = data || [];
+                const { data, error } = await sb.from(table).select('*');
+                err = error; rows = data || [];
             }
         } catch (e) {
-            console.warn('[TeacherDB] hydrate ' + storeName + ' failed:', e.message);
+            console.warn('[TeacherDB] hydrate ' + storeName + ' threw:', e.message);
             return;
+        }
+        if (err) {
+            console.warn('[TeacherDB] hydrate ' + storeName + ' failed:', err.message);
+            return;   /* المخبأُ يبقى كما هو — أفضلُ من فراغٍ */
         }
         await Cache.clearStore(storeName);
         if (rows.length) await Cache.putMany(storeName, rows);
@@ -373,15 +385,43 @@
            لوجدت شاشةٌ سبقتنا مخزنَها بلا وعدٍ فقرأته فارغاً وظنّته فارغاً.
            فتُبنى كلُّها الآن، وكلٌّ منها ينتظر المعرّف بنفسه. */
         const uidP = currentUid();
-        const start = (s) => {
-            const p = uidP.then((uid) => (uid ? hydrateStore(s, uid) : null));
+
+        /* ══ الطابور: خمسةٌ تسبق ثلاثةَ عشرَ ══
+           كانت الثمانيةَ عشرَ تنطلق في اللحظة نفسِها. والمتصفّحُ لا يفتح
+           للأصل الواحد إلا ستّ قنوات، فتُزاحم الخمسةُ التي تنتظرها الشاشةُ
+           ثلاثةَ عشرَ لا تحتاجها — وقيس على جهاز المعلّم: أبطأُ نداءٍ **٣٤
+           ثانية**، والشاشةُ تنتظره لأن `awaitStore('classes')` تنتظر مخزنَها
+           وهو في الطابور. (بلاغ «تأخّر أكثر من دقيقة»، ١٧ أغسطس ٢٠٢٦.)
+
+           فصار الترطيبُ على دفعتين: الخمسُ تنطلق الآن وحدَها، والباقيةُ
+           تنتظرها ثم تمضي أربعاً أربعاً فلا تُغرق القنوات مرّةً أخرى.
+
+           ولكنّ **الوعودَ كلَّها تُحجز في هذه اللحظة** لا عند انطلاقها:
+           فلو حُجز وعدُ «الاختبارات» عند دورها لوجدته شاشةٌ سبقتها فارغاً
+           بلا وعدٍ فظنّت المخزنَ فارغاً. فكلُّ مخزنٍ له وعدُه من أول تكّة،
+           وإنما يتأخّر **نداؤه** لا وعدُه. */
+        const reserve = (s, gate) => {
+            const p = gate
+                .then(() => uidP)
+                .then((uid) => (uid ? hydrateStore(s, uid) : null));
             _storeHydration[s] = p;
             p.finally(() => { if (_storeHydration[s] === p) _storeHydration[s] = null; });
             return p;
         };
 
-        const first = FIRST_PAINT_STORES.filter((s) => TABLE[s]).map(start);
-        STORE_NAMES.filter((s) => FIRST_PAINT_STORES.indexOf(s) < 0).forEach(start);
+        const now = Promise.resolve();
+        const first = FIRST_PAINT_STORES.filter((s) => TABLE[s]).map((s) => reserve(s, now));
+
+        /* فشلُ إحداها لا يحبس البقية — `catch` على المجموع لا على كلٍّ. */
+        const firstDone = Promise.all(first.map((p) => p.catch(() => {})));
+
+        const rest = STORE_NAMES.filter((s) => FIRST_PAINT_STORES.indexOf(s) < 0);
+        const LANES = 4;
+        const lanes = Array.from({ length: LANES }, () => firstDone);
+        rest.forEach((s, i) => {
+            const lane = i % LANES;
+            lanes[lane] = reserve(s, lanes[lane]).catch(() => {});
+        });
 
         _hydratePromise = Promise.all(first).then(() => {
             console.info('[TeacherDB] first paint in ' + Math.round(performance.now() - t0)
