@@ -27,7 +27,9 @@
         { pattern: /^\/setup$/,                    view: 'setup',     auth: true,  chrome: false },
         { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true, title: 'الرئيسية',        root: true },
         { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true, title: 'التذكيرات' },
-        { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true, title: 'الفصل' },
+        /* لوحةُ الفصل بلا عنوان: بطاقتُها تحمل الاسم كاملاً. وأقسامُه
+           تحتها تحمل عناوينَها من `TAB_TITLES`. */
+        { pattern: /^\/class\/([\w-]+)$/,   keys: ['id'], view: 'class',   auth: true, chrome: true, title: '' },
         { pattern: /^\/class\/([\w-]+)\/(\w+)$/, keys: ['id', 'tab'], view: 'class', auth: true, chrome: true, title: 'الفصل' },
         { pattern: /^\/student\/([\w-]+)$/, keys: ['id'], view: 'student', auth: true, chrome: true, title: 'الطالب' },
         { pattern: /^\/settings$/,                 view: 'settings',  auth: true, chrome: true, title: 'الإعدادات',       root: true },

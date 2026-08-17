@@ -219,11 +219,9 @@
             { key: 'strategies', icon: '🎯', label: 'الاستراتيجيات', count: strategyCount,     tint: '#BE185D', bg: '#FDF2F8' }
         ];
 
-        /* عنوانُ الشريط اسمُ الفصل لا كلمة «الفصل»: المعلّم عنده فصولٌ
-           عدّة، فالاسمُ يقول أيَّها فتح. */
-        if (global.Router && global.Router.setTitle) {
-            global.Router.setTitle(cls.grade + (cls.section ? ' / ' + cls.section : ''));
-        }
+        /* ولا عنوانَ في الشريط: اسمُ الفصل مكتوبٌ تحته مباشرةً في بطاقته
+           بخطٍّ كبير ومعه شعبتُه ومادّتُه وعددُ طلّابه. فكتابتُه في الشريط
+           تقولُه مرّتين في نظرةٍ واحدة. يبقى السهمُ وحدَه. */
 
         container.innerHTML = `
             <div class="container">
