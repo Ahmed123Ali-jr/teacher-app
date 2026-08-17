@@ -209,8 +209,8 @@ body.theme-dark .sched-time-btn:not(.on),
 body.theme-auto.dark-active .sched-time-btn:not(.on),
 body.theme-dark .tf-chip:not(.on),
 body.theme-auto.dark-active .tf-chip:not(.on),
-body.theme-dark .sched-table thead th,
-body.theme-auto.dark-active .sched-table thead th,
+body.theme-dark .sched-table thead th:not(.is-today),
+body.theme-auto.dark-active .sched-table thead th:not(.is-today),
 body.theme-dark .sched-corner,
 body.theme-auto.dark-active .sched-corner,
 body.theme-dark .bell-row,
@@ -233,8 +233,8 @@ body.theme-dark .select,
 body.theme-auto.dark-active .select,
 body.theme-dark .textarea,
 body.theme-auto.dark-active .textarea,
-body.theme-dark table thead th,
-body.theme-auto.dark-active table thead th {
+body.theme-dark table thead th:not(.is-today),
+body.theme-auto.dark-active table thead th:not(.is-today) {
     background: var(--surface-alt) !important;
     background-image: none !important;
     border-color: var(--border) !important;
@@ -257,8 +257,18 @@ body.theme-dark .box,
 body.theme-auto.dark-active .box,
 body.theme-dark table tr,
 body.theme-auto.dark-active table tr,
-body.theme-dark tbody td,
-body.theme-auto.dark-active tbody td {
+/* ══ عمودُ اليومِ الحالي يبقى ذهبيّاً في الداكن ══
+   قِيس في ١٨ أغسطس ٢٠٢٦: رأسُ اليوم وخلاياه كانا مطابقَين لبقيّة الأيام
+   حرفاً بحرف — الذهبيُّ مقتولٌ في الاثنين. فالقاعدتان العامّتان
+   (`thead th` و`tbody td`) تفرضان السطحَ بـ`!important` فتمحوان
+   ‎.is-today‎ معه. والمعلّمُ يفتح الجدولَ ليعرف **أينَ هو اليوم** — فهذه
+   العلامةُ هي وظيفتُه الأولى.
+
+   والحرزُ `:not(.is-today)` كما في «✓ تم» و«حصة انتظار اليوم»: الحالةُ
+   الملوّنةُ تُستثنى من قلب الأسطح، ويحرسها
+   `tools/check-active-states.mjs`. */
+body.theme-dark tbody td:not(.is-today),
+body.theme-auto.dark-active tbody td:not(.is-today) {
     background: var(--surface) !important;
     background-image: none !important;
     border-color: var(--border) !important;
