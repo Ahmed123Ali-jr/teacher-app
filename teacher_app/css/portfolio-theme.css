@@ -60,30 +60,6 @@ body {
 /* ==========================================================================
    Teacher header card — royal gradient
    ========================================================================== */
-#view-portfolio .portfolio-header {
-    background: linear-gradient(135deg, var(--pf-royal) 0%, var(--pf-royal-light) 100%);
-    border: 0;
-    color: var(--pf-white);
-    padding: var(--space-6);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 6px 18px rgba(15, 44, 92, 0.18);
-}
-#view-portfolio .portfolio-header h3 {
-    color: var(--pf-white);
-}
-#view-portfolio .portfolio-header .text-muted {
-    color: rgba(255, 255, 255, 0.88);
-}
-#view-portfolio .portfolio-avatar {
-    border: 3px solid var(--pf-gold);
-    background: var(--pf-white);
-    color: var(--pf-royal);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-#view-portfolio .portfolio-avatar img {
-    border-radius: var(--radius-full);
-}
-
 /* ==========================================================================
    Accordion sections (portfolio-only)
    ========================================================================== */

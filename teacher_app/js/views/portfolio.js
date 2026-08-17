@@ -183,21 +183,6 @@
                     <button class="btn btn-primary" id="btn-print-portfolio">📄 حفظ وطباعة</button>
                 </div>
 
-                <div class="card portfolio-header">
-                    <div class="portfolio-avatar">${
-                        global.ProfileView
-                            ? global.ProfileView.avatarInner(teacher, true)
-                            : initials(teacher.name)
-                    }</div>
-                    <div>
-                        <h3 style="margin:0 0 var(--space-1)">${escapeHtml(teacher.name)}</h3>
-                        <div class="text-muted">
-                            ${escapeHtml(teacher.school_name)}
-                            · ${escapeHtml((teacher.subjects || [teacher.subject]).filter(Boolean).join('، '))}
-                        </div>
-                    </div>
-                </div>
-
                 <div class="portfolio-sections" id="portfolio-sections">
                     ${SECTIONS.map((s) => sectionHeader(s, counts, state.openSection === s.key)).join('')}
                     ${(portfolio.custom_sections || []).map((cs) =>
@@ -370,11 +355,6 @@
             (p.extras || []).length > 0
         ];
         return { filled: has.filter(Boolean).length, total: has.length };
-    }
-
-    function initials(name) {
-        const parts = String(name || '').trim().split(/\s+/);
-        return (parts[0] || '').charAt(0) + (parts[1] || '').charAt(0);
     }
 
     function sectionHeader(section, counts, open) {
