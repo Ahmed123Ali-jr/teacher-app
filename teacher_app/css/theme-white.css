@@ -188,6 +188,6 @@ body:where(:not(.theme-dark)),
    القاعدة: يُحذف ما يشرح الواجهة، ويبقى ما يخبر عن الواقع أو يحذّر. */
 .dz-h, .bell-note, .callout, .callout-warn, .imp-warn, .imp-skip,
 .cls-s, .class-card-subject, .stat-label, .att-stat, .home-hij,
-.reminder-meta, .file-meta, .exam-stats, .portfolio-stats {
+.reminder-meta, .file-meta, .exam-stats {
     display: revert !important;
 }

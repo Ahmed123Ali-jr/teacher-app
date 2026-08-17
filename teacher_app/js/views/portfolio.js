@@ -195,13 +195,6 @@
                             ${escapeHtml(teacher.school_name)}
                             · ${escapeHtml((teacher.subjects || [teacher.subject]).filter(Boolean).join('، '))}
                         </div>
-                        <div class="portfolio-stats">
-                            <span>📝 ${counts.exams} اختبار</span>
-                            <span>📄 ${counts.worksheets} ورقة</span>
-                            <span>📚 ${counts.homework} واجب</span>
-                            <span>🎯 ${counts.strategies} استراتيجية</span>
-                            <span>🌟 ${counts.initiatives} مبادرة</span>
-                        </div>
                     </div>
                 </div>
 

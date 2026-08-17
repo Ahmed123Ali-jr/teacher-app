@@ -71,8 +71,7 @@ body {
 #view-portfolio .portfolio-header h3 {
     color: var(--pf-white);
 }
-#view-portfolio .portfolio-header .text-muted,
-#view-portfolio .portfolio-header .portfolio-stats {
+#view-portfolio .portfolio-header .text-muted {
     color: rgba(255, 255, 255, 0.88);
 }
 #view-portfolio .portfolio-avatar {

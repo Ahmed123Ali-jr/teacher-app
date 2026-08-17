@@ -2850,15 +2850,6 @@ body.drawer-open { overflow: hidden; }
     font-weight: var(--fw-bold);
     flex-shrink: 0;
 }
-.portfolio-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    font-size: var(--fs-sm);
-    margin-top: var(--space-2);
-    color: var(--text-muted);
-}
-
 /* TODO(phase-d): accordion already works, just tighten paddings on mobile
    and make section-header tap area full-row. */
 .portfolio-sections {
@@ -4464,7 +4455,6 @@ body.drawer-open { overflow: hidden; }
         padding: var(--space-4);
     }
     .portfolio-avatar { width: 56px; height: 56px; font-size: 20px; }
-    .portfolio-stats { font-size: var(--fs-xs); gap: var(--space-2); }
     .portfolio-section-header {
         padding: var(--space-4);
         gap: var(--space-2);
