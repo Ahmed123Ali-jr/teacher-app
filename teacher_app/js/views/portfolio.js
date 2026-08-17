@@ -179,8 +179,14 @@
 
         container.innerHTML = `
             <div class="container" style="max-width: 980px;">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <button class="btn btn-primary" id="btn-print-portfolio">📄 حفظ وطباعة</button>
+                <!-- الإزاحةُ في موضعين لأن الصفَّ ينقلب عموداً على الجوال:
+                     justify-content يحكم الأفقَ على الشاشة العريضة، و
+                     align-self يحكمه في العمود — وقاعدةُ الجوال تثبّت الزرَّ
+                     في البداية (يمينِها) فتُنقض هنا. والصفُّ مشتركٌ مع ستّ
+                     شاشاتٍ أخرى، فلا يُلمس صنفُه. -->
+                <div class="section-header" style="margin-top: var(--space-6); justify-content: flex-end;">
+                    <button class="btn btn-primary" id="btn-print-portfolio"
+                            style="align-self: flex-end;">🖨️ طباعة ملف الإنجاز</button>
                 </div>
 
                 <div class="portfolio-sections" id="portfolio-sections">
