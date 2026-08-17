@@ -17,9 +17,11 @@
 (function (global) {
     'use strict';
 
+    /* بلا رمزَين: «بنين» و«بنات» كلمتان لا تحتاجان صورةً تشرحهما، والرمزُ
+       يجعل الحبّتين تُقرآن رسمَين قبل أن تُقرآ نصّاً. */
     const GENDERS = [
-        { k: 'boys',  icon: '👦', label: 'بنين' },
-        { k: 'girls', icon: '👧', label: 'بنات' }
+        { k: 'boys',  label: 'بنين' },
+        { k: 'girls', label: 'بنات' }
     ];
     /* فصلان لا ثلاثة — عادت الوزارة للفصلين. */
     const TERMS = [
@@ -151,7 +153,7 @@
                 <div class="fchips" id="su-gender">
                     ${GENDERS.map((g) => `
                         <button type="button" class="fchip ${pick.gender === g.k ? 'on' : ''}"
-                                data-gender="${g.k}">${g.icon} ${g.label}</button>
+                                data-gender="${g.k}">${g.label}</button>
                     `).join('')}
                 </div>
 
