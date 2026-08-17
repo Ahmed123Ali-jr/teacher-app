@@ -111,11 +111,14 @@ body:where(:not(.theme-dark)),
 :where(body:not(.theme-dark)) .rd-cal,
 :where(body:not(.theme-dark)) .rem-card,
 :where(body:not(.theme-dark)) .stg-card,
-:where(body:not(.theme-dark)) .tf-box,
-:where(body:not(.theme-dark)) .bottom-nav {
+:where(body:not(.theme-dark)) .tf-box {
     background: #FFFFFF !important;
     background-image: none !important;
 }
+
+/* والشريطُ السفليُّ خارجَها عمداً: صار زجاجاً شفّافاً يُرى المحتوى تحته،
+   وتبييضُه يُعتمه فيعود شريطاً صلباً. لونُه مكتوبٌ في `views.css` وهو
+   أبيضُ أصلاً — ‎72٪‎ منه. */
 
 /* الهالة والحلقة الذهبيتان خلف الرمز: تُحيَّدان — كانتا تصبغان أعلى
    البطاقة كلَّه. */

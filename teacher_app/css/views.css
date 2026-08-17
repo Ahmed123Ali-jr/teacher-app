@@ -193,17 +193,35 @@ body.drawer-open { overflow: hidden; }
    Bottom navigation (Phase B) — mobile only
    ========================================================================== */
 /* الشريط السفلي (تصميم هـ): خلفية رصاصية متدرّجة، والتبويب النشط حبّة كحلية بارزة */
+/* ── الشريطُ عائمٌ لا ملتصق ──
+   كان يملأ عرض الشاشة ملتصقاً بحافّتها بخلفيةٍ صلبةٍ وحدٍّ علويّ، فيقطع
+   الصفحةَ قطعاً وينتهي المحتوى عنده. صار يُرفع عن الحافّة وجانبيها
+   ويُدوَّر، وتصير خلفيتُه زجاجاً ضبابياً يمرّ المحتوى تحته فيُرى لونُه
+   خافتاً — كما فعل iOS 26.
+
+   والقياساتُ محسوبة: الشريطُ ‎64px‎ بحشوته (‎4px‎ حولَ الحبّات، فالحبّةُ
+   ‎56px‎)، والفجوةُ ‎12px‎ فوق المنطقة الآمنة. فما يحجزه من الشاشة =
+   ‎الارتفاع + الفجوة + الآمنة‎، وهو ما تحسبه القواعدُ الخمسُ الأخرى. */
 .bottom-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap));
+    inset-inline: var(--bottom-nav-gap);
     z-index: 70;
     display: none;                     /* Visible only on mobile (@media below) */
-    background: linear-gradient(180deg, #fff 0%, #ECEAE3 140%);
-    border-top: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
-    box-shadow: 0 -4px 14px rgba(16, 24, 40, 0.07);
-    padding-bottom: var(--safe-bottom);
+    padding: 4px;
+    border-radius: 24px;
+    /* ‎85٪‎ لا ‎72٪‎: الزجاجُ يجعل أرضيّةَ الاسم متغيّرةً بما يمرّ تحته،
+       وعند ‎72٪‎ يهبط الاسمُ الخافت إلى ‎3.04:1‎ حين تمرّ بطاقةٌ كحليّة.
+       والكثافةُ هنا تُبقي الشفَّ محسوساً وتُثبّت الأرضية. */
+    background: rgba(255, 255, 255, .85);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid rgba(16, 24, 40, .10);
+    box-shadow: 0 8px 28px rgba(16, 24, 40, .16), 0 2px 6px rgba(16, 24, 40, .06);
+}
+/* ومن لا يعرف الزجاج يرى سطحاً معتماً بدل شفٍّ لا يُقرأ خلفه. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bottom-nav { background: #FFFFFF; }
 }
 .bottom-nav[hidden] { display: none !important; }
 
@@ -214,9 +232,12 @@ body.drawer-open { overflow: hidden; }
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: var(--bottom-nav-height);
+    min-height: calc(var(--bottom-nav-height) - 8px);
     padding: 6px 3px 4px;
-    color: var(--text-muted);
+    border-radius: 20px;
+    /* حبرٌ أغمقُ من الخافت العام: يُقاس على أغمقِ أرضيةٍ قد يصنعها الزجاج
+       (كحليٌّ تحته) فيبلغ ‎4.80:1‎، وعلى أفتحِها ‎6.41:1‎. */
+    color: #5F5F5C;
     text-decoration: none;
     font-size: 11px;
     font-weight: var(--fw-bold);
@@ -231,8 +252,8 @@ body.drawer-open { overflow: hidden; }
 .bottom-nav .bn-item::before {
     content: '';
     position: absolute;
-    inset: 6px 8px;
-    border-radius: 15px;
+    inset: 0;
+    border-radius: inherit;
     background: transparent;
     transition: background var(--dur-fast) var(--ease),
                 box-shadow var(--dur-fast) var(--ease);
@@ -242,7 +263,7 @@ body.drawer-open { overflow: hidden; }
     font-weight: var(--fw-black);
 }
 .bottom-nav .bn-item.is-active::before {
-    background: var(--primary);
+    background: linear-gradient(150deg, #1B3E77 0%, var(--primary) 55%, #0A2049 100%);
     box-shadow: 0 4px 11px rgba(15, 44, 92, 0.32),
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.18);
 }
@@ -2991,7 +3012,9 @@ body.drawer-open { overflow: hidden; }
 .sched-v2 {
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 170px);
+    /* والفجوةُ تُخصم معها: الشريطُ صار عائماً فأخذ من الشاشة أكثر ممّا
+       حُسب هنا، ولولاها لقُصّت آخرُ حصّةٍ بصمت. */
+    max-height: calc(100dvh - 170px - var(--bottom-nav-gap));
     padding-bottom: 0;
     overflow: hidden;
 }
@@ -3173,7 +3196,7 @@ body.drawer-open { overflow: hidden; }
    ولا يزيد أي صف عن جيرانه بسبب اسم طويل — النص يُقصّ بثلاث نقاط. */
 .sched-cell {
     background: var(--surface);
-    height: clamp(44px, calc((100dvh - 320px) / var(--rows, 7)), 78px);
+    height: clamp(44px, calc((100dvh - 320px - var(--bottom-nav-gap)) / var(--rows, 7)), 78px);
     cursor: pointer;
     overflow: hidden;
 }
@@ -5767,7 +5790,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     inset-inline: 0;
     /* يرتفع عن الشريط السفلي بمسافةٍ تُرى: كان يلتصق به فيُقرآن شريطاً
        واحداً. */
-    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-4));
+    bottom: calc(var(--bottom-nav-height) + var(--bottom-nav-gap) + var(--safe-bottom) + var(--space-4));
     z-index: 40;
     padding: 10px var(--mobile-padding) 12px;
     /* تدرّجٌ يذوب في الأرضية: الزرُّ يطفو ولا يقطع الصفحة بخطّ. */
@@ -5790,7 +5813,8 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    الجوال يتمدّد وينكمش، و`vh` لا يراه فتنزل العبارةُ تحت الطيّة. */
 .empty-classes {
     min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height)
-                     - var(--safe-bottom) - var(--space-5) - 91px);
+                     - var(--bottom-nav-gap) - var(--safe-bottom)
+                     - var(--space-5) - 91px);
     display: flex;
     flex-direction: column;
     align-items: center;

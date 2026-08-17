@@ -127,8 +127,13 @@
     --mobile-padding: 13px;
     --card-gap:       13px;
 
-    /* Bottom navigation height (mobile only) */
+    /* Bottom navigation height (mobile only) — ارتفاعُ الشريط نفسِه
+       بحشوته، لا المساحةُ التي يحجزها من الشاشة. */
     --bottom-nav-height: 64px;
+    /* والشريطُ عائمٌ لا ملتصق: هذه المسافةُ بينه وبين حافّة الشاشة، وبينه
+       وبين جانبيها. فالمساحةُ المحجوزة = الارتفاع + الفجوة + المنطقةُ
+       الآمنة — وستُّ قواعدَ في التطبيق تحسبها هكذا. */
+    --bottom-nav-gap: 12px;
 
     /* Safe-area insets (iPhone notch / home indicator) */
     --safe-top:    env(safe-area-inset-top, 0px);
@@ -380,12 +385,13 @@ small { font-size: var(--fs-sm); }
     .app-main  { padding-block: var(--space-5); }
 
     /* Reserve room for the bottom-nav (added in Phase B) */
-    body { padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom)); }
+    body { padding-bottom: calc(var(--bottom-nav-height) + var(--bottom-nav-gap) + var(--safe-bottom)); }
 
     /* ‫الحشوة أعلاه تُضاف فوق min-height: 100vh فتفرض تمريراً بمقدار ارتفاع
        الشريط السفلي في كل صفحة ولو كان محتواها قصيراً — نخصمها هنا. */
     .app-container {
-        min-height: calc(100dvh - var(--bottom-nav-height) - var(--safe-bottom));
+        min-height: calc(100dvh - var(--bottom-nav-height) - var(--bottom-nav-gap)
+                         - var(--safe-bottom));
     }
 
     /* ‫التذييل مخفيّ خلف الشريط السفلي على الجوال: لا يراه أحد ويضيف ٦٩px
