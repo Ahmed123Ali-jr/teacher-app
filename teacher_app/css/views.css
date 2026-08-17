@@ -210,14 +210,20 @@ body.drawer-open { overflow: hidden; }
     display: none;                     /* Visible only on mobile (@media below) */
     padding: 4px;
     border-radius: 24px;
-    /* ‎85٪‎ لا ‎72٪‎: الزجاجُ يجعل أرضيّةَ الاسم متغيّرةً بما يمرّ تحته،
+    /* ‎78٪‎ لا ‎72٪‎: الزجاجُ يجعل أرضيّةَ الاسم متغيّرةً بما يمرّ تحته،
        وعند ‎72٪‎ يهبط الاسمُ الخافت إلى ‎3.04:1‎ حين تمرّ بطاقةٌ كحليّة.
        والكثافةُ هنا تُبقي الشفَّ محسوساً وتُثبّت الأرضية. */
-    background: rgba(255, 255, 255, .85);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-    border: 1px solid rgba(16, 24, 40, .10);
-    box-shadow: 0 8px 28px rgba(16, 24, 40, .16), 0 2px 6px rgba(16, 24, 40, .06);
+    background: rgba(255, 255, 255, .78);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    backdrop-filter: blur(30px) saturate(200%);
+    /* والزجاجُ لا يُقرأ زجاجاً بالشفافية وحدها: يقرؤه الناظر من ثلاثة —
+       ضبابٌ يُميّع ما تحته، وإشباعٌ يُبقي لونَه، وخيطٌ لامعٌ على حافّته
+       العليا كأنّ الضوء يلمسها. فهذه الثلاثةُ مجتمعة. */
+    border: 1px solid rgba(255, 255, 255, .55);
+    box-shadow: 0 8px 28px rgba(16, 24, 40, .16),
+                0 2px 6px rgba(16, 24, 40, .07),
+                inset 0 1px 0 rgba(255, 255, 255, .75),
+                inset 0 -1px 0 rgba(16, 24, 40, .05);
 }
 /* ومن لا يعرف الزجاج يرى سطحاً معتماً بدل شفٍّ لا يُقرأ خلفه. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -236,8 +242,8 @@ body.drawer-open { overflow: hidden; }
     padding: 6px 3px 4px;
     border-radius: 20px;
     /* حبرٌ أغمقُ من الخافت العام: يُقاس على أغمقِ أرضيةٍ قد يصنعها الزجاج
-       (كحليٌّ تحته) فيبلغ ‎4.80:1‎، وعلى أفتحِها ‎6.41:1‎. */
-    color: #5F5F5C;
+       (كحليٌّ تحته) فيبلغ ‎4.69:1‎، وعلى أفتحِها ‎7.26:1‎. */
+    color: #575753;
     text-decoration: none;
     font-size: 11px;
     font-weight: var(--fw-bold);

@@ -466,13 +466,15 @@ body.theme-auto.dark-active ::placeholder { color: var(--text-muted); opacity: 1
    يصنعها الزجاج الداكن (بطاقةٌ بيضاء تحته) تُهبط ‎#A3AEC0‎ إلى ‎4.20:1‎. */
 body.theme-dark .bottom-nav .bn-item,
 body.theme-auto.dark-active .bottom-nav .bn-item {
-    color: #B4BECD !important;
+    color: #D2D8E2 !important;
 }
 body.theme-dark .bottom-nav,
 body.theme-auto.dark-active .bottom-nav {
-    background: rgba(30, 38, 52, .85) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .3) !important;
+    background: rgba(30, 38, 52, .78) !important;
+    border-color: rgba(255, 255, 255, .16) !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .55),
+                0 2px 6px rgba(0, 0, 0, .3),
+                inset 0 1px 0 rgba(255, 255, 255, .14) !important;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     body.theme-dark .bottom-nav,
