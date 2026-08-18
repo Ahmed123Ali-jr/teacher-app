@@ -1176,16 +1176,14 @@
        فقدَ عملَ الحصّة ولا يعرف كيف يعيده. فصار يسأل بلوحةٍ سفليّةٍ كلوحة
        حذف الطالب (البديل ب، ١٨ أغسطس ٢٠٢٦).
 
-       والنصُّ يقول ما يُمحى بالضبط: التحضيرُ كلُّه لا الحاضرون وحدهم —
-       فالإلغاء يحذف صفوفَ اليوم جميعَها، فيعود الغائبُ والمتأخّرُ «بلا
-       تحضير» لا على حالهما. ولا يُقال غيرُ ذلك فيثق بما ليس صحيحاً. */
+       والنصُّ سطرٌ واحدٌ بلا شرحٍ زائد (بطلبه، ١٨ أغسطس): العددُ واليومُ
+       وكفى. والعنوانُ فوقه يقول ما الفعل، والزرُّ الأحمرُ يقول خطرَه —
+       فتكرارُ ذلك في الجسم حشوٌ يُقرأ مرّةً ثم لا يُقرأ. */
     function confirmUnmarkAll(count, onConfirm) {
         const body = document.createElement('div');
         body.innerHTML = `
             <p style="margin-top:0">
-                يُمحى تحضيرُ <strong>${global.Words.count(count)}</strong> لهذا اليوم —
-                الحاضرون والغائبون والمتأخّرون.
-                <br>ويبقى كلُّ شيءٍ آخر كما هو.
+                يُمحى تحضيرُ <strong>${global.Words.count(count)}</strong> لهذا اليوم.
             </p>
             <div class="modal-footer" style="margin: var(--space-5) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-danger" data-confirm>نعم، ألغِ التحضير</button>
