@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحاتُ ألوان التطبيق</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<!--
+    preview-colors.html — معاينةٌ لا تُشحن. تُحذف بعد اختيار اللوحة.
+    الأرضيةُ بيضاءُ في الكلّ — المتبدّلُ لونُ الهُويّة وحدَه.
+    وكلُّ نسبةٍ مكتوبةٍ محسوبةٌ في الصفحة لا مقدَّرة.
+-->
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0 0 130px;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:#F2F1EC;color:#2C2C2A;line-height:1.7}
+.pv-title{text-align:center;font-size:16px;font-weight:800;margin:14px 12px 4px}
+.pv-note{text-align:center;font-size:12.5px;color:#6B6B68;margin:0 16px 10px;line-height:1.8}
+
+/* بطاقةُ الوصف + القياس */
+.cap{max-width:430px;margin:0 auto 10px;padding:12px 14px;background:#fff;
+  border:1px solid #E4E6EA;border-radius:14px}
+.cap .nm{font-size:15px;font-weight:800;color:var(--deep)}
+.cap .ds{display:block;font-size:11.5px;color:#6B6B68;margin-top:3px;line-height:1.7}
+.cap .m{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.cap .m b{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;
+  background:#F4F6F9;border:1px solid #E4E6EA;color:#2C2C2A}
+.cap .m b.bad{background:#FEF2F2;border-color:#FCA5A5;color:#B91C1C}
+.cap .m b.ok{background:#E6F3EE;border-color:#8FD3B8;color:#0B6B4A}
+
+/* شاشةُ العرض */
+.phone{max-width:430px;margin:0 auto;background:#fff;border:1px solid #E4E6EA;
+  border-radius:24px;overflow:hidden}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;
+  border-bottom:1px solid #E4E6EA}
+.hd b{font-size:15px;font-weight:800;color:var(--ink)}
+.hd span{color:var(--ink);font-size:17px}
+.bd{padding:14px}
+
+/* صندوقُ حصص اليوم */
+.today{border-radius:18px;padding:14px;margin-bottom:12px;color:#fff;
+  background:linear-gradient(150deg,var(--mid) 0%,var(--deep) 60%,var(--dark) 100%);
+  box-shadow:0 6px 16px color-mix(in srgb,var(--deep) 32%,transparent)}
+.today .t{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.today .t b{font-size:13.5px;font-weight:800}
+.today .t a{font-size:11.5px;color:rgba(255,255,255,.8);text-decoration:none}
+.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;width:64px;height:70px;border-radius:13px;background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.17);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px}
+.chip .n{font-size:13px;font-weight:800}
+.chip .h{font-size:10px;color:rgba(255,255,255,.62)}
+.chip .c{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.86)}
+.chip.live{background:var(--gold);border-color:transparent}
+.chip.live .n,.chip.live .h,.chip.live .c{color:var(--deep);font-weight:800}
+
+/* بطاقةُ فصل */
+.card{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:15px;
+  background:linear-gradient(150deg,#fff 0%,#F7F6F2 50%,#ECEAE3 100%);
+  border:1.5px solid #DDD9CE;margin-bottom:9px}
+.card .tx{flex:1}
+.card .t{display:block;font-size:13.5px;font-weight:800;color:var(--ink)}
+.card .s{display:block;font-size:11px;color:#6B6B68}
+.card .b{font-size:11px;font-weight:800;color:#fff;background:var(--deep);
+  border-radius:99px;padding:3px 10px}
+
+/* عمودُ الجدول */
+.tbl{display:grid;grid-template-columns:44px repeat(3,1fr);gap:0 6px;margin-bottom:12px}
+.th{padding:8px 2px;text-align:center;font-size:11px;font-weight:800;color:var(--ink);
+  background:linear-gradient(180deg,#fff,#ECEAE3);border-radius:11px 11px 0 0;
+  border-bottom:1px solid #D8D5CC}
+.th.today{background:linear-gradient(180deg,#D6B96F,var(--gold));color:var(--deep)}
+.per{background:var(--deep);color:#fff;text-align:center;padding:9px 2px;font-size:12px;font-weight:800}
+.cell{border:1px solid #E7EAF0;border-top:0;min-height:40px;padding:6px 2px;text-align:center;
+  font-size:10px;color:var(--ink);font-weight:700}
+.per:first-of-type{border-radius:0}
+
+.save{display:block;width:100%;margin-top:4px;min-height:48px;border:0;border-radius:13px;
+  background:linear-gradient(180deg,var(--mid),var(--deep));color:#fff;font-family:inherit;
+  font-size:14px;font-weight:800;box-shadow:0 4px 12px color-mix(in srgb,var(--deep) 28%,transparent)}
+
+/* الشريط السفلي */
+.nav{display:flex;gap:2px;margin:12px -14px -14px;padding:4px;
+  background:rgba(255,255,255,.85);border-top:1px solid #E4E6EA}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:7px 2px;border-radius:16px;text-decoration:none;color:#575753;font-size:10px;
+  font-weight:700}
+.nav a .i{font-size:19px}
+.nav a.on{color:#fff;background:linear-gradient(150deg,var(--mid),var(--deep))}
+
+.pv-bar{position:fixed;inset-inline:0;bottom:0;z-index:60;
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+  border-top:1px solid #DDDCD6;display:flex;gap:5px;overflow-x:auto}
+.pv-bar::-webkit-scrollbar{display:none}
+.pv-bar button{flex:none;min-width:60px;min-height:44px;border-radius:11px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:800;color:#2C2C2A;background:#fff;
+  border:1.5px solid #D8D5CC;padding:0 8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px}
+.pv-bar button i{width:22px;height:5px;border-radius:3px;display:block}
+.pv-bar button.on{color:#fff;background:#2C2C2A;border-color:#2C2C2A}
+</style>
+</head>
+<body>
+
+<p class="pv-title">لوحاتُ ألوان التطبيق</p>
+<p class="pv-note">الأرضيةُ بيضاءُ في الكلّ — المتبدّلُ <b>لونُ الهُويّة</b> وحدَه.<br>
+والنسبُ محسوبةٌ في الصفحة لا مقدَّرة.</p>
+
+<div class="cap">
+  <div class="nm" id="nm"></div>
+  <span class="ds" id="ds"></span>
+  <div class="m" id="m"></div>
+</div>
+
+<div class="phone">
+  <div class="hd"><b>الرئيسية</b><span>☰</span></div>
+  <div class="bd">
+    <div class="today">
+      <div class="t"><b>🕐 حصص اليوم</b><a href="#">الجدول كاملاً</a></div>
+      <div class="chips">
+        <div class="chip"><span class="n">1</span><span class="h">٠٧:٠٠</span><span class="c">الأول/ب</span></div>
+        <div class="chip live"><span class="n">2</span><span class="h">٠٧:٤٥</span><span class="c">الثالث/أ</span></div>
+        <div class="chip"><span class="n">3</span><span class="h">٠٨:٣٠</span><span class="c">الأول/ب</span></div>
+        <div class="chip"><span class="n">4</span><span class="h">٠٩:٤٥</span><span class="c">انتظار</span></div>
+      </div>
+    </div>
+
+    <div class="card"><span class="tx"><span class="t">الأول المتوسط / ب</span>
+      <span class="s">رياضيات</span></span><span class="b">٢٦</span></div>
+
+    <div class="tbl">
+      <div class="th">الحصة</div><div class="th">الأحد</div><div class="th today">الاثنين</div><div class="th">الثلاثاء</div>
+      <div class="per">1<br><span style="font-size:9px;opacity:.75">٠٧:٠٠</span></div>
+      <div class="cell">الأول/ب</div><div class="cell"></div><div class="cell">الثالث/أ</div>
+      <div class="per">2<br><span style="font-size:9px;opacity:.75">٠٧:٤٥</span></div>
+      <div class="cell"></div><div class="cell">الأول/ب</div><div class="cell"></div>
+    </div>
+
+    <button class="save">إضافة الطلاب</button>
+
+    <div class="nav">
+      <a class="on"><span class="i">🏠</span>الرئيسية</a>
+      <a><span class="i">📚</span>الفصول</a>
+      <a><span class="i">📅</span>الجدول</a>
+      <a><span class="i">📁</span>إنجاز</a>
+      <a><span class="i">⚙️</span>الإعدادات</a>
+    </div>
+  </div>
+</div>
+
+<div class="pv-bar" id="bar"></div>
+
+<script>
+const P = {
+  navy:   { nm:'الكحليّ — الحالي', deep:'#0F2C5C', mid:'#24498A', dark:'#0A2049', gold:'#C9A961',
+            ds:'أزرقٌ ملكيٌّ رسميّ. هو لونُ الوثائق السعودية، ولذلك اختير — وهو ما تراه اليوم.' },
+  green:  { nm:'الأخضر السعودي', deep:'#0B5D3B', mid:'#127A4E', dark:'#053venue'.replace('venue','') + '0F20', gold:'#C9A961',
+            ds:'أخضرُ العَلَم. أقربُ لونٍ لهُويّة المملكة، ويليق بتطبيقٍ تعليميٍّ رسميّ. والذهبيُّ معه زوجٌ معروف.' },
+  teal:   { nm:'البترولي', deep:'#0D4F5C', mid:'#12707F', dark:'#06323A', gold:'#C9A961',
+            ds:'أزرقٌ مخضرٌّ هادئ. أقلُّ رسميّةً من الكحليّ وأكثرُ حداثة، ويريح العينَ في الاستعمال الطويل.' },
+  wine:   { nm:'العنّابي', deep:'#7A1B33', mid:'#9E2544', dark:'#4E0F20', gold:'#C9A961',
+            ds:'أحمرُ نبيذيٌّ عميق. مميَّزٌ بين تطبيقات المعلّمين ولا يُخلط بغيره — لكنّه قد يُقرأ تحذيراً في بعض المواضع.' },
+  violet: { nm:'البنفسجي العميق', deep:'#3D2A6B', mid:'#55399A', dark:'#241640', gold:'#C9A961',
+            ds:'بنفسجيٌّ داكن. حديثٌ ومميَّز، وبعيدٌ عن ألوان التطبيقات الحكومية — يُقرأ «منتَجاً» أكثرَ من «وثيقة».' },
+  slate:  { nm:'الفحميّ والذهبيّ', deep:'#2B3440', mid:'#3C4757', dark:'#171D25', gold:'#C9A961',
+            ds:'رماديٌّ فحميٌّ محايد، ويترك الذهبيَّ يقود وحدَه. أهدأُ الستّة، وأقربُها لمظهرٍ راقٍ بلا لون.' }
+};
+
+/* حسابُ التباين — يُعرض لا يُدّعى */
+const lum = ([r,g,b]) => { const f = x => { x/=255; return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4); };
+  return .2126*f(r)+.7152*f(g)+.0722*f(b); };
+const hex = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+const ratio = (a,b) => { const l1=lum(a),l2=lum(b);
+  return ((Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)).toFixed(2); };
+
+let cur = 'navy';
+function apply(k) {
+  const p = P[k]; cur = k;
+  const r = document.documentElement.style;
+  r.setProperty('--deep', p.deep); r.setProperty('--mid', p.mid);
+  r.setProperty('--dark', p.dark); r.setProperty('--gold', p.gold);
+  r.setProperty('--ink', p.deep);
+  document.getElementById('nm').textContent = p.nm;
+  document.getElementById('ds').textContent = p.ds;
+  const onWhite = ratio(hex(p.deep), [255,255,255]);
+  const white   = ratio([255,255,255], hex(p.deep));
+  const onGold  = ratio(hex(p.deep), hex(p.gold));
+  const cls = v => v >= 4.5 ? 'ok' : 'bad';
+  document.getElementById('m').innerHTML =
+      '<b class="' + cls(onWhite) + '">حبرٌ على أبيض ' + onWhite + '</b>'
+    + '<b class="' + cls(white)   + '">أبيضُ على اللون ' + white + '</b>'
+    + '<b class="' + cls(onGold)  + '">على الذهبيّ ' + onGold + '</b>';
+  document.querySelectorAll('#bar button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+}
+document.getElementById('bar').innerHTML = Object.entries(P).map(([k,p]) =>
+  '<button data-k="' + k + '"><i style="background:' + p.deep + '"></i>'
+  + p.nm.split(' ')[0] + '</button>').join('');
+document.addEventListener('click', e => {
+  const b = e.target.closest('#bar button'); if (b) apply(b.dataset.k);
+});
+apply('navy');
+</script>
+</body>
+</html>
