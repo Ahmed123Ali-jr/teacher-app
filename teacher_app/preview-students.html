@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>إضافة الطلاب — ثلاثة أشكال</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<!--
+    preview-students.html — معاينةٌ لا تُشحن. تُحذف بعد اختيار الشكل.
+
+    اليوم: حبّتان تُبدّلان بين «لصق قائمة» و«رفع ملف»، فيُخفى أحدُهما دائماً
+    ويُطلب من المعلّم أن يقرّر طريقَه قبل أن يرى ما فيه. وهذه ثلاثةُ أشكالٍ
+    تُلغي التبديل: الكتابةُ حاضرةٌ والرفعُ حاضرٌ في شاشةٍ واحدة.
+-->
+<style>
+:root{
+  --ink:#0F2C5C; --ink2:#2C2C2A; --muted:#6B6B68;
+  --page:#FFFFFF; --card:#FFFFFF; --line:#E4E6EA; --line2:#D8D5CC;
+  --beige:#ECEAE3; --gold:#C9A961; --sheen:rgba(255,255,255,.75);
+}
+body.dark{
+  --ink:#8FB4F5; --ink2:#E8ECF3; --muted:#A3AEC0;
+  --page:#0D1117; --card:#161C27; --line:#2C3545; --line2:#3D4859;
+  --beige:#1E2634; --gold:#C9A961; --sheen:rgba(255,255,255,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0 0 140px;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:#F2F1EC;color:var(--ink2);line-height:1.75}
+body.dark{background:#05070B;color:#E8ECF3}
+.pv-title{text-align:center;font-size:16px;font-weight:800;margin:14px 12px 4px}
+.pv-note{text-align:center;font-size:12.5px;color:#6B6B68;margin:0 16px 12px;line-height:1.8}
+body.dark .pv-note{color:#A3AEC0}
+.pv-cap{max-width:430px;margin:0 auto 10px;padding:11px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px}
+.pv-cap .nm{font-size:14px;font-weight:800;color:var(--ink)}
+.pv-cap .ds{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.7}
+
+/* لوحةٌ سفليّةٌ كلوحات التطبيق */
+.sheet{max-width:430px;margin:0 auto;background:var(--card);
+  border:1px solid var(--line);border-radius:20px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(16,24,40,.12)}
+body.dark .sheet{box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.sh-head{display:flex;align-items:center;gap:10px;padding:14px 16px;
+  border-bottom:1px solid var(--line)}
+.sh-head b{font-size:15px;font-weight:800;color:var(--ink);flex:1}
+.sh-head .x{font-size:19px;color:var(--muted);cursor:pointer}
+.sh-body{padding:16px}
+
+label.lbl{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:var(--ink2)}
+textarea{display:block;width:100%;min-height:150px;resize:vertical;padding:12px 14px;
+  background:var(--page);border:2px solid var(--line);border-radius:13px;
+  font-family:inherit;font-size:14px;line-height:2;color:var(--ink2)}
+textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(15,44,92,.12)}
+textarea::placeholder{color:#A9A69C;font-weight:400}
+body.dark textarea::placeholder{color:#6B7686}
+.hint{margin-top:6px;font-size:11.5px;color:var(--muted)}
+.save{display:block;width:100%;margin-top:16px;min-height:50px;border:0;border-radius:13px;
+  background:linear-gradient(180deg,#24498A,#0F2C5C);color:#fff;font-family:inherit;
+  font-size:14.5px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(15,44,92,.28)}
+.ghost{display:block;width:100%;margin-top:8px;min-height:44px;border:0;background:none;
+  font-family:inherit;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer}
+
+/* ── أ: الرفعُ صفٌّ رصاصيٌّ تحت المربّع ── */
+.up-row{display:flex;align-items:center;gap:11px;width:100%;margin-top:14px;
+  padding:13px 14px;border-radius:14px;cursor:pointer;font-family:inherit;text-align:right;
+  background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--beige) 42%,var(--card)) 50%,var(--beige) 100%);
+  border:1.5px solid color-mix(in srgb,var(--beige) 85%,#000);
+  box-shadow:inset 0 1.5px 0 var(--sheen),0 3px 8px rgba(16,24,40,.09)}
+body.dark .up-row{background:var(--beige);border-color:var(--line)}
+.up-row .ic{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;
+  font-size:17px;background:var(--card);border:1px solid var(--line)}
+.up-row .tx{flex:1;min-width:0}
+.up-row .t{display:block;font-size:13.5px;font-weight:800;color:var(--ink)}
+.up-row .s{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:1px}
+.up-row .chev{color:var(--muted);font-size:16px;font-weight:800;transform:scaleX(-1)}
+
+/* ── ب: الرفعُ منطقةُ إفلاتٍ متقطّعة ── */
+.drop{display:block;width:100%;margin-top:14px;padding:20px 14px;border-radius:16px;
+  cursor:pointer;font-family:inherit;text-align:center;
+  background:color-mix(in srgb,var(--gold) 5%,var(--card));
+  border:1.5px dashed color-mix(in srgb,var(--gold) 55%,transparent)}
+.drop .ic{font-size:26px;display:block;margin-bottom:5px}
+.drop .t{display:block;font-size:13.5px;font-weight:800;color:var(--ink)}
+.drop .s{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:3px}
+
+/* ── ج: فاصلٌ «أو» ثم زرٌّ محدَّد ── */
+.orline{display:flex;align-items:center;gap:11px;margin:16px 0 12px}
+.orline i{flex:1;height:1px;background:var(--line)}
+.orline span{font-size:11.5px;font-weight:700;color:var(--muted)}
+.up-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  min-height:48px;border-radius:13px;cursor:pointer;font-family:inherit;
+  font-size:13.5px;font-weight:800;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--ink);box-shadow:0 2px 6px rgba(15,44,92,.10)}
+body.dark .up-btn{border-color:var(--ink)}
+.up-btn .ic{font-size:16px}
+
+.pv-bar{position:fixed;inset-inline:0;bottom:0;z-index:60;
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-top:1px solid #DDDCD6;display:flex;gap:6px}
+body.dark .pv-bar{background:rgba(13,17,23,.96);border-top-color:#2C3545}
+.pv-bar button{flex:1;min-height:46px;border-radius:12px;cursor:pointer;font-family:inherit;
+  font-size:15px;font-weight:800;color:#2C2C2A;background:#fff;border:1.5px solid #D8D5CC}
+body.dark .pv-bar button{color:#E8ECF3;background:#161C27;border-color:#2C3545}
+.pv-bar button.on{color:#fff;background:#0F2C5C;border-color:#0A2049}
+.pv-bar button.thm{flex:0 0 54px;font-size:19px}
+</style>
+</head>
+<body>
+
+<p class="pv-title">إضافة الطلاب — بلا حبّتَي تبديل</p>
+<p class="pv-note">
+  اليوم تُخفى إحدى الطريقتين دائماً. وفي الثلاثة: <b>الكتابةُ حاضرةٌ والرفعُ حاضر</b>.<br>
+  و<b>🌙</b> يقلب المظهر.
+</p>
+
+<div class="pv-cap"><div class="nm" id="cap-nm"></div><span class="ds" id="cap-ds"></span></div>
+
+<div class="sheet">
+  <div class="sh-head"><b>إضافة طلاب</b><span class="x">✕</span></div>
+  <div class="sh-body" id="body"></div>
+</div>
+
+<div class="pv-bar">
+  <button data-o="now">الحالي</button>
+  <button data-o="a" class="on">أ</button>
+  <button data-o="b">ب</button>
+  <button data-o="c">ج</button>
+  <button class="thm" id="thm">🌙</button>
+</div>
+
+<script>
+const PH = 'اكتب أسماء الطلاب هنا — اسم في كل سطر';
+const CAPS = {
+  now:['الحالي — حبّتان تُبدّلان','حبّةُ «📋 لصق قائمة» وحبّةُ «📎 رفع ملف»: يختار المعلّمُ طريقَه قبل أن يرى ما فيه، وتُخفى الأخرى. وعنوانُ المربّع فوقه يقول ما يقوله المربّعُ نفسُه.'],
+  a:['أ — الكتابةُ أولاً، والرفعُ صفٌّ تحتها','المربّعُ مفتوحٌ فوراً بشرحٍ داخله، وتحته صفٌّ رصاصيٌّ للرفع بمواد بطاقات التطبيق نفسِها (نفسُ صفوف الفصول و«إنجاز»). مألوفٌ للعين وأهدأُ ما في الثلاثة.'],
+  b:['ب — منطقةُ إفلاتٍ ذهبيّة','الرفعُ منطقةٌ متقطّعةٌ ذهبيّةٌ كخانات «حصة انتظار اليوم» في الجدول — تقول «أفلِت هنا» بلا كلمات. أوضحُ دعوةً، وأثقلُ بصرياً.'],
+  c:['ج — فاصلُ «أو» ثم زرٌّ محدَّد','المربّعُ ثم خطٌّ فيه «أو» ثم زرٌّ كحليُّ الحدّ. أقلُّ الثلاثة حبراً، ويقول صراحةً إنهما طريقان بديلان لا خطوتان متتاليتان.']
+};
+function textarea(){return `
+  <label class="lbl">أسماء الطلاب</label>
+  <textarea placeholder="${PH}"></textarea>
+  <div class="hint">يُتجاهل الفراغُ والأسطرُ الفارغة.</div>`;}
+const VIEWS = {
+  now: () => `
+    <div style="display:flex;gap:7px;margin-bottom:16px">
+      <button class="up-btn" style="min-height:38px;font-size:12.5px;border-color:#0F2C5C;background:#0F2C5C;color:#fff">📋 لصق قائمة</button>
+      <button class="up-btn" style="min-height:38px;font-size:12.5px;border-color:var(--line)">📎 رفع ملف أو صورة</button>
+    </div>
+    <label class="lbl">ألصق أسماء الطلاب — اسم في كل سطر</label>
+    <textarea placeholder="أحمد بن محمد&#10;سارة بنت عبدالله&#10;خالد بن فيصل"></textarea>
+    <div class="hint">يُتجاهل الفراغ والأسطر الفارغة.</div>
+    <button class="save">إضافة الطلاب</button>`,
+  a: () => textarea() + `
+    <button class="up-row">
+      <span class="ic">📄</span>
+      <span class="tx"><span class="t">ارفع ملفاً أو صورةً بأسماء الطلاب</span>
+      <span class="s">صورة أو PDF أو ملف نصّي</span></span>
+      <span class="chev">❮</span>
+    </button>
+    <button class="save">إضافة الطلاب</button>`,
+  b: () => textarea() + `
+    <button class="drop">
+      <span class="ic">📄</span>
+      <span class="t">ارفع ملفاً أو صورةً بأسماء الطلاب</span>
+      <span class="s">صورة أو PDF أو ملف نصّي</span>
+    </button>
+    <button class="save">إضافة الطلاب</button>`,
+  c: () => textarea() + `
+    <div class="orline"><i></i><span>أو</span><i></i></div>
+    <button class="up-btn"><span class="ic">📄</span> ارفع ملفاً أو صورةً بالأسماء</button>
+    <button class="save">إضافة الطلاب</button>`
+};
+let opt='a';
+function paint(){
+  document.getElementById('cap-nm').textContent=CAPS[opt][0];
+  document.getElementById('cap-ds').textContent=CAPS[opt][1];
+  document.getElementById('body').innerHTML=VIEWS[opt]();
+}
+document.addEventListener('click',(e)=>{
+  if(e.target.closest('#thm')){document.body.classList.toggle('dark');
+    document.getElementById('thm').textContent=document.body.classList.contains('dark')?'☀️':'🌙';return;}
+  const sw=e.target.closest('.pv-bar button[data-o]');
+  if(sw){document.querySelectorAll('.pv-bar button[data-o]').forEach(x=>x.classList.toggle('on',x===sw));
+    opt=sw.dataset.o;paint();}
+});
+paint();
+</script>
+</body>
+</html>
