@@ -878,7 +878,7 @@
             <div class="empty-state">
                 <div class="icon">🎒</div>
                 <h3>لا يوجد ${global.Words.studentsBare()} بعد</h3>
-                <p>ألصق قائمة أسماء ${global.Words.students()}، أو ارفع ملفاً أو صورة للقائمة.</p>
+                <p>اكتب الأسماء، أو ارفع ملفاً أو صورةً بالقائمة.</p>
                 <button class="btn btn-primary" data-empty-add>+ إضافة ${global.Words.studentsBare()}</button>
             </div>
         `;
@@ -1458,40 +1458,53 @@
        ADD STUDENTS MODAL
        ========================================================================== */
 
+    /* ══ شاشةٌ واحدةٌ لا حبّتا تبديل ══
+       كانت حبّتان تُبدّلان بين «لصق قائمة» و«رفع ملف»، فتُخفى إحدى
+       الطريقتين دائماً ويُطلب من المعلّم أن يقرّر طريقَه **قبل** أن يرى ما
+       فيه. وعنوانُ المربّع فوقه يكرّر ما يقوله المربّعُ نفسُه.
+
+       فصارتا حاضرتين معاً: المربّعُ مفتوحٌ وشرحُه داخلَه، وتحته صفُّ رفعٍ
+       بمواد بطاقات التطبيق نفسِها (صفوفُ الفصول و«إنجاز» واستيرادُ الجدول)
+       — فيدخل الشكلُ الجديد بلا أن يُشعر أنه غريب. (البديل أ، ١٨ أغسطس.) */
     function openAddStudentsModal(cls) {
-        let mode = 'paste';
+        let file = null;                 /* الملفُّ المختار — إن اختار */
         const form = document.createElement('div');
         paint();
 
         function paint() {
             form.innerHTML = `
-                <div class="filter-bar" style="margin-bottom: var(--space-5); flex-wrap: wrap;">
-                    <button class="chip ${mode === 'paste'  ? 'active' : ''}" data-mode="paste">📋 لصق قائمة</button>
-                    <button class="chip ${mode === 'upload' ? 'active' : ''}" data-mode="upload">📎 رفع ملف أو صورة</button>
+                <div class="field" style="margin-bottom: 0;">
+                    <label class="label" for="paste-names">أسماء ${global.Words.students()}</label>
+                    <textarea class="textarea" id="paste-names" rows="8"
+                              placeholder="اكتب أسماء ${global.Words.students()} هنا — اسم في كل سطر"></textarea>
+                    <div class="field-hint">يُتجاهل الفراغ والأسطر الفارغة.</div>
                 </div>
-                ${mode === 'paste'  ? pasteForm()  : ''}
-                ${mode === 'upload' ? uploadForm() : ''}
+
+                <button type="button" class="stu-up" id="stu-up">
+                    <span class="ic">${file ? '✓' : '📄'}</span>
+                    <span class="tx">
+                        <span class="t">${file ? escapeHtml(file.name)
+                                               : 'ارفع ملفاً أو صورةً بأسماء ' + global.Words.students()}</span>
+                        <span class="s">${file ? 'اضغط لاختيار ملفٍ آخر'
+                                               : 'صورة أو PDF أو ملف نصّي'}</span>
+                    </span>
+                    <span class="chev" aria-hidden="true">❮</span>
+                </button>
+                <input type="file" id="upload-file" accept=".csv,.txt,.pdf,image/*" hidden>
+
+                ${footer('إضافة ' + global.Words.students())}
             `;
-            form.querySelectorAll('[data-mode]').forEach((b) =>
-                b.addEventListener('click', () => { mode = b.dataset.mode; paint(); }));
+            const picker = form.querySelector('#upload-file');
+            form.querySelector('#stu-up').addEventListener('click', () => picker.click());
+            picker.addEventListener('change', () => {
+                file = picker.files[0] || null;
+                const txt = form.querySelector('#paste-names').value;
+                paint();
+                form.querySelector('#paste-names').value = txt;   /* لا يضيع ما كتب */
+            });
             bindSubmit();
         }
 
-        function pasteForm() { return `
-            <div class="field">
-                <label class="label">ألصق أسماء ${global.Words.students()} — اسم في كل سطر</label>
-                <textarea class="textarea" id="paste-names" rows="10"
-                          placeholder="أحمد بن محمد&#10;سارة بنت عبدالله&#10;خالد بن فيصل"></textarea>
-                <div class="field-hint">يُتجاهل الفراغ والأسطر الفارغة.</div>
-            </div>
-            ${footer('إضافة ' + global.Words.students())}`; }
-        function uploadForm() { return `
-            <div class="field">
-                <label class="label">ارفع ملف الأسماء أو صورة القائمة</label>
-                <input class="input" id="upload-file" type="file" accept=".csv,.txt,.pdf,image/*">
-                <div class="field-hint">ملف CSV أو نصي (يُقرأ مباشرة)، أو صورة/PDF لقائمة ${global.Words.students()} (يستخرجها الذكاء الاصطناعي تلقائياً).</div>
-            </div>
-            ${footer('إضافة ' + global.Words.students())}`; }
         function footer(primary) { return `
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-primary" data-submit>${primary}</button>
@@ -1506,11 +1519,13 @@
                 const origLabel = btn.textContent;
                 try {
                     let names = [];
-                    if (mode === 'paste') {
-                        names = parseNameList(form.querySelector('#paste-names').value);
-                    } else if (mode === 'upload') {
-                        const file = form.querySelector('#upload-file').files[0];
-                        if (!file) throw new Error('اختر ملفاً أولاً.');
+                    /* المكتوبُ يسبق المرفوع: إن كتب شيئاً فهو قصدُه، وإلّا
+                       فالملفُّ — ولا يُسأل أيَّهما أراد. */
+                    const typed = parseNameList(form.querySelector('#paste-names').value);
+                    if (typed.length) {
+                        names = typed;
+                    } else {
+                        if (!file) throw new Error('اكتب الأسماء أو ارفع ملفاً.');
                         // Text files (CSV/TXT) are read directly; PDF/images go to AI.
                         const isText = /\.(csv|txt)$/i.test(file.name)
                             || file.type === 'text/csv' || file.type === 'text/plain';

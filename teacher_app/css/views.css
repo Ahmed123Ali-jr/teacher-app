@@ -5115,6 +5115,33 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .br-jump-row .go { color: #fff; background: var(--primary); border: 1.5px solid #0A2049; }
 .br-jump-row .no { color: #0F2C5C; background: #ECEAE3; border: 1.5px solid #D8D5CC; }
 
+/* ══ صفُّ رفع أسماء الطلاب ══
+   بموادّ بطاقات التطبيق نفسِها — نفسُ تدرّج صفوف الفصول و«إنجاز» وزرِّ
+   استيراد الجدول — فيدخل الشكلُ الجديد بلا أن يُشعر أنه غريب.
+   ورمزُه يصير «✓» حين يُختار ملفٌّ فيقول حالَه بلا كلمات. */
+.stu-up {
+    display: flex; align-items: center; gap: 11px;
+    width: 100%; margin-top: var(--space-4);
+    padding: 13px 14px; border-radius: 14px;
+    cursor: pointer; font-family: inherit; text-align: right;
+    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
+    border: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
+    box-shadow: inset 0 1.5px 0 var(--sheen), 0 3px 8px rgba(16, 24, 40, .09);
+}
+.stu-up:active { transform: scale(.99); }
+.stu-up .ic {
+    width: 38px; height: 38px; flex: none; border-radius: 11px;
+    display: grid; place-items: center; font-size: 17px;
+    background: var(--surface); border: 1px solid var(--border);
+}
+.stu-up .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.stu-up .t {
+    font-size: 13.5px; font-weight: var(--fw-black); color: var(--ink-primary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.stu-up .s { font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 1px; }
+.stu-up .chev { color: var(--text-muted); font-size: 16px; font-weight: var(--fw-black); transform: scaleX(-1); }
+
 /* ---------- استيراد الجدول من صورة ---------- */
 .sched-import {
     display: block; width: 100%; margin: var(--space-4) 0 var(--space-2);
