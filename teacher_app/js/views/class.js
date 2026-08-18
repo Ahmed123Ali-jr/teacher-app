@@ -622,10 +622,21 @@
                 const allMarkedNow = students.length > 0
                     && students.every((s) => byStudent.get(s.id));
                 if (allMarkedNow) {
-                    btn.textContent = '⏳ جارٍ الإلغاء...';
+                    /* السؤالُ هنا لا قبل قراءة القاعدة: العددُ في الرسالة
+                       يجب أن يكون العددَ الحقيقيَّ لا المرسومَ على الشاشة. */
                     const ids = students.map((s) => byStudent.get(s.id)).filter(Boolean).map((r) => r.id);
-                    await global.TeacherDB.bulkRemove('attendance', ids);
-                    global.TeacherApp.toast('تم إلغاء تحضير الجميع.', 'success', 2500);
+                    btn.disabled = false;
+                    return confirmUnmarkAll(ids.length, async () => {
+                        const b = panel.querySelector('#btn-mark-all');
+                        if (b) { b.disabled = true; b.textContent = '⏳ جارٍ الإلغاء...'; }
+                        try {
+                            await global.TeacherDB.bulkRemove('attendance', ids);
+                            global.TeacherApp.toast('تم إلغاء تحضير الجميع.', 'success', 2500);
+                        } catch (err) {
+                            global.TeacherApp.toast('تعذّر الإلغاء: ' + err.message, 'error');
+                        }
+                        await renderStudents(panel, cls);
+                    });
                 } else {
                     btn.textContent = '⏳ جارٍ التحضير...';
                     const rows = students
@@ -1158,6 +1169,34 @@
         return `<input type="text" class="input input-sm num-input"
                        data-eval-num data-sid="${studentId}" data-col="${col.id}"
                        data-max="${col.max}" value="${display}" placeholder="—">`;
+    }
+
+    /* ══ تأكيدُ إلغاء تحضير الجميع ══
+       كان يُمحى تحضيرُ اليوم كلُّه بضغطةٍ واحدةٍ بلا سؤال — ومن أخطأ الزرَّ
+       فقدَ عملَ الحصّة ولا يعرف كيف يعيده. فصار يسأل بلوحةٍ سفليّةٍ كلوحة
+       حذف الطالب (البديل ب، ١٨ أغسطس ٢٠٢٦).
+
+       والنصُّ يقول ما يُمحى بالضبط: التحضيرُ كلُّه لا الحاضرون وحدهم —
+       فالإلغاء يحذف صفوفَ اليوم جميعَها، فيعود الغائبُ والمتأخّرُ «بلا
+       تحضير» لا على حالهما. ولا يُقال غيرُ ذلك فيثق بما ليس صحيحاً. */
+    function confirmUnmarkAll(count, onConfirm) {
+        const body = document.createElement('div');
+        body.innerHTML = `
+            <p style="margin-top:0">
+                يُمحى تحضيرُ <strong>${global.Words.count(count)}</strong> لهذا اليوم —
+                الحاضرون والغائبون والمتأخّرون.
+                <br>ويبقى كلُّ شيءٍ آخر كما هو.
+            </p>
+            <div class="modal-footer" style="margin: var(--space-5) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                <button type="button" class="btn btn-danger" data-confirm>نعم، ألغِ التحضير</button>
+                <button type="button" class="btn btn-ghost"  data-modal-close>تراجع</button>
+            </div>
+        `;
+        body.querySelector('[data-confirm]').addEventListener('click', () => {
+            global.Modal.close();
+            onConfirm();
+        });
+        global.Modal.open({ title: 'إلغاء تحضير الجميع؟', body });
     }
 
     /** Custom confirmation dialog — replaces window.confirm() which is
