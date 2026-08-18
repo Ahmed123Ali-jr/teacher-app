@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تحذير إلغاء التحضير — ثلاثة أشكال</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<!--
+    preview-undo.html — معاينةٌ لا تُشحن. تُحذف بعد اختيار الشكل.
+    اليوم: «✕ إلغاء تحضير الكل» يمحو تحضير اليوم كلَّه بضغطةٍ واحدةٍ بلا سؤال.
+-->
+<style>
+:root{--ink:#0F2C5C;--ink2:#2C2C2A;--muted:#6B6B68;--page:#FFF;--card:#FFF;
+  --line:#E4E6EA;--beige:#ECEAE3;--red:#B91C1C;--red-bg:#FEF2F2;--sheen:rgba(255,255,255,.75)}
+body.dark{--ink:#E8ECF3;--ink2:#E8ECF3;--muted:#A3AEC0;--page:#0D1117;--card:#161C27;
+  --line:#2C3545;--beige:#1E2634;--red:#F87171;--red-bg:#2A1315;--sheen:rgba(255,255,255,.06)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0 0 130px;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:#F2F1EC;color:var(--ink2);line-height:1.75}
+body.dark{background:#05070B;color:#E8ECF3}
+.pv-title{text-align:center;font-size:16px;font-weight:800;margin:14px 12px 4px}
+.pv-note{text-align:center;font-size:12.5px;color:#6B6B68;margin:0 16px 12px;line-height:1.8}
+body.dark .pv-note{color:#A3AEC0}
+.pv-cap{max-width:430px;margin:0 auto 12px;padding:11px 14px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px}
+.pv-cap .nm{font-size:14px;font-weight:800;color:var(--ink)}
+.pv-cap .ds{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.7}
+
+.phone{position:relative;max-width:430px;margin:0 auto;height:430px;overflow:hidden;
+  background:var(--page);border:1px solid var(--line);border-radius:26px}
+.ph-body{padding:14px;height:100%}
+.mark-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mb-btn{min-height:38px;padding:0 15px;border:0;border-radius:11px;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:800;color:#fff;background:#B91C1C}
+.stu{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line);margin-bottom:7px}
+.stu .n{flex:1;font-size:13px;font-weight:700}
+.stu .ok{font-size:15px}
+
+.back{position:absolute;inset:0;background:rgba(16,24,40,.42);display:none}
+.back.on{display:block}
+.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--card);
+  border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:0 -8px 28px rgba(16,24,40,.2);display:none}
+.sheet.on{display:block}
+.sh-t{font-size:15.5px;font-weight:800;color:var(--ink2);margin:0 0 6px}
+.sh-p{font-size:13px;color:var(--muted);margin:0 0 15px;line-height:1.85}
+.sh-p b{color:var(--ink2)}
+.row2{display:flex;gap:8px}
+.row2 button{flex:1;min-height:48px;border-radius:13px;cursor:pointer;font-family:inherit;
+  font-size:14px;font-weight:800;border:0}
+.b-danger{background:#B91C1C;color:#fff}
+.b-ghost{background:none;color:var(--muted);border:1.5px solid var(--line)!important}
+
+/* ── أ: شريطٌ خفيفٌ يزحف من الأسفل ── */
+.snack{position:absolute;inset-inline:12px;bottom:12px;display:none;
+  align-items:center;gap:11px;padding:12px 14px;border-radius:15px;
+  background:var(--card);border:1px solid var(--line);
+  box-shadow:0 8px 24px rgba(16,24,40,.18)}
+.snack.on{display:flex}
+.snack .ic{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+  font-size:16px;background:var(--red-bg);color:var(--red)}
+.snack .tx{flex:1;min-width:0;font-size:12.5px;font-weight:700;line-height:1.6}
+.snack .tx s{display:block;font-size:11px;font-weight:600;color:var(--muted);
+  text-decoration:none;margin-top:1px}
+.snack .go{flex:none;min-height:36px;padding:0 14px;border:0;border-radius:10px;
+  background:#B91C1C;color:#fff;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.snack .no{flex:none;min-height:36px;padding:0 10px;border:0;background:none;
+  color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+
+/* ── ج: تراجعٌ بعد الفعل ── */
+.toast{position:absolute;inset-inline:12px;bottom:12px;display:none;
+  align-items:center;gap:11px;padding:13px 14px;border-radius:15px;
+  background:#1E2634;color:#E8ECF3;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.toast.on{display:flex}
+.toast .tx{flex:1;font-size:13px;font-weight:700}
+.toast .undo{flex:none;min-height:34px;padding:0 14px;border:0;border-radius:9px;
+  background:#C9A961;color:#0F2C5C;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+
+.pv-bar{position:fixed;inset-inline:0;bottom:0;z-index:60;
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-top:1px solid #DDDCD6;display:flex;gap:6px}
+body.dark .pv-bar{background:rgba(13,17,23,.96);border-top-color:#2C3545}
+.pv-bar button{flex:1;min-height:46px;border-radius:12px;cursor:pointer;font-family:inherit;
+  font-size:15px;font-weight:800;color:#2C2C2A;background:#fff;border:1.5px solid #D8D5CC}
+body.dark .pv-bar button{color:#E8ECF3;background:#161C27;border-color:#2C3545}
+.pv-bar button.on{color:#fff;background:#0F2C5C;border-color:#0A2049}
+.pv-bar button.thm{flex:0 0 54px;font-size:19px}
+</style>
+</head>
+<body>
+
+<p class="pv-title">إلغاء تحضير الكل — ما الذي يظهر؟</p>
+<p class="pv-note">اضغط <b>«✕ إلغاء تحضير الكل»</b> في كل شكلٍ لترى ما يحدث. و<b>🌙</b> يقلب المظهر.</p>
+
+<div class="pv-cap"><div class="nm" id="cap-nm"></div><span class="ds" id="cap-ds"></span></div>
+
+<div class="phone">
+  <div class="ph-body">
+    <div class="mark-bar"><button class="mb-btn" id="undo">✕ إلغاء تحضير الكل</button></div>
+    <div class="stu"><span class="ok">✅</span><span class="n">أحمد بن محمد</span></div>
+    <div class="stu"><span class="ok">✅</span><span class="n">سارة بنت عبدالله</span></div>
+    <div class="stu"><span class="ok">✅</span><span class="n">خالد بن فيصل</span></div>
+    <div class="stu"><span class="ok">✅</span><span class="n">نورة بنت سعد</span></div>
+  </div>
+
+  <div class="back" id="back"></div>
+
+  <div class="sheet" id="sheet">
+    <p class="sh-t" id="sh-t"></p>
+    <p class="sh-p" id="sh-p"></p>
+    <div class="row2">
+      <button class="b-danger" id="yes">نعم، ألغِ التحضير</button>
+      <button class="b-ghost" id="no">تراجع</button>
+    </div>
+  </div>
+
+  <div class="snack" id="snack">
+    <span class="ic">⚠️</span>
+    <span class="tx">يُمحى تحضير <b>٢٦ طالباً</b> لهذا اليوم<s>الغياب والتأخير يبقيان</s></span>
+    <button class="no">لا</button><button class="go">ألغِ</button>
+  </div>
+
+  <div class="toast" id="toast">
+    <span class="tx">أُلغي تحضير ٢٦ طالباً</span>
+    <button class="undo">↶ تراجع</button>
+  </div>
+</div>
+
+<div class="pv-bar">
+  <button data-o="now">الحالي</button>
+  <button data-o="a" class="on">أ</button>
+  <button data-o="b">ب</button>
+  <button data-o="c">ج</button>
+  <button class="thm" id="thm">🌙</button>
+</div>
+
+<script>
+const CAPS={
+ now:['الحالي — بلا سؤال','ضغطةٌ واحدةٌ تمحو تحضير اليوم كلَّه فوراً. المعلّمُ الذي أخطأ الزرَّ يفقد عملَ الحصّة ولا يعرف كيف يعيده.'],
+ a:['أ — شريطٌ خفيفٌ فوق القائمة','يزحف شريطٌ من الأسفل يقول العددَ وما يبقى، وفيه «لا» و«ألغِ». لا يحجب الشاشة ولا يُطفئها — أخفُّ ما يكون، ويكفي لفعلٍ يُتدارك.'],
+ b:['ب — لوحةٌ سفليّةٌ تسأل','اللوحةُ المعتادةُ في التطبيق: تُظلم الشاشةُ خلفها ويقف المعلّم أمام سؤالٍ صريح. أوضحُها، وأثقلُها على فعلٍ يومي.'],
+ c:['ج — يُلغى فوراً ومعه «تراجع»','لا سؤالَ قبل: يُلغى ثم يظهر شريطٌ داكنٌ فيه «↶ تراجع» ثوانيَ. أسرعُ للمتعمِّد، ويحمي المخطئ — لكنّه يحتاج بناءَ استرجاعٍ حقيقيّ.']
+};
+let opt='a';
+const $=id=>document.getElementById(id);
+function hideAll(){['back','sheet','snack','toast'].forEach(i=>$(i).classList.remove('on'));}
+function paint(){$('cap-nm').textContent=CAPS[opt][0];$('cap-ds').textContent=CAPS[opt][1];hideAll();}
+$('undo').addEventListener('click',()=>{
+  hideAll();
+  if(opt==='now'){document.querySelectorAll('.stu .ok').forEach(e=>e.textContent='⬜');return;}
+  if(opt==='a'){$('snack').classList.add('on');}
+  if(opt==='b'){$('back').classList.add('on');$('sheet').classList.add('on');
+    $('sh-t').textContent='إلغاء تحضير الجميع؟';
+    $('sh-p').innerHTML='يُمحى تحضير <b>٢٦ طالباً</b> لهذا اليوم. والغيابُ والتأخيرُ يبقيان كما هما.';}
+  if(opt==='c'){document.querySelectorAll('.stu .ok').forEach(e=>e.textContent='⬜');
+    $('toast').classList.add('on');}
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest('#thm')){document.body.classList.toggle('dark');
+    $('thm').textContent=document.body.classList.contains('dark')?'☀️':'🌙';return;}
+  const sw=e.target.closest('.pv-bar button[data-o]');
+  if(sw){document.querySelectorAll('.pv-bar button[data-o]').forEach(x=>x.classList.toggle('on',x===sw));
+    opt=sw.dataset.o;document.querySelectorAll('.stu .ok').forEach(e=>e.textContent='✅');paint();return;}
+  if(e.target.closest('#no')||e.target.closest('#back')||e.target.closest('.snack .no')){hideAll();return;}
+  if(e.target.closest('#yes')||e.target.closest('.snack .go')){
+    hideAll();document.querySelectorAll('.stu .ok').forEach(e=>e.textContent='⬜');return;}
+  if(e.target.closest('.toast .undo')){hideAll();
+    document.querySelectorAll('.stu .ok').forEach(e=>e.textContent='✅');}
+});
+paint();
+</script>
+</body>
+</html>
