@@ -75,7 +75,7 @@ body:where(:not(.theme-dark)),
    فتُرى بحدّها الذهبي وظلّها — وكلاهما موجودٌ أصلاً في التصميم، فيُشدّ
    الحدّ قليلاً لا يُخترع. (بلا شرطِ الداكن: الحدُّ يقرأ الرمز، فيتبع
    المظهرَ من نفسه.) */
-.card, .start-box, .set-list, .cls-row, .flist, .ac-card, .imp-box {
+.card, .set-list, .cls-row, .flist, .ac-card, .imp-box {
     border: 1px solid var(--border);
 }
 
@@ -88,7 +88,6 @@ body:where(:not(.theme-dark)),
    فالتجسيم مطلوبٌ والألوان معتمدة.
    ========================================================================== */
 
-:where(body:not(.theme-dark)) .start-box,
 :where(body:not(.theme-dark)) .start-add-class,
 :where(body:not(.theme-dark)) .set-row,
 :where(body:not(.theme-dark)) .cls-row,
@@ -141,16 +140,10 @@ body:where(:not(.theme-dark)),
     border-inline: 1px solid #E7EAF0;
 }
 
-/* الهالة والحلقة الذهبيتان خلف الرمز: تُحيَّدان — كانتا تصبغان أعلى
-   البطاقة كلَّه. */
-:where(body:not(.theme-dark)) .start-halo { display: none !important; }
-:where(body:not(.theme-dark)) .start-ring { border: 1px solid #E4E6EA !important; }
-
 /* الخطّ الفاصل تحت الشريط العلوي كان ذهبياً عريضاً. */
 :where(body:not(.theme-dark)) .app-header { border-bottom-color: #E4E6EA !important; }
 
 /* آخرُ ما بقي ذهبياً بعد القياس: حلقة الرمز وإطار حبّة الحساب. */
-:where(body:not(.theme-dark)) .start-ring,
 :where(body:not(.theme-dark)) .avatar,
 :where(body:not(.theme-dark)) [class*="ava"],
 :where(body:not(.theme-dark)) .dash-ava,
@@ -170,7 +163,6 @@ body:where(:not(.theme-dark)),
    فيه المظهران.
    ========================================================================== */
 
-.start-s,            /* «صوّر جدولك المدرسي — تُنشأ فصولك…» */
 .set-row .h,         /* وصف كل صفٍّ في الإعدادات */
 .sch-hint,           /* «اضغط أي خانة لإضافة حصة» */
 .sched-hint,
@@ -183,7 +175,6 @@ body:where(:not(.theme-dark)),
 .imp-new-t span,
 .sch-card .s,
 .setup-hero .h,
-.start-box .start-s,
 
 /* ── مراجعةُ الشاشات كلِّها، لا الرئيسية وحدها ── */
 .hub-featured-sub,        /* «التحضير والغياب والمشاركة» تحت سجل الطلاب */

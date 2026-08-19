@@ -2073,51 +2073,39 @@ body.drawer-open { overflow: hidden; }
            + الشريطُ السفلي ‎58‎ + فرجةٌ ‎12‎ */
         min-height: calc(100dvh - 210px);
     }
-    .home-v2.is-start .start-box { margin-top: auto; }
 }
 
-.start-box {
+/* ══ لافتةُ «بقي الجدول» — تصميم «و» ══
+   حلّت محلَّ صندوقٍ فيه حلقةٌ ورمزُ تقويمٍ وعنوانٌ يكرّر نصَّ الزرّ. وهي
+   تقول ما ينقص لا ما يفعله الزرّ، فلا تنافسه.
+   وصبغتُها وحبرُها من الرموز لا من الأسماء، فتتبع المظهر وحدَها: على
+   الأبيض ذهبيّةٌ خفيفة، وعلى الداكن زيتونيّةٌ عميقة — ولا تُستثنى من
+   قلب المظهر كما تُستثنى الأسطحُ المثبَّتة. */
+.start-note {
     margin-top: var(--space-3);
-    border-radius: 26px;
-    padding: 34px 21px;
+    padding: 15px 16px;
+    border-radius: 16px;
     text-align: center;
-    position: relative;
-    overflow: hidden;
+    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+}
+.start-note b {
+    display: block;
+    font-size: 15px; font-weight: var(--fw-black);
     color: var(--ink-primary);
-    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
-    border: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
-    box-shadow: inset 0 1.5px 0 var(--sheen), 0 6px 14px rgba(16, 24, 40, .12);
 }
-.start-halo {
-    position: absolute; width: 210px; height: 210px; border-radius: 50%;
-    background: rgba(201, 169, 97, .10);
-    left: 50%; top: -115px; transform: translateX(-50%);
+.start-note span {
+    display: block; margin-top: 2px;
+    font-size: 13px; color: var(--text-muted);
 }
-.start-ring {
-    width: 96px; height: 96px; border-radius: 50%;
-    background: #fff;
-    display: grid; place-items: center;
-    margin: 0 auto; position: relative;
-    font-size: 46px;
-    box-shadow: inset 0 0 0 2px rgba(201, 169, 97, .5), 0 6px 14px rgba(16, 24, 40, .1);
-}
-/* القوسُ يشرح الزرَّ ولا ينافسه: أصغرُ وأخفتُ ويسقط سطراً حين يضيق. */
-.start-t-n {
-    display: block; margin-top: 3px;
-    font-size: 13px; font-weight: var(--fw-medium); color: var(--text-muted);
-}
-/* والفراغُ بين الحلقة والزرّ كان على عاتق `.start-t` — وقد حُذف العنوان،
-   فحمله `.start-cta` بهامشه هو. و`.start-s` لا شأن له: `theme-white`
-   يُخفيه مع بقيّة الأسطر التوضيحيّة. */
-.start-s {
-    font-size: 13.5px;
-    color: color-mix(in srgb, var(--primary) 60%, var(--mix-base));
-    margin-top: 6px; line-height: 1.7; position: relative;
-}
+/* والفراغُ الباقي كلُّه هنا: يدفع الزرَّين إلى أسفل الشاشة داخل الحاوية
+   المرنة أعلاه. وعلى الشاشات العريضة (بلا `is-start`) لا يتمدّد شيء،
+   فيكتفي بحدّه الأدنى. */
+.start-gap { flex: 1 1 auto; min-height: var(--space-3); }
 .start-cta {
     display: flex; align-items: center; justify-content: center;
-    margin: 21px auto 0;
-    min-height: 55px; max-width: 280px;
+    margin: 0;
+    min-height: 55px; width: 100%;
     border-radius: 14px;
     background: var(--primary); color: #fff;
     font-family: inherit; font-weight: var(--fw-black); font-size: 17px;
