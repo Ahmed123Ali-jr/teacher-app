@@ -135,12 +135,12 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
    بطلب المعلّم: بدل أن يرى فصولَه في أعلى الشاشة، تجيء أيقونةٌ ثمّ
    «بقي الجدول» ثمّ السطرُ الذي يشرحها. وموضعُها موضعُ الفصول نفسُه
    (أعلى الجسم) كما هي «د»، لا في الوسط. */
-.f-top{display:flex;flex-direction:column;align-items:center;text-align:center;
-  padding:6px 10px 0}
+.f-top{display:flex;flex-direction:column;align-items:center;padding:6px 0 0}
 .f-top .ring{width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center;
-  font-size:44px;box-shadow:inset 0 0 0 2px rgba(201,169,97,.5),0 6px 14px rgba(16,24,40,.1)}
-.f-top .t{font-size:20px;font-weight:800;color:var(--deep);margin-top:15px}
-.f-top .s{font-size:13.5px;color:var(--muted);margin-top:5px;max-width:255px}
+  font-size:44px;box-shadow:inset 0 0 0 2px rgba(201,169,97,.5),0 6px 14px rgba(16,24,40,.1);
+  margin-bottom:15px}
+/* والعبارةُ في صندوقها الذهبيِّ كما هي في «د» — لا نصّاً عارياً. */
+.f-top .d-note{margin-top:0;align-self:stretch}
 
 .sp{flex:1 1 auto;min-height:12px}
 
@@ -234,8 +234,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
     <div class="pane" data-p="f">
       <div class="f-top">
         <div class="ring">📅</div>
-        <div class="t">بقي الجدول</div>
-        <div class="s">حدّد حصص فصولك ليظهر يومُك وحصتُك القادمة هنا</div>
+        <div class="d-note"><b>بقي الجدول</b><span>حدّد حصص فصولك ليظهر يومُك هنا</span></div>
       </div>
       <div class="sp"></div>
       <a class="cta" href="#">+ أضف جدولك الأسبوعي</a>
