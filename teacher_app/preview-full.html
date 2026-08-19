@@ -45,10 +45,25 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .hero .days-b{background:rgba(255,255,255,.2);color:#fff}
 .hero .days-b.on{background:#fff;color:var(--deep)}
 .hero .prt{background:#fff;color:var(--deep)}
+/* ══ مربّعاتُ الإحصاء — ثلاثُ درجاتٍ للحجم ══
+   طلب المعلّم تصغيرَها. والدرجاتُ تُقاس لا تُقدَّر: كلُّ ما تكسبه
+   البطاقةُ من ارتفاعٍ يظهر طالباً أو نصفَ طالبٍ أكثرَ في القائمة. */
 .hero .stats{display:flex;gap:6px;margin-top:12px}
 .hero .st{flex:1;background:rgba(255,255,255,.13);border-radius:10px;padding:7px 4px;text-align:center}
 .hero .st b{display:block;font-size:16px;font-weight:800}
 .hero .st span{display:block;font-size:10px;opacity:.8}
+
+body[data-sz="s"] .hero .stats{gap:5px;margin-top:10px}
+body[data-sz="s"] .hero .st{padding:5px 3px;border-radius:9px}
+body[data-sz="s"] .hero .st b{font-size:14px}
+body[data-sz="s"] .hero .st span{font-size:9.5px}
+
+/* والأصغرُ سطرٌ واحد: الرقمُ ولافظُه جنباً إلى جنب. */
+body[data-sz="xs"] .hero .stats{gap:5px;margin-top:9px}
+body[data-sz="xs"] .hero .st{padding:4px 6px;border-radius:8px;display:flex;
+  align-items:baseline;justify-content:center;gap:4px}
+body[data-sz="xs"] .hero .st b{font-size:13.5px}
+body[data-sz="xs"] .hero .st span{font-size:9.5px}
 
 .tools{display:flex;gap:8px;margin-bottom:10px}
 .tools .sr{flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;
@@ -123,7 +138,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
   background:#12202A;color:#fff;border-radius:9px;padding:4px 11px;font-size:11.5px;font-weight:800}
 </style>
 </head>
-<body>
+<body data-sz="s">
 
 <div class="screen">
   <div class="hd"><b>سجل الطلاب</b><span>←</span></div>
@@ -176,8 +191,9 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 
 <div class="badge" id="badge">—</div>
 <div class="pick">
-  <button class="on" data-auto="0">ينزل بإصبعك</button>
-  <button data-auto="1">ينزل وحدَه عند الفتح</button>
+  <button data-sz="m">المربّعات كما هي</button>
+  <button class="on" data-sz="s">أصغر</button>
+  <button data-sz="xs">أصغر أكثر</button>
 </div>
 
 <script>
@@ -192,7 +208,7 @@ document.getElementById('rows').innerHTML = NAMES.map(function (n) {
 
 var sc = document.getElementById('scroll'), head = document.getElementById('head');
 var chips = document.getElementById('chips'), dsheet = document.getElementById('dsheet');
-var auto = false, animId = null;
+var auto = true, animId = null;
 
 function onScroll() {
     var stuck = sc.scrollTop >= head.offsetHeight - 1;
@@ -283,7 +299,7 @@ document.getElementById('up').addEventListener('click', function () {
 document.querySelector('.pick').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
-    auto = b.dataset.auto === '1';
+    document.body.dataset.sz = b.dataset.sz;
     reopen();
 });
 
