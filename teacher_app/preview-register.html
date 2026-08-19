@@ -46,12 +46,14 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .hero .st span{display:block;font-size:10px;opacity:.8}
 
 /* الشريطُ الموجز — بديلُ البطاقة */
-.slim{flex:0 0 auto;display:flex;align-items:center;gap:9px;background:var(--deep);color:#fff;
-  border-radius:14px;padding:9px 12px;margin-bottom:10px}
-.slim .d{flex:1;font-size:13.5px;font-weight:800}
-.slim .n{font-size:11.5px;opacity:.85}
-.slim .pill{background:rgba(255,255,255,.16);border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:800}
-.slim .prt{background:#fff;color:var(--deep);border-radius:9px;padding:4px 11px;font-size:12.5px;font-weight:800}
+.slim{flex:0 0 auto;display:flex;align-items:center;gap:10px;background:var(--deep);color:#fff;
+  border-radius:16px;padding:14px 15px;margin-bottom:10px}
+.slim .d{flex:1;font-size:15.5px;font-weight:800}
+.slim .n{font-size:12.5px;opacity:.85;margin-top:1px}
+.slim .pill{background:rgba(255,255,255,.18);border-radius:10px;padding:6px 12px;font-size:12.5px;
+  font-weight:800;cursor:pointer}
+.slim .prt{background:#fff;color:var(--deep);border-radius:10px;padding:7px 14px;font-size:13.5px;
+  font-weight:800;cursor:pointer}
 
 .days{flex:0 0 auto;display:flex;gap:6px;margin-bottom:10px;overflow:hidden}
 .days d{display:block;flex:0 0 62px;border:1px solid var(--line);border-radius:12px;padding:6px 0;
@@ -95,6 +97,17 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .row.tight{padding:8px 11px;gap:9px}
 .row.tight .acts i{width:32px;height:32px;font-size:13px}
 .row.tight .nm span{display:none}
+/* حالاتُ الحضور — لتُجرَّب باللمس */
+.row .acts i{cursor:pointer;transition:all .12s ease}
+.row .acts i.on{color:#fff;border-color:transparent;font-weight:800}
+.row .acts i[data-s="p"].on{background:#15794A}
+.row .acts i[data-s="a"].on{background:#B91C1C}
+.row .acts i[data-s="l"].on{background:#B7791F}
+.row .acts i[data-s="n"].on{background:var(--deep)}
+.row.done{border-color:color-mix(in srgb,#15794A 40%,#fff);background:color-mix(in srgb,#15794A 5%,#fff)}
+.row.abs{border-color:color-mix(in srgb,#B91C1C 35%,#fff);background:color-mix(in srgb,#B91C1C 4%,#fff)}
+.chips c{cursor:pointer}
+.markbar b{cursor:pointer}
 
 .pane{flex:1 1 auto;display:none;flex-direction:column;min-height:0}
 .pane.on{display:flex}
@@ -191,8 +204,9 @@ document.querySelectorAll('[data-rows]').forEach(function (box) {
     box.innerHTML = NAMES.map(function (n) {
         return '<div class="row' + (tight ? ' tight' : '') + '">'
           + '<div class="av">' + n[0] + '</div>'
-          + '<div class="nm"><b>' + n + '</b><span>بلا تحضير</span></div>'
-          + '<div class="acts"><i>✓</i><i>✗</i><i>⏰</i><i>📝</i></div></div>';
+          + '<div class="nm"><b>' + n + '</b><span data-st>بلا تحضير</span></div>'
+          + '<div class="acts"><i data-s="p">✓</i><i data-s="a">✗</i>'
+          + '<i data-s="l">⏰</i><i data-s="n">📝</i></div></div>';
     }).join('');
 });
 
@@ -206,6 +220,66 @@ function countVisible() {
     });
     document.getElementById('count').textContent = 'يظهر ' + n + ' طلاب بلا تمرير';
 }
+
+/* ══ التفاعل ══
+   ليست صوراً: تُضغط الأزرارُ فتتبدّل الحالة، ويتحدّث الإحصاء. الغرضُ أن
+   يُجرَّب التصميمُ باليد لا أن يُقاس بالعين. */
+var LABEL = { p: 'حاضر', a: 'غائب', l: 'متأخر', n: 'ملاحظة' };
+
+function setState(row, st) {
+    row.querySelectorAll('.acts i').forEach(function (b) {
+        b.classList.toggle('on', b.dataset.s === st);
+    });
+    row.classList.toggle('done', st === 'p');
+    row.classList.toggle('abs', st === 'a');
+    var lbl = row.querySelector('[data-st]');
+    if (lbl) lbl.textContent = st ? LABEL[st] : 'بلا تحضير';
+    row.dataset.state = st || '';
+}
+
+function refresh(pane) {
+    var rows = [].slice.call(pane.querySelectorAll('.row'));
+    var p = rows.filter(function (r) { return r.dataset.state === 'p'; }).length;
+    var a = rows.filter(function (r) { return r.dataset.state === 'a'; }).length;
+    var marked = p + a;
+    var pct = marked ? Math.round(p / marked * 100) + '٪' : '—';
+    var st = pane.querySelectorAll('.hero .st b');
+    if (st.length === 4) { st[1].textContent = p; st[2].textContent = a; st[3].textContent = pct; }
+    var n = pane.querySelector('.slim .n');
+    if (n) {
+        n.textContent = marked === 0 ? rows.length + ' طلاب · لم يُحضَّر أحد'
+            : rows.length + ' طلاب · ' + p + ' حاضر · ' + a + ' غائب · ' + pct;
+    }
+}
+
+document.querySelector('.bd').addEventListener('click', function (e) {
+    var pane = e.target.closest('.pane'); if (!pane) return;
+
+    var act = e.target.closest('.acts i');
+    if (act) {
+        var row = act.closest('.row');
+        setState(row, row.dataset.state === act.dataset.s ? '' : act.dataset.s);
+        refresh(pane); countVisible(); return;
+    }
+    var chip = e.target.closest('.chips c');
+    if (chip && !chip.classList.contains('ic')) {
+        chip.parentNode.querySelectorAll('c').forEach(function (c) {
+            c.classList.toggle('on', c === chip);
+        });
+        return;
+    }
+    if (e.target.closest('.markbar b')) {
+        pane.querySelectorAll('.row').forEach(function (r) { setState(r, 'p'); });
+        refresh(pane); return;
+    }
+    var day = e.target.closest('.days d');
+    if (day) {
+        day.parentNode.querySelectorAll('d').forEach(function (d) {
+            d.classList.toggle('on', d === day);
+        });
+        return;
+    }
+});
 
 document.querySelector('.pick').addEventListener('click', function (e) {
     var btn = e.target.closest('button');
