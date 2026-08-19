@@ -12,8 +12,12 @@
 
 :root {
     /* ---------- raw palette ---------- */
-    --pf-royal:        #0F2C5C;   /* الأزرق الملكي */
-    --pf-royal-light:  #1A3A6E;
+    /* ══ البترولي — اعتُمد في ١٨ أغسطس ٢٠٢٦ ══
+       كان كحليّاً ملكيّاً (‎#0F2C5C‎). واختار المعلّم البتروليَّ من ستِّ
+       لوحاتٍ عُرضت عليه مقيسةً. والاسمُ `pf-royal` بقي كما هو: تبديلُه
+       يلمس ثمانيةً وعشرين موضعاً بلا فائدة، والمعنى في قيمته لا في حرفه. */
+    --pf-royal:        #0A3F4A;   /* البترولي — لونُ الهُويّة */
+    --pf-royal-light:  #14606F;
 
     /* ══ سُلَّمُ لون الهُويّة ══
        أربعةٌ وثمانون لوناً كانت مكتوبةً صريحاً في التدرّجات والحبر، فلا
@@ -34,11 +38,11 @@
          `--on-gold`       حبرٌ على الذهبيّ — والذهبيُّ لا يتبدّل، فكذلك حبرُه
 
        والأخيران يحرسهما `tools/check-fixed-surfaces.mjs`. */
-    --primary-mid:     #24498A;
-    --primary-lift:    #1B3E77;
-    --primary-deep:    #0A2049;
-    --ink-fixed:       #0F2C5C;
-    --on-gold:         #0F2C5C;
+    --primary-mid:     #116373;
+    --primary-lift:    #0E5462;
+    --primary-deep:    #05262D;
+    --ink-fixed:       #0A3F4A;
+    --on-gold:         #0A3F4A;
     --pf-gold:         #C9A961;   /* الذهبي الفاخر */
     --pf-gold-light:   #E8D9A8;
     --pf-ivory:        #F8F6F0;   /* العاج */
@@ -142,7 +146,7 @@ body {
    (applied app-wide so the visual identity stays consistent)
    ========================================================================== */
 .badge-info {
-    background: rgba(15, 44, 92, 0.10);
+    background: color-mix(in srgb, var(--pf-royal) 10%, transparent);
     color: var(--pf-royal);
 }
 .badge-warning {

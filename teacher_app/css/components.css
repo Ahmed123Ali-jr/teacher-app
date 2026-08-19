@@ -142,7 +142,7 @@
 .input:focus, .select:focus, .textarea:focus {
     outline: none;
     border-color: var(--primary-light);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 .textarea {
@@ -184,7 +184,7 @@
     line-height: 1.4;
 }
 
-.badge-info    { background: rgba(59, 130, 246, 0.12); color: var(--ink-primary); }
+.badge-info    { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--ink-primary); }
 .badge-success { background: rgba(16, 185, 129, 0.12); color: var(--success); }
 .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
 .badge-danger  { background: rgba(239, 68, 68, 0.12);  color: var(--danger);  }

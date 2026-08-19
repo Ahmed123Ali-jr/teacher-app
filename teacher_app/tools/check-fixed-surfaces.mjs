@@ -83,12 +83,22 @@ function flippedInDark(sel) {
         }
     }
     for (const probe of probes) {
-        /* المُحدِّدُ في الداكن مسبوقٌ بـ`body.theme-dark ` */
-        const needle = 'body.theme-dark ' + probe;
-        if (dark.includes(needle)) return probe;
-        /* أو بصيغة `:not(...)` */
         const esc = probe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        if (new RegExp('body\\.theme-dark ' + esc + '(:not\\([^)]*\\))?[,{\\s]').test(dark)) return probe;
+        /* كلُّ مواضع ظهوره في الملفّ الداكن — ومعها ما يليها مباشرةً.
+           فقد يُقلب المُحدِّدُ في موضعٍ ويُستثنى في آخر. */
+        /* والحدُّ `\\s*[,{]` لازم: بدونه يلتقط `body.theme-dark .sch-card.wait .g`
+           على أنّه قلبٌ لـ`.sch-card` — وهو قاعدةُ حبرٍ لحفيدٍ لا قلبُ سطح.
+           فلا يُحسب القلبُ إلا حين ينتهي المُحدِّدُ عند هذا العنصر نفسِه. */
+        const hits = dark.matchAll(new RegExp(
+            'body\\.theme-dark ' + esc + '(:not\\(([^)]*)\\))?\\s*[,{]', 'g'));
+        for (const h of hits) {
+            /* حارسُ `:not(X)`: إن كان المُحدِّدُ الأصليُّ يحمل `X` فهذه
+               القاعدةُ تستثنيه لا تقلبه — فلا تُحسب. وقعت هذه في
+               `.sch-card.on::after`: الداكنُ يقلب `.sch-card:not(.on)`
+               فظنّت الأداةُ أنّ البطاقةَ المختارةَ تُقلب، وهي مستثناة. */
+            if (h[2] && sel.includes(h[2].trim())) continue;
+            return probe;
+        }
     }
     return null;
 }
@@ -101,6 +111,20 @@ function flippedInDark(sel) {
 const FIXED_TOKENS = ['--ink-fixed', '--on-gold'];
 const redefined = FIXED_TOKENS.filter((t) =>
     new RegExp('^\\s*' + t + '\\s*:', 'm').test(dark));
+
+/* ══ الاتّجاه المعاكس: حبرٌ مثبَّتٌ على سطحٍ يتبع المظهر ══
+   `--ink-fixed` و`--on-gold` لا يجوزان إلا حيث السطحُ **لا يتبدّل**. فإن
+   وُضعا على سطحٍ يقلبه `theme-dark` صارا داكنَين على داكن — وهو العطبُ
+   نفسُه مقلوباً. وقع هذا في ثلاثة مواضعَ يوم اعتُمد البترولي (١٨ أغسطس):
+   صنّفتُها بيدي فأخطأت، فصار السؤالُ للأداة لا للذاكرة. */
+const misfixed = [];
+for (const r of rules) {
+    if (!/color\s*:\s*[^;]*var\(\s*--(ink-fixed|on-gold)/.test(r.body)) continue;
+    const { body: surf, owner } = surfaceOf(r.sel);
+    if (!surf) continue;
+    const flip = flippedInDark(owner);
+    if (flip) misfixed.push({ ...r, owner, flip });
+}
 
 const found = [];
 for (const r of rules) {
@@ -122,9 +146,20 @@ if (redefined.length) {
     console.log('   يجعلهما فاتحَين على فاتح. يُحذف التعريفُ من الملفّ الداكن.\n');
 }
 
-if (!found.length && !redefined.length) {
+if (misfixed.length) {
+    console.log('‼️  ' + misfixed.length + ' موضعاً: حبرٌ **مثبَّت** على سطحٍ **يتبع** المظهر\n');
+    for (const f of misfixed) {
+        console.log('   ' + CSS + ':' + f.at);
+        console.log('      ' + f.sel);
+        console.log('      سطحُه ' + f.owner + ' يقلبه الداكن عبر: ' + f.flip);
+        console.log('      العلاج: يُبدَّل الحبرُ إلى var(--ink-primary) ليتبع السطح.');
+        console.log('');
+    }
+}
+
+if (!found.length && !redefined.length && !misfixed.length) {
     console.log('✅ لا حبرَ يتبع المظهر على سطحٍ فاتحٍ مثبَّت.');
-} else if (!found.length) {
+} else if (!found.length && !misfixed.length) {
     console.log('✅ لا حبرَ على سطحٍ مثبَّت — لكنّ الرموزَ الثابتة أعلاه تُصلَح.');
 } else {
     console.log('‼️  ' + found.length + ' موضعاً: الحبرُ يتبدّل والسطحُ لا يتبدّل\n');
@@ -144,4 +179,4 @@ if (Object.keys(ALLOW).length) {
     for (const [k, v] of Object.entries(ALLOW)) console.log('   ' + k + ' — ' + v);
 }
 
-process.exit((found.length || redefined.length) ? 1 : 0);
+process.exit((found.length || redefined.length || misfixed.length) ? 1 : 0);
