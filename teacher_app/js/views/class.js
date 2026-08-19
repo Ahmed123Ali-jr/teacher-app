@@ -241,7 +241,7 @@
                         <h2 class="chs-name">${escapeHtml(cls.grade)}</h2>
                         <div class="chs-chips">
                             <span class="chs-chip tinted">${escapeHtml(cls.subject)}</span>
-                            <span class="chs-chip">${global.Words.count(students.length)}</span>
+                            <span class="chs-chip tinted">${global.Words.count(students.length)}</span>
                         </div>
                     </div>
                 </div>
