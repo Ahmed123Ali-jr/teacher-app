@@ -22,11 +22,18 @@
     const DEFAULT_CLASS_COLOR = '#ECEAE3';
 
     /* الرفيق الغامق للبطاقات الكبيرة (هيرو الفصل وسجل المتابعة):
-       كحلي دائماً — بطلب المستخدم يكون داخل الفصل كحلياً. */
+       لونُ الهُويّة دائماً — بطلب المستخدم يكون داخل الفصل بلون التطبيق.
+       ويُقرأ من `--primary` لا يُكتب بالاسم: كُتب كحلياً هنا فبقي كحلياً
+       يوم صار التطبيق بترولياً، وأيقونةُ الفصل وحدها ظلّت من اللون القديم. */
+    /* ومن `body` لا من `documentElement`: الوضعُ الداكن يعرّف `--primary`
+       على `body.theme-dark`، فقراءتُه من الجذر تردُّ الفاتحَ في المظهرين. */
+    const IDENTITY = () => {
+        const v = getComputedStyle(document.body)
+            .getPropertyValue('--primary').trim();
+        return v || '#0A3F4A';
+    };
     const DEEP_COMPANION = {
-        '#ECEAE3': '#0F2C5C',   // رصاصي → كحلي
         '#EFE0BE': '#8C6D2F',   // (قيم قديمة من اللوحة السابقة)
-        '#DCE5F3': '#0F2C5C',
         '#E9E4D6': '#8A6F48'
     };
 
@@ -86,7 +93,7 @@
                     if (shadeOf(base, k).toLowerCase() === c) return DEEP_COMPANION[base];
                 }
             }
-            return StageColors.isLight(color) ? '#0F2C5C' : color;
+            return StageColors.isLight(color) ? IDENTITY() : color;
         },
         /** توحيد كل الفصول على اللون الرصاصي المعتمد — تعمل مرة عند فتح
          *  القوائم وتتجاهل ما هو موحّد أصلاً (رخيصة وآمنة التكرار). */
@@ -527,7 +534,7 @@
     function classesHtml(classes) {
         const cards = classes.map((c) => `
             <button class="class-card ${StageColors.isLight(c.color) ? 'card-light' : ''}" data-class-id="${c.id}"
-                    style="--card-color: ${c.color || '#1E40AF'};">
+                    style="--card-color: ${c.color || DEFAULT_CLASS_COLOR};">
                 <div>
                     <h4 class="class-card-title">${STAGE_LABELS[c.stage] || ''} — ${shortGrade(c.grade)} / ${c.section}</h4>
                     <div class="class-card-subject">${c.subject}</div>
@@ -627,7 +634,7 @@
                         const time = p ? `${p.start} — ${p.end}` : '';
                         const isWaiting = !cls;
                         // شريط جانبي فاتح لا يظهر — استخدم الرفيق الغامق
-                        const color = isWaiting ? '#F59E0B' : StageColors.deepFor(cls?.color || '#1E40AF');
+                        const color = isWaiting ? '#F59E0B' : StageColors.deepFor(cls?.color || DEFAULT_CLASS_COLOR);
                         const title = isWaiting
                             ? '⏳ حصة انتظار'
                             : `${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}`;

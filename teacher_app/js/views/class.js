@@ -98,7 +98,7 @@
     /* لون البطاقات الكبيرة (هيرو الفصل وسجل المتابعة): الألوان الفاتحة
        تُستبدل برفيقها الغامق حتى تبقى الكتابة البيضاء مقروءة. */
     function heroColor(cls) {
-        const c = (cls && cls.color) || '#0A3F4A';
+        const c = (cls && cls.color) || '#ECEAE3';
         return (global.StageColors && global.StageColors.deepFor)
             ? global.StageColors.deepFor(c) : c;
     }
