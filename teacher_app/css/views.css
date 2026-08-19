@@ -1437,31 +1437,14 @@ body.drawer-open { overflow: hidden; }
     border-left: 2.5px solid #fff;
     transform: rotate(-45deg);
 }
-/* والمدّةُ ‎3.5s‎ باختيار المعلّم بعد تجربة ‎1.4‎ و‎2.8‎ و‎4.4‎ — والغرضُ
-   أن تُلمح لا أن تُلحّ. وهي في رمزٍ واحدٍ لأن العنوانَ والسهمَ يشتركان
-   فيها، ولو كُتبت مرّتين لاختلّ الطَورُ عند أوّل تعديلٍ لأحدهما. */
-:root { --hub-pulse: 3.5s; }
+/* جُرّب وميضُ العنوان معه (١٩ أغسطس ٢٠٢٦) بمدّاتٍ أربع، فاختار المعلّم
+   الرجوعَ إلى السهم وحدَه بإعداده الأوّل. */
 @media (prefers-reduced-motion: no-preference) {
-    .hub-featured-chev { animation: chev-blink var(--hub-pulse) ease-in-out infinite; }
+    .hub-featured-chev { animation: chev-blink 1.4s ease-in-out infinite; }
 }
 @keyframes chev-blink {
     0%, 100% { opacity: 1; }
     50%      { opacity: .3; }
-}
-/* والعنوانُ يومض مع السهم — نفسُ المدّة ونفسُ التخفيف، وكلاهما يبدأ عند
-   رسم البطاقة فيبقيان على طَور واحد.
-   لكنّ قاعَه أعلى: عند ‎0.3‎ يصير الأبيضُ على البترولي ‎2.41:1‎ — أي عنوانٌ
-   يختفي نصفَ الوقت. وعند ‎0.55‎ يبقى ‎4.64:1‎ فوق العتبة الصارمة في أدنى
-   لحظات النبضة. الإيقاعُ متزامنٌ والعمقُ ليس كذلك — عمداً.
-   ومقصورةٌ على بطاقة لوحة الفصل: بطاقةُ السجلّ نفسُها بلا سهمٍ أصلاً. */
-@keyframes title-blink {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: .55; }
-}
-@media (prefers-reduced-motion: no-preference) {
-    .hub-featured:not(.reg-hero) .hub-featured-title {
-        animation: title-blink var(--hub-pulse) ease-in-out infinite;
-    }
 }
 .hub-featured-stats {
     display: flex;
