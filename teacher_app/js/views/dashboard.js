@@ -248,6 +248,17 @@
     }
 
     /** "07:55" → دقائق من منتصف الليل، أو null */
+    /* أوقاتُ الحصص من مصدرٍ واحدٍ مع شاشة الجدول: `getPeriodTimes` تردُّ
+       الافتراضيَّ حين لا شيءَ محفوظاً وتُكمل الناقص إلى سبع. وكانت الرئيسية
+       تقرأ الرمزَ خاماً، فمن لم يفتح محرّرَ التوقيت قطُّ يرى الجدولَ بأوقاتٍ
+       والرئيسيةَ بلا ✓ ولا ذهبيّ على أيّ حصّة. */
+    async function periodTimes() {
+        if (global.ScheduleView && global.ScheduleView.getPeriodTimes) {
+            return global.ScheduleView.getPeriodTimes();
+        }
+        return (await global.TeacherDB.Settings.get('period_times')) || [];
+    }
+
     function toMins(hhmm) {
         const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || '').trim());
         return m ? Number(m[1]) * 60 + Number(m[2]) : null;
@@ -319,10 +330,33 @@
             </div>`;
     }
 
-    /* صندوق حصص اليوم الكحلي — حبّات بحالة كل حصة */
+    /* صندوق حصص اليوم — حبّاتٌ بحالة كل حصّة.
+
+       ثلاثُ حالات: **مضى وقتُها** (✓ باهتة)، و**جاريةٌ الآن** (ذهبيّةٌ
+       صارخة)، و**القادمة** (ذهبيّةٌ خافتة). و✓ تعني مضيَّ الوقت لا
+       التحضير — بقرار المعلّم (١٩ أغسطس ٢٠٢٦).
+
+       و«القادمة» أُضيفت لأن الذهبيَّ كان للجارية وحدَها، فإن لم تكن أيُّ
+       حصّةٍ جاريةً — في الفسحة أو قبل الدوام أو بعده — لم يكن في الصندوق
+       شيءٌ مميَّزٌ البتّة: صفٌّ من ✓ لا يدلّ على شيء. */
     function periodsBoxHtml(todayRows, classById, periodByN) {
         if (!todayRows.length) return '';
         const now = new Date().getHours() * 60 + new Date().getMinutes();
+
+        /* أوّلُ حصّةٍ لم يبدأ وقتُها — تُحسب مرّةً قبل الرسم، ولا تُعلَّم
+           إن كانت هناك حصّةٌ جاريةٌ فالذهبيّان لا يجتمعان. */
+        const live = todayRows.some((r) => {
+            const p = periodByN[r.period];
+            if (!p) return false;
+            const a = toMins(p.start), b = toMins(p.end);
+            return a !== null && b !== null && now >= a && now < b;
+        });
+        const nextRow = live ? null : todayRows.find((r) => {
+            const p = periodByN[r.period];
+            const a = p ? toMins(p.start) : null;
+            return a !== null && now < a;
+        });
+
         const chips = todayRows.map((r) => {
             const cls = r.class_id ? classById[r.class_id] : null;
             const p = periodByN[r.period];
@@ -331,6 +365,7 @@
             let st = '';
             if (end !== null && now >= end) st = 'past';
             else if (start !== null && end !== null && now >= start && now < end) st = 'live';
+            else if (r === nextRow) st = 'next';
             const wait = !cls;
             const name = wait ? 'انتظار' : esc(chipName(cls));
             const stage = wait ? '' : esc(chipStage(cls));
@@ -343,6 +378,13 @@
                 ? `<div class="pchip wait ${st === 'past' ? 'past' : ''}">${inner}</div>`
                 : `<a href="#/class/${cls.id}" class="pchip ${st}">${inner}</a>`;
         }).join('');
+        /* وحين تمضي الحصصُ كلُّها يبقى الصندوقُ صفَّ ✓ لا يقول شيئاً —
+           فيُذيَّل بسطرٍ يقول إنّ اليوم انقضى. */
+        const allPast = todayRows.every((r) => {
+            const p = periodByN[r.period];
+            const b = p ? toMins(p.end) : null;
+            return b !== null && now >= b;
+        });
         return `
             <div class="pday-box">
                 <div class="pday-head">
@@ -350,6 +392,7 @@
                     <a href="#/schedule">الجدول كاملاً</a>
                 </div>
                 <div class="pday-chips">${chips}</div>
+                ${allPast ? '<div class="pday-done">انتهت حصصك اليوم</div>' : ''}
             </div>`;
     }
 
@@ -460,7 +503,7 @@
             : null;
 
         const scheduleRows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-        const periods = (await global.TeacherDB.Settings.get('period_times')) || [];
+        const periods = await periodTimes();
         const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
         const jsDay = new Date().getDay();
         const todayIdx = (jsDay >= 0 && jsDay <= 4) ? jsDay : -1;
@@ -607,7 +650,7 @@
         const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
-        const periods = (await global.TeacherDB.Settings.get('period_times')) || [];
+        const periods = await periodTimes();
         const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
 
         const today = todayIdx === -1

@@ -1974,8 +1974,26 @@ body.drawer-open { overflow: hidden; }
 }
 .pchip.live .pc-n, .pchip.live .pc-t, .pchip.live .pc-c { color: var(--on-gold); font-weight: var(--fw-black); }
 .pchip.live .pc-s { color: color-mix(in srgb, var(--on-gold) 78%, transparent); font-weight: var(--fw-black); }
+/* القادمة: ذهبيّةٌ خافتةٌ بحدٍّ ذهبيٍّ صريح — تدلّ على «التالية» ولا
+   تُلبس على الجارية. الفرقُ في الملء لا في الحدّ: الجاريةُ ذهبٌ صلبٌ
+   مكبَّرٌ بظلّ، وهذه إطارٌ وحدَه. */
+.pchip.next {
+    background: rgba(201, 169, 97, .13);
+    border-color: rgba(201, 169, 97, .55);
+}
+.pchip.next .pc-n, .pchip.next .pc-c { color: #E7C87B; font-weight: var(--fw-black); }
+.pchip.next .pc-t { color: rgba(231, 200, 123, .82); }
+.pchip.next .pc-s { color: rgba(231, 200, 123, .62); }
 .pchip.wait { background: rgba(231, 200, 123, .15); border-color: rgba(231, 200, 123, .45); }
 .pchip.wait .pc-c { color: #E7C87B; }
+/* وذيلُ الصندوق حين تمضي الحصصُ كلُّها — الحبّاتُ وحدَها صفُّ ✓ صامت. */
+.pday-done {
+    margin-top: 11px; padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+    text-align: center;
+    font-size: 12.5px; font-weight: var(--fw-bold);
+    color: rgba(255, 255, 255, .62);
+}
 
 /* أزرار التجهيز — تدرّج رصاصي */
 /* مربع حصتك الحالية — كحلي سادة بارز */

@@ -1523,5 +1523,9 @@
         return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
     }
 
-    global.ScheduleView = { render, nextClassInfo };
+    /* و`getPeriodTimes` مُصدَّرةٌ لأن الرئيسية كانت تقرأ الرمزَ خاماً
+       (`Settings.get('period_times') || []`) بلا افتراضيٍّ ولا إكمال —
+       فمن لم يفتح محرّرَ التوقيت قطُّ يرى الجدولَ بأوقاتٍ والرئيسيةَ بلا
+       أيّ علامة. مصدرٌ واحدٌ للأوقات يمنع اختلافَ الشاشتين. */
+    global.ScheduleView = { render, nextClassInfo, getPeriodTimes };
 })(window);
