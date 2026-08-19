@@ -1437,8 +1437,12 @@ body.drawer-open { overflow: hidden; }
     border-left: 2.5px solid #fff;
     transform: rotate(-45deg);
 }
+/* والمدّةُ ‎2.8s‎ لا ‎1.4s‎: رآها المعلّم سريعةً جداً — نبضةٌ كلَّ ثانيةٍ
+   ونصف تُقلق العينَ ولا تدعو. وهي مكتوبةٌ في رمزٍ واحدٍ لأن العنوانَ
+   يشاركها، ولو افترقا اختلّ الطَور. */
+:root { --hub-pulse: 2.8s; }
 @media (prefers-reduced-motion: no-preference) {
-    .hub-featured-chev { animation: chev-blink 1.4s ease-in-out infinite; }
+    .hub-featured-chev { animation: chev-blink var(--hub-pulse) ease-in-out infinite; }
 }
 @keyframes chev-blink {
     0%, 100% { opacity: 1; }
@@ -1456,7 +1460,7 @@ body.drawer-open { overflow: hidden; }
 }
 @media (prefers-reduced-motion: no-preference) {
     .hub-featured:not(.reg-hero) .hub-featured-title {
-        animation: title-blink 1.4s ease-in-out infinite;
+        animation: title-blink var(--hub-pulse) ease-in-out infinite;
     }
 }
 .hub-featured-stats {
