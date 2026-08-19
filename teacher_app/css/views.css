@@ -1437,10 +1437,11 @@ body.drawer-open { overflow: hidden; }
     border-left: 2.5px solid #fff;
     transform: rotate(-45deg);
 }
-/* والمدّةُ ‎2.8s‎ لا ‎1.4s‎: رآها المعلّم سريعةً جداً — نبضةٌ كلَّ ثانيةٍ
-   ونصف تُقلق العينَ ولا تدعو. وهي مكتوبةٌ في رمزٍ واحدٍ لأن العنوانَ
-   يشاركها، ولو افترقا اختلّ الطَور. */
-:root { --hub-pulse: 2.8s; }
+/* والمدّةُ ‎4.4s‎: كانت ‎1.4s‎ فرآها المعلّم سريعةً جداً، ثمّ ‎2.8s‎ فما
+   زالت. نبضةٌ تُقلق العينَ ليست دعوةً — والغرضُ أن تُلمح لا أن تُلحّ.
+   وهي في رمزٍ واحدٍ لأن العنوانَ والسهمَ يشتركان فيها، ولو كُتبت مرّتين
+   لاختلّ الطَورُ عند أوّل تعديلٍ لأحدهما. */
+:root { --hub-pulse: 4.4s; }
 @media (prefers-reduced-motion: no-preference) {
     .hub-featured-chev { animation: chev-blink var(--hub-pulse) ease-in-out infinite; }
 }
