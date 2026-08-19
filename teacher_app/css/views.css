@@ -1800,7 +1800,9 @@ body.drawer-open { overflow: hidden; }
 .home-hd {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    /* الصورةُ ملاصقةٌ للتحيّة على اليمين لا في الطرف المقابل — تصميم «أ»،
+       اختاره المعلّم من ثلاثة (١٩ أغسطس ٢٠٢٦). فلا `space-between` يباعد
+       بينهما بعرض الشاشة. */
     gap: var(--space-3);
     /* التحيةُ والتاريخُ والصورة ترتفع وحدها: `.app-main` تعطي الصفحة ٢١px
        أصلاً، وكان هذا الصفُّ يضيف مثلها فينزل ٤٢px عن الشريط.

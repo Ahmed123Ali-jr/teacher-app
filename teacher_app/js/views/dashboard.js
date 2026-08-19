@@ -509,11 +509,11 @@
         container.innerHTML = `
             <div class="container home-v2${bodyMod}">
                 <div class="home-hd">
+                    <a href="#/profile" class="home-av" aria-label="بياناتي">${avatarHtml}</a>
                     <div class="home-hd-tt">
                         <h2>${greet()}، ${firstName}</h2>
                         <div class="home-hij">${hijriToday()}</div>
                     </div>
-                    <a href="#/profile" class="home-av" aria-label="بياناتي">${avatarHtml}</a>
                 </div>
                 ${body}
             </div>
