@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>البطاقة كاملة مع سكرول</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<!--
+    preview-full.html — معاينةٌ لا تُشحن. تُحذف بعد الاختيار.
+    البطاقةُ كاملةٌ بإحصاءاتها الأربع، وتُمرَّر مع البحث فتغيب.
+    والخاناتُ ترتفع معها حتى تبلغ أعلى الشاشة ثمّ **تقف** — فتنزلق
+    الأسماءُ من تحتها ولا تغيب الخاناتُ أبداً.
+-->
+<style>
+:root{
+  --deep:#0A3F4A; --mid:#105260; --lift:#104E5B;
+  --gold:#C9A961; --beige:#ECEAE3; --ink:#2C2C2A; --muted:#6B6B68;
+  --line:#E4E6EA; --pick:52px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:#fff;color:var(--ink);line-height:1.7;overflow:hidden}
+
+.screen{height:calc(100dvh - var(--pick));display:flex;flex-direction:column;overflow:hidden;position:relative}
+.hd{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;border-bottom:1px solid var(--line);background:#fff;z-index:7}
+.hd b{font-size:15px;font-weight:800;color:var(--deep)}
+.scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 13px 12px;-webkit-overflow-scrolling:touch}
+.nav{flex:0 0 auto;margin:8px 11px 11px;padding:4px;border-radius:21px;background:rgba(255,255,255,.9);
+  border:1px solid var(--line);box-shadow:0 5px 16px rgba(16,24,40,.10);display:flex}
+.nav i{font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#575753;
+  border-radius:15px;line-height:1.4}
+.nav i span{display:block;font-size:16px}
+.nav i.on{color:#fff;background:linear-gradient(150deg,var(--lift),var(--deep));font-weight:800}
+
+.head{padding-top:11px}
+.hero{border-radius:18px;background:var(--deep);color:#fff;padding:15px;margin-bottom:10px}
+.hero .r1{display:flex;align-items:center;gap:9px}
+.hero .tt{flex:1;min-width:0}
+.hero .tt b{display:block;font-size:16.5px;font-weight:800}
+.hero .tt span{display:block;font-size:11.5px;opacity:.8;margin-top:2px}
+.hero .btn{height:34px;padding:0 13px;border-radius:11px;font-weight:800;font-size:13.5px;
+  display:flex;align-items:center;cursor:pointer;flex:0 0 auto}
+.hero .days-b{background:rgba(255,255,255,.2);color:#fff}
+.hero .days-b.on{background:#fff;color:var(--deep)}
+.hero .prt{background:#fff;color:var(--deep)}
+.hero .stats{display:flex;gap:6px;margin-top:12px}
+.hero .st{flex:1;background:rgba(255,255,255,.13);border-radius:10px;padding:7px 4px;text-align:center}
+.hero .st b{display:block;font-size:16px;font-weight:800}
+.hero .st span{display:block;font-size:10px;opacity:.8}
+
+.tools{display:flex;gap:8px;margin-bottom:10px}
+.tools .sr{flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;
+  display:flex;align-items:center;padding:0 12px;color:#9AA0A6;font-size:13.5px}
+.tools .ad{height:44px;padding:0 15px;border-radius:12px;background:var(--deep);color:#fff;
+  font-weight:800;font-size:13.5px;display:flex;align-items:center}
+
+/* ══ الخاناتُ ترتفع ثمّ تقف عند الأعلى ══
+   وحدُّها السفليُّ يظهر حين تقف، فيبين أن الأسماءَ تمرّ تحتها لا خلفها. */
+.chips{position:sticky;top:0;z-index:5;display:flex;gap:7px;overflow-x:auto;background:#fff;
+  padding:9px 0;margin:0 -13px;padding-inline:13px;scrollbar-width:none;
+  border-bottom:1px solid transparent;transition:border-color .15s ease, box-shadow .15s ease}
+.chips::-webkit-scrollbar{display:none}
+.chips.stuck{border-bottom-color:var(--line);box-shadow:0 4px 10px rgba(16,24,40,.06)}
+.chips c{display:block;flex:0 0 auto;border:1px solid var(--line);border-radius:11px;
+  padding:8px 14px;font-size:13.5px;font-weight:700;background:#fff;cursor:pointer}
+.chips c.on{background:color-mix(in srgb,var(--deep) 10%,#fff);border-color:var(--deep);
+  color:var(--deep);font-weight:800}
+
+.markbar{display:flex;background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:7px;margin:10px 0 9px}
+.markbar b{background:#15794A;color:#fff;border-radius:10px;padding:8px 16px;font-size:13.5px;
+  font-weight:800;cursor:pointer}
+.rows{display:flex;flex-direction:column;gap:9px}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+  border-radius:14px;padding:10px 12px}
+.row .av{flex:0 0 30px;height:30px;border-radius:9px;background:var(--beige);color:var(--deep);
+  display:grid;place-items:center;font-weight:800;font-size:13px}
+.row .nm{flex:1;min-width:0}
+.row .nm b{display:block;font-size:14.5px;font-weight:800}
+.row .nm span{display:block;font-size:11px;color:var(--muted)}
+.row .acts{display:flex;gap:6px}
+.row .acts i{font-style:normal;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:13.5px;color:var(--muted);cursor:pointer;transition:all .12s}
+.row .acts i.on{color:#fff;border-color:transparent;font-weight:800}
+.row .acts i[data-s="p"].on{background:#15794A}
+.row .acts i[data-s="a"].on{background:#B91C1C}
+.row .acts i[data-s="l"].on{background:#B7791F}
+.row .acts i[data-s="n"].on{background:var(--deep)}
+.row.done{border-color:color-mix(in srgb,#15794A 40%,#fff);background:color-mix(in srgb,#15794A 5%,#fff)}
+.row.abs{border-color:color-mix(in srgb,#B91C1C 35%,#fff);background:color-mix(in srgb,#B91C1C 4%,#fff)}
+
+.dsheet{display:none;position:absolute;inset-inline:13px;top:64px;z-index:8;
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;
+  box-shadow:0 12px 34px rgba(16,24,40,.22)}
+.dsheet.on{display:block}
+.dsheet .h{background:#F7F8FA;padding:10px 14px;font-size:12.5px;font-weight:800;color:var(--muted);
+  border-bottom:1px solid var(--line)}
+.dsheet r{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;
+  border-bottom:1px solid var(--line);cursor:pointer}
+.dsheet r:last-child{border-bottom:0}
+.dsheet r.on{background:color-mix(in srgb,var(--deep) 8%,#fff)}
+.dsheet r .dt{flex:1;font-size:14px;font-weight:800}
+.dsheet r .mt{font-size:11.5px;color:var(--muted);font-weight:400}
+.dsheet r .bd{font-size:11px;font-weight:800;border-radius:7px;padding:3px 9px;
+  background:color-mix(in srgb,#15794A 12%,#fff);color:#15794A}
+.dsheet r.on .bd{background:var(--deep);color:#fff}
+
+/* زرُّ الرجوع لأعلى — يظهر حين تغيب البطاقة */
+.up{position:absolute;inset-inline-start:13px;bottom:78px;z-index:8;background:var(--deep);color:#fff;
+  border:0;border-radius:12px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;
+  box-shadow:0 6px 16px rgba(16,24,40,.28);cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .18s ease}
+.up.on{opacity:1;pointer-events:auto}
+
+.pick{position:fixed;inset:auto 0 0 0;height:var(--pick);display:flex;background:#12202A;
+  padding:6px;gap:6px;z-index:9;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.pick button{flex:1;border:0;border-radius:10px;background:#1E323E;color:#C9D3DA;font-family:inherit;
+  font-weight:800;font-size:11.5px;cursor:pointer}
+.pick button.on{background:linear-gradient(150deg,#1A8299,var(--deep));color:#fff}
+.badge{position:fixed;bottom:calc(var(--pick) + 8px);inset-inline-end:10px;z-index:8;
+  background:#12202A;color:#fff;border-radius:9px;padding:4px 11px;font-size:11.5px;font-weight:800}
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="hd"><b>سجل الطلاب</b><span>←</span></div>
+
+  <div class="scroll" id="scroll">
+    <div class="head" id="head">
+      <div class="hero">
+        <div class="r1">
+          <div class="tt"><b>سجل متابعة الطلاب</b><span id="hdate">الخميس ٢٠ أغسطس</span></div>
+          <span class="btn days-b" id="daysBtn">الأيام</span>
+          <span class="btn prt">طباعة</span>
+        </div>
+        <div class="stats">
+          <div class="st"><b>12</b><span>طالب</span></div>
+          <div class="st"><b id="sp">0</b><span>حاضر</span></div>
+          <div class="st"><b id="sa">0</b><span>غائب</span></div>
+          <div class="st"><b id="spc">—</b><span>الحضور</span></div>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="sr">🔍 بحث باسم الطالب…</div>
+        <div class="ad">+ إضافة طلاب</div>
+      </div>
+    </div>
+
+    <div class="chips" id="chips">
+      <c class="on">الحضور</c><c>المشاركة</c><c>التقييم</c><c>الملاحظات</c><c>+</c>
+    </div>
+
+    <div class="markbar"><b id="markall">✓ تحضير الكل</b></div>
+    <div class="rows" id="rows"></div>
+  </div>
+
+  <div class="dsheet" id="dsheet">
+    <div class="h">الأيام التي عُبّئ فيها السجلّ</div>
+    <r class="on"><span class="dt">الخميس ٢٠ أغسطس</span><span class="bd">اليوم</span></r>
+    <r><span class="dt">الأربعاء ١٩ أغسطس<div class="mt">٦ حاضر · ٠ غائب</div></span><span class="bd">١٠٠٪</span></r>
+    <r><span class="dt">الثلاثاء ١٨ أغسطس<div class="mt">٥ حاضر · ١ غائب</div></span><span class="bd">٨٣٪</span></r>
+    <r><span class="dt">الاثنين ١٧ أغسطس<div class="mt">٦ حاضر · ٠ غائب</div></span><span class="bd">١٠٠٪</span></r>
+    <r><span class="dt">الأحد ١٦ أغسطس<div class="mt">٤ حاضر · ٢ غائب</div></span><span class="bd">٦٧٪</span></r>
+  </div>
+
+  <button class="up" id="up">↑ البطاقة</button>
+
+  <div class="nav">
+    <i><span>⚙️</span>الإعدادات</i><i><span>🗂️</span>إنجاز</i><i><span>📅</span>الجدول</i>
+    <i class="on"><span>📚</span>الفصول</i><i><span>🏠</span>الرئيسية</i>
+  </div>
+</div>
+
+<div class="badge" id="badge">—</div>
+<div class="pick">
+  <button class="on" data-auto="0">ينزل بإصبعك</button>
+  <button data-auto="1">ينزل وحدَه عند الفتح</button>
+</div>
+
+<script>
+var NAMES = ['أحمد علي','بندر سعد','خالد محمد','راكان فهد','سامي عبدالله','طلال ناصر',
+             'عمر يوسف','فيصل تركي','ماجد سلطان','نايف بدر','هشام وليد','ياسر صالح'];
+document.getElementById('rows').innerHTML = NAMES.map(function (n) {
+    return '<div class="row"><div class="av">' + n[0] + '</div>'
+      + '<div class="nm"><b>' + n + '</b><span data-st>بلا تحضير</span></div>'
+      + '<div class="acts"><i data-s="p">✓</i><i data-s="a">✗</i>'
+      + '<i data-s="l">⏰</i><i data-s="n">📝</i></div></div>';
+}).join('');
+
+var sc = document.getElementById('scroll'), head = document.getElementById('head');
+var chips = document.getElementById('chips'), dsheet = document.getElementById('dsheet');
+var auto = false, animId = null;
+
+function onScroll() {
+    var stuck = sc.scrollTop >= head.offsetHeight - 1;
+    chips.classList.toggle('stuck', stuck);
+    document.getElementById('up').classList.toggle('on', stuck);
+    var lim = sc.getBoundingClientRect().bottom;
+    var top = chips.getBoundingClientRect().bottom;
+    var n = 0;
+    document.querySelectorAll('.row').forEach(function (r) {
+        var b = r.getBoundingClientRect();
+        if (b.top >= top - 1 && b.bottom <= lim + 1) n++;
+    });
+    document.getElementById('badge').textContent = 'يظهر ' + n + ' طلاب';
+}
+sc.addEventListener('scroll', onScroll);
+
+function autoScroll() {
+    cancelAnimationFrame(animId);
+    var target = head.offsetHeight, from = sc.scrollTop, dist = target - from;
+    if (dist <= 0) return;
+    var t0 = null;
+    function step(ts) {
+        if (t0 === null) t0 = ts;
+        var k = Math.min(1, (ts - t0) / 900);
+        var e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2) / 2;
+        sc.scrollTop = from + dist * e;
+        if (k < 1) animId = requestAnimationFrame(step); else onScroll();
+    }
+    animId = requestAnimationFrame(step);
+}
+['touchstart','wheel','pointerdown'].forEach(function (ev) {
+    sc.addEventListener(ev, function () { cancelAnimationFrame(animId); }, { passive: true });
+});
+function reopen() {
+    cancelAnimationFrame(animId);
+    sc.scrollTop = 0; onScroll();
+    dsheet.classList.remove('on');
+    document.getElementById('daysBtn').classList.remove('on');
+    if (auto) setTimeout(autoScroll, 450);
+}
+
+var LABEL = { p:'حاضر', a:'غائب', l:'متأخر', n:'ملاحظة' };
+function setState(row, st) {
+    row.querySelectorAll('.acts i').forEach(function (b) { b.classList.toggle('on', b.dataset.s === st); });
+    row.classList.toggle('done', st === 'p');
+    row.classList.toggle('abs', st === 'a');
+    row.querySelector('[data-st]').textContent = st ? LABEL[st] : 'بلا تحضير';
+    row.dataset.state = st || '';
+}
+function refresh() {
+    var rows = [].slice.call(document.querySelectorAll('.row'));
+    var p = rows.filter(function (r) { return r.dataset.state === 'p'; }).length;
+    var a = rows.filter(function (r) { return r.dataset.state === 'a'; }).length;
+    var m = p + a;
+    document.getElementById('sp').textContent = p;
+    document.getElementById('sa').textContent = a;
+    document.getElementById('spc').textContent = m ? Math.round(p / m * 100) + '٪' : '—';
+}
+
+document.getElementById('daysBtn').addEventListener('click', function () {
+    dsheet.classList.toggle('on');
+    this.classList.toggle('on', dsheet.classList.contains('on'));
+});
+dsheet.addEventListener('click', function (e) {
+    var r = e.target.closest('r'); if (!r) return;
+    this.querySelectorAll('r').forEach(function (x) { x.classList.toggle('on', x === r); });
+    document.getElementById('hdate').textContent = r.querySelector('.dt').childNodes[0].textContent.trim();
+    dsheet.classList.remove('on');
+    document.getElementById('daysBtn').classList.remove('on');
+});
+chips.addEventListener('click', function (e) {
+    var c = e.target.closest('c'); if (!c) return;
+    this.querySelectorAll('c').forEach(function (x) { x.classList.toggle('on', x === c); });
+});
+document.getElementById('rows').addEventListener('click', function (e) {
+    var b = e.target.closest('.acts i'); if (!b) return;
+    var row = b.closest('.row');
+    setState(row, row.dataset.state === b.dataset.s ? '' : b.dataset.s);
+    refresh();
+});
+document.getElementById('markall').addEventListener('click', function () {
+    document.querySelectorAll('.row').forEach(function (r) { setState(r, 'p'); });
+    refresh();
+});
+document.getElementById('up').addEventListener('click', function () {
+    cancelAnimationFrame(animId); sc.scrollTop = 0; onScroll();
+});
+document.querySelector('.pick').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    auto = b.dataset.auto === '1';
+    reopen();
+});
+
+reopen();
+</script>
+
+</body>
+</html>
