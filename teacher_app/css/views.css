@@ -2083,12 +2083,14 @@ body.drawer-open { overflow: hidden; }
     font-size: 46px;
     box-shadow: inset 0 0 0 2px rgba(201, 169, 97, .5), 0 6px 14px rgba(16, 24, 40, .1);
 }
-.start-t { font-size: 23px; font-weight: var(--fw-black); margin-top: 15px; position: relative; }
 /* القوسُ يشرح الزرَّ ولا ينافسه: أصغرُ وأخفتُ ويسقط سطراً حين يضيق. */
 .start-t-n {
     display: block; margin-top: 3px;
     font-size: 13px; font-weight: var(--fw-medium); color: var(--text-muted);
 }
+/* والفراغُ بين الحلقة والزرّ كان على عاتق `.start-t` — وقد حُذف العنوان،
+   فحمله `.start-cta` بهامشه هو. و`.start-s` لا شأن له: `theme-white`
+   يُخفيه مع بقيّة الأسطر التوضيحيّة. */
 .start-s {
     font-size: 13.5px;
     color: color-mix(in srgb, var(--primary) 60%, var(--mix-base));

@@ -386,15 +386,17 @@
             </div>`;
     }
 
-    /* فصول موجودة بلا جدول: صندوق «أضف الجدول الأسبوعي» + زر «إضافة فصل» تحته */
+    /* فصول موجودة بلا جدول: صندوق «أضف جدولك الأسبوعي» + زر «إضافة فصل» تحته */
     function startScheduleHtml() {
+        /* وعنوانُ الصندوق حُذف (١٩ أغسطس ٢٠٢٦): كان يعيد نصَّ الزرِّ حرفاً
+           بحرف، فيقرأ المعلّمُ الجملةَ مرّتين ويضغط الأولى فلا تستجيب —
+           عنوانٌ يشبه زرّاً ولا يعمل عملَه. فبقي الزرُّ وحدَه. */
         return `
             <div class="start-box">
                 <div class="start-halo"></div>
                 <div class="start-ring">📅</div>
-                <div class="start-t">أضف الجدول الأسبوعي</div>
                 <div class="start-s">حدّد حصص فصولك في الجدول الأسبوعي<br>ليظهر يومك وحصتك القادمة هنا</div>
-                <a href="#/schedule" class="start-cta">+ أضف الجدول الأسبوعي</a>
+                <a href="#/schedule" class="start-cta">+ أضف جدولك الأسبوعي</a>
             </div>
             <button type="button" class="start-add-class" data-add-class>+ إضافة فصل</button>`;
     }
