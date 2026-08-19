@@ -1646,20 +1646,35 @@ body.drawer-open { overflow: hidden; }
    ========================================================================== */
 
 /* زر الطباعة داخل البطاقة الملوّنة */
+/* زرُّ الطباعة يُرى من أوّل نظرة: كان مربّعاً شفّافاً ‎18٪‎ على البترولي
+   برمزٍ ‎17px‎ — يذوب في البطاقة فلا يُلمح. صار سطحاً أبيضَ صلباً بحجمٍ
+   يبلغ الحدَّ الأدنى للمس (‎44px‎)، ورمزُه ‎21px‎.
+   وحالتُه المعطَّلة كانت ‎opacity: .45‎ فتكاد تختفي — وهي الحالةُ التي
+   يراها المعلّمُ أوّلَ مرّةٍ إذ لا طلابَ بعد. صارت بيضاءَ خافتةً تبقى
+   مرئيّةً وتقول «هنا زرٌّ لا يعمل الآن» بدل أن تقول لا شيء. */
 .reg-hero-print {
-    width: 38px; height: 38px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, .18);
+    width: 44px; height: 44px;
+    border-radius: 13px;
+    background: #fff;
+    color: var(--primary);
     border: 0;
-    font-size: 17px;
+    font-size: 21px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
     font-family: inherit;
-    transition: background var(--dur-fast) var(--ease);
+    box-shadow: 0 3px 10px rgba(16, 24, 40, .22);
+    transition: transform var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease);
 }
-.reg-hero-print:hover { background: rgba(255, 255, 255, .28); }
-.reg-hero-print[disabled] { opacity: .45; cursor: default; }
+.reg-hero-print:hover { box-shadow: 0 5px 14px rgba(16, 24, 40, .3); }
+.reg-hero-print:active { transform: scale(.94); }
+.reg-hero-print[disabled] {
+    background: rgba(255, 255, 255, .42);
+    box-shadow: none;
+    opacity: 1;
+    cursor: default;
+}
 
 /* إحصائيتا حاضر/غائب قابلتان للضغط (فلترة) */
 .reg-hero button.hf-stat {
