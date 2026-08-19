@@ -494,7 +494,7 @@
                         <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                         <div class="hub-featured-sub">📅 ${humanDate(date)}${isToday ? '' : ' — سجل سابق'}</div>
                     </div>
-                    <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">🖨️</button>
+                    <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">طباعة</button>
                 </div>
                 <div class="hub-featured-stats">
                     <div class="hf-stat"><div class="hf-num num">${students.length}</div><div class="hf-lbl">${global.Words.student()}</div></div>
