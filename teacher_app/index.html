@@ -283,14 +283,17 @@
             const bar = document.createElement('div');
             bar.id = 'sw-update-banner';
             bar.style.cssText = [
-                'position:fixed','bottom:16px','inset-inline-end:16px','z-index:9999',
-                'background:var(--brand,#1E40AF)','color:#fff','padding:10px 14px',
+                /* فوق الشريط السفلي العائم لا تحته: كان عند ‎16px‎ فيزاحمه
+               الشريطُ ويصعب أن تُرى اللافتةُ أو يُضغط زرُّها. */
+            'position:fixed','bottom:calc(84px + env(safe-area-inset-bottom))',
+            'inset-inline-end:16px','z-index:9999',
+                'background:#0A3F4A','color:#fff','padding:10px 14px',
                 'border-radius:10px','font-family:IBM Plex Sans Arabic,system-ui,sans-serif',
                 'box-shadow:0 6px 20px rgba(0,0,0,.18)','font-size:14px',
                 'display:flex','gap:10px','align-items:center'
             ].join(';');
             bar.innerHTML = '<span>تحديث جديد متاح</span>'
-                + '<button id="sw-update-btn" style="background:#fff;color:#1E40AF;'
+                + '<button id="sw-update-btn" style="background:#fff;color:#0A3F4A;'
                 + 'border:none;border-radius:6px;padding:6px 10px;font-weight:700;'
                 + 'cursor:pointer">تحديث</button>';
             document.body.appendChild(bar);
