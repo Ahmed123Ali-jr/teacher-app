@@ -93,6 +93,15 @@ function flippedInDark(sel) {
     return null;
 }
 
+/* ══ حرزٌ ثانٍ: الثابتان لا يُعاد تعريفُهما في الداكن ══
+   `--ink-fixed` و`--on-gold` حبرٌ على أسطحٍ فاتحةٍ لا تتبع المظهر. فلو
+   عرَّفهما `theme-dark.css` لصارا فاتحَين على فاتح — وهو العطبُ الذي
+   وُلدا لمنعه. ولا يمسكه الفحصُ الأول لأنّهما ليسا من رموز الحبر
+   المتبدّلة، فيُسأل عنهما صراحةً. */
+const FIXED_TOKENS = ['--ink-fixed', '--on-gold'];
+const redefined = FIXED_TOKENS.filter((t) =>
+    new RegExp('^\\s*' + t + '\\s*:', 'm').test(dark));
+
 const found = [];
 for (const r of rules) {
     const ink = THEMED_INK.find((t) => new RegExp('color\\s*:\\s*[^;]*var\\(\\s*' + t).test(r.body));
@@ -106,8 +115,17 @@ for (const r of rules) {
     found.push({ ...r, ink, owner, surf: surf.trim().replace(/\s+/g, ' ').slice(0, 70) });
 }
 
-if (!found.length) {
+if (redefined.length) {
+    console.log('‼️  رمزٌ ثابتٌ أُعيد تعريفُه في `theme-dark.css`: '
+        + redefined.join('، '));
+    console.log('   هذان حبرٌ على سطحٍ لا يتبع المظهر — تعريفُهما هناك');
+    console.log('   يجعلهما فاتحَين على فاتح. يُحذف التعريفُ من الملفّ الداكن.\n');
+}
+
+if (!found.length && !redefined.length) {
     console.log('✅ لا حبرَ يتبع المظهر على سطحٍ فاتحٍ مثبَّت.');
+} else if (!found.length) {
+    console.log('✅ لا حبرَ على سطحٍ مثبَّت — لكنّ الرموزَ الثابتة أعلاه تُصلَح.');
 } else {
     console.log('‼️  ' + found.length + ' موضعاً: الحبرُ يتبدّل والسطحُ لا يتبدّل\n');
     for (const f of found) {
@@ -126,4 +144,4 @@ if (Object.keys(ALLOW).length) {
     for (const [k, v] of Object.entries(ALLOW)) console.log('   ' + k + ' — ' + v);
 }
 
-process.exit(found.length ? 1 : 0);
+process.exit((found.length || redefined.length) ? 1 : 0);
