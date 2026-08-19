@@ -487,6 +487,7 @@
         const prevChips = panel.querySelector('#col-chips');
         const prevChipsScroll = prevChips ? prevChips.scrollLeft : null;
 
+        panel.classList.toggle('is-empty-students', students.length === 0);
         panel.innerHTML = `
             <div class="hub-featured reg-hero" style="--cls-color:${heroColor(cls)}">
                 <div class="hub-featured-head">
@@ -506,11 +507,13 @@
 
             ${students.length > 0 ? dateStripHtml(date, markedDates) : ''}
 
-            <div class="reg-toolrow">
-                <input type="search" class="input search-input" id="student-search"
-                       placeholder="🔍 بحث باسم ${global.Words.theStudent()}...">
-                <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.studentsBare()}</button>
-            </div>
+            ${students.length > 0 ? `
+                <div class="reg-toolrow">
+                    <input type="search" class="input search-input" id="student-search"
+                           placeholder="🔍 بحث باسم ${global.Words.theStudent()}...">
+                    <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.studentsBare()}</button>
+                </div>
+            ` : ''}
 
             ${students.length > 0 ? `
                 <div class="col-chips-bar" id="col-chips">
@@ -882,15 +885,23 @@
         }
     }
 
+    /* الحالةُ الفارغة على نمط «و» في الرئيسية (تصميم «أ»، ٢٠ أغسطس ٢٠٢٦):
+       لافتةٌ ذهبيّةٌ تقول ما ينقص، ثمّ فراغٌ يدفع الزرَّ إلى أسفل الشاشة حيث
+       تبلغه الإبهام. وكان صندوقاً متقطّعاً في وسط الشاشة وزرُّه صغيرٌ فيه.
+
+       وشريطُ البحث والإضافة يُخفى معها: لا معنى للبحث في قائمةٍ فارغة، ولا
+       لزرَّي إضافةٍ في شاشةٍ واحدة. */
     function emptyStudentsState() {
-        /* بلا رمزٍ تعبيريّ فوق العنوان — و`.empty-state .icon` تبقى في
-           التنسيق لأن خمسَ شاشاتٍ أخرى تستعملها. */
+        /* وأصنافُ الرئيسية نفسُها (`start-note` و`start-gap` و`start-cta`)
+           لا نسخةٌ منها: فيتطابق الشكلان يقيناً، ويتبع أحدُهما الآخرَ عند
+           أيّ تعديلٍ لاحق. */
         return `
-            <div class="empty-state">
-                <h3>لا يوجد ${global.Words.studentsBare()} بعد</h3>
-                <p>اكتب الأسماء، أو ارفع ملفاً أو صورةً بالقائمة.</p>
-                <button class="btn btn-primary" data-empty-add>+ إضافة ${global.Words.studentsBare()}</button>
+            <div class="start-note">
+                <b>لا ${global.Words.studentsBare()} بعد</b>
+                <span>اكتب الأسماء، أو ارفع ملفاً أو صورةً بالقائمة</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ إضافة ${global.Words.studentsBare()}</button>
         `;
     }
 
