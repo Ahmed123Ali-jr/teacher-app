@@ -248,7 +248,6 @@
 
                 <a class="hub-featured" href="#/class/${cls.id}/students" style="--cls-color:${heroColor(cls)}">
                     <div class="hub-featured-head">
-                        <div class="hub-featured-icon">👥</div>
                         <div class="hub-featured-titles">
                             <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                             <div class="hub-featured-sub">التحضير والغياب والمشاركة</div>
@@ -491,7 +490,6 @@
         panel.innerHTML = `
             <div class="hub-featured reg-hero" style="--cls-color:${heroColor(cls)}">
                 <div class="hub-featured-head">
-                    <div class="hub-featured-icon">👥</div>
                     <div class="hub-featured-titles">
                         <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
                         <div class="hub-featured-sub">📅 ${humanDate(date)}${isToday ? '' : ' — سجل سابق'}</div>

@@ -1423,14 +1423,8 @@ body.drawer-open { overflow: hidden; }
     align-items: center;
     gap: var(--space-3);
 }
-.hub-featured-icon {
-    width: 50px; height: 50px;
-    border-radius: 15px;
-    background: rgba(255, 255, 255, .16);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    flex-shrink: 0;
-}
+/* `.hub-featured-icon` حُذفت (١٩ أغسطس ٢٠٢٦): كانت مربّعاً فيه 👥 يسبق
+   «سجل متابعة الطلاب» في بطاقتَي الفصل والسجلّ. لا مستعملَ لها بعد. */
 .hub-featured-titles { flex: 1; min-width: 0; }
 .hub-featured-title { font-weight: var(--fw-black); font-size: var(--fs-lg); }
 .hub-featured-sub   { font-size: var(--fs-xs); opacity: .85; margin-top: 2px; }
