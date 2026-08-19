@@ -482,13 +482,14 @@
         const isWeekend      = todayIdx === -1;
         const hasPeriodsToday = todayRows.length > 0;
 
-        let body;
+        let body, bodyMod = '';
         if (!hasClasses) {
             // أول فتح: البطاقة الرصاصية «أضف فصلك الأول» فقط
             body = startFirstClassHtml();
         } else if (!hasSchedule) {
             // فصول بلا جدول: صندوق الجدول + زر إضافة فصل — بلا تذكيرات ولا تجهيز
             body = startScheduleHtml();
+            bodyMod = ' is-start';   /* تنزل المجموعةُ إلى متناول الإبهام */
         } else if (isWeekend) {
             body = remindersCardHtml(remindersToday, classById) + restCardHtml('weekend');
         } else if (!hasPeriodsToday) {
@@ -503,7 +504,7 @@
         }
 
         container.innerHTML = `
-            <div class="container home-v2">
+            <div class="container home-v2${bodyMod}">
                 <div class="home-hd">
                     <div class="home-hd-tt">
                         <h2>${greet()}، ${firstName}</h2>
