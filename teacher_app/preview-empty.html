@@ -136,10 +136,8 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
    «بقي الجدول» ثمّ السطرُ الذي يشرحها. وموضعُها موضعُ الفصول نفسُه
    (أعلى الجسم) كما هي «د»، لا في الوسط. */
 .f-top{display:flex;flex-direction:column;align-items:center;padding:6px 0 0}
-.f-top .ring{width:96px;height:96px;border-radius:50%;background:#fff;display:grid;place-items:center;
-  font-size:44px;box-shadow:inset 0 0 0 2px rgba(201,169,97,.5),0 6px 14px rgba(16,24,40,.1);
-  margin-bottom:15px}
-/* والعبارةُ في صندوقها الذهبيِّ كما هي في «د» — لا نصّاً عارياً. */
+/* والعبارةُ في صندوقها الذهبيِّ كما هي في «د» — لا نصّاً عارياً.
+   وبلا رمزٍ تعبيريّ فوقها بطلب المعلّم. */
 .f-top .d-note{margin-top:0;align-self:stretch}
 
 .sp{flex:1 1 auto;min-height:12px}
@@ -233,7 +231,6 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
     <!-- ══ و ══ -->
     <div class="pane" data-p="f">
       <div class="f-top">
-        <div class="ring">📅</div>
         <div class="d-note"><b>بقي الجدول</b><span>حدّد حصص فصولك ليظهر يومُك هنا</span></div>
       </div>
       <div class="sp"></div>
@@ -255,7 +252,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
   <button data-go="c"><b>ج</b>معاينةُ الأسبوع</button>
   <button data-go="d"><b>د</b>فصولك</button>
   <button data-go="e"><b>هـ</b>فصولك<br>في إطار</button>
-  <button data-go="f"><b>و</b>أيقونة<br>بقي الجدول</button>
+  <button data-go="f"><b>و</b>بقي الجدول<br>بلا رمز</button>
 </div>
 
 <script>
