@@ -121,8 +121,16 @@ function auditIn(win) {
             if (!v.endsWith('px')) return null;
             if (parseFloat(v) > 16) return null;
         }
+        /* ويُقرأ تدرّجُه أيضاً لا لونُه الصلبَ وحدَه: حبّةُ التنقّل السفلي
+           مرسومةٌ `linear-gradient` على `::before`، و`backgroundColor` لها
+           شفّافٌ — فكانت الحبّةُ خفيّةً على الأداة، وتُحسب الكتابةُ البيضاءُ
+           على بياض الصفحة ‎1.00‎ في ثلاثٍ وثلاثين موضعاً بالوضع الفاتح. */
         const c = parse(cs.backgroundColor);
-        return c && c[3] > 0 ? c : null;
+        const g = (cs.backgroundImage && cs.backgroundImage.indexOf('gradient') >= 0)
+            ? (cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(parse).filter(Boolean)
+            : null;
+        const solid = c && c[3] > 0 ? c : null;
+        return (solid || (g && g.length)) ? { solid: solid, grad: (g && g.length) ? g : null } : null;
     }
 
     /* ── لماذا التذكّر ──
@@ -150,7 +158,16 @@ function auditIn(win) {
         let grad = up.grad;
 
         const c = parse(cs.backgroundColor);
-        if (c && c[3] > 0) base = c[3] === 1 ? c : over(c, base);
+        if (c && c[3] > 0) {
+            base = c[3] === 1 ? c : over(c, base);
+            /* ولونٌ صلبٌ يُبطل تدرّجَ السلف: كان `grad` يُورَّث ولا يُمحى،
+               فيُقاس النصُّ على طرفَي تدرّجِ جَدٍّ بعيدٍ لا يراه أحد، وتُهمل
+               أرضيّةُ العنصر نفسِه. فأبلغت الأداةُ عن ‎1.00‎ (أبيضُ على أبيض)
+               في ثمانيةَ عشرَ موضعاً بالوضع الفاتح، و`.btn-primary` وقتَها
+               أبيضُ على البترولي ‎11.52‎ — قِيس حيّاً فكذّبها.
+               ولم يظهر في الداكن لأن `theme-dark` يُسطّح أكثرَ التدرّجات. */
+            if (c[3] === 1) grad = null;
+        }
 
         if (cs.backgroundImage && cs.backgroundImage !== 'none'
             && cs.backgroundImage.indexOf('gradient') >= 0) {
@@ -161,7 +178,12 @@ function auditIn(win) {
         /* الزائفُ المغطّي يُرسم فوق خلفية عنصره، فيحلّ محلّها سريراً. */
         for (const w of ['::before', '::after']) {
             const p = coveringPseudo(node, w);
-            if (p) base = p[3] === 1 ? p : over(p, base);
+            if (!p) continue;
+            if (p.solid) {
+                base = p.solid[3] === 1 ? p.solid : over(p.solid, base);
+                if (p.solid[3] === 1) grad = null;   /* وكذلك الزائفُ الصلب */
+            }
+            if (p.grad) grad = p.grad;               /* وتدرّجُه يحلّ محلَّ الموروث */
         }
 
         const res = { base: base, grad: grad };
@@ -341,6 +363,19 @@ async function run() {
 
     win.document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
     win.document.body.classList.add('theme-' + mode);
+
+    /* تُجمَّد الحركةُ في المسرح قبل أيِّ قياس: حبّةُ التنقّل السفلي تتحرّك
+       (`transition: background`)، و`auditPressed` يضع صنفَ الحالة على
+       الجميع ثم ينزعه — فتُقاس الشاشةُ التالية والحبّةُ في منتصف الذوبان.
+       فتصدر قراءتان متناقضتان للعنصر نفسِه: أبيضُ على أبيضَ ‎1.00‎، ورماديٌّ
+       على الحبّة ‎1.28‎ — وكلتاهما لا وجود لها في التطبيق (الاسمُ المختارُ
+       أبيضُ على البترولي، وأخواتُه رماديّاتٌ على الزجاج).
+       وإعادةُ التنسيق وحدَها لا تُنهي انتقالاً — تُنهيه مدّةُ صفر. */
+    const freeze = win.document.createElement('style');
+    freeze.textContent = '*, *::before, *::after {'
+        + ' transition: none !important; animation: none !important; }';
+    win.document.head.appendChild(freeze);
+
     forceRestyle(win);
 
     let total = 0, screens = 0;
