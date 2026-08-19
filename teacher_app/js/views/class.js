@@ -883,9 +883,10 @@
     }
 
     function emptyStudentsState() {
+        /* بلا رمزٍ تعبيريّ فوق العنوان — و`.empty-state .icon` تبقى في
+           التنسيق لأن خمسَ شاشاتٍ أخرى تستعملها. */
         return `
             <div class="empty-state">
-                <div class="icon">🎒</div>
                 <h3>لا يوجد ${global.Words.studentsBare()} بعد</h3>
                 <p>اكتب الأسماء، أو ارفع ملفاً أو صورةً بالقائمة.</p>
                 <button class="btn btn-primary" data-empty-add>+ إضافة ${global.Words.studentsBare()}</button>
