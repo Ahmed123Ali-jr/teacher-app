@@ -55,6 +55,22 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .slim .prt{background:#fff;color:var(--deep);border-radius:10px;padding:7px 14px;font-size:13.5px;
   font-weight:800;cursor:pointer}
 
+/* أيقونتان في الموجز: البحثُ يتمدّد شريطاً، و«⋯» تفتح ورقةً فيها
+   الإضافةُ والأيامُ والطباعةُ وتعديلُ الخانات. فلا تُفقد وظيفةٌ بحذف
+   الشريط — تُنقل إلى حيث تُطلب. */
+.slim .ib{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);
+  display:grid;place-items:center;font-size:16px;cursor:pointer;flex:0 0 auto}
+.sbox{flex:0 0 auto;display:none;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--deep);
+  border-radius:13px;padding:0 12px;height:46px;margin-bottom:10px}
+.sbox.on{display:flex}
+.sbox input{flex:1;border:0;outline:0;font-family:inherit;font-size:14px;background:transparent}
+.sbox span{color:var(--muted);font-size:15px;cursor:pointer;padding:4px}
+.sheet{flex:0 0 auto;display:none;flex-direction:column;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.sheet.on{display:flex}
+.sheet b{background:#fff;padding:13px 15px;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer}
+.sheet b:first-child{color:var(--deep);font-weight:800}
+
 .days{flex:0 0 auto;display:flex;gap:6px;margin-bottom:10px;overflow:hidden}
 .days d{display:block;flex:0 0 62px;border:1px solid var(--line);border-radius:12px;padding:6px 0;
   text-align:center;font-size:10.5px;color:var(--muted)}
@@ -154,6 +170,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
           <div class="st"><b>0</b><span>غائب</span></div><div class="st"><b>—</b><span>الحضور</span></div>
         </div>
       </div>
+      <div class="tools"><div class="sr">🔍 بحث باسم الطالب…</div><div class="ad">+ إضافة طلاب</div></div>
       <div class="chips"><c class="on">الحضور</c><c>المشاركة</c><c>التقييم</c><c>الملاحظات</c><c class="ic">+</c></div>
       <div class="markbar"><b>✓ تحضير الكل</b></div>
       <div class="rows" data-rows></div>
@@ -163,7 +180,14 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
     <div class="pane" data-p="c">
       <div class="slim">
         <div class="d">الخميس ٢٠ أغسطس<div class="n">٦ طلاب · لم يُحضَّر أحد</div></div>
-        <span class="pill">أيام ←</span><span class="prt">طباعة</span>
+        <span class="ib" data-search>🔍</span><span class="ib" data-more>⋯</span>
+      </div>
+      <div class="sbox" data-sbox><input placeholder="اكتب اسم الطالب…"><span data-sclose>✕</span></div>
+      <div class="sheet" data-sheet>
+        <b data-add>+ إضافة طلاب</b>
+        <b>الأيام السابقة</b>
+        <b>طباعة السجل</b>
+        <b>تعديل الخانات</b>
       </div>
       <div class="chips"><c class="on">الحضور</c><c>المشاركة</c><c>التقييم</c><c>الملاحظات</c><c class="ic">+</c></div>
       <div class="markbar"><b>✓ تحضير الكل</b></div>
@@ -174,7 +198,14 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
     <div class="pane" data-p="d">
       <div class="slim">
         <div class="d">الخميس ٢٠ أغسطس<div class="n">٦ طلاب · لم يُحضَّر أحد</div></div>
-        <span class="pill">أيام ←</span><span class="prt">طباعة</span>
+        <span class="ib" data-search>🔍</span><span class="ib" data-more>⋯</span>
+      </div>
+      <div class="sbox" data-sbox><input placeholder="اكتب اسم الطالب…"><span data-sclose>✕</span></div>
+      <div class="sheet" data-sheet>
+        <b data-add>+ إضافة طلاب</b>
+        <b>الأيام السابقة</b>
+        <b>طباعة السجل</b>
+        <b>تعديل الخانات</b>
       </div>
       <div class="chips"><c class="on">الحضور</c><c>المشاركة</c><c>التقييم</c><c>الملاحظات</c><c class="ic">+</c></div>
       <div class="markbar"><b>✓ تحضير الكل</b></div>
@@ -271,6 +302,27 @@ document.querySelector('.bd').addEventListener('click', function (e) {
     if (e.target.closest('.markbar b')) {
         pane.querySelectorAll('.row').forEach(function (r) { setState(r, 'p'); });
         refresh(pane); return;
+    }
+    if (e.target.closest('[data-search]')) {
+        var box = pane.querySelector('[data-sbox]');
+        pane.querySelector('[data-sheet]').classList.remove('on');
+        box.classList.toggle('on');
+        if (box.classList.contains('on')) box.querySelector('input').focus();
+        countVisible(); return;
+    }
+    if (e.target.closest('[data-sclose]')) {
+        pane.querySelector('[data-sbox]').classList.remove('on');
+        countVisible(); return;
+    }
+    if (e.target.closest('[data-more]')) {
+        var sh = pane.querySelector('[data-sheet]');
+        pane.querySelector('[data-sbox]').classList.remove('on');
+        sh.classList.toggle('on');
+        countVisible(); return;
+    }
+    if (e.target.closest('.sheet b')) {
+        pane.querySelector('[data-sheet]').classList.remove('on');
+        countVisible(); return;
     }
     var day = e.target.closest('.days d');
     if (day) {
