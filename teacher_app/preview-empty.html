@@ -109,13 +109,35 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .d-note b{display:block;font-size:14.5px;font-weight:800;color:var(--deep)}
 .d-note span{display:block;font-size:12.5px;color:#7A6532;margin-top:2px}
 
+/* ══ هـ — «د» داخل إطارٍ يتمدّد كإطار «أ» ══
+   قائمةُ الفصول حقيقيّةٌ من بيانات المعلّم، والإطارُ يبتلع الفراغَ الباقي
+   فيمتلئ الطولُ سواءٌ كان عنده فصلٌ واحد أو ستّة. وعددُ الفصول هنا **واحد**
+   عمداً — هي أسوأُ حالةٍ للامتلاء، وبها يُقارَن بـ«د» وجهاً لوجه. */
+.e-card{flex:1 1 auto;display:flex;flex-direction:column;border-radius:24px;padding:17px 15px 18px;
+  overflow:hidden;
+  background:linear-gradient(150deg,#fff 0%,color-mix(in srgb,var(--beige) 42%,#fff) 50%,var(--beige) 100%);
+  border:1px solid #E7E4DA;box-shadow:0 5px 16px rgba(16,24,40,.07)}
+.e-card .hh{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 11px}
+.e-card .hh b{font-size:15.5px;font-weight:800;color:var(--deep)}
+.e-card .hh span{font-size:12px;color:var(--muted)}
+.e-cls{display:flex;align-items:center;gap:12px;padding:12px;border-radius:15px;
+  background:#fff;border:1px solid #E7E4DA;margin-bottom:9px}
+.e-cls .lt{flex:0 0 40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  font-weight:800;font-size:16px;color:#fff;background:linear-gradient(150deg,var(--mid),var(--deep))}
+.e-cls .tx b{display:block;font-size:14.5px;font-weight:800}
+.e-cls .tx span{display:block;font-size:12px;color:var(--muted)}
+.e-card .miss{text-align:center;margin:0 6px 13px}
+.e-card .miss b{display:block;font-size:15px;font-weight:800;color:var(--deep)}
+.e-card .miss span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.e-card .cta{align-self:stretch}
+
 .sp{flex:1 1 auto;min-height:12px}
 
 /* ── شريطُ الاختيار: مثبَّتٌ بأسفل الشاشة ── */
 .pick{position:fixed;inset:auto 0 0 0;height:var(--pick);display:flex;align-items:stretch;
   background:#12202A;padding:6px;gap:6px;z-index:9;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
 .pick button{flex:1;border:0;border-radius:11px;background:#1E323E;color:#C9D3DA;
-  font-family:inherit;font-weight:800;font-size:12.5px;line-height:1.35;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:11px;line-height:1.35;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
 .pick button b{font-size:15px;color:#fff}
 .pick button.on{background:linear-gradient(150deg,#1A8299,var(--deep));color:#fff}
@@ -185,6 +207,18 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
       <div class="add">+ إضافة فصل</div>
     </div>
 
+    <!-- ══ هـ ══ -->
+    <div class="pane" data-p="e">
+      <div class="e-card">
+        <div class="hh"><b>فصولك</b><span>فصلٌ واحد</span></div>
+        <div class="e-cls"><div class="lt">أ</div><div class="tx"><b>الأول المتوسط — أ</b><span>العلوم</span></div></div>
+        <div class="sp"></div>
+        <div class="miss"><b>بقي الجدول</b><span>حدّد حصص فصولك ليظهر يومُك هنا</span></div>
+        <a class="cta" href="#">+ أضف جدولك الأسبوعي</a>
+      </div>
+      <div class="add">+ إضافة فصل</div>
+    </div>
+
   </div>
 
   <div class="nav">
@@ -198,6 +232,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
   <button data-go="b"><b>ب</b>خطوتان</button>
   <button data-go="c"><b>ج</b>معاينةُ الأسبوع</button>
   <button data-go="d"><b>د</b>فصولك</button>
+  <button data-go="e"><b>هـ</b>فصولك<br>في إطار</button>
 </div>
 
 <script>
