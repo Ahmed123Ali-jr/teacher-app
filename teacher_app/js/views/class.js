@@ -363,44 +363,40 @@
 
     /* شريط الأيام: زرّ تقويم ثابت للقفز البعيد، ثم أيام الدراسة الأحدث
        أولاً. والنقطة تحت اليوم تعني أن فيه تحضيراً محفوظاً. */
-    function dateStripHtml(date, markedDates) {
+    /* قائمةُ الأيام المعبّأة — حلّت محلَّ شريط التواريخ (٢٠ أغسطس ٢٠٢٦).
+       كان الشريطُ يأكل ‎65‎ بكسلاً من كلِّ فتحةٍ ليعرض سبعةَ أيامٍ أكثرُها
+       فارغ. وصارت زرّاً في البطاقة يفتح ما عُبّئ فعلاً، بحصيلةِ كلِّ يوم.
+       والتقويمُ الكاملُ باقٍ في ذيلها لمن أراد يوماً بعيداً. */
+    function daysSheetHtml(date, markedDates) {
         const today = todayISO();
-        const days  = schoolDaysBack(STRIP_DAYS);
-        /* يوم مختار خارج الشريط (اختير من التقويم) يُضاف في مكانه الزمني
-           وإلا اختفى المؤشّر ولم يعرف المعلم أين هو. */
-        if (!days.includes(date) && date < today) {
-            days.push(date);
-            days.sort((a, b) => b.localeCompare(a));
-        }
-        const marked = markedDates || new Set();
+        const marked = markedDates || new Map();
+        const days = [...marked.keys()].filter((d) => d <= today).sort((a, b) => b.localeCompare(a));
+        if (!days.includes(today)) days.unshift(today);
+        if (!days.includes(date)) { days.push(date); days.sort((a, b) => b.localeCompare(a)); }
+
+        const rows = days.slice(0, 30).map((d) => {
+            const st = marked.get(d);
+            const n  = st ? st.p + st.a : 0;
+            const pct = n ? Math.round((st.p / n) * 100) : null;
+            const sub = st ? `${global.Words.count(st.p)} حاضر · ${st.a} غائب` : 'لم يُعبَّأ بعد';
+            return `
+                <button type="button" class="rdl-row${d === date ? ' on' : ''}" data-d="${d}">
+                    <span class="rdl-tx">
+                        <b>${escapeHtml(humanDate(d))}</b>
+                        <span>${escapeHtml(sub)}</span>
+                    </span>
+                    <span class="rdl-bd${st ? '' : ' none'}">${d === today ? 'اليوم' : (pct === null ? '—' : pct + '٪')}</span>
+                </button>`;
+        }).join('');
 
         return `
-            <div class="rd-wrap">
-                <div class="rd-strip">
-                    <button type="button" class="rd-cal" id="rd-cal"
-                            aria-label="اختر أي يوم">📅</button>
-                    <input type="date" id="rd-input" max="${today}" value="${date}"
-                           class="rd-input" aria-hidden="true" tabindex="-1">
-                    <div class="rd-days" id="rd-days">
-                        ${days.map((d) => {
-                            const l = dayLabel(d);
-                            return `
-                                <button type="button" class="rd-day${d === date ? ' on' : ''}${d === today ? ' is-today' : ''}"
-                                        data-d="${d}">
-                                    <span class="dw">${l.dow}</span>
-                                    <span class="dn num">${l.num}</span>
-                                    <span class="dot${marked.has(d) ? '' : ' none'}"></span>
-                                </button>`;
-                        }).join('')}
-                    </div>
-                </div>
-                ${date === today ? '' : `
-                    <div class="rd-past">
-                        <span>⚠️ تعدّل سجل ${escapeHtml(humanDate(date))}</span>
-                        <button type="button" id="rd-back">ارجع لليوم</button>
-                    </div>`}
-            </div>
-        `;
+            <div class="rdl-sheet" id="rdl-sheet" hidden>
+                <div class="rdl-h">الأيام التي عُبّئ فيها السجلّ</div>
+                ${rows}
+                <button type="button" class="rdl-any" id="rd-cal">📅 اختر أيَّ يوم…</button>
+                <input type="date" id="rd-input" max="${today}" value="${date}"
+                       class="rd-input" aria-hidden="true" tabindex="-1">
+            </div>`;
     }
 
     async function renderStudents(panel, cls, opts = {}) {
@@ -431,9 +427,17 @@
             const attByStudent = new Map();
             /* نجمع تواريخ الأيام المحضَّرة في المرور نفسه — النقطة تحت اليوم
                في الشريط تخبر المعلم أي يوم نسيه بلا أن يفتحه. */
-            markedDates = new Set();
+            /* خريطةٌ لا مجموعة: القيمةُ إحصاءُ اليوم. و`attAll` بين أيدينا
+               أصلاً، فحسابُه هنا بلا استعلامٍ زائد — وبه تُبنى قائمةُ
+               «الأيام» بحصيلةِ كلِّ يومٍ لا بتاريخه وحده. */
+            markedDates = new Map();
             for (const r of attAll) {
-                if (r.date) markedDates.add(r.date);
+                if (r.date) {
+                    let d = markedDates.get(r.date);
+                    if (!d) { d = { p: 0, a: 0 }; markedDates.set(r.date, d); }
+                    if (r.status === 'present' || r.status === 'late') d.p++;
+                    else if (r.status === 'absent') d.a++;
+                }
                 if (r.date === date) attByStudent.set(r.student_id, r);
             }
             const parByStudent = new Map();
@@ -493,8 +497,12 @@
                 <div class="hub-featured-head">
                     <div class="hub-featured-titles">
                         <div class="hub-featured-title">سجل متابعة ${global.Words.students()}</div>
-                        <div class="hub-featured-sub">📅 ${humanDate(date)}${isToday ? '' : ' — سجل سابق'}</div>
+                        <div class="hub-featured-sub">${escapeHtml(humanDate(date))}${isToday ? '' : `
+                            — سجل سابق <button type="button" class="rdl-back" id="rd-back">ارجع لليوم</button>`}</div>
                     </div>
+                    ${students.length > 0 ? `
+                        <button class="reg-hero-print reg-hero-days" id="btn-days" aria-expanded="false">الأيام</button>
+                    ` : ''}
                     <button class="reg-hero-print" id="btn-print-students" ${students.length === 0 ? 'disabled' : ''} aria-label="طباعة السجل">طباعة</button>
                 </div>
                 <div class="hub-featured-stats">
@@ -505,7 +513,7 @@
                 </div>
             </div>
 
-            ${students.length > 0 ? dateStripHtml(date, markedDates) : ''}
+            ${students.length > 0 ? daysSheetHtml(date, markedDates) : ''}
 
             ${students.length > 0 ? `
                 <div class="reg-toolrow">
@@ -547,10 +555,20 @@
             _regDate = d;
             renderStudents(panel, cls);
         };
-        panel.querySelectorAll('.rd-day[data-d]').forEach((b) => {
+        panel.querySelectorAll('.rdl-row[data-d]').forEach((b) => {
             b.addEventListener('click', () => goToDate(b.dataset.d));
         });
         panel.querySelector('#rd-back')?.addEventListener('click', () => goToDate(todayISO()));
+
+        /* زرُّ «الأيام» يفتح القائمةَ ويغلقها. */
+        const daysBtn = panel.querySelector('#btn-days');
+        const daysSheet = panel.querySelector('#rdl-sheet');
+        daysBtn?.addEventListener('click', () => {
+            const open = daysSheet.hidden;
+            daysSheet.hidden = !open;
+            daysBtn.classList.toggle('on', open);
+            daysBtn.setAttribute('aria-expanded', String(open));
+        });
 
         const dateInput = panel.querySelector('#rd-input');
         panel.querySelector('#rd-cal')?.addEventListener('click', () => {
@@ -562,11 +580,6 @@
         });
         dateInput?.addEventListener('change', () => goToDate(dateInput.value));
 
-        /* اليوم المختار يظهر في مرمى النظر لا خارج الشريط. */
-        const onDay = panel.querySelector('.rd-day.on');
-        if (onDay && onDay.scrollIntoView) {
-            onDay.scrollIntoView({ block: 'nearest', inline: 'center' });
-        }
 
         panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
         panel.querySelector('[data-empty-add]')?.addEventListener('click', () => openAddStudentsModal(cls));

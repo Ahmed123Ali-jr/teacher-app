@@ -1692,6 +1692,56 @@ body.drawer-open { overflow: hidden; }
     cursor: default;
 }
 
+/* ══ قائمةُ الأيام — حلّت محلّ شريط التواريخ ══
+   الشريطُ كان يأكل ‎65‎ بكسلاً من كلِّ فتحةٍ ليعرض سبعةَ أيامٍ أكثرُها
+   فارغ. وهذه تُفتح بزرٍّ وتعرض ما عُبّئ فعلاً بحصيلته. */
+.reg-hero-days { background: rgba(255, 255, 255, .22); color: #fff; }
+.reg-hero-days.on { background: #fff; color: var(--primary); }
+.rdl-back {
+    margin-inline-start: 7px;
+    background: rgba(255, 255, 255, .22); color: #fff;
+    border: 0; border-radius: 8px; padding: 2px 9px;
+    font-family: inherit; font-size: 11.5px; font-weight: var(--fw-bold);
+    cursor: pointer;
+}
+.rdl-sheet {
+    margin-top: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--surface);
+}
+.rdl-h {
+    padding: 10px 14px;
+    font-size: 12.5px; font-weight: var(--fw-black); color: var(--text-muted);
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border);
+}
+.rdl-row, .rdl-any {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 12px 14px;
+    background: var(--surface); border: 0;
+    border-bottom: 1px solid var(--border);
+    font-family: inherit; text-align: start; cursor: pointer;
+    color: var(--ink-primary);
+}
+.rdl-row:last-of-type { border-bottom: 1px solid var(--border); }
+.rdl-any { border-bottom: 0; justify-content: center; font-weight: var(--fw-bold);
+    font-size: 13.5px; color: var(--text-muted); }
+.rdl-row.on { background: color-mix(in srgb, var(--primary) 8%, var(--mix-base)); }
+.rdl-tx { flex: 1; min-width: 0; }
+.rdl-tx b { display: block; font-size: 14px; font-weight: var(--fw-black); }
+.rdl-tx span { display: block; font-size: 11.5px; color: var(--text-muted); }
+.rdl-bd {
+    flex: none;
+    font-size: 11px; font-weight: var(--fw-black);
+    border-radius: 7px; padding: 3px 9px;
+    background: color-mix(in srgb, var(--primary) 10%, var(--mix-base));
+    color: var(--ink-primary);
+}
+.rdl-bd.none { background: transparent; color: var(--text-muted); }
+.rdl-row.on .rdl-bd { background: var(--primary); color: #fff; }
+
 /* إحصائيتا حاضر/غائب قابلتان للضغط (فلترة) */
 .reg-hero button.hf-stat {
     border: 0;
