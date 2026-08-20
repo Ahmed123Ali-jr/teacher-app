@@ -144,7 +144,7 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
           <span class="btn prt">طباعة</span>
         </div>
         <div class="stats">
-          <div class="st"><b>12</b><span>طالب</span></div>
+          <div class="st"><b>50</b><span>طالب</span></div>
           <div class="st"><b id="sp">0</b><span>حاضر</span></div>
           <div class="st"><b id="sa">0</b><span>غائب</span></div>
           <div class="st"><b id="spc">—</b><span>الحضور</span></div>
@@ -196,9 +196,17 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 </div>
 
 <script>
-var NAMES = ['أحمد علي','بندر سعد','خالد محمد','راكان فهد','سامي عبدالله','طلال ناصر',
-             'عمر يوسف','فيصل تركي','ماجد سلطان','نايف بدر','هشام وليد','ياسر صالح',
-             'إبراهيم سالم','جابر راشد','حمد مشعل'];
+/* خمسون طالباً — بطلب المعلّم ليختبر النزولَ والطلوعَ بقائمةٍ حقيقيّة
+   الطول: قائمةٌ من اثني عشرَ لا تكشف اندفاعَ السحب ولا حدودَه. */
+var FIRST = ['أحمد','بندر','خالد','راكان','سامي','طلال','عمر','فيصل','ماجد','نايف',
+             'هشام','ياسر','إبراهيم','جابر','حمد','سعود','عبدالله','مشعل','نواف','وليد',
+             'تركي','ثامر','حسن','سلطان','صالح'];
+var SECOND = ['علي','سعد','محمد','فهد','عبدالعزيز','ناصر','يوسف','راشد','مبارك','بدر',
+              'سالم','صقر','مانع','عايض','زياد','هاني','معاذ','أنس','رائد','لؤي'];
+var NAMES = [];
+for (var i = 0; i < 50; i++) {
+    NAMES.push(FIRST[i % FIRST.length] + ' ' + SECOND[(i * 7 + 3) % SECOND.length]);
+}
 document.getElementById('rows').innerHTML = NAMES.map(function (n) {
     return '<div class="row"><div class="av">' + n[0] + '</div>'
       + '<div class="nm"><b>' + n + '</b><span data-st>بلا تحضير</span></div>'
