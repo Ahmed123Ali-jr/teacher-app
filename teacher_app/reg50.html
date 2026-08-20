@@ -12,13 +12,15 @@
     القويّ. والسببُ أنّي كنتُ أُصارع اندفاعَ المتصفّح: أُعيد `scrollTop`
     قسراً في كلّ حدثٍ فيتنازعان، فيهتزّ، ويسبقني الاندفاعُ فيكشف ما وراءه.
 
-    والصوابُ ألّا يُصارَع: يُبنى الحاجزُ من **حدود التمرير نفسِها**.
-    وعاءان متداخلان لكلٍّ حدُّه الطبيعيّ:
-      · الخارجيُّ يحمل البطاقةَ والبحث، وأقصى تمريرٍ فيه = ارتفاعُهما
-        بالضبط. فيقف عنده وحدَه — حدٌّ حقيقيٌّ تعرفه فيزياءُ المتصفّح.
-      · الداخليُّ قائمةُ الطلاب، و`overscroll-behavior: contain` يمنع
-        سحبَها للخارجيّ في السحبة نفسِها.
-    فلا سطرَ واحدٌ يُعدّل `scrollTop` أثناء اللمس — ولا ارتجاف.
+    ثمّ جُرّب وعاءان متداخلان، فظهر طريقٌ مسدود: `overscroll-behavior:
+    contain` يمنع سحبَ القائمة إلى الخارجيّ **دائماً** لا في السحبة الواحدة
+    فقط — فمن يسحب على الأسماء لا يبلغ البطاقةَ أبداً، ولا سبيلَ إلا أن
+    يسحب من عند الخانات. (بلاغُ المعلّم.)
+
+    فصار وعاءً واحداً: كلُّ شيءٍ فيه، والخاناتُ `sticky` ترتفع مع المحتوى
+    حتى تبلغ القمّةَ ثمّ تقف. والسحبُ من أيّ موضعٍ يعمل — لا مسدودَ ولا
+    مصارعةَ اندفاع، والفيزياءُ كلُّها للمتصفّح.
+    والثمنُ: لا حاجزَ سحبتين — السحبةُ القويّةُ تبلغ الأعلى مرّةً واحدة.
 -->
 <style>
 :root{
@@ -36,12 +38,10 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
   padding:11px 16px;border-bottom:1px solid var(--line);background:#fff;z-index:7}
 .hd b{font-size:15px;font-weight:800;color:var(--deep)}
 
-/* ══ الوعاءُ الخارجيّ: أقصى تمريرٍ فيه = ارتفاعُ الكتلة العليا ══ */
-.outer{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain}
+/* ══ وعاءٌ واحدٌ لا وعاءان ══ */
+.outer{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .head{padding:11px 13px 0}
-/* اللوحةُ بارتفاع الوعاء كاملاً — بها يتحدّد الحدُّ الطبيعيّ */
-.pane{height:100%;display:flex;flex-direction:column;min-height:0}
+.pane{display:block}
 
 .hero{border-radius:18px;background:var(--deep);color:#fff;padding:15px;margin-bottom:10px}
 .hero .r1{display:flex;align-items:center;gap:9px}
@@ -64,18 +64,19 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .tools .ad{height:44px;padding:0 15px;border-radius:12px;background:var(--deep);color:#fff;
   font-weight:800;font-size:13.5px;display:flex;align-items:center}
 
-.chips{flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;background:#fff;padding:9px 13px;
-  scrollbar-width:none;border-bottom:1px solid transparent;transition:border-color .18s ease}
+/* الخاناتُ لاصقةٌ في القمّة: ترتفع مع المحتوى ثمّ تقف ولا تغيب. */
+.chips{position:sticky;top:0;z-index:5;display:flex;gap:7px;overflow-x:auto;background:#fff;
+  padding:9px 13px;scrollbar-width:none;border-bottom:1px solid transparent;
+  transition:border-color .18s ease,box-shadow .18s ease}
 .chips::-webkit-scrollbar{display:none}
-.chips.stuck{border-bottom-color:var(--line);box-shadow:0 4px 10px rgba(16,24,40,.06)}
+.chips.stuck{border-bottom-color:var(--line);box-shadow:0 4px 10px rgba(16,24,40,.07)}
 .chips c{display:block;flex:0 0 auto;border:1px solid var(--line);border-radius:11px;
   padding:8px 14px;font-size:13.5px;font-weight:700;background:#fff;cursor:pointer}
 .chips c.on{background:color-mix(in srgb,var(--deep) 10%,#fff);border-color:var(--deep);
   color:var(--deep);font-weight:800}
 
-/* ══ الوعاءُ الداخليّ: قائمةُ الطلاب ══ */
-.list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  overscroll-behavior-y:contain;padding:0 13px 12px}
+/* قائمةُ الطلاب — لا وعاءَ لها، تمرّ مع الكلّ. */
+.list{padding:9px 13px 12px}
 .markbar{display:flex;background:#fff;border:1px solid var(--line);border-radius:14px;
   padding:7px;margin-bottom:9px}
 .markbar b{background:#15794A;color:#fff;border-radius:10px;padding:8px 16px;font-size:13.5px;
@@ -219,53 +220,31 @@ var head = document.getElementById('head'), chips = document.getElementById('chi
 var dsheet = document.getElementById('dsheet');
 var auto = true, animId = null;
 
-function maxOuter() { return outer.scrollHeight - outer.clientHeight; }
+function barrier() { return head.offsetHeight; }
 
 function status() {
-    var collapsed = outer.scrollTop >= maxOuter() - 1;
-    chips.classList.toggle('stuck', collapsed);
-    document.getElementById('up').classList.toggle('on', collapsed);
-    var lim = list.getBoundingClientRect().bottom, top = list.getBoundingClientRect().top;
+    var stuck = outer.scrollTop >= barrier() - 1;
+    chips.classList.toggle('stuck', stuck);
+    document.getElementById('up').classList.toggle('on', stuck);
+    var top = chips.getBoundingClientRect().bottom;
+    var lim = outer.getBoundingClientRect().bottom;
     var n = 0;
     document.querySelectorAll('.row').forEach(function (r) {
         var b = r.getBoundingClientRect();
         if (b.top >= top - 1 && b.bottom <= lim + 1) n++;
     });
     document.getElementById('badge').textContent =
-        (collapsed ? '⏹ عند الخانات' : '↑ الأعلى') + ' · ' + n + ' طلاب';
+        (stuck ? '⏹ عند الخانات' : '↑ الأعلى') + ' · ' + n + ' طلاب';
 }
 outer.addEventListener('scroll', status);
-list.addEventListener('scroll', status);
 
-/* ══ توجيهُ السحبة قبل أن تبدأ ══
-   لا يُعدَّل `scrollTop` أثناء اللمس البتّة. يُقرَّر فقط **أيُّ وعاءٍ**
-   يستقبل السحبةَ، ويُقرَّر عند `touchstart` — قبل أن يتحرّك شيء:
-     · الكتلةُ العليا ظاهرةٌ  → تُغلق القائمةُ فتذهب السحبةُ للخارجيّ.
-     · القائمةُ في أوّلها والكتلةُ مطويّة → تُغلق كذلك، فتُظهر السحبةُ
-       الكتلةَ (وهي السحبةُ الثانية التي طلبها المعلّم).
-     · غيرُ ذلك → القائمةُ تستقبلها.
-   وإن تبيّن من أوّل حركةٍ أنّه يسحب لأعلى، تُفتح القائمةُ فوراً. */
-var startY = 0, decided = false;
-outer.addEventListener('touchstart', function (e) {
-    startY = e.touches[0].clientY; decided = false;
-    var collapsed = outer.scrollTop >= maxOuter() - 1;
-    list.style.overflowY = (!collapsed || list.scrollTop <= 0) ? 'hidden' : 'auto';
-}, { passive: true });
-outer.addEventListener('touchmove', function (e) {
-    if (decided || list.style.overflowY !== 'hidden') return;
-    var dy = e.touches[0].clientY - startY;
-    if (Math.abs(dy) < 5) return;
-    decided = true;
-    if (dy < 0 && outer.scrollTop >= maxOuter() - 1) list.style.overflowY = 'auto';
-}, { passive: true });
-outer.addEventListener('touchend', function () {
-    setTimeout(function () { list.style.overflowY = 'auto'; }, 60);
-}, { passive: true });
+/* ولا توجيهَ سحباتٍ ولا حبس: وعاءٌ واحدٌ يستقبل كلَّ سحبةٍ من أيّ موضع،
+   فلا موضعَ مسدود. */
 
 /* النزولُ التلقائيُّ عند الفتح — حركةٌ واحدةٌ لا لمسَ معها، فلا تنازع. */
 function autoScroll() {
     cancelAnimationFrame(animId);
-    var target = maxOuter(), from = outer.scrollTop, dist = target - from;
+    var target = barrier(), from = outer.scrollTop, dist = target - from;
     if (dist <= 0) return;
     var t0 = null;
     function step(ts) {
@@ -282,7 +261,7 @@ function autoScroll() {
 });
 function reopen() {
     cancelAnimationFrame(animId);
-    outer.scrollTop = 0; list.scrollTop = 0; status();
+    outer.scrollTop = 0; status();
     dsheet.classList.remove('on');
     document.getElementById('daysBtn').classList.remove('on');
     if (auto) setTimeout(autoScroll, 450);
@@ -333,7 +312,6 @@ document.getElementById('markall').addEventListener('click', function () {
 });
 document.getElementById('up').addEventListener('click', function () {
     cancelAnimationFrame(animId);
-    list.scrollTop = 0;
     outer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.querySelector('.pick').addEventListener('click', function (e) {
