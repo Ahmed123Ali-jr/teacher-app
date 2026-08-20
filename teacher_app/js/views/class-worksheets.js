@@ -37,12 +37,21 @@
        القائمة
        ========================================================================== */
 
+    /* والمعرّفاتُ نصٌّ لا رقم: صارت `uuid` يوم انتقلت القاعدةُ إلى
+       Supabase، و`Number(uuid)` يعطي `NaN` — فكان الفتحُ والطباعةُ والحذفُ
+       من القائمة يموت صامتاً بلا رسالةٍ ولا أثر. */
     async function render(panel, cls) {
         const sheets = (await global.TeacherDB.getAllByIndex('worksheets', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
+        /* زرُّ الإضافة كان في الحالة الفارغة وحدَها: فمن أنشأ ورقةً لم يجد
+           سبيلاً إلى ثانية. (بلاغُ المعلّم، ٢٠ أغسطس ٢٠٢٦.) */
         panel.innerHTML = `
-            ${sheets.length === 0 ? empty() : list(sheets)}
+            ${sheets.length === 0 ? empty() : `
+                <div class="ws-topbar">
+                    <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة عمل جديدة</button>
+                </div>
+                ${list(sheets)}`}
         `;
 
         panel.querySelector('#btn-manual-sheet')?.addEventListener('click', () => startManual(cls, panel));
@@ -51,7 +60,7 @@
 
         panel.querySelectorAll('[data-ws-open]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const row = await global.TeacherDB.get('worksheets', Number(btn.dataset.wsOpen));
+                const row = await global.TeacherDB.get('worksheets', btn.dataset.wsOpen);
                 if (!row) return;
                 state[cls.id] = { cls, step: 2, sheet: normalize(row) };
                 renderWizard(panel, cls);
@@ -59,7 +68,7 @@
         });
         panel.querySelectorAll('[data-ws-print]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const row = await global.TeacherDB.get('worksheets', Number(btn.dataset.wsPrint));
+                const row = await global.TeacherDB.get('worksheets', btn.dataset.wsPrint);
                 if (!row) return;
                 global.PrintWorksheet.savePdf(
                     { sheet: normalize(row), cls, teacher: await global.Auth.currentTeacher() });
@@ -68,7 +77,7 @@
         panel.querySelectorAll('[data-ws-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 if (!global.confirm('حذف هذه الورقة؟')) return;
-                await global.TeacherDB.remove('worksheets', Number(btn.dataset.wsDelete));
+                await global.TeacherDB.remove('worksheets', btn.dataset.wsDelete);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);
             });

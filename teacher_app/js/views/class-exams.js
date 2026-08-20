@@ -42,7 +42,11 @@
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
         panel.innerHTML = `
-            ${exams.length === 0 ? emptyState() : listHtml(exams)}
+            ${exams.length === 0 ? emptyState() : `
+                <div class="ws-topbar">
+                    <button class="btn btn-primary" id="btn-manual-exam">+ اختبار جديد</button>
+                </div>
+                ${listHtml(exams)}`}
         `;
 
         /* الإنشاء يدويّ بالكامل — لا توليد آلي. */
@@ -77,7 +81,7 @@
 
         panel.querySelectorAll('[data-exam-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                const id = Number(btn.dataset.examDelete);
+                const id = btn.dataset.examDelete;
                 if (!global.confirm('حذف هذا الاختبار؟')) return;
                 await global.TeacherDB.remove('exams', id);
                 global.TeacherApp.toast('تم الحذف.', 'info');
