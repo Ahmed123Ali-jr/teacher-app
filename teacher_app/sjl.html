@@ -38,10 +38,10 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
   padding:11px 16px;border-bottom:1px solid var(--line);background:#fff;z-index:7}
 .hd b{font-size:15px;font-weight:800;color:var(--deep)}
 
-/* ══ وعاءٌ واحدٌ لا وعاءان ══ */
+/* ══ وعاءان: الخارجيُّ حدُّه ارتفاعُ الكتلة العليا فيقف عنده وحدَه ══ */
 .outer{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .head{padding:11px 13px 0}
-.pane{display:block}
+.pane{height:100%;display:flex;flex-direction:column;min-height:0}
 
 .hero{border-radius:18px;background:var(--deep);color:#fff;padding:15px;margin-bottom:10px}
 .hero .r1{display:flex;align-items:center;gap:9px}
@@ -64,8 +64,8 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .tools .ad{height:44px;padding:0 15px;border-radius:12px;background:var(--deep);color:#fff;
   font-weight:800;font-size:13.5px;display:flex;align-items:center}
 
-/* الخاناتُ لاصقةٌ في القمّة: ترتفع مع المحتوى ثمّ تقف ولا تغيب. */
-.chips{position:sticky;top:0;z-index:5;display:flex;gap:7px;overflow-x:auto;background:#fff;
+/* الخاناتُ أوّلُ اللوحة الثابتة — لا تغيب أبداً. */
+.chips{flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;background:#fff;
   padding:9px 13px;scrollbar-width:none;border-bottom:1px solid transparent;
   transition:border-color .18s ease,box-shadow .18s ease}
 .chips::-webkit-scrollbar{display:none}
@@ -75,8 +75,9 @@ body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
 .chips c.on{background:color-mix(in srgb,var(--deep) 10%,#fff);border-color:var(--deep);
   color:var(--deep);font-weight:800}
 
-/* قائمةُ الطلاب — لا وعاءَ لها، تمرّ مع الكلّ. */
-.list{padding:9px 13px 12px}
+/* قائمةُ الطلاب وعاؤها الخاصّ، و`contain` يمنع اندفاعَها من عبور الحاجز. */
+.list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;padding:9px 13px 12px}
 .markbar{display:flex;background:#fff;border:1px solid var(--line);border-radius:14px;
   padding:7px;margin-bottom:9px}
 .markbar b{background:#15794A;color:#fff;border-radius:10px;padding:8px 16px;font-size:13.5px;
@@ -220,14 +221,13 @@ var head = document.getElementById('head'), chips = document.getElementById('chi
 var dsheet = document.getElementById('dsheet');
 var auto = true, animId = null;
 
-function barrier() { return head.offsetHeight; }
+function barrier() { return outer.scrollHeight - outer.clientHeight; }
 
 function status() {
     var stuck = outer.scrollTop >= barrier() - 1;
     chips.classList.toggle('stuck', stuck);
     document.getElementById('up').classList.toggle('on', stuck);
-    var top = chips.getBoundingClientRect().bottom;
-    var lim = outer.getBoundingClientRect().bottom;
+    var top = list.getBoundingClientRect().top, lim = list.getBoundingClientRect().bottom;
     var n = 0;
     document.querySelectorAll('.row').forEach(function (r) {
         var b = r.getBoundingClientRect();
@@ -237,6 +237,27 @@ function status() {
         (stuck ? '⏹ عند الخانات' : '↑ الأعلى') + ' · ' + n + ' طلاب';
 }
 outer.addEventListener('scroll', status);
+list.addEventListener('scroll', status);
+
+/* ══ فتحُ الطريق المسدود ══
+   `contain` يحفظ الحاجزَ لكنّه يسدّ الرجوعَ من الأسماء. فبدل إلغائه،
+   يُفتح البابُ بحركةٍ **صريحةٍ واحدة**: إن كانت القائمةُ في أوّلها
+   وسحبَ المعلّمُ لأسفل أربعين بكسلاً، رجع الرأسُ بانزلاقةٍ ناعمة.
+   وهي حركةٌ مقصودةٌ لا مصارعةُ اندفاع — تبدأ وتنتهي، فلا ارتجاف. */
+var pullY = 0, pulling = false, pulled = false;
+list.addEventListener('touchstart', function (e) {
+    pullY = e.touches[0].clientY;
+    pulling = list.scrollTop <= 0 && outer.scrollTop >= barrier() - 1;
+    pulled = false;
+}, { passive: true });
+list.addEventListener('touchmove', function (e) {
+    if (!pulling || pulled) return;
+    if (list.scrollTop > 0) { pulling = false; return; }
+    if (e.touches[0].clientY - pullY < 40) return;
+    pulled = true; pulling = false;
+    cancelAnimationFrame(animId);
+    outer.scrollTo({ top: 0, behavior: 'smooth' });
+}, { passive: true });
 
 /* ولا توجيهَ سحباتٍ ولا حبس: وعاءٌ واحدٌ يستقبل كلَّ سحبةٍ من أيّ موضع،
    فلا موضعَ مسدود. */
@@ -261,7 +282,7 @@ function autoScroll() {
 });
 function reopen() {
     cancelAnimationFrame(animId);
-    outer.scrollTop = 0; status();
+    outer.scrollTop = 0; list.scrollTop = 0; status();
     dsheet.classList.remove('on');
     document.getElementById('daysBtn').classList.remove('on');
     if (auto) setTimeout(autoScroll, 450);
@@ -312,6 +333,7 @@ document.getElementById('markall').addEventListener('click', function () {
 });
 document.getElementById('up').addEventListener('click', function () {
     cancelAnimationFrame(animId);
+    list.scrollTop = 0;
     outer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.querySelector('.pick').addEventListener('click', function (e) {
