@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>حاجزٌ سلس — وعاءان لا حبس</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<!--
+    preview-smooth.html — معاينةٌ لا تُشحن. تُحذف بعد الاختيار.
+
+    شكا المعلّم من ارتجافٍ عند التوقّف، ومن ظهور ما خلف الحاجز عند السحب
+    القويّ. والسببُ أنّي كنتُ أُصارع اندفاعَ المتصفّح: أُعيد `scrollTop`
+    قسراً في كلّ حدثٍ فيتنازعان، فيهتزّ، ويسبقني الاندفاعُ فيكشف ما وراءه.
+
+    ثمّ جُرّب وعاءان متداخلان، فظهر طريقٌ مسدود: `overscroll-behavior:
+    contain` يمنع سحبَ القائمة إلى الخارجيّ **دائماً** لا في السحبة الواحدة
+    فقط — فمن يسحب على الأسماء لا يبلغ البطاقةَ أبداً، ولا سبيلَ إلا أن
+    يسحب من عند الخانات. (بلاغُ المعلّم.)
+
+    فصار وعاءً واحداً: كلُّ شيءٍ فيه، والخاناتُ `sticky` ترتفع مع المحتوى
+    حتى تبلغ القمّةَ ثمّ تقف. والسحبُ من أيّ موضعٍ يعمل — لا مسدودَ ولا
+    مصارعةَ اندفاع، والفيزياءُ كلُّها للمتصفّح.
+    والثمنُ: لا حاجزَ سحبتين — السحبةُ القويّةُ تبلغ الأعلى مرّةً واحدة.
+-->
+<style>
+:root{
+  --deep:#0A3F4A; --mid:#105260; --lift:#104E5B;
+  --gold:#C9A961; --beige:#ECEAE3; --ink:#2C2C2A; --muted:#6B6B68;
+  --line:#E4E6EA; --pick:52px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:#fff;color:var(--ink);line-height:1.7;overflow:hidden}
+
+.screen{height:calc(100dvh - var(--pick));display:flex;flex-direction:column;overflow:hidden;position:relative}
+.hd{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;border-bottom:1px solid var(--line);background:#fff;z-index:7}
+.hd b{font-size:15px;font-weight:800;color:var(--deep)}
+
+/* ══ ثلاثةُ أوضاعٍ تُبدَّل بصنفٍ على body ══
+   حاولتُ ثلاثَ مرّاتٍ أن أُخمّن ما يعمل على جهاز المعلّم فأخطأت، فصارت
+   الأوضاعُ الثلاثةُ أمامه يجرّبها بإصبعه:
+     one  — وعاءٌ واحدٌ حرّ: لا توقّف، ولا موضعَ مسدود.
+     snap — وعاءٌ واحدٌ ومغناطيس: يستقرّ عند الخانات إن قاربها، بفيزياء
+            المتصفّح وحدَها (`scroll-snap`) لا بجافاسكربت.
+     two  — وعاءان وبابٌ صريح: توقّفٌ حقيقيّ، والرجوعُ بسحبةٍ لأسفل. */
+.outer{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.head{padding:11px 13px 0}
+
+body[data-m="one"] .pane, body[data-m="snap"] .pane{display:block}
+body[data-m="one"] .list, body[data-m="snap"] .list{overflow:visible;min-height:0}
+body[data-m="one"] .chips, body[data-m="snap"] .chips{position:sticky;top:0;z-index:5}
+
+body[data-m="snap"] .outer{scroll-snap-type:y proximity}
+body[data-m="snap"] .head{scroll-snap-align:start}
+body[data-m="snap"] .pane{scroll-snap-align:start}
+
+body[data-m="two"] .pane{height:100%;display:flex;flex-direction:column;min-height:0}
+body[data-m="two"] .list{overflow-y:auto;overscroll-behavior-y:contain}
+
+.hero{border-radius:18px;background:var(--deep);color:#fff;padding:15px;margin-bottom:10px}
+.hero .r1{display:flex;align-items:center;gap:9px}
+.hero .tt{flex:1;min-width:0}
+.hero .tt b{display:block;font-size:16.5px;font-weight:800}
+.hero .tt span{display:block;font-size:11.5px;opacity:.8;margin-top:2px}
+.hero .btn{height:34px;padding:0 13px;border-radius:11px;font-weight:800;font-size:13.5px;
+  display:flex;align-items:center;cursor:pointer;flex:0 0 auto}
+.hero .days-b{background:rgba(255,255,255,.2);color:#fff}
+.hero .days-b.on{background:#fff;color:var(--deep)}
+.hero .prt{background:#fff;color:var(--deep)}
+.hero .stats{display:flex;gap:5px;margin-top:10px}
+.hero .st{flex:1;background:rgba(255,255,255,.13);border-radius:9px;padding:5px 3px;text-align:center}
+.hero .st b{display:block;font-size:14px;font-weight:800}
+.hero .st span{display:block;font-size:9.5px;opacity:.8}
+
+.tools{display:flex;gap:8px;margin-bottom:10px}
+.tools .sr{flex:1;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;
+  display:flex;align-items:center;padding:0 12px;color:#9AA0A6;font-size:13.5px}
+.tools .ad{height:44px;padding:0 15px;border-radius:12px;background:var(--deep);color:#fff;
+  font-weight:800;font-size:13.5px;display:flex;align-items:center}
+
+.chips{flex:0 0 auto;display:flex;gap:7px;overflow-x:auto;background:#fff;
+  padding:9px 13px;scrollbar-width:none;border-bottom:1px solid transparent;
+  transition:border-color .18s ease,box-shadow .18s ease}
+.chips::-webkit-scrollbar{display:none}
+.chips.stuck{border-bottom-color:var(--line);box-shadow:0 4px 10px rgba(16,24,40,.07)}
+.chips c{display:block;flex:0 0 auto;border:1px solid var(--line);border-radius:11px;
+  padding:8px 14px;font-size:13.5px;font-weight:700;background:#fff;cursor:pointer}
+.chips c.on{background:color-mix(in srgb,var(--deep) 10%,#fff);border-color:var(--deep);
+  color:var(--deep);font-weight:800}
+
+.list{flex:1 1 auto;-webkit-overflow-scrolling:touch;padding:9px 13px 12px}
+.markbar{display:flex;background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:7px;margin-bottom:9px}
+.markbar b{background:#15794A;color:#fff;border-radius:10px;padding:8px 16px;font-size:13.5px;
+  font-weight:800;cursor:pointer}
+.rows{display:flex;flex-direction:column;gap:9px}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+  border-radius:14px;padding:10px 12px}
+.row .av{flex:0 0 30px;height:30px;border-radius:9px;background:var(--beige);color:var(--deep);
+  display:grid;place-items:center;font-weight:800;font-size:13px}
+.row .nm{flex:1;min-width:0}
+.row .nm b{display:block;font-size:14.5px;font-weight:800}
+.row .nm span{display:block;font-size:11px;color:var(--muted)}
+.row .acts{display:flex;gap:6px}
+.row .acts i{font-style:normal;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+  display:grid;place-items:center;font-size:13.5px;color:var(--muted);cursor:pointer;transition:all .12s}
+.row .acts i.on{color:#fff;border-color:transparent;font-weight:800}
+.row .acts i[data-s="p"].on{background:#15794A}
+.row .acts i[data-s="a"].on{background:#B91C1C}
+.row .acts i[data-s="l"].on{background:#B7791F}
+.row .acts i[data-s="n"].on{background:var(--deep)}
+.row.done{border-color:color-mix(in srgb,#15794A 40%,#fff);background:color-mix(in srgb,#15794A 5%,#fff)}
+.row.abs{border-color:color-mix(in srgb,#B91C1C 35%,#fff);background:color-mix(in srgb,#B91C1C 4%,#fff)}
+
+.dsheet{display:none;position:absolute;inset-inline:13px;top:64px;z-index:8;
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;
+  box-shadow:0 12px 34px rgba(16,24,40,.22)}
+.dsheet.on{display:block}
+.dsheet .h{background:#F7F8FA;padding:10px 14px;font-size:12.5px;font-weight:800;color:var(--muted);
+  border-bottom:1px solid var(--line)}
+.dsheet r{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;
+  border-bottom:1px solid var(--line);cursor:pointer}
+.dsheet r:last-child{border-bottom:0}
+.dsheet r.on{background:color-mix(in srgb,var(--deep) 8%,#fff)}
+.dsheet r .dt{flex:1;font-size:14px;font-weight:800}
+.dsheet r .mt{font-size:11.5px;color:var(--muted);font-weight:400}
+.dsheet r .bd{font-size:11px;font-weight:800;border-radius:7px;padding:3px 9px;
+  background:color-mix(in srgb,#15794A 12%,#fff);color:#15794A}
+.dsheet r.on .bd{background:var(--deep);color:#fff}
+
+.up{position:absolute;inset-inline-start:13px;bottom:82px;z-index:8;background:var(--deep);color:#fff;
+  border:0;border-radius:12px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:800;
+  box-shadow:0 6px 16px rgba(16,24,40,.28);cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .18s ease}
+.up.on{opacity:1;pointer-events:auto}
+
+.pick{position:fixed;inset:auto 0 0 0;height:var(--pick);display:flex;background:#12202A;
+  padding:6px;gap:6px;z-index:9;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.pick button{flex:1;border:0;border-radius:10px;background:#1E323E;color:#C9D3DA;font-family:inherit;
+  font-weight:800;font-size:11.5px;cursor:pointer}
+.pick button.on{background:linear-gradient(150deg,#1A8299,var(--deep));color:#fff}
+.badge{position:fixed;bottom:calc(var(--pick) + 8px);inset-inline-end:10px;z-index:8;
+  background:#12202A;color:#fff;border-radius:9px;padding:4px 11px;font-size:11.5px;font-weight:800}
+</style>
+</head>
+<body data-m="two">
+
+<div class="screen">
+  <div class="hd"><b>سجل الطلاب</b><span>←</span></div>
+
+  <div class="outer" id="outer">
+    <div class="head" id="head">
+      <div class="hero">
+        <div class="r1">
+          <div class="tt"><b>سجل متابعة الطلاب</b><span id="hdate">الخميس ٢٠ أغسطس</span></div>
+          <span class="btn days-b" id="daysBtn">الأيام</span>
+          <span class="btn prt">طباعة</span>
+        </div>
+        <div class="stats">
+          <div class="st"><b>50</b><span>طالب</span></div>
+          <div class="st"><b id="sp">0</b><span>حاضر</span></div>
+          <div class="st"><b id="sa">0</b><span>غائب</span></div>
+          <div class="st"><b id="spc">—</b><span>الحضور</span></div>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="sr">🔍 بحث باسم الطالب…</div>
+        <div class="ad">+ إضافة طلاب</div>
+      </div>
+    </div>
+
+    <div class="pane">
+      <div class="chips" id="chips">
+        <c class="on">الحضور</c><c>المشاركة</c><c>التقييم</c><c>الملاحظات</c><c>+</c>
+      </div>
+      <div class="list" id="list">
+        <div class="markbar"><b id="markall">✓ تحضير الكل</b></div>
+        <div class="rows" id="rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dsheet" id="dsheet">
+    <div class="h">الأيام التي عُبّئ فيها السجلّ</div>
+    <r class="on"><span class="dt">الخميس ٢٠ أغسطس</span><span class="bd">اليوم</span></r>
+    <r><span class="dt">الأربعاء ١٩ أغسطس<div class="mt">٦ حاضر · ٠ غائب</div></span><span class="bd">١٠٠٪</span></r>
+    <r><span class="dt">الثلاثاء ١٨ أغسطس<div class="mt">٥ حاضر · ١ غائب</div></span><span class="bd">٨٣٪</span></r>
+    <r><span class="dt">الاثنين ١٧ أغسطس<div class="mt">٦ حاضر · ٠ غائب</div></span><span class="bd">١٠٠٪</span></r>
+    <r><span class="dt">الأحد ١٦ أغسطس<div class="mt">٤ حاضر · ٢ غائب</div></span><span class="bd">٦٧٪</span></r>
+  </div>
+
+  <button class="up" id="up">↑ البطاقة</button>
+
+  <div class="nav" style="flex:0 0 auto;margin:8px 11px 11px;padding:4px;border-radius:21px;
+       background:rgba(255,255,255,.9);border:1px solid var(--line);
+       box-shadow:0 5px 16px rgba(16,24,40,.10);display:flex">
+    <i style="font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#575753"><span style="display:block;font-size:16px">⚙️</span>الإعدادات</i>
+    <i style="font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#575753"><span style="display:block;font-size:16px">🗂️</span>إنجاز</i>
+    <i style="font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#575753"><span style="display:block;font-size:16px">📅</span>الجدول</i>
+    <i style="font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#fff;border-radius:15px;background:linear-gradient(150deg,var(--lift),var(--deep));font-weight:800"><span style="display:block;font-size:16px">📚</span>الفصول</i>
+    <i style="font-style:normal;flex:1;text-align:center;padding:6px 0;font-size:10px;color:#575753"><span style="display:block;font-size:16px">🏠</span>الرئيسية</i>
+  </div>
+</div>
+
+<div class="badge" id="badge">—</div>
+<div class="pick">
+  <button data-m="one">١ حرّ</button>
+  <button data-m="snap">٢ مغناطيس</button>
+  <button class="on" data-m="two">٣ حاجزٌ وباب</button>
+</div>
+
+<script>
+/* خمسون طالباً — بطلب المعلّم ليختبر النزولَ والطلوعَ بقائمةٍ حقيقيّة
+   الطول: قائمةٌ من اثني عشرَ لا تكشف اندفاعَ السحب ولا حدودَه. */
+var FIRST = ['أحمد','بندر','خالد','راكان','سامي','طلال','عمر','فيصل','ماجد','نايف',
+             'هشام','ياسر','إبراهيم','جابر','حمد','سعود','عبدالله','مشعل','نواف','وليد',
+             'تركي','ثامر','حسن','سلطان','صالح'];
+var SECOND = ['علي','سعد','محمد','فهد','عبدالعزيز','ناصر','يوسف','راشد','مبارك','بدر',
+              'سالم','صقر','مانع','عايض','زياد','هاني','معاذ','أنس','رائد','لؤي'];
+var NAMES = [];
+for (var i = 0; i < 50; i++) {
+    NAMES.push(FIRST[i % FIRST.length] + ' ' + SECOND[(i * 7 + 3) % SECOND.length]);
+}
+document.getElementById('rows').innerHTML = NAMES.map(function (n) {
+    return '<div class="row"><div class="av">' + n[0] + '</div>'
+      + '<div class="nm"><b>' + n + '</b><span data-st>بلا تحضير</span></div>'
+      + '<div class="acts"><i data-s="p">✓</i><i data-s="a">✗</i>'
+      + '<i data-s="l">⏰</i><i data-s="n">📝</i></div></div>';
+}).join('');
+
+var outer = document.getElementById('outer'), list = document.getElementById('list');
+var head = document.getElementById('head'), chips = document.getElementById('chips');
+var dsheet = document.getElementById('dsheet');
+var auto = true, animId = null;
+
+function mode() { return document.body.dataset.m; }
+function barrier() {
+    return mode() === 'two' ? outer.scrollHeight - outer.clientHeight : head.offsetHeight;
+}
+
+function status() {
+    var stuck = outer.scrollTop >= barrier() - 1;
+    chips.classList.toggle('stuck', stuck);
+    document.getElementById('up').classList.toggle('on', stuck);
+    var top = list.getBoundingClientRect().top, lim = list.getBoundingClientRect().bottom;
+    var n = 0;
+    document.querySelectorAll('.row').forEach(function (r) {
+        var b = r.getBoundingClientRect();
+        if (b.top >= top - 1 && b.bottom <= lim + 1) n++;
+    });
+    document.getElementById('badge').textContent =
+        (stuck ? '⏹ عند الخانات' : '↑ الأعلى') + ' · ' + n + ' طلاب';
+}
+outer.addEventListener('scroll', status);
+list.addEventListener('scroll', status);
+
+/* ══ توجيهُ السحبة — النصفان معاً ══
+   بُني الحاجزُ صاعداً ونُسي هابطاً. فكانت السحبةُ على الأسماء تُحرّك
+   الطلابَ دائماً: هابطاً لا تُطوى البطاقة، وصاعداً لا تعود. (بلاغُ
+   المعلّم مرّتين، وهو محقّ.)
+
+   والعلاجُ أن يُقرَّر **أيُّ وعاءٍ يستقبل السحبة** عند لمسة الإصبع، قبل
+   أن يتحرّك شيء:
+     · البطاقةُ ظاهرة        → الوعاءُ الخارجيّ: تُطوى وحدَها والطلابُ ثابتون.
+     · مطويّةٌ والقائمةُ في أوّلها → يُنتظر الاتّجاه: سحبٌ لأسفل يعيد
+       البطاقة، وسحبٌ لأعلى يُمرّر الطلاب.
+     · غيرُ ذلك             → القائمة.
+   ولا يُعدَّل `scrollTop` أثناء اللمس البتّة — فلا ارتجاف. */
+var startY = 0, route = '', settled = false, fallbackT = null;
+
+function headerVisible() { return outer.scrollTop < barrier() - 1; }
+
+list.addEventListener('touchstart', function (e) {
+    clearTimeout(fallbackT);
+    if (mode() !== 'two') { route = ''; list.style.overflowY = 'auto'; return; }
+    startY = e.touches[0].clientY;
+    settled = false;
+    if (headerVisible())            route = 'outer';
+    else if (list.scrollTop <= 0)   route = 'pending';
+    else                            route = 'list';
+    list.style.overflowY = (route === 'list') ? 'auto' : 'hidden';
+}, { passive: true });
+
+list.addEventListener('touchmove', function (e) {
+    if (mode() !== 'two' || settled) return;
+    var dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) < 6) return;
+
+    if (route === 'pending') {
+        settled = true;
+        if (dy < 0) { list.style.overflowY = 'auto'; route = 'list'; }
+        else {
+            route = 'outer';
+            /* حبلُ نجاةٍ: إن لم يستجب الوعاءُ الخارجيُّ للتوجيه على
+               هذا الجهاز، تُطلق انزلاقةٌ صريحةٌ بعد ‎140ms‎. */
+            var before = outer.scrollTop;
+            fallbackT = setTimeout(function () {
+                if (Math.abs(outer.scrollTop - before) < 3) {
+                    outer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 140);
+        }
+        return;
+    }
+    if (route === 'outer' && headerVisible() && dy < 0) {
+        settled = true;
+        var b2 = outer.scrollTop;
+        fallbackT = setTimeout(function () {
+            if (Math.abs(outer.scrollTop - b2) < 3) {
+                outer.scrollTo({ top: barrier(), behavior: 'smooth' });
+            }
+        }, 140);
+    }
+}, { passive: true });
+
+list.addEventListener('touchend', function () {
+    setTimeout(function () { list.style.overflowY = 'auto'; }, 80);
+}, { passive: true });
+
+/* النزولُ التلقائيُّ عند الفتح — حركةٌ واحدةٌ لا لمسَ معها، فلا تنازع. */
+function autoScroll() {
+    cancelAnimationFrame(animId);
+    var target = barrier(), from = outer.scrollTop, dist = target - from;
+    if (dist <= 0) return;
+    var t0 = null;
+    function step(ts) {
+        if (t0 === null) t0 = ts;
+        var k = Math.min(1, (ts - t0) / 900);
+        var e = k < .5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2) / 2;
+        outer.scrollTop = from + dist * e;
+        if (k < 1) animId = requestAnimationFrame(step); else status();
+    }
+    animId = requestAnimationFrame(step);
+}
+['touchstart','wheel','pointerdown'].forEach(function (ev) {
+    outer.addEventListener(ev, function () { cancelAnimationFrame(animId); }, { passive: true });
+});
+function reopen() {
+    cancelAnimationFrame(animId);
+    outer.scrollTop = 0; list.scrollTop = 0; status();
+    dsheet.classList.remove('on');
+    document.getElementById('daysBtn').classList.remove('on');
+    if (auto) setTimeout(autoScroll, 450);
+}
+
+var LABEL = { p:'حاضر', a:'غائب', l:'متأخر', n:'ملاحظة' };
+function setState(row, st) {
+    row.querySelectorAll('.acts i').forEach(function (b) { b.classList.toggle('on', b.dataset.s === st); });
+    row.classList.toggle('done', st === 'p');
+    row.classList.toggle('abs', st === 'a');
+    row.querySelector('[data-st]').textContent = st ? LABEL[st] : 'بلا تحضير';
+    row.dataset.state = st || '';
+}
+function refresh() {
+    var rows = [].slice.call(document.querySelectorAll('.row'));
+    var p = rows.filter(function (r) { return r.dataset.state === 'p'; }).length;
+    var a = rows.filter(function (r) { return r.dataset.state === 'a'; }).length;
+    var m = p + a;
+    document.getElementById('sp').textContent = p;
+    document.getElementById('sa').textContent = a;
+    document.getElementById('spc').textContent = m ? Math.round(p / m * 100) + '٪' : '—';
+}
+
+document.getElementById('daysBtn').addEventListener('click', function () {
+    dsheet.classList.toggle('on');
+    this.classList.toggle('on', dsheet.classList.contains('on'));
+});
+dsheet.addEventListener('click', function (e) {
+    var r = e.target.closest('r'); if (!r) return;
+    this.querySelectorAll('r').forEach(function (x) { x.classList.toggle('on', x === r); });
+    document.getElementById('hdate').textContent = r.querySelector('.dt').childNodes[0].textContent.trim();
+    dsheet.classList.remove('on');
+    document.getElementById('daysBtn').classList.remove('on');
+});
+chips.addEventListener('click', function (e) {
+    var c = e.target.closest('c'); if (!c) return;
+    this.querySelectorAll('c').forEach(function (x) { x.classList.toggle('on', x === c); });
+});
+document.getElementById('rows').addEventListener('click', function (e) {
+    var b = e.target.closest('.acts i'); if (!b) return;
+    var row = b.closest('.row');
+    setState(row, row.dataset.state === b.dataset.s ? '' : b.dataset.s);
+    refresh();
+});
+document.getElementById('markall').addEventListener('click', function () {
+    document.querySelectorAll('.row').forEach(function (r) { setState(r, 'p'); });
+    refresh();
+});
+document.getElementById('up').addEventListener('click', function () {
+    cancelAnimationFrame(animId);
+    list.scrollTop = 0;
+    outer.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.querySelector('.pick').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    document.body.dataset.m = b.dataset.m;
+    reopen();
+});
+
+reopen();
+</script>
+
+</body>
+</html>
