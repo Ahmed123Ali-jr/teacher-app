@@ -454,6 +454,14 @@
        ولا يُصفَّى `getAll` — النسخة الاحتياطية تريد السنة كلّها لا فصلاً. */
     const TERM_SCOPED = { classes: true, schedule: true };
 
+    /* الجداولُ التي فيها عمودُ `teacher_id` — وهي كلُّها إلا سجلَّي
+       الاستراتيجيات والمبادرات، فهما يُنسبان عبر صفّهما الأمّ. */
+    const TEACHER_OWNED = {
+        classes: true, students: true, attendance: true, participation: true,
+        assignments: true, exams: true, worksheets: true, strategies: true,
+        initiatives: true, schedule: true, reminders: true, ai_usage: true
+    };
+
     let _term = null;
 
     const termOf = (row) => {
@@ -604,6 +612,18 @@
         }
 
         const row = Object.assign({}, value);
+        /* ══ صاحبُ الصفّ يُسند هنا لا في كل شاشة ══
+           كلُّ جدولٍ (إلا سجلَّي الاستراتيجيات والمبادرات) فيه `teacher_id`،
+           وسياسةُ الأمان ترفض صفّاً بلا صاحب. وكان الإسنادُ متروكاً لكلّ
+           شاشةٍ تكتب — ففعلته «التذكيرات» ونسيته أوراقُ العمل والاختبارات،
+           فكان كلُّ حفظٍ يُرفض بـ`row-level security policy` والزرُّ يبدو
+           معطّلاً بلا سبب. (بلاغُ المعلّم، ٢٠ أغسطس ٢٠٢٦.)
+           فصار هنا مرّةً واحدة: من كتب صفّاً بلا صاحبٍ نُسب إليه تلقائياً،
+           ومن أسنده صراحةً بقي إسنادُه. */
+        if (TEACHER_OWNED[storeName] && !row.teacher_id) {
+            const uid = await currentUid();
+            if (uid) row.teacher_id = uid;
+        }
         if (TERM_SCOPED[storeName] && row.term == null) row.term = await currentTerm();
         if (row.id == null) {
             delete row.id;
