@@ -2399,6 +2399,8 @@ body.drawer-open { overflow: hidden; }
    No horizontal scroll, nothing sticky → the iOS blank-names bug is impossible.
    ========================================================================== */
 .st-cards { display: flex; flex-direction: column; gap: 9px; }
+/* الشريطُ اللونيُّ على حافّة البطاقة حُذف (٢٠ أغسطس ٢٠٢٦): طلب المعلّم
+   ألّا تُلوَّن الخاناتُ بالأخضر والأحمر، والزرُّ المضغوطُ وحدَه هو الخبر. */
 .st-card {
     position: relative;
     display: flex;
@@ -2407,27 +2409,19 @@ body.drawer-open { overflow: hidden; }
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 12px 12px 12px 14px;
-    padding-inline-start: 17px;   /* 12px + مساحة الشريط اللوني */
+    padding: 12px;
     overflow: hidden;
 }
-.st-card::before {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0; inset-inline-start: 0;
-    width: 5px;
-    background: var(--stripe, var(--stripe-none));
-}
-/* حرف الطالب الأول في مربع رمادي (نموذج ج) */
+/* رقمُ الطالب في مربّعٍ هادئ — كان الحرفَ الأوّل من اسمه. */
 .stc-av {
     flex-shrink: 0;
-    width: 38px; height: 38px;
-    border-radius: 11px;
+    width: 34px; height: 34px;
+    border-radius: 10px;
     background: var(--surface-alt);
     color: var(--text-muted);
     display: grid; place-items: center;
-    font-weight: 800;
-    font-size: 16px;
+    font-weight: var(--fw-bold);
+    font-size: 14px;
 }
 .stc-info { flex: 1; min-width: 0; }
 .st-card .st-name-link {
@@ -2438,7 +2432,7 @@ body.drawer-open { overflow: hidden; }
     text-decoration: none;
     line-height: 1.4;
 }
-.stc-status { font-size: 12px; font-weight: 700; margin-top: 2px; }
+/* `.stc-status` حُذفت: لا سطرَ حالةٍ تحت الاسم. */
 /* أزرار الحضور: مربعات صغيرة بجانب الاسم (نموذج ج) */
 .stc-ab { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .st-card .att-btn {
@@ -2529,10 +2523,13 @@ body.drawer-open { overflow: hidden; }
     justify-content: center;
 }
 .att-btn:hover { border-color: var(--att-color); color: var(--att-color); }
+/* الزرُّ المضغوطُ بلونِ الهُويّة لا بالأخضر والأحمر — بقرار المعلّم.
+   والرمزُ يفرّق بينها: ✓ للحاضر و✗ للغائب و⏰ للمتأخّر. و`--att-color`
+   يبقى حيّاً لأن الإحصاءَ والتقاريرَ والطباعةَ تقرؤه. */
 .att-btn.active {
-    background: var(--att-color);
-    border-color: var(--att-color);
-    color: white;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
     transform: scale(1.05);
 }
 

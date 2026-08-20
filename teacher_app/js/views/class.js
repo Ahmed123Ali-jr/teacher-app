@@ -739,17 +739,8 @@
                 panel.querySelectorAll(`[data-att-btn][data-sid="${sid}"]`).forEach((b) => {
                     b.classList.toggle('active', status !== null && b.dataset.status === status);
                 });
-                // Recolor the card stripe + status word for instant feedback.
-                const meta = status ? ATTENDANCE[status] : null;
-                const card = btn.closest('.st-card');
-                if (card) {
-                    card.style.setProperty('--stripe', meta ? meta.color : 'var(--stripe-none)');
-                    const sw = card.querySelector('.stc-status');
-                    if (sw) {
-                        sw.textContent = meta ? meta.label : 'بلا تحضير';
-                        sw.style.color = meta ? meta.color : 'var(--text-muted)';
-                    }
-                }
+                /* لا شريطَ يُلوَّن ولا سطرَ حالةٍ يُحدَّث: الصفُّ صار اسماً
+                   ورقماً وأزرارَ حالة، والزرُّ المضغوطُ وحدَه هو الخبر. */
                 refreshAttendanceUI();
                 if (status === null) clearAttendance(sid, today);
                 else setAttendance(cls, sid, today, status);
@@ -992,20 +983,18 @@
     }
 
     /* ==========================================================================
-       Register CARDS (design «ج») — one comfortable card per student with a
-       colored status stripe. No horizontal scroll → the iOS "blank names"
-       bug is structurally impossible. Emits the SAME data hooks the handlers
-       rely on (.st-row / .st-name-link / [data-att-btn] / [data-eval-btn] /
+       Register CARDS — بطاقةٌ لكل طالب: رقمُه واسمُه وأزرارُ حالته.
+       بلا شريطٍ ملوَّنٍ وبلا سطر حالةٍ تحت الاسم (قرارُ المعلّم،
+       ٢٠ أغسطس ٢٠٢٦). ولا تمريرَ أفقيّاً — فعطبُ «الأسماء تبيضّ» في
+       WebKit مستحيلٌ بالبنية.
+       وتُصدِر المقابضَ نفسَها التي تعتمدها المعالِجات (.st-row /
+       .st-name-link / [data-att-btn] / [data-eval-btn] /
        input[data-eval-num] / [data-del-student]).
        ========================================================================== */
     function studentsCards(students, attToday, evalToday, columns, showAttendance = true) {
         const cards = students.map((s, i) => {
             const att    = attToday[i];
-            const meta   = att && ATTENDANCE[att.status];
-            const stripe = meta ? meta.color : 'var(--stripe-none)';
-            const word   = meta ? meta.label : 'بلا تحضير';
             const values = readValues(evalToday[i]);
-            const letter = escapeHtml((s.name || '؟').trim().charAt(0));
 
             // Left-side control: attendance squares («الكل»/«الحضور») or the
             // focused column's control (stars / number / check / tri).
@@ -1013,12 +1002,15 @@
                 ? attendanceButtons(s.id, att)
                 : (columns.length === 1 ? renderCell(s.id, columns[0], values[columns[0].id]) : '');
 
+            /* ترقيمٌ لا حرفٌ أوّل، واسمٌ وحدَه بلا سطر حالةٍ تحته — بقرار
+               المعلّم (٢٠ أغسطس ٢٠٢٦). والرقمُ من موضع الطالب في القائمة
+               كاملةً لا في المرشَّحة، فيبقى ثابتاً: من كان الثاني عشر
+               يبقى الثاني عشرَ ولو رُشِّح الغائبون وحدَهم. */
             return `
-                <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:${stripe};">
-                    <div class="stc-av">${letter}</div>
+                <div class="st-card st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
+                    <div class="stc-av num">${i + 1}</div>
                     <div class="stc-info">
                         <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
-                        <div class="stc-status" style="color:${meta ? stripe : 'var(--text-muted)'};">${word}</div>
                     </div>
                     <div class="stc-ab">${ctl}</div>
                 </div>`;
@@ -1029,9 +1021,9 @@
     /* Notes focus as cards — name + a comfortable note box (same field shown
        on the student page; saved in the background, no re-render). */
     function studentsNotesCards(students) {
-        const cards = students.map((s) => `
-            <div class="st-card st-card-note st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}" style="--stripe:var(--stripe-none);">
-                <div class="stc-av">${escapeHtml((s.name || '؟').trim().charAt(0))}</div>
+        const cards = students.map((s, i) => `
+            <div class="st-card st-card-note st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
+                <div class="stc-av num">${i + 1}</div>
                 <div class="stc-info">
                     <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">${escapeHtml(s.name)}</a>
                 </div>
