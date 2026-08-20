@@ -42,8 +42,14 @@
     async function render(panel, cls) {
         const files = ensureList(cls);
 
+        /* زرُّ الرفع كان في الحالة الفارغة وحدَها، والمعالِجُ أدناه ينتظر
+           زرّاً لم يُرسم قطُّ حين توجد ملفّات. */
         panel.innerHTML = `
-            ${files.length === 0 ? empty() : list(files)}
+            ${files.length === 0 ? empty() : `
+                <div class="ws-topbar">
+                    <button class="btn btn-primary" id="btn-upload">+ ارفع ملفاً</button>
+                </div>
+                ${list(files)}`}
 
             <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
                 <h4 style="margin-top:0">ملاحظة</h4>
