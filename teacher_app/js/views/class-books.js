@@ -32,6 +32,9 @@
     async function render(panel, cls) {
         const books = await global.TeacherDB.getAllByIndex('books', 'class_id', cls.id);
 
+        /* الحالةُ الفارغة تأخذ نمطَ «و» في الرئيسية: لافتةٌ تقول ما ينقص،
+           وفراغٌ، وزرٌّ عريضٌ في متناول الإبهام. */
+        panel.classList.toggle('is-empty-tab', books.length === 0);
         panel.innerHTML = `
             ${books.length === 0 ? emptyState() : bookGrid(books)}
         `;
@@ -82,11 +85,15 @@
         global.PdfCore.ensurePdfJs().catch(() => {});
     }
 
+    /* نمطُ «و» — كنمط «فصولٌ بلا جدول» في الرئيسية بعينه. */
     function emptyState() {
         return `
-            <div class="empty-state">
-                <button class="btn btn-primary" data-empty-add>+ ارفع الكتاب</button>
+            <div class="start-note">
+                <b>لا كتب بعد</b>
+                <span>ارفع كتاب الفصل أو دليل المعلّم لتقرأه هنا</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ ارفع كتاباً</button>
         `;
     }
 
