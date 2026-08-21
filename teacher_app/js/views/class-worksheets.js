@@ -44,14 +44,14 @@
         const sheets = (await global.TeacherDB.getAllByIndex('worksheets', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
-        /* زرُّ الإضافة كان في الحالة الفارغة وحدَها: فمن أنشأ ورقةً لم يجد
+        /* زرُّ الإضافة أسفلَ القائمة لا فوقها (بطلب المعلّم)، وكان قبلها في الحالة الفارغة وحدَها: فمن أنشأ ورقةً لم يجد
            سبيلاً إلى ثانية. (بلاغُ المعلّم، ٢٠ أغسطس ٢٠٢٦.) */
         panel.innerHTML = `
             ${sheets.length === 0 ? empty() : `
-                <div class="ws-topbar">
+                ${list(sheets)}
+                <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-manual-sheet">+ ورقة عمل جديدة</button>
-                </div>
-                ${list(sheets)}`}
+                </div>`}
         `;
 
         panel.querySelector('#btn-manual-sheet')?.addEventListener('click', () => startManual(cls, panel));

@@ -34,15 +34,15 @@
 
         const today = todayISO();
 
-        /* زرُّ الإضافة كان في الحالة الفارغة وحدَها: فمن أضاف واحداً لم
+        /* زرُّ الإضافة أسفلَ القائمة لا فوقها (بطلب المعلّم)، وكان قبلها في الحالة الفارغة وحدَها: فمن أضاف واحداً لم
            يجد سبيلاً إلى ثانٍ، والمعالِجُ أدناه ينتظر زرّاً لم يُرسم قطّ.
            (العطبُ نفسُه في الاختبارات وأوراق العمل والواجبات والتوزيع.) */
         panel.innerHTML = `
             ${rows.length === 0 ? empty() : `
-                <div class="ws-topbar">
+                ${list(rows, today)}
+                <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-new-hw">+ واجب جديد</button>
-                </div>
-                ${list(rows, today)}`}
+                </div>`}
         `;
 
         panel.querySelector('#btn-new-hw')?.addEventListener('click', () => openForm(cls, panel));

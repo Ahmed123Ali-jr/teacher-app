@@ -43,10 +43,10 @@
 
         panel.innerHTML = `
             ${exams.length === 0 ? emptyState() : `
-                <div class="ws-topbar">
+                ${listHtml(exams)}
+                <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-manual-exam">+ اختبار جديد</button>
-                </div>
-                ${listHtml(exams)}`}
+                </div>`}
         `;
 
         /* الإنشاء يدويّ بالكامل — لا توليد آلي. */

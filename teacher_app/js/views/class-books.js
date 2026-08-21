@@ -35,15 +35,15 @@
         /* الحالةُ الفارغة تأخذ نمطَ «و» في الرئيسية: لافتةٌ تقول ما ينقص،
            وفراغٌ، وزرٌّ عريضٌ في متناول الإبهام. */
         panel.classList.toggle('is-empty-tab', books.length === 0);
-        /* زرُّ الإضافة كان في الحالة الفارغة وحدَها: فمن أضاف واحداً لم
+        /* زرُّ الإضافة أسفلَ القائمة لا فوقها (بطلب المعلّم)، وكان قبلها في الحالة الفارغة وحدَها: فمن أضاف واحداً لم
            يجد سبيلاً إلى ثانٍ، والمعالِجُ أدناه ينتظر زرّاً لم يُرسم قطّ.
            (العطبُ نفسُه في الاختبارات وأوراق العمل والواجبات والتوزيع.) */
         panel.innerHTML = `
             ${books.length === 0 ? emptyState() : `
-                <div class="ws-topbar">
+                ${bookGrid(books)}
+                <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-add-book">+ ارفع كتاباً</button>
-                </div>
-                ${bookGrid(books)}`}
+                </div>`}
         `;
 
         panel.querySelector('#btn-add-book')?.addEventListener('click', () => openForm(cls, panel));

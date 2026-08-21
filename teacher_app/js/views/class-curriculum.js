@@ -46,10 +46,10 @@
            زرّاً لم يُرسم قطُّ حين توجد ملفّات. */
         panel.innerHTML = `
             ${files.length === 0 ? empty() : `
-                <div class="ws-topbar">
+                ${list(files)}
+                <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-upload">+ ارفع ملفاً</button>
-                </div>
-                ${list(files)}`}
+                </div>`}
 
             <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
                 <h4 style="margin-top:0">ملاحظة</h4>
