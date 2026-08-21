@@ -29,7 +29,7 @@
         if (n <= 10) return ar(n) + ' ' + few;
         return ar(n) + ' ' + many;
     }
-    const qWord = (n) => countWord(n, 'سؤال واحد', 'سؤالان', 'أسئلة', 'سؤالاً');
+    const pWord = (n) => countWord(n, 'فقرة واحدة', 'فقرتان', 'فقرات', 'فقرة');
 
     const state = {};
 
@@ -41,6 +41,7 @@
        Supabase، و`Number(uuid)` يعطي `NaN` — فكان الفتحُ والطباعةُ والحذفُ
        من القائمة يموت صامتاً بلا رسالةٍ ولا أثر. */
     async function render(panel, cls) {
+        panel.classList.remove('has-qe-dock');
         const sheets = (await global.TeacherDB.getAllByIndex('worksheets', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
@@ -110,7 +111,7 @@
                         <div>
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(r.title)}</h4>
                             <div class="text-muted" style="font-size:var(--fs-sm);">
-                                ${qWord(countOf(r))} ·
+                                ${pWord(countOf(r))} ·
                                 ${new Date(r.created_at).toLocaleDateString('ar-SA')}
                             </div>
                         </div>
@@ -157,31 +158,34 @@
         const s = state[cls.id];
         const sh = s.sheet;
 
+        /* شاشةٌ بلا حشو: شكا المعلّم من كثرة ما تعرضه (٢١ أغسطس ٢٠٢٦).
+           فسقط عنوانُ الشاشة — بطاقةُ العنوان تحته تقول ما هي — وطُوِيت
+           التعليماتُ في زرٍّ يفتحها من يحتاجها. والأفعالُ الثلاثة نزلت
+           إلى شريطٍ ثابتٍ أسفل الشاشة، كزرّ إضافة الاختبار. */
+        panel.classList.add('has-qe-dock');
         panel.innerHTML = `
             <div class="wizard">
                 <div class="wizard-header">
                     <button class="btn btn-ghost btn-sm" id="back-list">← القائمة</button>
                 </div>
-                <h3 class="wizard-title">أسئلة ورقة العمل</h3>
 
                 ${QE().editorHtml(sh.title, sh.questions, {
                     points: false, titleLabel: 'عنوان ورقة العمل'
                 })}
 
-                <div class="field" style="margin-top:var(--space-4);">
-                    <label class="label">التعليمات (تُطبع أعلى الورقة)</label>
-                    <textarea class="textarea" id="ws-inst" rows="2"
-                              placeholder="مثلاً: أجب عن الأسئلة الآتية مستعيناً بكتابك.">${escapeHtml(sh.instructions || '')}</textarea>
-                </div>
+                ${instHtml(sh)}
 
-                <div class="wizard-footer">
-                    <button class="btn btn-secondary" id="ws-save">💾 حفظ</button>
-                    <button class="btn btn-primary" id="ws-print">🖨️ حفظ وطباعة</button>
+                <div class="qe-dock">
+                    ${QE().addBtnHtml()}
+                    <div class="wizard-footer">
+                        <button class="btn btn-secondary" id="ws-save">حفظ</button>
+                        <button class="btn btn-primary" id="ws-print">حفظ وطباعة</button>
+                    </div>
                 </div>
             </div>
         `;
 
-        panel.querySelector('#ws-inst').addEventListener('input', (e) => { sh.instructions = e.target.value; });
+        bindInst(panel, sh, () => step2(panel, cls));
 
         QE().bind(panel, sh.questions, {
             points: false,
@@ -218,6 +222,33 @@
         global.PrintWorksheet.preloadPdfEngine().catch(() => {});
     }
 
+    /* ---------- التعليمات: مطويّةٌ حتى تُطلب ---------- */
+
+    function instHtml(sh) {
+        if (!sh.instOpen && !String(sh.instructions || '').trim()) {
+            return '<button type="button" class="qe-instfold" id="ws-inst-open">'
+                 + '+ تعليمات تُطبع أعلى الورقة</button>';
+        }
+        return `
+            <div class="field" style="margin-top:var(--space-4);">
+                <label class="label">التعليمات (تُطبع أعلى الورقة)</label>
+                <textarea class="textarea" id="ws-inst" rows="2"
+                          placeholder="مثلاً: أجب عن الأسئلة الآتية مستعيناً بكتابك."
+                          >${escapeHtml(sh.instructions || '')}</textarea>
+            </div>`;
+    }
+
+    function bindInst(panel, sh, rerender) {
+        panel.querySelector('#ws-inst')
+            ?.addEventListener('input', (e) => { sh.instructions = e.target.value; });
+        panel.querySelector('#ws-inst-open')?.addEventListener('click', () => {
+            /* راية عرضٍ لا حقلَ يُحفظ: تُنزع قبل الحفظ في `save`. */
+            sh.instOpen = true;
+            rerender();
+            panel.querySelector('#ws-inst')?.focus();
+        });
+    }
+
     /* رفضٌ غير ملتقَط داخل مستمع نقرٍ يموت صامتاً، فيبدو الزرّ معطّلاً
        بلا سبب. انظر النظير في class-exams.js. */
     async function guard(btn, fn) {
@@ -236,8 +267,10 @@
 
     async function save(sh) {
         sh.updated_at = new Date().toISOString();
-        /* التمارين القديمة تُحذف بعد التحويل، فلا يبقى مصدران للحقيقة. */
+        /* التمارين القديمة تُحذف بعد التحويل، فلا يبقى مصدران للحقيقة.
+           و`instOpen` رايةُ عرضٍ لا عمودَ لها في القاعدة. */
         delete sh.exercises;
+        delete sh.instOpen;
         sh.id = await global.TeacherDB.put('worksheets', sh);
         return sh;
     }

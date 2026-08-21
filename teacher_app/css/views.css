@@ -5087,11 +5087,26 @@ body.drawer-open { overflow: hidden; }
     box-shadow: 0 2px 6px rgba(16, 24, 40, .05);
 }
 .qe-sec-head {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: flex-start; gap: 8px;
     padding: 11px 13px; background: var(--primary); color: #fff;
 }
-.qe-sec-head .t { flex: 1; font-size: 12.5px; font-weight: var(--fw-black); line-height: 1.6; }
+.qe-sec-head .tx { flex: 1; min-width: 0; }
+/* الترويسةُ كما تُطبع، وتحتها اسمُ النوع وعددُ فقراته: المعلّم يقرأ
+   الأولى ليتأكّد من الورق، والثانية ليعرف أين هو من الورقة. */
+.qe-sec-head .tx b {
+    display: block; font-size: 12.5px; font-weight: var(--fw-black); line-height: 1.6;
+}
+.qe-sec-head .tx span {
+    display: block; font-size: 11px; font-weight: 500; opacity: .82; margin-top: 1px;
+}
 .qe-sec-head .g { flex: none; font-size: 11px; font-weight: var(--fw-black); color: #E8D9A8; }
+.qe-sec-del {
+    flex: none; border: 0; background: transparent; color: #fff; opacity: .8;
+    font-size: 14px; line-height: 1; padding: 3px 4px; cursor: pointer;
+    position: relative;
+}
+/* مساحةُ لمسٍ ٤٤ حول أيقونةٍ صغيرة، بلا تكبيرها في الترويسة. */
+.qe-sec-del::after { content: ""; position: absolute; inset: -12px -10px; }
 
 .qe-items { padding: 11px 12px; display: flex; flex-direction: column; gap: 12px; }
 .qe-item { display: flex; gap: 9px; align-items: flex-start; }
@@ -5156,8 +5171,10 @@ body.drawer-open { overflow: hidden; }
     background: var(--surface); border: 1.5px solid var(--border);
     font-size: 13px; line-height: 1; padding: 0;
 }
+.qe-del { display: grid; place-items: center; color: var(--text-muted); }
+.qe-sec-del svg, .qe-del svg { display: block; }
 
-/* ---------- الإضافة ---------- */
+/* ---------- الإضافة: «+ فقرة» داخل القسم ---------- */
 .qe-add-in {
     display: block; width: calc(100% - 24px); margin: 0 12px 12px;
     min-height: 40px; border-radius: 11px; cursor: pointer; font-family: inherit;
@@ -5165,20 +5182,85 @@ body.drawer-open { overflow: hidden; }
     background: color-mix(in srgb, var(--beige) 35%, var(--surface));
     border: 1.5px dashed var(--border-strong);
 }
-.qe-new {
-    display: flex; flex-wrap: wrap; gap: 7px; padding: 12px;
-    background: color-mix(in srgb, var(--beige) 30%, var(--surface));
-    border: 1.5px dashed var(--border-strong); border-radius: 16px;
+
+/* ══ شريطُ الأفعال — ثابتٌ أسفل الشاشة بتلاشٍ ══
+   كنمط `.ws-addbar`: الورقةُ تطول بالفقرات، ولو مضى الشريطُ مع التمرير
+   لاحتاج المعلّمُ أن ينزل إلى آخرها ليضيف سؤالاً أو يحفظ. والتدرّجُ تحته
+   يُذيب ما يمرّ فلا يبدو جداراً. و‎74px‎ ارتفاعُ شريط التنقّل العائم. */
+.qe-dock {
+    position: sticky;
+    bottom: calc(var(--safe-bottom) + 74px);
+    z-index: 6;
+    margin-top: var(--space-5);
+    padding: 18px 0 4px;
+    background: linear-gradient(to top,
+        var(--surface) 0%, var(--surface) 66%, transparent 100%);
 }
-.qe-new .lbl {
-    flex: 1 0 100%; font-size: 11.5px; font-weight: var(--fw-black);
-    color: var(--text-muted);
+.qe-dock .wizard-footer {
+    margin-top: 9px; padding-top: 0; border-top: 0;
+    flex-direction: row; flex-wrap: nowrap;
 }
-.qe-new button {
-    flex: 1 1 30%; min-height: 40px; border-radius: 11px; cursor: pointer;
-    font-family: inherit; font-size: 11.5px; font-weight: var(--fw-black);
-    color: var(--ink-primary); background: var(--surface);
-    border: 1.5px solid var(--border);
+/* «حفظ» و«حفظ وطباعة» صفٌّ واحدٌ حتى على الجوال: الشريطُ ثابتٌ، وثلاثةُ
+   أزرارٍ مصفوفةً طولاً تأكل ثلثَ الشاشة. */
+.qe-dock .wizard-footer .btn { flex: 1 1 0; width: auto; min-height: 48px; }
+.qe-addsec {
+    display: block; width: 100%; min-height: 52px; border: 0; border-radius: 15px;
+    cursor: pointer; font-family: inherit; font-size: 15px;
+    font-weight: var(--fw-black); color: #fff; background: var(--primary);
+    box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+/* مساحةٌ أسفل اللوحة ليجد الشريطُ ما يعلو عليه عند نهاية التمرير. وهي
+   أقلُّ من مساحة `.ws-addbar` عمداً: `.wizard` والجسمُ يتبرّعان بما
+   يقارب ‎100px‎ تحته أصلاً، وزيادتُها تفتح فجوةً بيضاء في آخر الورقة. */
+#tab-panel.has-qe-dock { padding-bottom: calc(var(--safe-bottom) + 24px); }
+@media (min-width: 768px) {
+    .qe-dock { position: static; background: none; padding: 0; }
+    #tab-panel.has-qe-dock { padding-bottom: var(--space-10); }
+}
+
+/* ══ ورقةُ الأنواع ══
+   زرٌّ واحدٌ يفتحها بدل صفٍّ من خمسة أزرارٍ مبثوثةٍ في الصفحة — وهو ما
+   شكا منه المعلّم: «معلومات كثيرة». */
+.qe-sheet {
+    position: fixed; inset: 0; z-index: 60;
+    display: flex; align-items: flex-end;
+    background: rgba(16, 24, 40, .45);
+}
+.qe-sheet[hidden] { display: none; }
+.qe-sheet-in {
+    width: 100%; max-height: 82vh; overflow-y: auto;
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    padding: 14px 14px calc(var(--safe-bottom) + 20px);
+    box-shadow: 0 -8px 28px rgba(16, 24, 40, .22);
+}
+.qe-sheet-in .h {
+    font-size: 12px; font-weight: var(--fw-black);
+    color: var(--text-muted); margin: 2px 4px 10px;
+}
+.qe-sheet-in button {
+    display: block; width: 100%; text-align: start; cursor: pointer;
+    font-family: inherit; padding: 12px 14px; margin-bottom: 8px;
+    border-radius: 13px; border: 1.5px solid var(--border);
+    background: var(--surface);
+}
+.qe-sheet-in button b {
+    display: block; font-size: 14.5px; font-weight: var(--fw-black);
+    color: var(--ink-primary);
+}
+.qe-sheet-in button small {
+    display: block; font-size: 11.5px; font-weight: 500;
+    line-height: 1.75; color: var(--text-muted); margin-top: 2px;
+}
+.qe-sheet-in button.used { border-style: dashed; }
+
+/* ══ طيُّ التعليمات ══
+   حقلٌ يستعمله المعلّمُ أحياناً، فلا يشغل الشاشةَ دائماً. */
+.qe-instfold {
+    display: inline-block; cursor: pointer; font-family: inherit;
+    margin-top: var(--space-4); padding: 9px 14px;
+    font-size: 13px; font-weight: var(--fw-black); color: var(--text-muted);
+    background: transparent; border: 1.5px dashed var(--border-strong);
+    border-radius: 12px;
 }
 .qe-empty { text-align: center; padding: var(--space-5) var(--space-4); }
 .qe-empty p { margin: 0; font-size: 14px; font-weight: var(--fw-black); color: var(--ink-primary); }

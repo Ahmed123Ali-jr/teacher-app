@@ -20,7 +20,7 @@
         if (n <= 10) return arDigits(n) + ' ' + few;
         return arDigits(n) + ' ' + many;
     }
-    const qWord = (n) => countWord(n, 'سؤال واحد', 'سؤالان', 'أسئلة', 'سؤالاً');
+    const pWord = (n) => countWord(n, 'فقرة واحدة', 'فقرتان', 'فقرات', 'فقرة');
     const mWord = (n) => countWord(n, 'درجة واحدة', 'درجتان', 'درجات', 'درجة');
 
     const TYPE_LABELS = {
@@ -38,6 +38,7 @@
        ========================================================================== */
 
     async function render(panel, cls) {
+        panel.classList.remove('has-qe-dock');
         const exams = (await global.TeacherDB.getAllByIndex('exams', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
@@ -107,7 +108,7 @@
                         <div>
                             <h4 style="margin:0 0 var(--space-1)">${escapeHtml(e.title)}</h4>
                             <div class="text-muted" style="font-size:var(--fs-sm);">
-                                ${qWord(e.questions?.length || 0)} ·
+                                ${pWord(e.questions?.length || 0)} ·
                                 ${formatShortDate(e.created_at)}
                             </div>
                         </div>
@@ -161,6 +162,7 @@
     function renderWizard(panel, cls) {
         const s = state[cls.id];
         if (!s) return render(panel, cls);
+        panel.classList.remove('has-qe-dock');
 
         panel.innerHTML = `
             <div class="wizard">
@@ -195,16 +197,21 @@
         const exam = s.exam;
         if (!exam) { s.step = 1; return renderWizard(body.closest('#tab-panel'), cls); }
 
+        /* لا عنوانَ للشاشة: نقاطُ الخطوات فوقها تقول «الأسئلة» فيكفي.
+           والأفعالُ في شريطٍ ثابتٍ أسفل الشاشة كورقة العمل — الاختبارُ
+           يطول بالفقرات، فلا يُطلب من المعلّم أن ينزل إلى آخره ليحفظ. */
+        body.closest('#tab-panel')?.classList.add('has-qe-dock');
         body.innerHTML = `
-            <h3 class="wizard-title">الخطوة ١ من ٢: أسئلة الاختبار</h3>
-
             ${global.QuestionEditor.editorHtml(exam.title, exam.questions, {
                 points: true
             })}
 
-            <div class="wizard-footer">
-                <button class="btn btn-secondary" id="btn-save">💾 حفظ</button>
-                <button class="btn btn-primary" id="btn-to-print">الطباعة ←</button>
+            <div class="qe-dock">
+                ${global.QuestionEditor.addBtnHtml()}
+                <div class="wizard-footer">
+                    <button class="btn btn-secondary" id="btn-save">حفظ</button>
+                    <button class="btn btn-primary" id="btn-to-print">الطباعة ←</button>
+                </div>
             </div>
         `;
 
