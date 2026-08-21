@@ -96,11 +96,49 @@ h2.pt{font-size:26px;font-weight:800;margin:6px 0 14px}
 .acts .p{flex:1;min-height:50px;border-radius:14px;background:var(--deep);color:#fff;
   font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center}
 
+/* ══ د · زرٌّ واحدٌ يفتح ورقةَ الأنواع ══ */
+.addq{width:100%;min-height:52px;border:1.5px dashed var(--deep);border-radius:14px;
+  background:color-mix(in srgb,var(--deep) 6%,#fff);color:var(--deep);font-family:inherit;
+  font-weight:800;font-size:15.5px;cursor:pointer;margin-bottom:14px}
+.tysheet{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;
+  background:rgba(16,24,40,.42)}
+.tysheet.on{display:flex}
+.tysheet .in{width:100%;background:#fff;border-radius:20px 20px 0 0;padding:14px 14px 22px}
+.tysheet .h{font-size:13px;color:var(--muted);font-weight:800;margin:2px 4px 10px}
+.tysheet b{display:block;padding:14px;border-radius:13px;border:1px solid var(--line);
+  font-size:15px;font-weight:700;margin-bottom:8px;cursor:pointer}
+
+/* ══ هـ · يبدأ بسؤالٍ جاهز ══ */
+.qtype{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+  border-radius:9px;padding:3px 10px;font-size:11.5px;font-weight:800;color:var(--deep);
+  background:color-mix(in srgb,var(--deep) 6%,#fff);cursor:pointer}
+.qs .qh{display:flex;align-items:center;gap:8px}
+.qs .qh .sp{flex:1}
+
+/* ══ و · الأدنى: عنوانٌ في الترويسة وزرٌّ عائم ══ */
+/* ترويسةُ «و» وحدَها تحمل العنوانَ وزرَّ الحفظ؛ وفي غيرها تبقى كما هي.
+   (كانت مُعلَّمةً بأصنافِ اللوحات فتظهر العناوينُ مزدوجةً — عطبٌ رأيتُه
+   في الصورة قبل النشر.) */
+.hd .tin, .hd .ok{display:none}
+body[data-v="f"] .hd .hd-t, body[data-v="f"] .hd .hd-b{display:none}
+body[data-v="f"] .hd .tin{display:block}
+body[data-v="f"] .hd .ok{display:inline-flex}
+body[data-v="f"] .back{display:none}
+.hd .tin{flex:1;border:0;outline:0;background:transparent;font-family:inherit;
+  font-size:15px;font-weight:800;color:var(--deep);text-align:start;min-width:0;padding:0 10px}
+.hd .ok{background:var(--deep);color:#fff;border:0;border-radius:10px;padding:7px 14px;
+  font-family:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.fab{position:absolute;inset-inline-start:16px;bottom:86px;z-index:8;width:56px;height:56px;
+  border-radius:50%;background:var(--deep);color:#fff;border:0;font-size:26px;line-height:1;
+  box-shadow:0 8px 20px rgba(16,24,40,.3);cursor:pointer}
+
 .pane{display:none}
 .pane.on{display:block}
-body[data-v="a"] .only-b,body[data-v="a"] .only-c{display:none}
-body[data-v="b"] .only-a,body[data-v="b"] .only-c{display:none}
-body[data-v="c"] .only-a,body[data-v="c"] .only-b{display:none}
+/* لوحةٌ واحدةٌ تظهر — والبقيّةُ تُخفى بصنفٍ على body */
+.only-a,.only-b,.only-c,.only-d,.only-e,.only-f{display:none}
+body[data-v="a"] .only-a,body[data-v="b"] .only-b,body[data-v="c"] .only-c,
+body[data-v="d"] .only-d,body[data-v="e"] .only-e,body[data-v="f"] .only-f{display:block}
+body[data-v="a"] .only-a.acts,body[data-v="b"] .only-b.acts,body[data-v="c"] .only-c.acts{display:flex}
 
 .pick{position:fixed;inset:auto 0 0 0;height:var(--pick);display:flex;background:#12202A;
   padding:6px;gap:6px;z-index:9;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
@@ -111,10 +149,15 @@ body[data-v="c"] .only-a,body[data-v="c"] .only-b{display:none}
   background:#12202A;color:#fff;border-radius:9px;padding:4px 11px;font-size:11.5px;font-weight:800}
 </style>
 </head>
-<body data-v="b">
+<body data-v="d">
 
 <div class="screen">
-  <div class="hd"><b>أوراق العمل</b><span>←</span></div>
+  <div class="hd">
+    <b class="hd-t">أوراق العمل</b>
+    <input class="tin" value="ورقة عمل — العلوم" placeholder="عنوان الورقة">
+    <span class="hd-b">←</span>
+    <button class="ok">حفظ</button>
+  </div>
 
   <div class="bd" id="bd">
     <span class="back">← القائمة</span>
@@ -163,9 +206,41 @@ body[data-v="c"] .only-a,body[data-v="c"] .only-b{display:none}
       <span class="instfold" id="foldc">+ تعليمات تُطبع أعلى الورقة</span>
     </div>
 
+    <!-- ══ د · زرٌّ واحدٌ يفتح ورقةَ الأنواع ══ -->
+    <div class="only-d">
+      <div class="tline">
+        <input value="ورقة عمل — العلوم" placeholder="عنوان الورقة">
+        <span class="cnt">٠</span>
+      </div>
+      <div id="qbox-d"></div>
+      <button class="addq" id="openty">+ أضف سؤالاً</button>
+      <span class="instfold" id="foldd">+ تعليمات تُطبع أعلى الورقة</span>
+    </div>
+
+    <!-- ══ هـ · يبدأ بسؤالٍ جاهز ══ -->
+    <div class="only-e">
+      <div class="tline">
+        <input value="ورقة عمل — العلوم" placeholder="عنوان الورقة">
+        <span class="cnt">١</span>
+      </div>
+      <div id="qbox-e"></div>
+      <button class="addq" id="adde">+ سؤال</button>
+      <span class="instfold" id="folde">+ تعليمات تُطبع أعلى الورقة</span>
+    </div>
+
+    <!-- ══ و · الأدنى ══ -->
+    <div class="only-f">
+      <div id="qbox-f"></div>
+      <span class="instfold" id="foldf">+ تعليمات تُطبع أعلى الورقة</span>
+    </div>
+
     <div class="only-a acts"><div class="s">💾 حفظ</div><div class="p">🖨️ حفظ وطباعة</div></div>
     <div class="only-b acts"><div class="s">حفظ</div><div class="p">حفظ وطباعة</div></div>
+    <div class="only-d acts"><div class="s">حفظ</div><div class="p">حفظ وطباعة</div></div>
+    <div class="only-e acts"><div class="s">حفظ</div><div class="p">حفظ وطباعة</div></div>
   </div>
+
+  <button class="fab only-f" id="fabf">+</button>
 
   <!-- شريطُ الأنواع الثابت — «ج» وحدَها -->
   <div class="only-c" style="flex:0 0 auto;padding:8px 14px 0;border-top:1px solid var(--line)">
@@ -181,16 +256,33 @@ body[data-v="c"] .only-a,body[data-v="c"] .only-b{display:none}
   </div>
 </div>
 
+<div class="tysheet" id="tysheet">
+  <div class="in">
+    <div class="h">نوعُ السؤال</div>
+    <b data-t>اختيار من متعدد</b><b data-t>صح/خطأ</b><b data-t>أكمل الفراغ</b>
+    <b data-t>مقالي</b><b data-t>مطابقة</b>
+  </div>
+</div>
+
 <div class="badge" id="badge">—</div>
 <div class="pick">
-  <button data-v="a">أ · الحالي</button>
-  <button class="on" data-v="b">ب · منقّى</button>
-  <button data-v="c">ج · الأنواع تحت</button>
+  <button data-v="a">أ<br>الحالي</button>
+  <button data-v="b">ب<br>منقّى</button>
+  <button data-v="c">ج<br>الأنواع تحت</button>
+  <button class="on" data-v="d">د<br>زرٌّ واحد</button>
+  <button data-v="e">هـ<br>يبدأ بسؤال</button>
+  <button data-v="f">و<br>الأدنى</button>
 </div>
 
 <script>
+/* مواضعُ القياس — تُعرَّف قبل أوّل نداءٍ لـ`measure`: `addQ` تُستدعى عند
+   بناء اللوحات، و`var` تُرفع بلا قيمةٍ فترمي «reading 'd' of undefined». */
+var WHERE = { a: '.only-a .tybox', b: '#tyb', c: '#tyc',
+              d: '#openty', e: '#adde', f: '#fabf' };
+
 function qHtml(n) {
-    return '<div class="qs"><div class="qh">السؤال ' + n + ' — صح/خطأ</div>'
+    return '<div class="qs"><div class="qh">السؤال ' + n
+      + '<span class="sp"></span><span class="qtype">صح/خطأ ⌄</span></div>'
       + '<div class="qb"><div class="qn">' + n + '</div>'
       + '<textarea placeholder="اكتب نصّ السؤال…"></textarea></div>'
       + '<div class="tf"><b>صح ✓</b><b>خطأ ✗</b></div></div>';
@@ -198,10 +290,31 @@ function qHtml(n) {
 function addQ(box) {
     var n = box.children.length + 1;
     box.insertAdjacentHTML('beforeend', qHtml(n));
-    var cnt = box.closest('.pane, div[class^="only"]').querySelector('.cnt');
+    var wrap = box.parentElement;
+    var cnt = wrap && wrap.querySelector('.cnt');
     if (cnt) cnt.textContent = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'][Math.min(n,9)];
     measure();
 }
+/* ── د: ورقةُ الأنواع ── */
+var sheet = document.getElementById('tysheet');
+document.getElementById('openty').addEventListener('click', function () { sheet.classList.add('on'); });
+sheet.addEventListener('click', function (e) {
+    if (e.target === sheet) { sheet.classList.remove('on'); return; }
+    if (!e.target.closest('[data-t]')) return;
+    sheet.classList.remove('on');
+    addQ(document.getElementById('qbox-d'));
+});
+/* ── هـ: يبدأ بسؤالٍ جاهز، ونوعُه يُبدَّل من رقاقةٍ في رأسه ── */
+addQ(document.getElementById('qbox-e'));
+document.getElementById('adde').addEventListener('click', function () {
+    addQ(document.getElementById('qbox-e'));
+});
+/* ── و: زرٌّ عائم ── */
+addQ(document.getElementById('qbox-f'));
+document.getElementById('fabf').addEventListener('click', function () {
+    addQ(document.getElementById('qbox-f'));
+});
+
 ['tyb','tyc'].forEach(function (id) {
     var el = document.getElementById(id); if (!el) return;
     el.addEventListener('click', function (e) {
@@ -209,7 +322,7 @@ function addQ(box) {
         addQ(document.getElementById(id === 'tyb' ? 'qbox-b' : 'qbox-c'));
     });
 });
-['foldb','foldc'].forEach(function (id) {
+['foldb','foldc','foldd','folde','foldf'].forEach(function (id) {
     var el = document.getElementById(id); if (!el) return;
     el.addEventListener('click', function () {
         if (this.dataset.open) return;
@@ -225,14 +338,13 @@ function addQ(box) {
    وتُقاس من أعلى المحتوى لا من أعلى الشاشة، فالترويسةُ مشتركة. */
 function measure() {
     var v = document.body.dataset.v;
-    var el = v === 'a' ? document.querySelector('.only-a .tybox')
-           : document.getElementById(v === 'b' ? 'tyb' : 'tyc');
+    var el = document.querySelector(WHERE[v]);
     var bd = document.getElementById('bd');
     var badge = document.getElementById('badge');
     if (!el || !bd) { badge.textContent = '—'; return; }
     var top = el.getBoundingClientRect().top - bd.getBoundingClientRect().top + bd.scrollTop;
-    badge.textContent = (v === 'c' ? 'الأنواع ثابتةٌ أسفل الشاشة'
-        : 'فوق الأنواع ' + Math.max(0, Math.round(top)) + 'px');
+    var FIXED = { c: 'الأنواع ثابتةٌ أسفل الشاشة', f: 'زرٌّ عائمٌ — صفرُ تمرير' };
+    badge.textContent = FIXED[v] || ('فوق الإضافة ' + Math.max(0, Math.round(top)) + 'px');
 }
 document.querySelector('.pick').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
