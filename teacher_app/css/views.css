@@ -1711,19 +1711,35 @@ body.drawer-open { overflow: hidden; }
    كان زرُّ الإضافة في الحالة الفارغة وحدَها، فمن أنشأ واحداً لم يجد
    سبيلاً إلى ثانٍ. ثمّ وُضع فوق القائمة، فطلب المعلّم إنزالَه.
 
-   وجُرّب ثابتاً فوق شريط التنقّل فكان يغطّي بطاقةً في منتصف التمرير —
-   جدارٌ بترولـيٌّ يقطع القائمة. فصار في مجرى الصفحة بعد آخر بطاقةٍ
-   حقيقةً، كما طُلب حرفاً. */
+   وهو ثابتٌ أسفل الشاشة فوق شريط التنقّل: القوائمُ تطول، ولو مضى مع
+   التمرير لاحتاج المعلّمُ أن ينزل إلى آخرها ليضيف.
+
+   وجُرّب أوّلاً بخلفيّةٍ صمّاء فبدا جداراً بترولـيّاً يقطع القائمة نصفين.
+   فصار تحته **تلاشٍ** لا حافّة: تدرّجٌ من لون السطح إلى الشفافيّة، تذوب
+   فيه البطاقاتُ وهي تمرّ فلا تُقطع. واللونُ من الرمز فيتبع المظهرين.
+
+   وأسفلَ اللوحة مساحةٌ بقدره، فآخرُ بطاقةٍ تُرى كاملةً عند نهاية
+   التمرير ولا تبقى تحته أبداً. */
 .ws-addbar {
+    position: sticky;
+    bottom: calc(var(--safe-bottom) + 74px);
+    z-index: 6;
     display: flex;
     margin-top: var(--space-5);
+    padding: 18px 0 4px;
+    background: linear-gradient(to top,
+        var(--surface) 0%, var(--surface) 62%, transparent 100%);
 }
 .ws-addbar .btn {
     width: 100%;
     min-height: 52px;
+    box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
 }
+#tab-panel:not(.is-empty-tab) { padding-bottom: calc(var(--space-10) + 58px); }
 @media (min-width: 768px) {
+    .ws-addbar { position: static; background: none; padding: 0; }
     .ws-addbar .btn { width: auto; }
+    #tab-panel:not(.is-empty-tab) { padding-bottom: var(--space-10); }
 }
 
 /* ══ قائمةُ الأيام — حلّت محلّ شريط التواريخ ══
