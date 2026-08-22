@@ -198,7 +198,24 @@
         const first = items[0], last = items[items.length - 1];
         const before = t < ts(first.from);
         const after  = t > ts(last.to);
-        if (!current) current = before ? weeks[0] : (inSpan ? nextWeekAfter(items, inSpan) : weeks[weeks.length - 1]);
+
+        /* فجوةٌ بين مقطعين: الجمعةُ والسبتُ بين آخر يوم عودةِ المعلّمين
+           وأوّلِ أسبوعِ دراسة. لا هي «قبل البداية» — العامُ بدأ بعودة
+           المعلّمين — ولا هي داخل أسبوعٍ ولا مقطع.
+
+           وكان الاحتياطُ يقول «آخرُ أسابيع الفصل»، فيرى معلّمُ الرياض
+           يوم السبت ٢٢ أغسطس أنّه في **الأسبوع التاسع عشر** والدراسةُ لم
+           تبدأ. (بلاغُه، ٢٢ أغسطس ٢٠٢٦.) والعطبُ في التقويمين معاً —
+           فجوةُ مكة بعده بأسبوع (٢٨ و٢٩ أغسطس) فلم تظهر بعد.
+
+           والصوابُ أن الفجوةَ تسبق الأسبوعَ القادم لا تتبع الماضي. */
+        const gap = !current && !inSpan && !before && !after;
+        if (!current) {
+            if (before)      current = weeks[0];
+            else if (inSpan) current = nextWeekAfter(items, inSpan);
+            else if (after)  current = weeks[weeks.length - 1];
+            else current = weeks.find((w) => ts(w.from) > t) || weeks[weeks.length - 1];
+        }
 
         /* أقرب انقطاعٍ قادم: يومُ إجازة داخل أسبوع، أو مقطعُ إجازة. */
         let nextOff = null;
@@ -227,8 +244,11 @@
            مضى «قادم». */
         const nextWeek = inSpan ? weekAfter(items, inSpan) : null;
 
+        /* كم بقي على أوّل أسبوعِ دراسةٍ حين نكون في الفجوة. */
+        const daysToWeek = gap ? Math.round((ts(current.from) - t) / 864e5) : 0;
+
         return { cal, items, weeks, current, inSpan, nextWeek, nextOff, daysToOff,
-                 before, after, firstWork, daysToStart };
+                 before, after, gap, daysToWeek, firstWork, daysToStart };
     }
 
     /** الأسبوع التالي للمقطع، أو null إن لم يكن بعده أسبوع. */

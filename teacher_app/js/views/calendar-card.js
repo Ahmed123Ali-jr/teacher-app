@@ -75,7 +75,9 @@
         const total = weeksOfTerm(st, st.current.term).length;
         const term = st.cal.terms.find((t) => t.n === st.current.term);
         const R = 22, C = 2 * Math.PI * R;
-        const pct = Math.max(0, Math.min(1, st.current.k / total));
+        /* والقوسُ يقيس ما مضى: أسبوعٌ لم يبدأ لا يُحتسب. */
+        const done = st.gap ? st.current.k - 1 : st.current.k;
+        const pct = Math.max(0, Math.min(1, done / total));
 
         /* حين نكون داخل إجازة، الصدق أن نقولها لا أن نُظهر أسبوعاً
            لم يبدأ بعد كأنه جارٍ. */
@@ -95,6 +97,12 @@
                لا محالة. والصمت فيها أصدق من عرض الأسبوع الأخير كأنه جارٍ. */
             headline = `انتهى الفصل ${esc(term.name)}`;
             sub = 'تقويم الفصل التالي لم يُضف بعد';
+        } else if (st.gap) {
+            /* الجمعةُ والسبتُ قبل أوّل أسبوع: الأسبوعُ لم يبدأ، فيُقال
+               متى يبدأ لا أنّه جارٍ. */
+            headline = 'الأسبوع ' + AC().ordinal(st.current.k);
+            sub = `يبدأ ${esc(AC().gregorian(st.current.from))}`
+                + (st.daysToWeek > 0 ? ` · بعد ${dayWord(st.daysToWeek)}` : '');
         } else {
             headline = 'الأسبوع ' + AC().ordinal(st.current.k);
             sub = `الفصل ${esc(term.name)} · ${ar(st.current.k)} من ${ar(total)} أسبوعاً`;
@@ -156,7 +164,7 @@
                 const cls = [
                     idx < curIdx ? 'past' : '',
                     it.offs.length ? 'hol' : '',
-                    it === st.current && !st.inSpan && !st.before && !st.after ? 'now' : '',
+                    it === st.current && !st.inSpan && !st.before && !st.after && !st.gap ? 'now' : '',
                     it.k === ui.sel ? 'sel' : '',
                     it.exam ? 'exam' : ''
                 ].filter(Boolean).join(' ');
@@ -176,7 +184,7 @@
 
     function detail(st) {
         const w = st.weeks.find((x) => x.term === ui.term && x.k === ui.sel) || st.current;
-        const isNow = (w === st.current) && !st.inSpan && !st.before && !st.after;
+        const isNow = (w === st.current) && !st.inSpan && !st.before && !st.after && !st.gap;
         const hj = AC().hijri, gr = AC().gregorian;
         return `
             <div class="ac-det ${isNow ? 'is-now' : ''} ${w.offs.length ? 'is-hol' : ''}">
@@ -231,6 +239,10 @@
                 : 'يبدأ العام قريباً';
         }
         if (st.after)  return 'انتهى الفصل الدراسي الأول';
+        if (st.gap) {
+            return `الأسبوع ${AC().ordinal(st.current.k)} يبدأ `
+                + (st.daysToWeek > 0 ? `بعد ${dayWord(st.daysToWeek)}` : 'غداً');
+        }
         return `الأسبوع ${AC().ordinal(st.current.k)}` + tail;
     }
 
