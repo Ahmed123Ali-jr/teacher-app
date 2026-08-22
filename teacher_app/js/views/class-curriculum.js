@@ -44,20 +44,26 @@
 
         /* زرُّ الرفع كان في الحالة الفارغة وحدَها، والمعالِجُ أدناه ينتظر
            زرّاً لم يُرسم قطُّ حين توجد ملفّات. */
+        /* الحالةُ الفارغة بنمط الكتب — انظر النظير في class-exams.js. */
+        panel.classList.toggle('is-empty-tab', files.length === 0);
+
+        /* وبطاقةُ الملاحظة تسقط في الحالة الفارغة: الحالةُ عمودٌ مرنٌ
+           زرُّه في القاع، فبطاقةٌ تحته تدفعه إلى الوسط وتنقض الغرض. وما
+           فيها من إرشادٍ انتقل إلى سطر اللافتة، فلا يضيع. */
         panel.innerHTML = `
             ${files.length === 0 ? empty() : `
                 ${list(files)}
                 <div class="ws-addbar">
                     <button class="btn btn-primary" id="btn-upload">+ ارفع ملفاً</button>
-                </div>`}
+                </div>
 
-            <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
-                <h4 style="margin-top:0">ملاحظة</h4>
-                <p style="margin: 0; font-size: var(--fs-sm);">
-                    ارفع ملف التوزيع كما هو من الإدارة أو الإشراف التربوي (PDF / صورة / Word).
-                    الملفات تظهر تلقائياً في ملف الإنجاز عند الطباعة.
-                </p>
-            </div>
+                <div class="card" style="margin-top: var(--space-6); background: rgba(59,130,246,0.06);">
+                    <h4 style="margin-top:0">ملاحظة</h4>
+                    <p style="margin: 0; font-size: var(--fs-sm);">
+                        ارفع ملف التوزيع كما هو من الإدارة أو الإشراف التربوي (PDF / صورة / Word).
+                        الملفات تظهر تلقائياً في ملف الإنجاز عند الطباعة.
+                    </p>
+                </div>`}
         `;
 
         panel.querySelector('#btn-upload')?.addEventListener('click', () => openForm(cls, panel));
@@ -109,10 +115,13 @@
 
     function empty() {
         return `
-            <div class="empty-state">
-                <p>ارفع ملف التوزيع الرسمي للفصل (PDF أو صورة أو Word).</p>
-                <button class="btn btn-primary" data-empty-add>+ رفع ملف</button>
+            <div class="start-note">
+                <b>لا ملفّ توزيع بعد</b>
+                <span>ارفعه كما هو من الإدارة (PDF أو صورة أو Word)،
+                      ويظهر تلقائياً في ملف الإنجاز</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ ارفع ملفاً</button>
         `;
     }
 

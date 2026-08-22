@@ -34,6 +34,9 @@
 
         const today = todayISO();
 
+        /* الحالةُ الفارغة بنمط الكتب — انظر النظير في class-exams.js. */
+        panel.classList.toggle('is-empty-tab', rows.length === 0);
+
         /* زرُّ الإضافة أسفلَ القائمة لا فوقها (بطلب المعلّم)، وكان قبلها في الحالة الفارغة وحدَها: فمن أضاف واحداً لم
            يجد سبيلاً إلى ثانٍ، والمعالِجُ أدناه ينتظر زرّاً لم يُرسم قطّ.
            (العطبُ نفسُه في الاختبارات وأوراق العمل والواجبات والتوزيع.) */
@@ -65,12 +68,16 @@
         });
     }
 
+    /* ونصُّ الزرِّ هو نصُّ شريط الإضافة نفسُه: زرٌّ واحدٌ لفعلٍ واحدٍ لا
+       يُسمّى باسمين. */
     function empty() {
         return `
-            <div class="empty-state">
-                <p>حدّد مواعيد تسليم الواجبات لمتابعتها بسهولة.</p>
-                <button class="btn btn-primary" data-empty-add>+ إضافة موعد تسليم واجب</button>
+            <div class="start-note">
+                <b>لا واجبات بعد</b>
+                <span>حدّد مواعيد التسليم لتتابعها هنا</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ واجب جديد</button>
         `;
     }
 
