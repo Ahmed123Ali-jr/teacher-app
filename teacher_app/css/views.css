@@ -4869,6 +4869,17 @@ body.drawer-open { overflow: hidden; }
 .stg-sum b { font-size: 22px; font-weight: var(--fw-black); color: #D6B96F; }
 .stg-sum span { font-size: 11.5px; font-weight: var(--fw-bold); color: rgba(255, 255, 255, .78); line-height: 1.6; }
 
+/* سطرُ الإخبار تحت الحصيلة: حبرُه من الرمز لا لونٌ ثابت، فيتبع
+   المظهرين — وهو الدرسُ الذي أخذناه من وسمَي الواجب. */
+.stg-note {
+    margin: 9px 0 0; padding: 9px 12px; border-radius: 11px;
+    font-size: 12px; line-height: 1.85; font-weight: 500;
+    color: var(--ink-primary);
+    background: color-mix(in srgb, var(--pf-gold) 13%, var(--mix-base));
+    border-inline-start: 3px solid color-mix(in srgb, var(--pf-gold) 65%, var(--mix-base));
+}
+.stg-note b { font-weight: var(--fw-black); }
+
 .stg-fams { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 5px; margin-bottom: var(--space-3); }
 .stg-fams::-webkit-scrollbar { height: 0; }
 .stg-fam {
