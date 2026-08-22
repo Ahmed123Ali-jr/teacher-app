@@ -139,6 +139,7 @@
                 title: 'ورقة عمل — ' + (cls.subject || ''),
                 topic: '',
                 instructions: '',
+                settings: {},
                 questions: [],
                 created_at: new Date().toISOString()
             }
@@ -173,7 +174,7 @@
                     points: false, titleLabel: 'عنوان ورقة العمل'
                 })}
 
-                ${instHtml(sh)}
+                ${extrasHtml(sh)}
 
                 <div class="qe-dock">
                     ${QE().addBtnHtml()}
@@ -185,7 +186,7 @@
             </div>
         `;
 
-        bindInst(panel, sh, () => step2(panel, cls));
+        bindExtras(panel, sh, () => step2(panel, cls));
 
         QE().bind(panel, sh.questions, {
             points: false,
@@ -222,23 +223,57 @@
         global.PrintWorksheet.preloadPdfEngine().catch(() => {});
     }
 
-    /* ---------- التعليمات: مطويّةٌ حتى تُطلب ---------- */
+    /* ---------- زيادتان مطويّتان: التعليماتُ والتاريخ ----------
+       كلتاهما تُستعمل أحياناً لا دائماً، فلا تشغلان الشاشةَ حتى تُطلبا —
+       وهو ما شكا منه المعلّم أوّلاً. وهما زرّان في سطرٍ واحد لا سطرين. */
 
-    function instHtml(sh) {
-        if (!sh.instOpen && !String(sh.instructions || '').trim()) {
-            return '<button type="button" class="qe-instfold" id="ws-inst-open">'
-                 + '+ تعليمات تُطبع أعلى الورقة</button>';
-        }
-        return `
+    const instOn = (sh) => sh.instOpen || !!String(sh.instructions || '').trim();
+    /* وجودُ المفتاح هو السؤال، لا قيمتُه: تاريخٌ فارغٌ مطلوبٌ يعني نقاطاً
+       على الورق، فيجب أن يبقى ظاهراً في المحرّر أيضاً. وبهذا تتّفق
+       الشاشةُ والورقةُ على شرطٍ واحد. */
+    const dateOn = (sh) => !!(sh.settings && sh.settings.sheet_date !== undefined);
+
+    function extrasHtml(sh) {
+        const folds = [
+            instOn(sh) ? '' : '<button type="button" class="qe-instfold" id="ws-inst-open">'
+                             + '+ تعليمات تُطبع أعلى الورقة</button>',
+            dateOn(sh) ? '' : '<button type="button" class="qe-instfold" id="ws-date-open">'
+                             + '+ تاريخ يُطبع في الترويسة</button>'
+        ].filter(Boolean).join('');
+
+        return (folds ? `<div class="qe-folds">${folds}</div>` : '')
+            + (instOn(sh) ? `
             <div class="field" style="margin-top:var(--space-4);">
                 <label class="label">التعليمات (تُطبع أعلى الورقة)</label>
                 <textarea class="textarea" id="ws-inst" rows="2"
                           placeholder="مثلاً: أجب عن الأسئلة الآتية مستعيناً بكتابك."
                           >${escapeHtml(sh.instructions || '')}</textarea>
-            </div>`;
+            </div>` : '')
+            + (dateOn(sh) ? `
+            <div class="field" style="margin-top:var(--space-4);">
+                <label class="label">التاريخ (يُطبع في ترويسة الورقة)</label>
+                <div class="cb-sub" style="margin:0;">
+                    <input class="input" id="ws-date"
+                           value="${escapeAttr(sh.settings.sheet_date || '')}"
+                           placeholder="اكتب التاريخ… أو اتركه فراغاً ليُكتب بالقلم">
+                    <button type="button" class="btn btn-secondary btn-sm" id="ws-date-today">اليوم</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="ws-date-off"
+                            aria-label="إزالة سطر التاريخ">إزالة</button>
+                </div>
+            </div>` : '');
     }
 
-    function bindInst(panel, sh, rerender) {
+    /* أمُّ القرى صريحةً لا تقويمُ الجهاز — النظيرُ في class-exams.js. */
+    function todayHijri() {
+        try {
+            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',
+                { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+        } catch (e) {
+            return new Date().toLocaleDateString('ar-SA');
+        }
+    }
+
+    function bindExtras(panel, sh, rerender) {
         panel.querySelector('#ws-inst')
             ?.addEventListener('input', (e) => { sh.instructions = e.target.value; });
         panel.querySelector('#ws-inst-open')?.addEventListener('click', () => {
@@ -246,6 +281,28 @@
             sh.instOpen = true;
             rerender();
             panel.querySelector('#ws-inst')?.focus();
+        });
+
+        const dt = panel.querySelector('#ws-date');
+        if (dt) {
+            dt.addEventListener('input', () => { sh.settings.sheet_date = dt.value; });
+            panel.querySelector('#ws-date-today').addEventListener('click', () => {
+                dt.value = todayHijri();
+                sh.settings.sheet_date = dt.value;
+                dt.focus();
+            });
+            panel.querySelector('#ws-date-off').addEventListener('click', () => {
+                delete sh.settings.sheet_date;
+                rerender();
+            });
+        }
+        /* الفتحُ يُنشئ المفتاحَ فارغاً، فتُطبع نقاطٌ حتى لو لم يكتب شيئاً —
+           فمن طلب سطرَ تاريخٍ يريده على الورق. */
+        panel.querySelector('#ws-date-open')?.addEventListener('click', () => {
+            sh.settings = sh.settings || {};
+            sh.settings.sheet_date = '';
+            rerender();
+            panel.querySelector('#ws-date')?.focus();
         });
     }
 
@@ -268,7 +325,8 @@
     async function save(sh) {
         sh.updated_at = new Date().toISOString();
         /* التمارين القديمة تُحذف بعد التحويل، فلا يبقى مصدران للحقيقة.
-           و`instOpen` رايةُ عرضٍ لا عمودَ لها في القاعدة. */
+           و`instOpen` رايةُ عرضٍ لا عمودَ لها في القاعدة — بخلاف
+           `settings.sheet_date` فله عمودُه. */
         delete sh.exercises;
         delete sh.instOpen;
         sh.id = await global.TeacherDB.put('worksheets', sh);

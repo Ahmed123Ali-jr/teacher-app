@@ -550,10 +550,16 @@
             ? sheet.questions
             : global.QuestionEditor.fromExercises(sheet.exercises);
 
+        /* التاريخُ يكتبه المعلّم كما في الاختبار — وإن تركه فارغاً وهو
+           يريده، خرجت نقاطٌ يملؤها بالقلم. ولا سطرَ تاريخٍ أصلاً لورقةٍ
+           لم يُطلب لها. */
+        const when = String(sheet.settings?.sheet_date || '').trim();
         const exam = {
             title: sheet.title || 'ورقة عمل',
             settings: { include_name: true, include_grade: false, include_teacher: true,
-                        include_instructions: false },
+                        include_instructions: false,
+                        include_date: !!(sheet.settings && sheet.settings.sheet_date !== undefined),
+                        exam_date: when },
             questions: questions.map((q) => Object.assign({}, q, { points: 0 }))
         };
         return savePdf({ exam, cls: ctx.cls, teacher: ctx.teacher, instructions: sheet.instructions },
