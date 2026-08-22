@@ -61,9 +61,9 @@ li.wait { opacity: .55; }
     صوّر هذه الشاشة كاملةً وأرسلها — الخطوة الحمراء تكفي لمعرفة السبب.
 </div>
 
-<script src="js/question-editor.js?v=3"></script>
+<script src="js/question-editor.js?v=5"></script>
 <script src="js/pdf-core.js?v=9"></script>
-<script src="js/print-exam.js?v=D10"></script>
+<script src="js/print-exam.js?v=D12"></script>
 
 <script>
 (function () {
@@ -104,7 +104,7 @@ li.wait { opacity: .55; }
             'يدعم مشاركة الملفّات': canShareFiles ? 'نعم' : 'لا — سيُنزّل الملف',
             'navigator.share': typeof nav.share,
             'عامل الخدمة يتحكّم': nav.serviceWorker && nav.serviceWorker.controller ? 'نعم' : 'لا',
-            'نسخ الوحدات': 'question-editor v3 · pdf-core v9 · print-exam D10'
+            'نسخ الوحدات': 'question-editor v5 · pdf-core v9 · print-exam D12'
         };
     }
 
@@ -120,7 +120,11 @@ li.wait { opacity: .55; }
               options:['الخشب','اللحاء','الوَرقة','الزهرة'], answer:'الخشب', points:2 },
             { type:'tf', text:'القمر جسمٌ مضيءٌ بذاته.', options:[], answer:'خطأ', points:1 },
             { type:'essay', text:'اذكر ثلاثاً من طرق المحافظة على البيئة المدرسية.',
-              options:[], answer:'', points:4 }
+              options:[], answer:'', points:4 },
+            { id:'m1', type:'match', text:'الخشب',  options:[], answer:'ينقل الماء والأملاح', points:1 },
+            { id:'m2', type:'match', text:'اللحاء', options:[], answer:'ينقل الغذاء المصنَّع', points:1 },
+            { id:'m3', type:'match', text:'الجذر',  options:[], answer:'يثبّت النبات في التربة', points:1 },
+            { id:'m4', type:'match', text:'الزهرة', options:[], answer:'عضو التكاثر في النبات', points:1 }
         ]
     };
 

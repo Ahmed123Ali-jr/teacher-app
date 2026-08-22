@@ -115,6 +115,47 @@
     const TF_HEAD  = '<tr><th class="m">م</th><th>العبارة</th>'
                    + '<th class="c">صح</th><th class="c">خطأ</th></tr>';
     const KEY_HEAD = '<tr><th class="m">م</th><th>الإجابة</th></tr>';
+    const MATCH_HEAD = '<tr><th class="m">م</th><th>العمود (أ)</th>'
+                     + '<th class="c">الإجابة</th>'
+                     + '<th class="m">م</th><th>العمود (ب)</th></tr>';
+
+    /* ------------------------------------------------------------------
+       المطابقة: العمود (ب) مخلوطٌ، وإلّا صار الجواب ١-أ ٢-ب بلا تفكير.
+
+       والخلطُ ثابتٌ لا عشوائيّ: بذرتُه من معرّفات الفقرات ونصوصها، فالورقة
+       الواحدة تخرج بالترتيب نفسِه كلّما طُبعت — ولولا ذلك لخالف نموذجُ
+       الإجابة الورقةَ التي بيد الطالب.
+       ------------------------------------------------------------------ */
+    function shuffleB(items) {
+        let seed = 2166136261;
+        items.forEach((q) => {
+            const str = String(q.id || '') + '|' + String(q.text || '');
+            for (let i = 0; i < str.length; i += 1) {
+                seed = ((seed ^ str.charCodeAt(i)) * 16777619) >>> 0;
+            }
+        });
+        const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+
+        const out = items.map((q, i) => ({ from: i, text: String(q.answer || '') }));
+        for (let i = out.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(rnd() * (i + 1));
+            const t = out[i]; out[i] = out[j]; out[j] = t;
+        }
+        /* خلطٌ أعاد الترتيبَ نفسَه لا يخلط شيئاً — تُدار القائمةُ خطوةً. */
+        if (out.length > 1 && out.every((x, i) => x.from === i)) out.push(out.shift());
+        return out;
+    }
+    /* حروفُ العمود (ب) على ترتيب أبجد، لا على ترتيب الهجاء: هي ترقيمٌ
+       لا تهجئة. و`LETTERS` أعلاه لخيارات الاختيار من متعدد وحدَها —
+       أربعةٌ لا تكفي عموداً قد يبلغ عشراً. */
+    const ABJAD = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي', 'ك', 'ل'];
+    const bLetter = (k) => ABJAD[k] || ar(k + 1);
+
+    /* موضعُ مقابلِ الفقرة i في العمود المخلوط — أي حرفُها في نموذج الإجابة. */
+    const letterFor = (bCol, i) => {
+        const k = bCol.findIndex((x) => x.from === i);
+        return k < 0 ? '' : bLetter(k);
+    };
 
     /* ------------------------------------------------------------------
        بناء الكتل: كل كتلة وحدة لا تُشقّ. السؤال مع خياراته، والسؤال
@@ -150,9 +191,18 @@
             /* درجة السؤال بجانبه تفيد حين تختلف داخل القسم، أما قسمٌ
                بسؤالٍ واحد فرأسه قاله سلفاً — فلا يُكتب مرّتين. */
             const perQ = g.items.length > 1;
+            const bCol = g.type === 'match' ? shuffleB(g.items) : null;
 
             g.items.forEach((q, i) => {
                 const n = ar(i + 1);
+                if (g.type === 'match') {
+                    blocks.push({ kind: 'row', sec: secNo, head: MATCH_HEAD, tcls: 'ex-tbl', html:
+                        `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
+                        + '<td class="c">&nbsp;</td>'
+                        + `<td class="m">${bLetter(i)}</td>`
+                        + `<td>${escapeHtml(bCol[i].text)}</td></tr>` });
+                    return;
+                }
                 if (g.type === 'tf') {
                     blocks.push({ kind: 'row', sec: secNo, head: TF_HEAD, tcls: 'ex-tbl', html:
                         `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
@@ -176,7 +226,7 @@
                         + `<span class="t">${escapeHtml(withBlank)}</span></div>` });
                     return;
                 }
-                /* مقالي / مطابقة: سؤالٌ ومساحة كتابة، كتلةً واحدة. */
+                /* مقالي: سؤالٌ ومساحة كتابة، كتلةً واحدة. */
                 blocks.push({ kind: 'q', sec: secNo, html:
                     `<div class="ex-q"><span class="n">${n}-</span>`
                     + `<span class="t">${escapeHtml(q.text).replace(/\n/g, '<br>')}</span>`
@@ -198,9 +248,14 @@
             out.push({ kind: 'q', sec: secNo, html:
                 `<div class="ex-q" style="margin-top:10px;"><span class="t" style="font-weight:900;">`
                 + `السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}</span></div>` });
+            /* الخلطُ يُعاد بالبذرة نفسِها، فالحرفُ هنا هو الحرفُ هناك. */
+            const bCol = g.type === 'match' ? shuffleB(g.items) : null;
             g.items.forEach((q, i) => {
+                const ans = g.type === 'match'
+                    ? `${letterFor(bCol, i)}) ${String(q.answer || '')}`
+                    : answerText(q);
                 out.push({ kind: 'row', sec: secNo, head: KEY_HEAD, tcls: 'ex-key', html:
-                    `<tr><td class="m">${ar(i + 1)}</td><td>${escapeHtml(answerText(q))}</td></tr>` });
+                    `<tr><td class="m">${ar(i + 1)}</td><td>${escapeHtml(ans)}</td></tr>` });
             });
         });
         return out;
@@ -211,7 +266,7 @@
             const i = (q.options || []).indexOf(q.answer);
             return i >= 0 ? `${LETTERS[i]}) ${q.answer}` : (q.answer || '—');
         }
-        if (q.type === 'essay' || q.type === 'match') return q.answer || 'يُصحَّح تقديرياً';
+        if (q.type === 'essay') return q.answer || 'يُصحَّح تقديرياً';
         return q.answer || '—';
     }
 

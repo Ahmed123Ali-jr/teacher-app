@@ -177,14 +177,42 @@
         return '';
     }
 
+    /* المطابقةُ طرفان لا طرف: نصُّ الفقرة هو العمود (أ)، وما يقابله في
+       (ب) يسكن `answer` كما تسكنه إجابةُ «أكمل الفراغ». */
+    const PLACEHOLDER = {
+        fill:  'اكتب العبارة، وضع مكان الفراغ ……',
+        tf:    'اكتب العبارة كاملةً'
+    };
+
+    /* حقلُ المطابقة سطرٌ لا مربّع: طرفاها كلمةٌ أو شبهُ جملة، والمربّعُ
+       ذو السطرين يوهم أن المطلوب فقرةٌ كاملة. ووسمُ الحرف على كلٍّ منهما
+       يبقى ظاهراً بعد الكتابة، والنائبُ عنه يختفي بأوّل حرف. */
+    function fieldsHtml(q, i) {
+        if (q.type !== 'match') {
+            return `<textarea class="qe-ta" rows="2" data-qe-text="${i}"
+                          placeholder="${escapeAttr(PLACEHOLDER[q.type] || 'اكتب نصّ الفقرة…')}"
+                          >${escapeHtml(q.text)}</textarea>`;
+        }
+        return `
+            <div class="qe-pair">
+                <span class="qe-tag">أ</span>
+                <input class="qe-in" data-qe-text="${i}" value="${escapeAttr(q.text)}"
+                       placeholder="العمود (أ) — مثلاً: الخشب">
+            </div>
+            <div class="qe-pair">
+                <span class="qe-tag">ب</span>
+                <input class="qe-in" data-qe-ans="${i}" value="${escapeAttr(q.answer || '')}"
+                       placeholder="ما يقابله في العمود (ب)">
+            </div>`;
+    }
+
     /** الفقرة: رقمُها داخل قسمها، لا داخل الورقة كلِّها. */
     function itemHtml(q, i, k, o) {
         return `
         <div class="qe-item">
             <span class="qe-n">${arDigits(k + 1)}</span>
             <div class="qe-body">
-                <textarea class="qe-ta" rows="2" data-qe-text="${i}"
-                          placeholder="اكتب نصّ الفقرة…">${escapeHtml(q.text)}</textarea>
+                ${fieldsHtml(q, i)}
                 ${miniFor(q, i)}
                 <div class="qe-tools">
                     ${o.points ? `<span class="qe-pts-l">الدرجة</span>
@@ -382,10 +410,20 @@
         if (!qs.length) return 'أضف سؤالاً واحداً على الأقل.';
         const groups = groupByType(qs);
         for (let gi = 0; gi < groups.length; gi += 1) {
-            const at = groups[gi].items.findIndex((x) => !String(x.q.text || '').trim());
+            const g = groups[gi];
+            const sec = `السؤال ${ORDINALS[gi] || arDigits(gi + 1)}`;
+            const at = g.items.findIndex((x) => !String(x.q.text || '').trim());
             if (at >= 0) {
-                return `الفقرة ${arDigits(at + 1)} من السؤال ${ORDINALS[gi] || arDigits(gi + 1)}`
-                     + ' بلا نصّ — اكتبها أو احذفها.';
+                return `الفقرة ${arDigits(at + 1)} من ${sec} بلا نصّ — اكتبها أو احذفها.`;
+            }
+            /* المطابقةُ وحدَها تسقط بنصف فقرة: طرفٌ في (أ) بلا مقابلٍ في
+               (ب) يخرج على الورق سطراً في عمودٍ وفراغاً في الآخر. */
+            if (g.type === 'match') {
+                const half = g.items.findIndex((x) => !String(x.q.answer || '').trim());
+                if (half >= 0) {
+                    return `الفقرة ${arDigits(half + 1)} من ${sec} بلا عمود (ب) —`
+                         + ' اكتب ما يقابلها.';
+                }
             }
         }
         return null;
