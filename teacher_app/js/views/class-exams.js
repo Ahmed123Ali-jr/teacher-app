@@ -107,36 +107,48 @@
         `;
     }
 
-    function listHtml(exams) {
-        return `
-            <div class="grid grid-2">
-                ${exams.map((e) => `
-                    <div class="card exam-card">
-                        <div>
-                            <h4 style="margin:0 0 var(--space-1)">${escapeHtml(e.title)}</h4>
-                            <div class="text-muted" style="font-size:var(--fs-sm);">
-                                ${pWord(e.questions?.length || 0)} ·
-                                ${formatShortDate(e.created_at)}
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="btn btn-secondary btn-sm" data-exam-open="${e.id}">✏️ مراجعة</button>
-                            <button class="btn btn-ghost btn-sm" data-exam-print="${e.id}">🖨️</button>
-                            <button class="btn btn-ghost btn-sm" data-exam-delete="${e.id}">🗑️</button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
 
-    function formatShortDate(iso) {
+    /* أيقونتان مرسومتان لا رمزين تعبيريّين: الرمزُ يأخذ لونَ خطِّ النظام
+       الملوّن فلا يتبع لونَ الزرّ، والمرسومةُ تتبع `currentColor`.
+       (النظيرُ في question-editor.js.) */
+    const SVG = (d) => '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    const ICON_EDIT  = SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>');
+    const ICON_TRASH = SVG('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
+
+    /* أمُّ القرى صريحةً لا `ar-SA` المجرّدة: تلك تتبع تقويم الجهاز فتُخرج
+       ميلاديّاً على متصفّحٍ وهجريّاً على آخر — والمدرسةُ هجريّة.
+       (النظيرُ في academic-calendar.js.) */
+    function shortHijri(iso) {
         if (!iso) return '';
         try {
-            return new Intl.DateTimeFormat('ar-SA', {
-                day: 'numeric', month: 'short', year: 'numeric'
-            }).format(new Date(iso));
-        } catch { return iso; }
+            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',
+                { day: 'numeric', month: 'long' }).format(new Date(iso));
+        } catch (e) { return ''; }
+    }
+
+    /* الشكلُ «ب»: صفٌّ كصفِّ الطالب. والنصُّ نفسُه يفتح كزرِّ التعديل،
+       فالإصبعُ تبلغ أيَّهما سبق. والفاصلُ شرطةٌ لا نقطة: النقطةُ بين
+       الأرقام العربية تُقرأ صفراً. */
+    function listHtml(exams) {
+        return exams.map((e, i) => `
+            <div class="st-card doc-row">
+                <div class="stc-av num">${arDigits(i + 1)}</div>
+                <div class="doc-tx" data-exam-open="${e.id}">
+                    <span class="doc-tt">${escapeHtml(e.title)}</span>
+                    <span class="doc-ss">${pWord(e.questions?.length || 0)}
+                        — ${shortHijri(e.created_at)}</span>
+                </div>
+                <div class="doc-acts">
+                    <button type="button" class="doc-ib p" data-exam-print="${e.id}">طباعة</button>
+                    <button type="button" class="doc-ib" data-exam-open="${e.id}"
+                            title="تعديل" aria-label="تعديل">${ICON_EDIT}</button>
+                    <button type="button" class="doc-ib" data-exam-delete="${e.id}"
+                            title="حذف" aria-label="حذف">${ICON_TRASH}</button>
+                </div>
+            </div>
+        `).join('');
     }
 
     /* ==========================================================================
