@@ -289,6 +289,7 @@
                     ${checkbox('include_school',       'ترويسة المدرسة', settings.include_school)}
                     ${checkbox('include_teacher',      'اسم المعلم', settings.include_teacher)}
                     ${checkbox('include_date',         'التاريخ', settings.include_date)}
+                    ${dateFieldHtml(settings)}
                     ${checkbox('include_name',         'خانة اسم الطالب', settings.include_name)}
                     ${checkbox('include_grade',        'الدرجة الكلية', settings.include_grade)}
                     ${checkbox('include_instructions', 'تعليمات الاختبار', settings.include_instructions)}
@@ -302,9 +303,13 @@
             </div>
         `;
 
-        body.querySelectorAll('.checkbox-list input').forEach((cb) => {
-            cb.addEventListener('change', () => { settings[cb.name] = cb.checked; });
+        body.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach((cb) => {
+            cb.addEventListener('change', () => {
+                settings[cb.name] = cb.checked;
+                if (cb.name === 'include_date') step4(body, cls);
+            });
         });
+        bindDateField(body, settings);
 
         body.querySelector('#btn-back').addEventListener('click', () => {
             s.step = 3;
@@ -322,6 +327,51 @@
         /* تحميل محرّك PDF فور فتح الخطوة، لا عند الضغط: إيماءة المستخدم
            في iOS تضيع لو انتظرت تحميل المكتبتين، فلا تفتح ورقة المشاركة. */
         global.PrintExam.preloadPdfEngine().catch(() => {});
+    }
+
+    /* ---------- التاريخ: يكتبه المعلّم ---------- */
+
+    /* كان التطبيق يطبع تاريخ اليوم بلا سؤال، والاختبارُ يُعدُّ قبل موعده
+       بأيّام — فتخرج الورقةُ بتاريخٍ خاطئ. (بلاغُ المعلّم، ٢٢ أغسطس
+       ٢٠٢٦: «المفروض المعلم يحط التاريخ بيده».)
+
+       فصار حقلاً نصّياً لا مُنتقيَ تقويم: المدارسُ تكتب بالهجريّ،
+       و`input[type=date]` ميلاديٌّ لا يُبدَّل. وزرُّ «اليوم» يملؤه
+       بضغطةٍ لمن أراد. وإن تُرك فارغاً خرجت على الورق نقاطٌ يكتب عليها
+       بالقلم — وهو ما يفعله كثيرٌ من المعلّمين أصلاً. */
+    function dateFieldHtml(settings) {
+        if (!settings.include_date) return '';
+        return `
+            <div class="cb-sub">
+                <input class="input" id="exam-date" inputmode="text"
+                       value="${escapeAttr(settings.exam_date || '')}"
+                       placeholder="اكتب التاريخ… أو اتركه فراغاً ليُكتب بالقلم">
+                <button type="button" class="btn btn-secondary btn-sm" id="exam-date-today">اليوم</button>
+            </div>`;
+    }
+
+    /* أمُّ القرى صريحةً لا `toLocaleDateString('ar-SA')`: تلك تتبع تقويم
+       الجهاز فتُخرج ميلاديّاً على بعض المتصفّحات وهجريّاً على غيرها —
+       والمدرسةُ تكتب بالهجريّ دائماً. (والنمطُ نفسُه في
+       academic-calendar.js.) */
+    function todayHijri() {
+        try {
+            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',
+                { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+        } catch (e) {
+            return new Date().toLocaleDateString('ar-SA');
+        }
+    }
+
+    function bindDateField(body, settings) {
+        const inp = body.querySelector('#exam-date');
+        if (!inp) return;
+        inp.addEventListener('input', () => { settings.exam_date = inp.value; });
+        body.querySelector('#exam-date-today').addEventListener('click', () => {
+            inp.value = todayHijri();
+            settings.exam_date = inp.value;
+            inp.focus();
+        });
     }
 
     function checkbox(name, label, checked) {

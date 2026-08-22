@@ -290,7 +290,12 @@
             cls?.subject ? `المادة: ${escapeHtml(cls.subject)}` : '',
             cls?.grade ? `الصف: ${escapeHtml(cls.grade)}${cls.section ? ' / ' + escapeHtml(cls.section) : ''}` : '',
             s.include_teacher && teacher?.name ? `المعلم: ${escapeHtml(teacher.name)}` : '',
-            s.include_date ? `التاريخ: ${new Date().toLocaleDateString('ar-SA')}` : '',
+            /* تاريخٌ يكتبه المعلّم، لا تاريخُ اليوم: الاختبارُ يُعدّ قبل
+               موعده. وفراغُه نقاطٌ تُملأ بالقلم لا يومُ الطباعة. */
+            s.include_date
+                ? `التاريخ: ${String(s.exam_date || '').trim()
+                    ? escapeHtml(String(s.exam_date).trim()) : '................'}`
+                : '',
             s.include_grade !== false && total ? `الدرجة: ${ar(total)}` : ''
         ].filter(Boolean).join('<br>');
 
