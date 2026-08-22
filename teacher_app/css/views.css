@@ -1791,6 +1791,27 @@ body.drawer-open { overflow: hidden; }
     box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 #tab-panel:not(.is-empty-tab) { padding-bottom: calc(var(--space-10) + 58px); }
+
+/* ══ وفي القاع ولو قصرت القائمة ══
+   اللصوقُ لا يعمل إلا حين يفيض المحتوى، وثلاثةُ اختباراتٍ لا تفيض —
+   فكان الشريطُ يقف تحت آخر صفٍّ في وسط الشاشة. (بلاغُ المعلّم، ٢٢
+   أغسطس ٢٠٢٦.) وهو العطبُ عينُه الذي أُصلح في شريط المحرّر، والعلاجُ
+   عينُه: اللوحةُ عمودٌ مرنٌ بقياسَي الحالة الفارغة ‎(175‎ و‎28)‎،
+   و`margin-top: auto` يدفع الشريطَ إلى قاعها — فيقع حيث يقع زرُّ
+   الحالة الفارغة تماماً. وإذا طالت القائمة انعدم `auto` وعاد اللصوق.
+
+   و`:has(> .ws-addbar)` لا صنفٌ يُضاف في خمس شاشات: الشرطُ هو وجودُ
+   الشريط نفسِه، فلا تُنسى شاشةٌ ولا يبقى صنفٌ بعد زواله. وأبناءُ
+   العمود `flex: 0 0 auto` صراحةً لئلّا ينكمشوا حين يفيض. */
+@media (max-width: 767px) {
+    #tab-panel:has(> .ws-addbar) {
+        min-height: calc(100dvh - 175px);
+        display: flex; flex-direction: column;
+        padding-bottom: calc(var(--safe-bottom) + 28px);
+    }
+    #tab-panel:has(> .ws-addbar) > * { flex: 0 0 auto; }
+    .ws-addbar { margin-top: auto; }
+}
 @media (min-width: 768px) {
     .ws-addbar { position: static; background: none; padding: 0; }
     .ws-addbar .btn { width: auto; }
