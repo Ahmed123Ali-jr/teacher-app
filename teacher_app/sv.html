@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أشكالُ الاختبارات وأوراق العمل المحفوظة</title>
+<link rel="stylesheet" href="css/main.css?s=1">
+<link rel="stylesheet" href="css/components.css?s=1">
+<link rel="stylesheet" href="css/views.css?s=1">
+<link rel="stylesheet" href="css/portfolio-theme.css?s=1">
+<link rel="stylesheet" href="css/theme-white.css?s=1">
+<link rel="stylesheet" href="css/fonts.css?s=1">
+<!--
+    sv.html — معاينةٌ لا تُشحن. تُحذف بعد الاختيار.
+
+    أربعةُ أشكالٍ لقائمة المحفوظ، كلُّها من مفردات التطبيق نفسِه لا من
+    خيالٍ جديد: صفُّ الطالب، وبطاقةُ التذكير، وبلاطةُ الفصل، والقائم
+    اليوم. والأنماطُ من ملفّات التطبيق، فما تراه هو ما يقع.
+-->
+<style>
+body { margin:0; background: var(--bg); padding-bottom: 62px; }
+.hd { height:85px; display:flex; align-items:center; padding:0 16px;
+      background:var(--surface); border-bottom:1px solid var(--border); }
+.hd b { font-size:17px; color:var(--ink-primary); }
+.note { margin: 10px 0 4px; font-size:11.5px; color:var(--text-muted); font-weight:700; }
+
+/* ── ب: صفٌّ كصفِّ الطالب. الجديدُ فيه سطرٌ ثانٍ ووسمُ فقرات ── */
+.sv-row .stc-av { border-radius: 10px; font-size: 15px; }
+.sv-tx { flex:1; min-width:0; }
+.sv-tt { display:block; font-weight:800; font-size:15px; color:var(--text); line-height:1.4; }
+.sv-ss { display:block; font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+.sv-acts { display:flex; gap:5px; flex-shrink:0; }
+.sv-ib { width:33px; height:33px; display:grid; place-items:center; border-radius:10px; border:1.5px solid var(--border);
+         background:var(--surface); display:grid; place-items:center; cursor:pointer;
+         color:var(--text-muted); font-size:13px; }
+.sv-ib.p { border-color: var(--primary); color: var(--primary); font-weight:800; font-size:12px;
+           width:auto; padding:0 11px; font-family:inherit; }
+
+/* ── ج: بطاقةُ التذكير الكريميّة ── */
+.sv-rem { margin-bottom: var(--space-3); }
+.sv-rem .rem-head { padding: 12px 13px; }
+.sv-rem .rem-tt { font-size:15px; }
+.sv-foot { display:flex; gap:7px; padding: 0 13px 12px; }
+.sv-foot .btn { flex:1; }
+
+/* ── د: بلاطةٌ كبطاقة الفصل ── */
+.sv-tile { min-height: 96px; padding: 13px; }
+.sv-tile .t { font-size:15.5px; font-weight:900; line-height:1.45; }
+.sv-tile .m { font-size:11.5px; opacity:.85; margin-top:3px; }
+.sv-tile .a { display:flex; gap:6px; margin-top:auto; }
+.sv-tile .a i { font-style:normal; background:rgba(255,255,255,.2); border-radius:9px;
+                padding:5px 10px; font-size:11.5px; font-weight:800; }
+
+.pick { position:fixed; inset:auto 0 0 0; z-index:990; background:#12202A; padding:6px;
+        padding-bottom:calc(6px + env(safe-area-inset-bottom)); display:flex; gap:6px; }
+.pick button { flex:1; border:0; border-radius:10px; background:#1E323E; color:#C9D3DA;
+        font-family:inherit; font-weight:800; font-size:11px; cursor:pointer; padding:8px 2px; line-height:1.3; }
+.pick button.on { background:linear-gradient(150deg,#1A8299,var(--primary)); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="hd"><b>الاختبارات</b></div>
+<div class="container"><div class="tab-panel" id="p"></div></div>
+
+<div class="pick">
+  <button data-v="a">أ · الحالي</button>
+  <button class="on" data-v="b">ب · صفٌّ كصفِّ الطالب<br>(المقترح)</button>
+  <button data-v="c">ج · بطاقةٌ كالتذكير</button>
+  <button data-v="d">د · بلاطةٌ كالفصل</button>
+</div>
+
+<script>
+var TRASH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"'
+  + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+var ROWS = [
+    { t:'اختبار الوحدة الأولى — الخلية', n:'٧ فقرات', d:'٩ ربيع الأول' },
+    { t:'اختبار قصير: أجهزة جسم الإنسان', n:'٤ فقرات', d:'٢ ربيع الأول' },
+    { t:'الاختبار الشهري الأول', n:'١٢ فقرة', d:'٢٤ صفر' }
+];
+var NOTE = {
+    a: 'الحالي: بطاقتان في صفٍّ واحد، وثلاثةُ أزرارٍ في كلٍّ — على الجوال يضيق العنوان.',
+    b: 'من صفِّ الطالب في الصفحة نفسِها: الصفُّ كلُّه يُفتح للمراجعة، وزرّان للطباعة والحذف.',
+    c: 'من بطاقة التذكير في الرئيسية: أيقونةٌ ووسمٌ بعدد الفقرات، والأفعالُ في القاع.',
+    d: 'من بلاطة الفصل: تُلفت النظر، لكنّها لونٌ ثقيلٌ لقائمةٍ قد تطول.'
+};
+
+function draw(v) {
+    var p = document.getElementById('p');
+    var h = '<div class="note">' + NOTE[v] + '</div>';
+
+    if (v === 'a') {
+        h += '<div class="grid grid-2">' + ROWS.map(function (r) {
+            return '<div class="card exam-card"><div>'
+              + '<h4 style="margin:0 0 var(--space-1)">' + r.t + '</h4>'
+              + '<div class="text-muted" style="font-size:var(--fs-sm);">' + r.n + ' — ' + r.d + '</div>'
+              + '</div><div class="flex gap-2">'
+              + '<button class="btn btn-secondary btn-sm">✏️ مراجعة</button>'
+              + '<button class="btn btn-ghost btn-sm">🖨️</button>'
+              + '<button class="btn btn-ghost btn-sm">🗑️</button></div></div>';
+        }).join('') + '</div>';
+    }
+
+    if (v === 'b') {
+        h += ROWS.map(function (r, i) {
+            return '<div class="st-card sv-row" style="margin-bottom:9px">'
+              + '<div class="stc-av num">' + ['١','٢','٣'][i] + '</div>'
+              + '<div class="sv-tx"><span class="sv-tt">' + r.t + '</span>'
+              + '<span class="sv-ss">' + r.n + ' — ' + r.d + '</span></div>'
+              + '<div class="sv-acts"><button class="sv-ib p">طباعة</button>'
+              + '<button class="sv-ib">'+TRASH+'</button></div></div>';
+        }).join('');
+    }
+
+    if (v === 'c') {
+        h += ROWS.map(function (r) {
+            return '<div class="rem-card sv-rem"><div class="rem-head">'
+              + '<div class="rem-ic">📝</div>'
+              + '<div class="rem-tx"><div class="rem-tt">' + r.t + '</div>'
+              + '<div class="sv-ss">' + r.d + '</div></div>'
+              + '<div class="rem-tag" style="background:color-mix(in srgb,var(--pf-gold) 22%,#fff);color:#7A6224">'
+              + r.n + '</div></div>'
+              + '<div class="sv-foot"><button class="btn btn-secondary btn-sm">مراجعة</button>'
+              + '<button class="btn btn-primary btn-sm">طباعة</button>'
+              + '<button class="btn btn-ghost btn-sm">'+TRASH+'</button></div></div>';
+        }).join('');
+    }
+
+    if (v === 'd') {
+        h += '<div class="grid grid-2">' + ROWS.map(function (r) {
+            return '<div class="class-card sv-tile">'
+              + '<div><div class="t">' + r.t + '</div><div class="m">' + r.n + ' — ' + r.d + '</div></div>'
+              + '<div class="a"><i>مراجعة</i><i>طباعة</i></div></div>';
+        }).join('') + '</div>';
+    }
+
+    h += '<div class="ws-addbar"><button class="btn btn-primary">+ اختبار جديد</button></div>';
+    p.innerHTML = h;
+}
+
+document.querySelector('.pick').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    draw(b.dataset.v);
+});
+draw('b');
+</script>
+
+</body>
+</html>
