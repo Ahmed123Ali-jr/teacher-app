@@ -270,10 +270,11 @@
     const addBtnHtml = () =>
         '<button type="button" class="qe-addsec" data-qe-open>+ أضف سؤالاً</button>';
 
+    /* بلا شرحٍ تحته: الزرُّ في قاع الشاشة يقول ما يُفعل، وسطرٌ يشرحه
+       تكرارٌ لا يقرؤه أحدٌ مرّتين. (طلبُ المعلّم، ٢٢ أغسطس ٢٠٢٦.) */
     const EMPTY_HINT = `
         <div class="qe-empty">
             <p>لا أسئلة بعد.</p>
-            <p class="sub">اضغط «+ أضف سؤالاً» واخترْ نوعه، ثمّ أضف فقراتِه.</p>
         </div>`;
 
     /**

@@ -5229,10 +5229,32 @@ body.drawer-open { overflow: hidden; }
     font-weight: var(--fw-black); color: #fff; background: var(--primary);
     box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
 }
-/* مساحةٌ أسفل اللوحة ليجد الشريطُ ما يعلو عليه عند نهاية التمرير. وهي
-   أقلُّ من مساحة `.ws-addbar` عمداً: `.wizard` والجسمُ يتبرّعان بما
-   يقارب ‎100px‎ تحته أصلاً، وزيادتُها تفتح فجوةً بيضاء في آخر الورقة. */
-#tab-panel.has-qe-dock { padding-bottom: calc(var(--safe-bottom) + 24px); }
+/* ══ والشريطُ في القاع حتى لو خلت الورقة ══
+   اللصوقُ لا يعمل إلا حين يفيض المحتوى، والمحرّرُ يُفتح فارغاً في الغالب
+   — فكان الشريطُ يقع في منتصف الشاشة أوّلَ ما يُضغط «اختبار جديد».
+   (بلاغُ المعلّم، ٢٢ أغسطس ٢٠٢٦.)
+
+   فتُعامَل لوحتُه معاملةَ الحالة الفارغة بالقياسات نفسِها ‎(175‎ و‎28)‎،
+   فيقع الشريطُ حيث يقع «+ اختبار جديد» تماماً. و`margin-top: auto` هو
+   الذي يدفعه إلى القاع، فإذا طال المحتوى انعدم وعاد اللصوقُ يعمل.
+
+   وأبناءُ العمود `flex: 0 0 auto` صراحةً: الانكماشُ الافتراضيّ في
+   العمود المرن كان يضغط بطاقاتِ الأسئلة حين يفيض. */
+#tab-panel.has-qe-dock { padding-bottom: calc(var(--safe-bottom) + 28px); }
+@media (max-width: 767px) {
+    #tab-panel.has-qe-dock { min-height: calc(100dvh - 175px); }
+    #tab-panel.has-qe-dock,
+    #tab-panel.has-qe-dock > .wizard,
+    #tab-panel.has-qe-dock #wiz-body { display: flex; flex-direction: column; }
+    #tab-panel.has-qe-dock > .wizard,
+    #tab-panel.has-qe-dock #wiz-body { flex: 1 0 auto; }
+    /* و`.wizard` تتنازل عن حاشيتها السفلى: تقع تحت الشريط فتزيحه عن
+       القاع ‎34px‎، فلا يحاذي «+ اختبار جديد» في القائمة. */
+    #tab-panel.has-qe-dock > .wizard { padding-bottom: 0; }
+    #tab-panel.has-qe-dock > .wizard > *,
+    #tab-panel.has-qe-dock #wiz-body > * { flex: 0 0 auto; }
+    .qe-dock { margin-top: auto; }
+}
 @media (min-width: 768px) {
     .qe-dock { position: static; background: none; padding: 0; }
     #tab-panel.has-qe-dock { padding-bottom: var(--space-10); }
@@ -5285,12 +5307,10 @@ body.drawer-open { overflow: hidden; }
     background: transparent; border: 1.5px dashed var(--border-strong);
     border-radius: 12px;
 }
+/* سطرٌ واحدٌ لا سطران: الشرحُ تحته حُذف بطلب المعلّم — الزرُّ في القاع
+   يقول ما يُفعل. */
 .qe-empty { text-align: center; padding: var(--space-5) var(--space-4); }
 .qe-empty p { margin: 0; font-size: 14px; font-weight: var(--fw-black); color: var(--ink-primary); }
-.qe-empty .sub {
-    margin-top: 6px; font-size: 12px; font-weight: 500;
-    line-height: 1.9; color: var(--text-muted);
-}
 
 /* ==========================================================================
    قارئ الكتب (book-reader.js) — التصميم ج.
