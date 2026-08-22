@@ -12,13 +12,17 @@
     }
     function escapeAttr(s) { return escapeHtml(s); }
 
+    /* ميلاديٌّ صريحٌ لا `ar-SA` المجرّدة: تلك تتبع تقويم الجهاز فتُخرج
+       هجريّاً على متصفّحٍ وميلاديّاً على آخر. والميلاديُّ هو الصواب هنا
+       بخلاف تاريخ الورقة المطبوعة: المعلّم اختار الموعدَ من
+       `input[type=date]` وهو ميلاديّ، فيُعرض كما اختاره لا مترجَماً. */
     function formatDate(iso) {
         if (!iso) return '—';
         try {
-            return new Intl.DateTimeFormat('ar-SA', {
-                weekday: 'long', day: 'numeric', month: 'short'
+            return new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {
+                weekday: 'long', day: 'numeric', month: 'long'
             }).format(new Date(iso + 'T00:00:00'));
-        } catch { return iso; }
+        } catch (e) { return iso; }
     }
 
     function todayISO() {
@@ -81,33 +85,40 @@
         `;
     }
 
+
+    /* أيقونتان مرسومتان لا رمزين تعبيريّين — النظيرُ في class-exams.js. */
+    const SVG = (d) => '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    const ICON_TRASH = SVG('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
+    const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    /* الشكلُ «ب» كالاختبارات وأوراق العمل — شرحُه في class-exams.js.
+       والفعلُ الرئيسُ هنا «تعديل»: الواجبُ لا يُطبع ولا يُتصفَّح.
+
+       و«اليوم» و«متأخر» تبقيان: بيانٌ عن الواقع لا شرحٌ للواجهة، وهي
+       القاعدةُ التي يمشي عليها التطبيق. أمّا وصفُ الواجب فسقط من الصفّ —
+       الشكلُ سطران، والوصفُ يُقرأ عند فتحه. */
     function list(rows, today) {
-        return `
-            <div class="reminders-list">
-                ${rows.map((r) => {
-                    const overdue = r.due_date && r.due_date < today;
-                    const dueToday = r.due_date === today;
-                    return `
-                        <article class="reminder-item ${overdue ? 'is-overdue' : ''}" style="--type-color: ${dueToday ? '#F59E0B' : '#8B5CF6'};">
-                            <div class="reminder-icon">📚</div>
-                            <div class="reminder-body">
-                                <div class="reminder-title">${escapeHtml(r.title)}</div>
-                                <div class="reminder-meta">
-                                    <span>📅 ${formatDate(r.due_date)}</span>
-                                    ${dueToday ? '<span class="badge badge-warning">اليوم</span>' : ''}
-                                    ${overdue ? '<span class="badge badge-danger">متأخر</span>' : ''}
-                                </div>
-                                ${r.description ? `<div class="reminder-notes">${escapeHtml(r.description)}</div>` : ''}
-                            </div>
-                            <div class="reminder-actions">
-                                <button class="btn btn-ghost btn-sm" data-hw-edit="${r.id}">✏️</button>
-                                <button class="btn btn-ghost btn-sm" data-hw-delete="${r.id}">🗑️</button>
-                            </div>
-                        </article>
-                    `;
-                }).join('')}
-            </div>
-        `;
+        return rows.map((r, i) => {
+            const overdue  = r.due_date && r.due_date < today;
+            const dueToday = r.due_date === today;
+            return `
+            <div class="st-card doc-row">
+                <div class="stc-av num">${arDigits(i + 1)}</div>
+                <div class="doc-tx" data-hw-edit="${r.id}">
+                    <span class="doc-tt">${escapeHtml(r.title)}</span>
+                    <span class="doc-ss">${formatDate(r.due_date)}
+                        ${dueToday ? '<b class="doc-tag warn">اليوم</b>' : ''}
+                        ${overdue  ? '<b class="doc-tag late">متأخر</b>' : ''}</span>
+                </div>
+                <div class="doc-acts">
+                    <button type="button" class="doc-ib p" data-hw-edit="${r.id}">تعديل</button>
+                    <button type="button" class="doc-ib" data-hw-delete="${r.id}"
+                            title="حذف" aria-label="حذف">${ICON_TRASH}</button>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     function openForm(cls, panel, existing) {

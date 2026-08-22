@@ -1746,6 +1746,22 @@ body.drawer-open { overflow: hidden; }
 }
 .doc-ib:active { transform: scale(.97); }
 
+/* وسمُ الواجب: «اليوم» و«متأخر» بيانٌ عن الواقع لا شرحٌ للواجهة، فيبقى.
+   وألوانُه تُخلط مع `--mix-base` لا مع الأبيض، فتتبع المظهرين. */
+.doc-tag {
+    display: inline-block; margin-inline-start: 5px;
+    padding: 1px 7px; border-radius: 7px;
+    font-size: 10.5px; font-weight: var(--fw-black);
+}
+.doc-tag.warn {
+    color: #7A6224;
+    background: color-mix(in srgb, var(--pf-gold) 26%, var(--mix-base));
+}
+.doc-tag.late {
+    color: #B42318;
+    background: color-mix(in srgb, #B42318 14%, var(--mix-base));
+}
+
 /* ══ شريطُ الإنشاء — أسفلَ القائمة لا فوقها ══
    كان زرُّ الإضافة في الحالة الفارغة وحدَها، فمن أنشأ واحداً لم يجد
    سبيلاً إلى ثانٍ. ثمّ وُضع فوق القائمة، فطلب المعلّم إنزالَه.

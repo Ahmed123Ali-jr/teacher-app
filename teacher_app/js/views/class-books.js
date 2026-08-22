@@ -15,11 +15,14 @@
         }[m]));
     }
 
+    /* بأرقامٍ عربيّةٍ ووحدةٍ عربيّة: «2.3 MB» لاتينيٌّ داخل سطرٍ عربيّ،
+       فيقلبه ترتيبُ الاتّجاهين إلى «MB 2.3» — الوحدةُ قبل الرقم. */
     function formatSize(bytes) {
-        if (!bytes) return '—';
+        if (!bytes) return '';
         const kb = bytes / 1024;
-        if (kb < 1024) return kb.toFixed(1) + ' KB';
-        return (kb / 1024).toFixed(1) + ' MB';
+        const n = (v) => v.toFixed(1).replace('.', '٫')
+            .replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+        return kb < 1024 ? n(kb) + ' ك.ب' : n(kb / 1024) + ' م.ب';
     }
 
     const TYPE_LABELS = {
@@ -104,27 +107,35 @@
         `;
     }
 
+
+    /* أيقونتان مرسومتان لا رمزين تعبيريّين — النظيرُ في class-exams.js. */
+    const SVG = (d) => '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    const ICON_EDIT  = SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>');
+    const ICON_TRASH = SVG('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>');
+    const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    /* الشكلُ «ب» كالاختبارات وأوراق العمل — شرحُه في class-exams.js.
+       والفعلُ الرئيسُ هنا «تصفّح» لا «طباعة»: الكتابُ يُقرأ. */
     function bookGrid(books) {
-        return `
-            <div class="grid grid-3">
-                ${books.map((b) => `
-                    <div class="card book-card">
-                        <div class="book-body">
-                            <h4 style="margin:0 0 var(--space-1)">${escapeHtml(b.title || 'كتاب')}</h4>
-                            <div class="text-muted" style="font-size: var(--fs-sm);">
-                                <span class="badge badge-info">${TYPE_LABELS[b.type] || '—'}</span>
-                                ${b.size_bytes ? `<span style="margin-right: var(--space-2);">${formatSize(b.size_bytes)}</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="book-actions">
-                            <button class="btn btn-primary btn-sm" data-book-read="${b.id}">📖 تصفّح</button>
-                            <button class="btn btn-ghost btn-sm" data-book-edit="${b.id}" title="تعديل">✏️</button>
-                            <button class="btn btn-ghost btn-sm" data-book-delete="${b.id}" title="حذف">🗑️</button>
-                        </div>
-                    </div>
-                `).join('')}
+        return books.map((b, i) => `
+            <div class="st-card doc-row">
+                <div class="stc-av num">${arDigits(i + 1)}</div>
+                <div class="doc-tx" data-book-read="${b.id}">
+                    <span class="doc-tt">${escapeHtml(b.title || 'كتاب')}</span>
+                    <span class="doc-ss">${TYPE_LABELS[b.type] || 'أخرى'}${
+                        b.size_bytes ? ' — ' + formatSize(b.size_bytes) : ''}</span>
+                </div>
+                <div class="doc-acts">
+                    <button type="button" class="doc-ib p" data-book-read="${b.id}">تصفّح</button>
+                    <button type="button" class="doc-ib" data-book-edit="${b.id}"
+                            title="تعديل" aria-label="تعديل">${ICON_EDIT}</button>
+                    <button type="button" class="doc-ib" data-book-delete="${b.id}"
+                            title="حذف" aria-label="حذف">${ICON_TRASH}</button>
+                </div>
             </div>
-        `;
+        `).join('');
     }
 
     function openForm(cls, panel, existing) {

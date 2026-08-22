@@ -521,5 +521,14 @@ body.theme-auto.dark-active .bottom-nav {
     body.theme-auto.dark-active .bottom-nav { background: var(--surface-alt) !important; }
 }
 
+/* وسمُ الواجب: حبرُه في اللوحة الفاتحة داكنٌ صريح (‎#7A6224‎ و‎#B42318‎)
+   لأنه على أرضيّةٍ فاتحةٍ مخلوطة. وتلك الأرضيّةُ تُظلم مع المظهر بينما
+   الحبرُ ثابت، فيهبط إلى ‎2.9‎ و‎2.6‎. فيُقلب الحبرُ هنا لا الأرضيّة:
+   اللونُ يبقى دالّاً — ذهبيٌّ لليوم وأحمرُ للمتأخر — وهو ما يفيده الوسم. */
+body.theme-dark .doc-tag.warn,
+body.theme-auto.dark-active .doc-tag.warn { color: #EBD9A6; }
+body.theme-dark .doc-tag.late,
+body.theme-auto.dark-active .doc-tag.late { color: #F5A9A2; }
+
 /* شريطُ التمرير ولونُ واجهة المتصفّح يتبعان المظهر. */
 body.theme-dark, body.theme-auto.dark-active { color-scheme: dark; }
