@@ -1390,7 +1390,12 @@
             panel.dataset.activeColFocus = col.id;
             await renderStudents(panel, cls);
         });
-        global.Modal.open({ title: '+ خانة جديدة', body: form });
+        /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح كانت تقفز على «اسم الخانة»
+           بمجرّد الفتح، فتغطّي نصفَ اللوحة قبل أن يرى المعلّمُ ما فيها —
+           ولعلّه جاء ليختار نوعَ التقييم لا ليكتب. فليضغط الخانةَ بنفسه.
+           (طلبُ المعلّم، ٢٢ أغسطس ٢٠٢٦؛ والنظيرُ في «تعديل الخانات»
+           و«طباعة السجل» سبقه.) */
+        global.Modal.open({ title: '+ خانة جديدة', body: form, autofocus: false });
     }
 
     function openColumnManager(cls, panel) {
