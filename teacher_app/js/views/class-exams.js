@@ -42,6 +42,11 @@
         const exams = (await global.TeacherDB.getAllByIndex('exams', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
+        /* الحالةُ الفارغة تأخذ نمطَ «و» في الرئيسية كما أخذته الكتب:
+           لافتةٌ تقول ما ينقص، وفراغٌ، وزرٌّ عريضٌ في متناول الإبهام.
+           و`is-empty-tab` هي التي تجعل اللوحةَ عموداً مرناً يملأ الشاشة. */
+        panel.classList.toggle('is-empty-tab', exams.length === 0);
+
         panel.innerHTML = `
             ${exams.length === 0 ? emptyState() : `
                 ${listHtml(exams)}
@@ -93,10 +98,12 @@
 
     function emptyState() {
         return `
-            <div class="empty-state">
-                <p>اكتب أسئلتك بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
-                <button class="btn btn-primary" data-empty-add>+ اختبار جديد</button>
+            <div class="start-note">
+                <b>لا اختبارات بعد</b>
+                <span>اكتب أسئلتك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ اختبار جديد</button>
         `;
     }
 
@@ -162,7 +169,9 @@
     function renderWizard(panel, cls) {
         const s = state[cls.id];
         if (!s) return render(panel, cls);
-        panel.classList.remove('has-qe-dock');
+        /* المحرّرُ ليس حالةً فارغة: لولا نزعُها لبقيت اللوحةُ عموداً مرناً
+           بارتفاعٍ أدنى، فتتمدّد تحت الأسئلة. */
+        panel.classList.remove('has-qe-dock', 'is-empty-tab');
 
         panel.innerHTML = `
             <div class="wizard">

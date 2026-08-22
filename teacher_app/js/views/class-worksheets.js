@@ -45,6 +45,9 @@
         const sheets = (await global.TeacherDB.getAllByIndex('worksheets', 'class_id', cls.id))
             .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
+        /* الحالةُ الفارغة بنمط الكتب — انظر النظير في class-exams.js. */
+        panel.classList.toggle('is-empty-tab', sheets.length === 0);
+
         /* زرُّ الإضافة أسفلَ القائمة لا فوقها (بطلب المعلّم)، وكان قبلها في الحالة الفارغة وحدَها: فمن أنشأ ورقةً لم يجد
            سبيلاً إلى ثانية. (بلاغُ المعلّم، ٢٠ أغسطس ٢٠٢٦.) */
         panel.innerHTML = `
@@ -96,10 +99,12 @@
 
     function empty() {
         return `
-            <div class="empty-state">
-                <p>اكتب أوراق العمل بنفسك، وتخرج الورقة بالتصميم الرسمي جاهزةً للطباعة.</p>
-                <button class="btn btn-primary" data-empty-add>+ إضافة ورقة عمل</button>
+            <div class="start-note">
+                <b>لا أوراق عمل بعد</b>
+                <span>اكتب الورقة بنفسك، وتخرج بالتصميم الرسمي جاهزةً للطباعة</span>
             </div>
+            <div class="start-gap"></div>
+            <button type="button" class="start-cta" data-empty-add>+ ورقة عمل جديدة</button>
         `;
     }
 
@@ -164,6 +169,7 @@
            التعليماتُ في زرٍّ يفتحها من يحتاجها. والأفعالُ الثلاثة نزلت
            إلى شريطٍ ثابتٍ أسفل الشاشة، كزرّ إضافة الاختبار. */
         panel.classList.add('has-qe-dock');
+        panel.classList.remove('is-empty-tab');
         panel.innerHTML = `
             <div class="wizard">
                 <div class="wizard-header">
