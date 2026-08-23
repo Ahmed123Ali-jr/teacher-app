@@ -9,6 +9,22 @@
 (function (global) {
     'use strict';
 
+    /** UUID v4 — من المنصّة إن وُجد، وإلّا مبنيٌّ بالشكل نفسه. */
+    function uuid() {
+        if (global.crypto && global.crypto.randomUUID) return global.crypto.randomUUID();
+        if (global.crypto && global.crypto.getRandomValues) {
+            const b = global.crypto.getRandomValues(new Uint8Array(16));
+            b[6] = (b[6] & 0x0f) | 0x40;   /* النسخة ٤ */
+            b[8] = (b[8] & 0x3f) | 0x80;   /* المتغيّر  */
+            const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+            return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+    }
+
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, (m) => ({
             '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -221,11 +237,12 @@
 
                 if (file) {
                     // No size cap — IndexedDB can hold hundreds of MB easily.
-                    if (!row.id) {
-                        row.id = (global.crypto && crypto.randomUUID)
-                            ? crypto.randomUUID()
-                            : ('b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
-                    }
+                    /* المعرّفُ يجب أن يكون UUID: عمودُ القاعدة `uuid`،
+                       والاحتياطيّ القديم `b_١٧٦...` كان يُرفض — فينكسر
+                       الرفعُ على WebKit قبل ١٥٫٤ حيث لا `randomUUID`.
+                       ويلزم توليدُه هنا لا تركُه للقاعدة، لأن ملفَّ الكتاب
+                       يُحفظ محلياً بهذا المعرّف. (ق٫١٠) */
+                    if (!row.id) row.id = uuid();
                     row.size_bytes   = file.size;
                     row.mime_type    = file.type || 'application/pdf';
                     row.filename     = file.name;
