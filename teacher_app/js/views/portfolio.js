@@ -543,11 +543,16 @@
             </div>
         `;
 
+        /* حارسُ الضغط المزدوج — ضغطتان كانتا تُنشئان قسمين. (ق٫٩) */
+        let saving = false;
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (saving) return;
             const name = form.querySelector('#cs-name').value.trim();
             const icon = form.querySelector('#cs-icon').value.trim();
             if (!name) return global.TeacherApp.toast('اسم القسم مطلوب.', 'warning');
+            saving = true;
 
             if (!Array.isArray(portfolio.custom_sections)) portfolio.custom_sections = [];
 
@@ -563,7 +568,13 @@
                 state.openSection = 'custom_' + sec.id;
             }
 
-            await savePortfolio(portfolio);
+            try {
+                await savePortfolio(portfolio);
+            } catch (err) {
+                /* يُحرَّر الحارس وإلّا بقيت النافذة مفتوحةً بزرٍّ ميّت. */
+                saving = false;
+                return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
+            }
             global.Modal.close();
             global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم إضافة القسم ✅', 'success');
             refresh();

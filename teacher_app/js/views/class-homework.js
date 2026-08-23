@@ -147,8 +147,14 @@
             </div>
         `;
 
+        /* حارسُ الضغط المزدوج: الحفظ رحلةُ شبكة، والزرّ يبقى حيّاً خلالها
+           فتُنشئ ضغطتان واجبَين. (ق٫٩ — نمط `reminders.js`) */
+        let saving = false;
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (saving) return;
+            saving = true;
             try {
                 const row = {
                     class_id: cls.id,
@@ -164,6 +170,7 @@
                 global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
                 await render(panel, cls);
             } catch (err) {
+                saving = false;
                 global.TeacherApp.toast(err.message, 'error');
             }
         });
