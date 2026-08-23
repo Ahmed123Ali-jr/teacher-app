@@ -44,7 +44,13 @@
         { key: 'extras',      title: 'صور ومرفقات إضافية',     icon: '📎', auto: false }
     ];
 
-    const state = { openSection: 'personal' };
+    /* الأقسامُ كلُّها مطويّةٌ عند الفتح: كان «البيانات الشخصية» يُفتح
+       افتراضاً فيملأ الشاشةَ ببطاقةِ هُويّةٍ طويلةٍ قبل أن يرى المعلّمُ
+       بقيّةَ الأقسام — ولعلّه جاء لغيره. (طلبُه، ٢٢ أغسطس ٢٠٢٦.)
+
+       والحالةُ تبقى بين زيارةٍ وأخرى في الجلسة الواحدة: من فتح قسماً
+       ثمّ خرج وعاد يجده مفتوحاً، وهو ما يتوقّعه. */
+    const state = { openSection: null };
 
     async function loadPortfolio(teacherId) {
         const row = await global.TeacherDB.get('portfolio', teacherId);
@@ -478,7 +484,9 @@
             const idx = ctx.portfolio.custom_sections.findIndex((s) => s.id === sec.id);
             if (idx > -1) ctx.portfolio.custom_sections.splice(idx, 1);
             await savePortfolio(ctx.portfolio);
-            state.openSection = 'personal';
+            /* ولا يُفتح غيرُه مكانَه: القسمُ حُذف، فالطيُّ أصدقُ من قفزةٍ
+               إلى قسمٍ لم يطلبه. */
+            state.openSection = null;
             global.TeacherApp.toast('تم حذف القسم.', 'info');
             ctx.refresh();
         });
