@@ -3166,11 +3166,18 @@ body.drawer-open { overflow: hidden; }
 }
 .portfolio-section-header:hover { background: var(--surface-alt); }
 
-.portfolio-icon {
-    font-size: 22px;
-    line-height: 1;
-    flex-shrink: 0;
+/* مربّعُ أيقونة القسم — الشكلُ «ب»: كمربّع رقم الطالب في السجل، فالتطبيقُ
+   لغةٌ واحدة. والأيقونةُ داخله مرسومةٌ تتبع لونَ الهُويّة، إلّا في القسم
+   المخصَّص فرمزُ المعلّم فيه كما كتبه. */
+.pf-chip {
+    width: 38px; height: 38px; flex: none; border-radius: 11px;
+    display: grid; place-items: center;
+    font-size: 19px; line-height: 1;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, var(--mix-base));
+    border: 1.5px solid color-mix(in srgb, var(--primary) 22%, var(--mix-base));
 }
+.pf-chip svg { display: block; }
 .portfolio-title {
     font-weight: var(--fw-bold);
     font-size: var(--fs-lg);
@@ -4743,7 +4750,9 @@ body.drawer-open { overflow: hidden; }
         gap: var(--space-2);
     }
     .portfolio-title { font-size: var(--fs-body); }
-    .portfolio-icon { font-size: 18px; }
+    /* على الجوال يضيق السطر، فيصغر المربّع قليلاً ويبقى فوق حدّ اللمس. */
+    .pf-chip { width: 34px; height: 34px; border-radius: 10px; font-size: 17px; }
+    .pf-chip svg { width: 18px; height: 18px; }
     .portfolio-section-body { padding: var(--space-4); }
     .portfolio-card {
         padding: var(--space-3);

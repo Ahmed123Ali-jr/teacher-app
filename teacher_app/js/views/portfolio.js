@@ -363,6 +363,35 @@
         return { filled: has.filter(Boolean).length, total: has.length };
     }
 
+    /* ---------- أيقونات الأقسام ----------
+       مرسومةٌ لا رموزاً تعبيريّة: الرمزُ يأخذ لونَه من خطّ النظام الملوّن
+       فلا يتبع لونَ الهُويّة، ويختلف شكلُه بين آيفون وأندرويد. والمرسومةُ
+       تتبع `currentColor` فتنقلب مع المظهر. (الشكلُ «ب» باعتماد المعلّم،
+       ٢٢ أغسطس ٢٠٢٦؛ والنظيرُ في question-editor.js وصفوف المحفوظ.)
+
+       وكان «الهدف» أيقونةَ قسمين: الرسالة والاستراتيجيات. ففُرّقا —
+       هدفٌ للرسالة ومصباحٌ للاستراتيجيات. */
+    const SVG = (d) => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none"'
+        + ' stroke="currentColor" stroke-width="1.8" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+
+    const SECTION_ICONS = {
+        personal:     '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/>',
+        certificates: '<circle cx="12" cy="9" r="5"/><path d="M8.6 13.4 7 22l5-3 5 3-1.6-8.6"/>',
+        mission:      '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.2"/>',
+        schedules:    '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+        exams:        '<path d="M9 4h6v3H9z"/><path d="M15 5.5h3A1.5 1.5 0 0 1 19.5 7v12.5A1.5 1.5 0 0 1 18 21H6a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 6 5.5h3"/><path d="m9 14 2 2 4-4"/>',
+        worksheets:   '<path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V7.5z"/><path d="M14 3v4.5h4.5M9 12.5h6M9 16h4"/>',
+        homework:     '<path d="M12 6C10 4.5 7.5 4 5 4v14c2.5 0 5 .5 7 2 2-1.5 4.5-2 7-2V4c-2.5 0-5 .5-7 2z"/><path d="M12 6v14"/>',
+        strategies:   '<path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 2.5a6.2 6.2 0 0 0-3.6 11.2c.6.5 1 1.2 1.1 1.9h5c.1-.7.5-1.4 1.1-1.9A6.2 6.2 0 0 0 12 2.5z"/>',
+        initiatives:  '<path d="m12 3 2.6 5.4 6 .8-4.3 4.1 1 5.9-5.3-2.8-5.3 2.8 1-5.9L3.4 9.2l6-.8z"/>',
+        extras:       '<path d="M20 11.4 12.6 18.8a4.7 4.7 0 0 1-6.6-6.6l7.6-7.6a3.3 3.3 0 0 1 4.7 4.7l-7.6 7.6a1.9 1.9 0 0 1-2.7-2.7l6.7-6.7"/>'
+    };
+    /* قسمٌ لا رسمَ له — وهو المخصَّص — يلبس رمزَ المعلّم في المربّع نفسِه،
+       فالشكلُ واحدٌ وإن اختلف ما بداخله. */
+    const chipHtml = (key, fallback) => SECTION_ICONS[key]
+        ? SVG(SECTION_ICONS[key])
+        : escapeHtml(fallback || '📂');
     function sectionHeader(section, counts, open) {
         const count = counts[section.key] ?? '';
         const badge = count !== '' ?
@@ -370,7 +399,7 @@
         return `
             <div class="portfolio-section ${open ? 'is-open' : ''}">
                 <button class="portfolio-section-header" data-section-toggle="${section.key}">
-                    <span class="portfolio-icon">${section.icon}</span>
+                    <span class="pf-chip">${chipHtml(section.key, section.icon)}</span>
                     <span class="portfolio-title">${section.title}</span>
                     ${section.star ? '<span class="badge badge-warning">⭐ مميزة</span>' : ''}
                     ${section.auto ? '<span class="badge badge-info">تلقائي</span>' : ''}
@@ -411,7 +440,7 @@
         return `
             <div class="portfolio-section ${open ? 'is-open' : ''}">
                 <button class="portfolio-section-header" data-section-toggle="custom_${sec.id}">
-                    <span class="portfolio-icon">${escapeHtml(icon)}</span>
+                    <span class="pf-chip">${chipHtml(null, icon)}</span>
                     <span class="portfolio-title">${escapeHtml(sec.name || 'قسم بدون اسم')}</span>
                     <span class="badge badge-muted">${count}</span>
                     <span class="portfolio-chev">${open ? '▼' : '◀'}</span>

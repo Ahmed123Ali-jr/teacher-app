@@ -530,5 +530,17 @@ body.theme-auto.dark-active .doc-tag.warn { color: #EBD9A6; }
 body.theme-dark .doc-tag.late,
 body.theme-auto.dark-active .doc-tag.late { color: #F5A9A2; }
 
+/* مربّعُ أيقونة القسم: حبرُه في اللوحة الفاتحة هو البترولي نفسُه على
+   أرضيّةٍ منه مخفَّفة. وفي الداكن تُظلم الأرضيّةُ ويبقى الحبرُ بترولياً
+   داكناً فيهبط إلى ‎1.46‎ — لا يُرى أصلاً. فيُقلب الحبرُ وأرضيّتُه معاً
+   إلى الطرف الفاتح من البترولي، فيبقى اللونُ لونَ الهُويّة ويُقرأ.
+   (وهي علّةُ «طباعة» في صفوف المحفوظ عينُها، وقد وقعتُ فيها مرّتين.) */
+body.theme-dark .pf-chip,
+body.theme-auto.dark-active .pf-chip {
+    color: #7FCBDD;
+    background: color-mix(in srgb, #7FCBDD 12%, var(--mix-base));
+    border-color: color-mix(in srgb, #7FCBDD 26%, var(--mix-base));
+}
+
 /* شريطُ التمرير ولونُ واجهة المتصفّح يتبعان المظهر. */
 body.theme-dark, body.theme-auto.dark-active { color-scheme: dark; }
