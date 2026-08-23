@@ -386,6 +386,31 @@
         if (rows.length) await Cache.putMany(storeName, rows);
     }
 
+    /* ── بصمةُ المالك ──
+       المخبأُ لا يحمل اسمَ صاحبه، فحسابُ «ب» يقرأ ما تركه «أ»: يرث
+       `onboarded` فيتخطّى التهيئة كلَّها، ويرث `academic_term` فيكتب
+       فصولاً موسومةً بفصلٍ ليس فصله، ثم يُصدّر نسخةً فيها صفوفُ «أ»
+       فيُعيد الاستيرادُ نسبَها إليه ملكيةً دائمة.
+
+       والمِعلمُ في `localStorage` لا في المخبأ: الترطيبُ يمسح مخزن
+       `settings` ويملؤه من الخادم، فأيُّ مِعلمٍ بداخله يُمحى قبل أن يُقرأ. */
+    const OWNER_KEY = 'teacher_app_cache_owner';
+
+    function cacheOwner() {
+        try { return global.localStorage.getItem(OWNER_KEY); } catch (e) { return null; }
+    }
+
+    /** يمسح المخبأ إن كان لغير صاحب الجلسة. @returns {boolean} هل مُسح؟ */
+    async function claimCache(uid) {
+        if (cacheOwner() === uid) return false;
+        /* يُمسح كاملاً بما فيه الملفّات المحليّة: كتبُ معلّمٍ آخر لا تُترك
+           على جهازٍ صار لغيره. ومسحُ مخبأٍ فارغٍ على جهازٍ جديدٍ لا يكلّف. */
+        await Cache.clearAll();
+        try { global.localStorage.setItem(OWNER_KEY, uid); } catch (e) { /* لا يوقف الإقلاع */ }
+        console.info('[TeacherDB] مخبأُ معلّمٍ آخر — مُسح بالكامل.');
+        return true;
+    }
+
     /** Pull the current teacher's rows from Supabase into the cache.
      *  Resolves once the first screen's stores are in; the rest keep loading. */
     function hydrate() {
@@ -411,8 +436,13 @@
            فلو حُجز وعدُ «الاختبارات» عند دورها لوجدته شاشةٌ سبقتها فارغاً
            بلا وعدٍ فظنّت المخزنَ فارغاً. فكلُّ مخزنٍ له وعدُه من أول تكّة،
            وإنما يتأخّر **نداؤه** لا وعدُه. */
+        /* بوّابةٌ واحدةٌ يمرّ بها كلُّ مخزنٍ قبل ملئه: تُمسح إن كان
+           المخبأُ لمعلّمٍ آخر. وتُحسب مرّةً ويُنتظرها الجميع. */
+        const claimed = uidP.then((uid) => (uid ? claimCache(uid) : false));
+
         const reserve = (s, gate) => {
             const p = gate
+                .then(() => claimed)
                 .then(() => uidP)
                 .then((uid) => (uid ? hydrateStore(s, uid) : null));
             _storeHydration[s] = p;
