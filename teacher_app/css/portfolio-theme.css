@@ -87,7 +87,7 @@ body {
 /* Main page title "📁 ملف الإنجاز" — gold underline */
 #view-portfolio .section-title {
     color: var(--pf-royal);
-    border-bottom: 2px solid var(--pf-gold);
+    border-bottom: 2px solid var(--primary);
     padding-bottom: var(--space-2);
 }
 
@@ -97,47 +97,55 @@ body {
 /* ==========================================================================
    Accordion sections (portfolio-only)
    ========================================================================== */
+/* ══ بلا ذهبيّ في ملف الإنجاز ══
+   تسعُ بطاقاتٍ بحدٍّ ذهبيٍّ باهتٍ وعشرةُ حدودٍ داخلية تصنع شبكةً ذهبيّةً
+   تحيط كلَّ شيء — وهي العلّةُ نفسُها التي حيّدها `theme-white.css` في
+   بقيّة التطبيق حين نزع الذهبيَّ عن رمز `--border`. وبقيت هنا لأن هذه
+   القواعد تكتب اللونَ صريحاً لا عبر الرمز. (طلبُ المعلّم، ٢٢ أغسطس
+   ٢٠٢٦.) فصارت تقرأ الرمزَ كغيرها، فتتبع المظهرَ وتوافق بقيّةَ الشاشات. */
 .portfolio-section {
     background: var(--pf-white);
-    border: 1px solid var(--pf-gold-light);
+    border: 1px solid var(--border);
     transition: border-color var(--dur-fast) var(--ease),
                 box-shadow var(--dur-fast) var(--ease);
 }
 .portfolio-section:hover {
-    border-color: var(--pf-gold);
-    box-shadow: 0 2px 8px rgba(201, 169, 97, 0.18);
+    border-color: var(--border-strong);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .10);
 }
 .portfolio-section.is-open {
-    border-color: var(--pf-gold);
-    box-shadow: 0 4px 12px rgba(201, 169, 97, 0.22);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 16%, transparent);
 }
 .portfolio-section-header:hover {
     background: var(--pf-ivory);
 }
 .portfolio-section-body {
     background: var(--pf-ivory);
-    border-top: 1px solid var(--pf-gold-light);
+    border-top: 1px solid var(--border);
 }
 .portfolio-title {
     color: var(--pf-royal);
 }
 .portfolio-section.is-open .portfolio-chev {
-    color: var(--pf-gold);
+    color: var(--primary);
 }
 
 /* ==========================================================================
    Generic cards (strategies, initiatives, file cards) — applied app-wide
    ========================================================================== */
+/* وحدُّ هذه كحدِّ `.card` سواءً — كانت وحدَها ذهبيّةً بين البطاقات، فتُرى
+   شاذّةً في التوزيع كما تُرى في ملف الإنجاز. */
 .portfolio-card,
 .file-card,
 .auto-item {
     background: var(--pf-white);
-    border: 1px solid var(--pf-gold-light);
+    border: 1px solid var(--border);
     transition: border-color var(--dur-fast) var(--ease);
 }
 .portfolio-card:hover,
 .file-card:hover {
-    border-color: var(--pf-gold);
+    border-color: var(--border-strong);
 }
 .portfolio-card-header h4 {
     color: var(--pf-royal);
@@ -198,7 +206,7 @@ body {
    ========================================================================== */
 #view-portfolio .info-table-compact th,
 #view-portfolio .info-table-compact td {
-    border-color: var(--pf-gold-light);
+    border-color: var(--border);
 }
 #view-portfolio .info-table-compact th {
     background: var(--pf-ivory);
@@ -213,19 +221,45 @@ a:hover {
     color: var(--pf-gold);
 }
 
+/* ══ ما بقي ذهبيّاً في التطبيق يُحيَّد داخل ملف الإنجاز وحدَه ══
+   الوسومُ وزرُّ «حفظ» الثانويّ قواعدُها عامّةٌ تخصّ الشاشات كلَّها، ولم
+   يطلب المعلّم نزعَ الذهبيّ منها جميعاً — طلبه من ملف الإنجاز. فتُقيَّد
+   بـ`#view-portfolio` ولا تُمسّ خارجَه.
+
+   وحبرُ `.badge-warning` كان ‎#6B5416‎ معايَراً على أرضيّةٍ ذهبيّة، فيُبدَّل
+   معها: أرضيّةٌ من الرمز وحبرٌ من الحبر الأساسيّ، فيتبعان المظهرين. */
+#view-portfolio .badge-warning {
+    background: color-mix(in srgb, var(--primary) 9%, var(--mix-base));
+    color: var(--ink-primary);
+}
+#view-portfolio .badge-muted {
+    background: color-mix(in srgb, var(--beige) 32%, var(--mix-base));
+    color: var(--ink-primary);
+    border: 1px solid var(--border);
+}
+#view-portfolio .btn-secondary {
+    border-color: var(--border-strong);
+}
+#view-portfolio .btn-secondary:hover,
+#view-portfolio .btn-ghost:hover {
+    background: color-mix(in srgb, var(--beige) 30%, var(--mix-base));
+}
+
 /* ==========================================================================
    Personal info — Government-style ID card
    ========================================================================== */
+/* إطارُ البطاقة بلون الهُويّة لا بالذهبيّ. وهذه بطاقةُ الشاشة وحدَها —
+   المطبوعةُ يبنيها `print-portfolio.js` بلوحة `print.css`، فلا تتأثّر. */
 #view-portfolio .pf-id-card {
     background: var(--pf-white);
     padding: 8px;
-    border: 1px solid var(--pf-gold);
+    border: 1px solid var(--primary);
     max-width: 720px;
     margin: 0 auto;
 }
 
 #view-portfolio .pf-id-inner {
-    border: 0.5px solid var(--pf-gold);
+    border: 0.5px solid var(--border-strong);
     padding: 28px;
 }
 
@@ -275,7 +309,7 @@ a:hover {
 #view-portfolio .pf-id-photo {
     width: 100px;
     height: 130px;
-    border: 1px solid var(--pf-gold);
+    border: 1px solid var(--border-strong);
     padding: 4px;
     background: var(--pf-ivory);
     overflow: hidden;
@@ -306,7 +340,7 @@ a:hover {
 }
 
 #view-portfolio .pf-id-table tr {
-    border-bottom: 0.5px solid var(--pf-gold-light);
+    border-bottom: 0.5px solid var(--border);
 }
 
 #view-portfolio .pf-id-table tr:last-child {
@@ -335,7 +369,7 @@ a:hover {
 #view-portfolio .pf-id-footer {
     margin-top: 24px;
     padding-top: 16px;
-    border-top: 2px solid var(--pf-gold);
+    border-top: 2px solid var(--primary);
     display: flex;
     justify-content: space-between;
     font-size: 11px;
