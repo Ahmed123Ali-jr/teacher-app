@@ -114,6 +114,37 @@
             throw new Error('كلمة المرور يجب أن تكون ٦ أحرف على الأقل.');
         }
 
+        /* ── الزائرُ يُرقّى ولا يُستبدل (قرار المستخدم ٢١ أغسطس) ──
+           `signUp` تُنشئ **معرّفاً جديداً كلّياً**، فتبقى فصولُ الزائر
+           وطلابُه وجدولُه تحت المعرّف القديم — يتيمةً لا سبيل إليها،
+           لأنّ حساب الزائر بلا بريدٍ ولا كلمةِ مرور: الجلسةُ كانت مفتاحَه
+           الوحيد. فمن جرّب وبنى ثم سجّل يخسر كلَّ شيءٍ بصمت.
+
+           و`updateUser` تربط البريد بالحساب المجهول **في مكانه**: المعرّف
+           نفسه، فلا ينتقل صفٌّ واحد — وهو أأمنُ بكثيرٍ من نسخ تسعةَ عشرَ
+           مخزناً وترميم النسب بينها. */
+        let session = await sb.auth.getSession().catch(() => ({ data: {} }));
+        const current = session && session.data && session.data.session
+            ? session.data.session.user : null;
+
+        if (current && current.is_anonymous) {
+            const { data: up, error: upErr } = await sb.auth.updateUser({
+                email, password, data: { full_name: name.trim() }
+            });
+            if (upErr) {
+                if (/already|registered|exists/i.test(upErr.message || '')) {
+                    throw new Error('هذا البريد مسجّل مسبقاً — استخدم تسجيل الدخول.');
+                }
+                throw new Error(upErr.message || 'تعذّر إنشاء الحساب.');
+            }
+            const me = (up && up.user) || current;
+            invalidateTeacher();
+            /* الملفُّ موجودٌ منذ كان زائراً — يُحدَّث اسمُه لا يُنشأ. */
+            await ensureProfile(me.id, { full_name: name.trim() });
+            const prof = await fetchProfile(me.id);
+            return mapProfile(me, prof);
+        }
+
         const { data, error } = await sb.auth.signUp({
             email,
             password,
@@ -127,6 +158,13 @@
         }
         const user = data.user;
         if (!user) throw new Error('تعذّر إنشاء الحساب.');
+
+        /* ولا جلسةَ يعني أنّ «تأكيد البريد» مفعَّلٌ في لوحة Supabase:
+           فالحسابُ أُنشئ ولم يُدخَل. وبلا هذا الفحص تبقى جلسةُ الزائر
+           حيّةً وتقول الشاشةُ «تم إنشاء حسابك» — تسجيلٌ يكذب. */
+        if (!data.session) {
+            throw new Error('أُنشئ حسابك — افتح بريدك وأكّده ثم سجّل الدخول.');
+        }
         invalidateTeacher();   // معلّمٌ آخر — انظر التعليق في `guestLogin`
 
         await ensureProfile(user.id, { full_name: name.trim() });
