@@ -6325,3 +6325,16 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 /* لا تُطبع مع السجلات ولا تظهر في تصدير PDF. */
 #pdfcore-stage .app-credit { display: none; }
+
+/* تحذيرُ الملفّات المحليّة — حقيقةٌ يعتمد عليها المعلّم، لا حشو. */
+.local-note {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    font-size: var(--fs-xs);
+    line-height: 1.9;
+    color: var(--text-muted);
+}
+.local-note b { color: var(--text); font-weight: var(--fw-black); }
