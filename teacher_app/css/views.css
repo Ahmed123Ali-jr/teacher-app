@@ -6305,18 +6305,23 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     .classes-fab { bottom: 0; }
 }
 
-/* نسبةُ العمل — أسفل الإعدادات، هادئةٌ لا تزاحم شيئاً. */
+/* ==========================================================================
+   نسبةُ العمل — سطرٌ واحد في هيكل التطبيق، يظهر في كل شاشة
+   ==========================================================================
+   موضعُه آخرُ `.app-main` لا داخل شاشةٍ بعينها: فيرث حشوةَ الأسفل التي
+   تُبعده عن الشريط السفلي، ويظهر في أيّ شاشةٍ تُضاف لاحقاً بلا أن يُذكر.
+   وهادئٌ عمداً — نسبةُ عملٍ لا إعلان.
+   ========================================================================== */
 .app-credit {
     text-align: center;
-    margin: var(--space-6) 0 var(--space-8);
+    margin: var(--space-6) 0 var(--space-4);
     font-size: var(--fs-xs);
-    line-height: 2;
     color: var(--text-muted);
 }
 .app-credit b {
-    display: inline-block;
-    font-size: var(--fs-sm);
     font-weight: var(--fw-black);
-    color: var(--text);
+    color: var(--text-muted);
     letter-spacing: .2px;
 }
+/* لا تُطبع مع السجلات ولا تظهر في تصدير PDF. */
+#pdfcore-stage .app-credit { display: none; }
