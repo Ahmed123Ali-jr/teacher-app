@@ -204,11 +204,22 @@
         try {
             /* كل مخزن يُمسح على حدة: شواهد الاستراتيجيات فيها صور طلاب،
                وبقاؤها بعد حذف الحساب خرق للخصوصية لا مجرّد ملفات يتيمة. */
+            /* حلقةُ ترقيمٍ حتى يفرغ المجلد: `list()` حدُّها الافتراضيّ
+               **مئة ملف**، فمعلّمٌ عنده مئةٌ وعشرون شاهداً كانت تبقى صورُ
+               طلابه في الخادم إلى الأبد — خرقُ خصوصيةٍ لا ملفاتٌ يتيمة،
+               ومخالفةٌ لشرط آبل ٥٫١٫١(v). (ق٫٣) */
+            const PAGE = 100;
             for (const bucket of ['books', 'evidence']) {
-                const { data: files } = await sb.storage.from(bucket).list(user.id);
-                if (files && files.length) {
-                    await sb.storage.from(bucket)
+                for (let guard = 0; guard < 200; guard++) {
+                    const { data: files, error } = await sb.storage.from(bucket)
+                        .list(user.id, { limit: PAGE });
+                    if (error) throw error;
+                    if (!files || !files.length) break;
+                    const { error: rmErr } = await sb.storage.from(bucket)
                         .remove(files.map((f) => user.id + '/' + f.name));
+                    if (rmErr) throw rmErr;
+                    /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
+                    if (files.length < PAGE) break;
                 }
             }
         } catch (e) {
