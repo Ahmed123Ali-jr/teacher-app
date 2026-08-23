@@ -193,6 +193,10 @@
                 ${MENU_GROUPS.map(groupHtml).join('')}
 
                 <button type="button" class="set-logout" id="btn-logout-settings">تسجيل الخروج</button>
+
+                <p class="app-credit">
+                    تصميم وتطوير<br><b>أحمد علي عسيري</b>
+                </p>
             </div>
         `;
 
@@ -1022,6 +1026,7 @@
                     <tr><th>الإصدار</th><td>${APP_VERSION}</td></tr>
                     <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
                     <tr><th>الاسم</th><td>تطبيق إنجاز المعلم</td></tr>
+                    <tr><th>تصميم وتطوير</th><td>أحمد علي عسيري</td></tr>
                     <tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>
                     <tr><th>رقم البناء</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                 </tbody>

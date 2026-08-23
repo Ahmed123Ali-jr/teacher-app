@@ -6304,3 +6304,19 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 @media (min-width: 769px) {
     .classes-fab { bottom: 0; }
 }
+
+/* نسبةُ العمل — أسفل الإعدادات، هادئةٌ لا تزاحم شيئاً. */
+.app-credit {
+    text-align: center;
+    margin: var(--space-6) 0 var(--space-8);
+    font-size: var(--fs-xs);
+    line-height: 2;
+    color: var(--text-muted);
+}
+.app-credit b {
+    display: inline-block;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-black);
+    color: var(--text);
+    letter-spacing: .2px;
+}
