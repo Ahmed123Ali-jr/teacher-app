@@ -4362,15 +4362,22 @@ body.drawer-open { overflow: hidden; }
 /* «أخرى» باهتةٌ تدلّ على الحقل ولا تُقرأ قيمةً فيه. */
 .tf-num::placeholder { color: var(--text-muted); font-size: 12px; font-weight: var(--fw-medium); opacity: 1; }
 
-/* «حفظ» و«إلغاء» فوق قائمة الحصص — لا في ذيل اللوحة خلف تمريرة. */
-.times-actions {
-    display: flex;
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
+/* سطرُ الطمأنة مكان الزرَّين: لا «حفظ» ولا «إلغاء»، فكلُّ تغييرٍ يُحفظ
+   ساعةَ وقوعه. وبلا هذا السطر يظنّ المعلّمُ أن تغييرَه ضاع فيبحث عن زرٍّ
+   ليس هناك. ويومض «حُفظت ✓» عند كلّ كتابة ثمّ يهدأ لونُه ويبقى نصُّه —
+   فالتأكيدُ الباقي أطمنُ من وميضٍ يذهب ولا يُدرى أكان أم لا. */
+.times-auto {
+    margin: 0 0 var(--space-4);
+    padding: 8px 11px; border-radius: 10px;
+    font-size: 12px; font-weight: var(--fw-bold); text-align: center;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--beige) 35%, var(--mix-base));
+    transition: color .18s ease, background-color .18s ease;
 }
-/* «حفظ» يأخذ السطر و«إلغاء» بقدر كلمته: تساويهما يجعل الإلغاء دعوةً
-   مثله، وليس هو ما جاء المعلّم من أجله. */
-.times-actions .btn-primary { flex: 1; }
+.times-auto.on {
+    color: #fff;
+    background: var(--primary);
+}
 
 .times-list {
     display: flex;

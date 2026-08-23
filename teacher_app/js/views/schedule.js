@@ -1358,25 +1358,64 @@
             `).join('');
         }
 
+        /* ---------- الحفظ التلقائيّ ----------
+           التثبيتُ في `ctx` فوريٌّ فلا يضيع شيءٌ لو أُغلقت اللوحة في الحال،
+           والكتابةُ في القاعدة بعد سكونِ ثلثَي ثانية: كتابةُ «٤٥» تُطلق
+           حدثين، وضبطُ سبع حصصٍ يدويّاً يُطلق عشرات — فلا تُرسل كلُّها.
+
+           والرسمُ خلف اللوحة يُؤجَّل إلى إغلاقها: اللوحةُ تغطّيه فلا يُرى،
+           وإعادةُ رسمِه مع كلّ حرفٍ عملٌ لا يراه أحد. */
+        let saveTimer = null, dirty = false;
+
+        function flash(text) {
+            const el = form.querySelector('#tf-state');
+            if (!el) return;
+            el.textContent = text;
+            el.classList.add('on');
+            global.setTimeout(() => el.classList.remove('on'), 1400);
+        }
+
+        function writeNow() {
+            if (!dirty) return Promise.resolve();
+            dirty = false;
+            const saved = rows.map((r) => ({ ...r }));
+            const conf  = { ...cfg };
+            return bgSave(async () => {
+                await savePeriodTimes(saved);
+                await global.TeacherDB.Settings.set('period_autofill', conf);
+            }, () => render(container));
+        }
+
+        function commit() {
+            ctx.periods  = rows.map((r) => ({ ...r }));
+            ctx.autofill = { ...cfg };
+            dirty = true;
+            global.clearTimeout(saveTimer);
+            saveTimer = global.setTimeout(() => {
+                writeNow().then(() => flash('حُفظت ✓'));
+            }, 650);
+        }
+
         /* التعبئة فورية بلا زر: أي تغيير في البداية أو المدة أو الفسحة يعيد
            حساب الأوقات ويُحدّث القائمة وحدها — لا الصفحة كلها — حتى لا يفقد
            الحقل الذي يكتب فيه المعلم تركيزه. */
         function recalc() {
             rows.splice(0, rows.length, ...autofillRows(rows.length, cfg));
             const list = form.querySelector('#times-list');
-            if (!list) return;
-            list.innerHTML = rowsHtml();
-            bindRows();
+            if (list) { list.innerHTML = rowsHtml(); bindRows(); }
+            commit();
         }
 
-        /* «حفظ» فوق القائمة لا تحتها: كان في ذيل اللوحة فيمرّ المعلّم بسبع
-           حصصٍ قبل أن يبلغه، وأكثرُ ما يفعله ضبطُ البداية والمدّة ثم الحفظ. */
+        /* لا «حفظ» ولا «إلغاء»: كلُّ تغييرٍ يُحفظ ساعةَ وقوعه. كان الزرّان
+           فوق القائمة لأن المعلّم يمرّ بسبع حصصٍ قبل أن يبلغهما في الذيل،
+           ثم سقطا أصلاً — والزرُّ الذي لا يُنسى هو الذي لا يوجد.
+           (طلبُ المعلّم، ٢٢ أغسطس ٢٠٢٦.)
+
+           ومكانَهما سطرٌ يطمئنه أن ما غيّره محفوظ — وإلّا ظنّ أنه ضاع
+           وبحث عن زرٍّ ليس هناك. */
         function paint() {
             form.innerHTML = autofillHtml() + `
-                <div class="times-actions">
-                    <button type="button" class="btn btn-primary" id="save-times">حفظ</button>
-                    <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
-                </div>
+                <p class="times-auto" id="tf-state">تُحفظ التغييرات تلقائياً</p>
 
                 <div class="times-list" id="times-list">${rowsHtml()}</div>
             `;
@@ -1386,7 +1425,11 @@
         function bindRows() {
             form.querySelectorAll('[data-t]').forEach((inp) => {
                 inp.addEventListener('input', () => {
+                    /* الوقتُ الفارغ حالةُ عبورٍ أثناء الكتابة لا اختيار،
+                       فلا يُثبَّت وإلّا حُفظت حصّةٌ بلا بداية. */
+                    if (!inp.value) return;
                     rows[Number(inp.dataset.t)][inp.dataset.k] = inp.value;
+                    commit();
                 });
             });
         }
@@ -1436,27 +1479,22 @@
             });
 
             bindRows();
-            form.querySelector('#save-times')?.addEventListener('click', () => {
-                const saved = rows.map((r) => ({ ...r }));
-                ctx.periods  = saved;
-                ctx.autofill = { ...cfg };
-                global.Modal.close();
-                paintView(container, ctx);
-                global.TeacherApp.toast('تم حفظ الأوقات ✅', 'success', 1100);
-                /* الإعدادات تُكتب في الخلفية؛ الجدول أمام المعلم بالأوقات
-                   الجديدة قبل أن تصل الشبكة. */
-                bgSave(async () => {
-                    await savePeriodTimes(saved);
-                    await global.TeacherDB.Settings.set('period_autofill', { ...cfg });
-                }, () => render(container));
-            });
         }
 
         /* بلا تركيزٍ تلقائيّ: النافذةُ حبّاتُ مدّةٍ تُضغط قبل أن تكون حقلاً
            يُكتب، فقفزُ لوحة المفاتيح عليها يغطّي نصفَها قبل أن يراها
            المعلّم. فليضغط الحقلَ بنفسه. (طلبُه، ٢٢ أغسطس ٢٠٢٦؛ والنظيرُ
            في «+ خانة جديدة» و«تعديل الخانات» و«طباعة السجل».) */
-        global.Modal.open({ title: '⏰ توقيت الحصص', body: form, autofocus: false });
+        global.Modal.open({
+            title: '⏰ توقيت الحصص', body: form, autofocus: false,
+            /* الإغلاقُ يكتب ما لم تبلغه المهلةُ بعد — فمن غيّر وأغلق في
+               الحال لا يفقد تغييرَه — ثمّ يُعاد رسمُ الجدول بالأوقات. */
+            onClose: () => {
+                global.clearTimeout(saveTimer);
+                writeNow();
+                paintView(container, ctx);
+            }
+        });
     }
 
     /* ==========================================================================
