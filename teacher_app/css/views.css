@@ -4166,7 +4166,7 @@ body.drawer-open { overflow: hidden; }
 
 .set-group { margin-bottom: var(--space-3); }
 .set-group-t {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: var(--fw-black);
     color: var(--text-muted);
     margin: 0 var(--space-1) var(--space-2);
@@ -4186,7 +4186,7 @@ body.drawer-open { overflow: hidden; }
     align-items: center;
     gap: 11px;
     width: 100%;
-    padding: 12px 15px;
+    padding: 13px 15px;
     background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 30%, var(--mix-base)) 100%);
     border: 0;
     font-family: inherit;
@@ -4197,12 +4197,14 @@ body.drawer-open { overflow: hidden; }
 .set-row:active { background: color-mix(in srgb, var(--beige) 55%, var(--mix-base)); }
 /* و`.ic` سقطت مع الأيقونات، فلا قاعدةَ لها. */
 .set-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.set-row .t { font-size: 14px; font-weight: var(--fw-black); color: var(--ink-primary); }
+/* ‎15.5px‎ لا ‎14‎: طلبَ المعلّم تكبيراً يسيراً (٢٢ أغسطس ٢٠٢٦). والصفُّ
+   صار نصّاً وحدَه بعد سقوط الأيقونة، فله سعةٌ يحتملها. */
+.set-row .t { font-size: 15.5px; font-weight: var(--fw-black); color: var(--ink-primary); }
 .set-row .h {
     font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 1px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.set-row .chev { color: var(--text-muted); font-weight: var(--fw-black); font-size: 12px; flex-shrink: 0; }
+.set-row .chev { color: var(--text-muted); font-weight: var(--fw-black); font-size: 13px; flex-shrink: 0; }
 .set-row.is-danger .t { color: #DC2626; }
 
 /* صفّ منفرد خارج مجموعة — «تغيير كلمة المرور» في الملف التعريفي. */
