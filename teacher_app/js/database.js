@@ -469,16 +469,36 @@
         return (n >= 1 && n <= 3) ? n : 1;
     };
 
+    /**
+     * الفصل الدراسيّ الجاري.
+     *
+     * ── سباقٌ كان يُخفي فصول المعلّم (ق٫٥) ──
+     * المخبأُ فارغٌ عند أول فتحٍ على جهازٍ جديد، فتُقرأ «الفصل الأول»
+     * افتراضاً **وتُحفظ في المذكّرة إلى نهاية الجلسة**. فمعلّمُ الفصل
+     * الثاني يفتح تطبيقه فيجد شاشاته فارغة — فصولُه موسومةٌ بالثاني
+     * والتصفيةُ تسأل عن الأول — وكتاباتُه الجديدة تُوسم بفصلٍ ليس فصله.
+     *
+     * فصار: يُنتظر الترطيبُ إن كان جارياً، ولا تُحفظ المذكّرة إلا إن
+     * قُرئت قيمةٌ فعلاً. وقراءةُ المخبأ رخيصةٌ فلا يضرّ تكرارها.
+     */
     async function currentTerm() {
         if (_term != null) return _term;
+
+        /* الترطيبُ يملأ `settings` — فانتظارُه قبل الحكم لا بعده. */
+        if (_hydratePromise) {
+            try { await _hydratePromise; } catch (e) { /* فشلُه لا يحبس */ }
+        }
+
         /* من المخبأ رأساً: `get('settings')` يمرّ بمسارٍ يقرأ الفصول، فتدور. */
-        let n = 1;
+        let n = 1, found = false;
         try {
             const row = await Cache.get('settings', 'academic_term');
-            if (row) n = Number(row.value);
+            if (row) { n = Number(row.value); found = true; }
         } catch (e) { /* قراءةٌ فاشلة لا تحبس المعلّم خارج فصوله */ }
-        _term = (n >= 1 && n <= 3) ? n : 1;
-        return _term;
+
+        const val = (n >= 1 && n <= 3) ? n : 1;
+        if (found) _term = val;   /* لا تُحفظ قيمةٌ لم تُقرأ */
+        return val;
     }
 
     /* Books store the PDF in Supabase Storage (bucket "books"); the row
