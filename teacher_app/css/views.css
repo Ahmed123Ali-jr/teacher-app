@@ -4172,7 +4172,9 @@ body.drawer-open { overflow: hidden; }
     margin: 0 var(--space-1) var(--space-2);
 }
 
-/* الصفوف تُبنى كمجموعة واحدة بحواف مدوّرة، يفصلها خط رفيع كخلايا الجدول. */
+/* الصفوف تُبنى كمجموعة واحدة بحواف مدوّرة. وبلا خطٍّ يفصلها وبلا أيقونات
+   — بطلب المعلّم (٢٢ أغسطس ٢٠٢٦). فالمجموعةُ نفسُها هي الحدُّ، وعنوانُها
+   فوقها يقول ما تجمع، والفراغُ بين السطور يكفي لفصلها. */
 .set-list {
     border-radius: 14px;
     overflow: hidden;
@@ -4187,15 +4189,13 @@ body.drawer-open { overflow: hidden; }
     padding: 12px 15px;
     background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 30%, var(--mix-base)) 100%);
     border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--beige) 88%, #000);
     font-family: inherit;
     text-align: right;
     text-decoration: none;
     cursor: pointer;
 }
-.set-row:first-child { border-top: 0; }
 .set-row:active { background: color-mix(in srgb, var(--beige) 55%, var(--mix-base)); }
-.set-row .ic { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+/* و`.ic` سقطت مع الأيقونات، فلا قاعدةَ لها. */
 .set-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .set-row .t { font-size: 14px; font-weight: var(--fw-black); color: var(--ink-primary); }
 .set-row .h {

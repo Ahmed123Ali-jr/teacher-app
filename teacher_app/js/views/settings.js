@@ -50,26 +50,26 @@
         {
             title: 'الحساب والمدرسة',
             items: [
-                { page: 'profile-link',  icon: '👤', label: 'بياناتي الشخصية',   sub: 'الاسم، التخصص، المواد', href: '#/profile' },
-                { page: 'school',        icon: '🏫', label: 'بيانات المدرسة',    sub: 'الاسم، إدارة التعليم، العام' },
-                { page: 'term',          icon: '📚', label: 'الفصل الدراسي',     sub: 'الانتقال بين الفصلين ونقل فصولك' },
-                { page: 'password',      icon: '🔐', label: 'تغيير كلمة المرور', sub: 'الحالية ثم الجديدة' }
+                { page: 'profile-link',  label: 'بياناتي الشخصية',   sub: 'الاسم، التخصص، المواد', href: '#/profile' },
+                { page: 'school',        label: 'بيانات المدرسة',    sub: 'الاسم، إدارة التعليم، العام' },
+                { page: 'term',          label: 'الفصل الدراسي',     sub: 'الانتقال بين الفصلين ونقل فصولك' },
+                { page: 'password',      label: 'تغيير كلمة المرور', sub: 'الحالية ثم الجديدة' }
             ]
         },
         {
             title: 'التطبيق',
             items: [
-                { page: 'appearance',    icon: '🎨', label: 'المظهر',          sub: 'الوضع الفاتح والداكن' },
-                { page: 'bell',          icon: '🔔', label: 'منبّه الحصص',      sub: 'جرس المدرسة وتنبيه حصتك' },
-                { page: 'backup',        icon: '💾', label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
-                { page: 'invite',        icon: '👥', label: 'دعوة معلم',       sub: 'شارك التطبيق مع زميلك' }
+                { page: 'appearance',    label: 'المظهر',          sub: 'الوضع الفاتح والداكن' },
+                { page: 'bell',          label: 'منبّه الحصص',      sub: 'جرس المدرسة وتنبيه حصتك' },
+                { page: 'backup',        label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
+                { page: 'invite',        label: 'دعوة معلم',       sub: 'شارك التطبيق مع زميلك' }
             ]
         },
         {
             title: 'معلومات',
             items: [
-                { page: 'about',         icon: 'ℹ️', label: 'عن التطبيق',       sub: 'الإصدار، التحديث، الخصوصية، الدعم' },
-                { page: 'danger',        icon: '🔥', label: 'حذف البيانات أو الحساب', sub: 'لا يمكن التراجع', danger: true }
+                { page: 'about',         label: 'عن التطبيق',       sub: 'الإصدار، التحديث، الخصوصية، الدعم' },
+                { page: 'danger',        label: 'حذف البيانات أو الحساب', sub: 'لا يمكن التراجع', danger: true }
             ]
         }
     ];
@@ -192,7 +192,7 @@
             <div class="container set-v2">
                 ${MENU_GROUPS.map(groupHtml).join('')}
 
-                <button type="button" class="set-logout" id="btn-logout-settings">🚪 تسجيل الخروج</button>
+                <button type="button" class="set-logout" id="btn-logout-settings">تسجيل الخروج</button>
             </div>
         `;
 
@@ -230,7 +230,6 @@
         return `
             <${tag} class="set-row ${it.danger ? 'is-danger' : ''}"
                     data-settings-page="${it.page}"${hrefAttr}>
-                <span class="ic">${it.icon}</span>
                 <span class="tx">
                     <span class="t">${it.label}</span>
                     <span class="h">${it.sub || ''}</span>
