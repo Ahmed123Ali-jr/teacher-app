@@ -171,8 +171,11 @@
     async function logoutLocal() {
         invalidateTeacher();
         if (global.TeacherDB) {
-            try { global.TeacherDB.clearLocalCache().catch(() => {}); } catch (e) {}
-            try { global.TeacherDB.resetHydration(); } catch (e) {}
+            /* وملفاتُ الكتب تبقى هنا كما تبقى في `logout` — التراجعُ عن
+               التهيئة خروجٌ لا حذف. */
+            try { await global.TeacherDB.clearLocalCache(global.TeacherDB.LOCAL_ONLY); }
+            catch (e) { console.warn('[Auth] تعذّر مسح المخبأ:', e && e.message); }
+            try { global.TeacherDB.resetHydration(); } catch (e) { /* لا يوقف الخروج */ }
         }
         try {
             await sb.auth.signOut({ scope: 'local' });
@@ -182,13 +185,24 @@
         }
     }
 
+    /**
+     * خروجٌ يمسح المخبأ — **إلا ملفاتِ الكتب**.
+     *
+     * `book_files` ليست مخبأً بل ملفاتُ المعلّم نفسُها: تُحفظ محلياً
+     * وحدها بلا نسخةٍ على الخادم. فمسحُها عند الخروج كان **فقداً نهائياً
+     * بلا سؤالٍ ولا تحذير** — ورفعُ كتابٍ بثلاثمئة صفحةٍ يضيع بضغطةٍ
+     * يوميّة. وتبقى محفوظةً حتى يدخل معلّمٌ **مختلف**، فتُمسح حينها.
+     *
+     * والمسحُ يُنتظر الآن: التعليقُ القديم قال «الدخولُ التالي يمسح على
+     * أي حال»، ولم يعد ذلك صحيحاً بعد إصلاح ق٫١ — فلو سبق الدخولُ المسحَ
+     * لقرأ الحسابُ الجديد مخبأَ من قبله.
+     */
     async function logout() {
         invalidateTeacher();
         if (global.TeacherDB) {
-            /* المسحُ المحلّي لا يُنتظر: لا شاشةَ بعد الخروج تقرأ منه،
-               والدخولُ التالي يمسح كل مخزنٍ قبل ملئه على أي حال. */
-            try { global.TeacherDB.clearLocalCache().catch(() => {}); } catch (e) {}
-            try { global.TeacherDB.resetHydration(); } catch (e) {}
+            try { await global.TeacherDB.clearLocalCache(global.TeacherDB.LOCAL_ONLY); }
+            catch (e) { console.warn('[Auth] تعذّر مسح المخبأ:', e && e.message); }
+            try { global.TeacherDB.resetHydration(); } catch (e) { /* لا يوقف الخروج */ }
         }
         await sb.auth.signOut();
     }
@@ -233,8 +247,10 @@
 
         invalidateTeacher();
         if (global.TeacherDB) {
-            try { await global.TeacherDB.clearLocalCache(); } catch (e) {}
-            try { global.TeacherDB.resetHydration(); } catch (e) {}
+            /* هنا تُمحى ملفاتُ الكتب أيضاً — الحسابُ ذهب، ولا معنى
+               لإبقاء ملفاته على الجهاز. وهو عكسُ `logout` عن قصد. */
+            try { await global.TeacherDB.clearLocalCache(); } catch (e) { /* الحساب أولى */ }
+            try { global.TeacherDB.resetHydration(); } catch (e) { /* لا يوقف الحذف */ }
         }
         /* الجلسة صارت لحساب محذوف — نُسقطها محلياً ولو رفض الخادم. */
         try { await sb.auth.signOut(); } catch (e) { /* متوقّع */ }

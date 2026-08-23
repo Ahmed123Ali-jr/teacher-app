@@ -141,8 +141,19 @@
         async clearStore(storeName) {
             return cacheTx(storeName, 'readwrite', (s) => reqAsPromise(s.clear()));
         },
-        async clearAll() {
-            for (const def of CACHE_STORES) await this.clearStore(def.name);
+        /**
+         * @param {string[]} [keep] أسماءُ مخازنَ لا تُمسح.
+         *
+         * `book_files` ملفاتُ المعلّم نفسِها لا مخبأً لها: مكتوبةٌ محلياً
+         * وحدها (`storage_path='local'`). فمسحُها عند الخروج **فقدٌ لا
+         * رجعةَ فيه** — كتابُ منهجٍ بثلاثمئة صفحةٍ يذهب بضغطةٍ يوميّة.
+         */
+        async clearAll(keep) {
+            const skip = new Set(keep || []);
+            for (const def of CACHE_STORES) {
+                if (skip.has(def.name)) continue;
+                await this.clearStore(def.name);
+            }
         },
         async putMany(storeName, rows) {
             if (!rows || rows.length === 0) return;
@@ -1007,6 +1018,8 @@
         // Cache control
         hydrate,
         resetHydration,
-        clearLocalCache: () => Cache.clearAll()
+        clearLocalCache: (keep) => Cache.clearAll(keep),
+        /* أسماءُ المخازن التي تحمل ملفاتٍ لا نسخةَ لها على الخادم. */
+        LOCAL_ONLY: ['book_files']
     };
 })(window);
