@@ -770,17 +770,103 @@
         return dump;
     }
 
+    /**
+     * يستعيد نسخةً احتياطية.
+     *
+     * ── ثلاثةُ عيوبٍ كانت تجتمع فتُفقد البيانات برسالة نجاح (ق٫٤) ──
+     * • `clear()` يمسح المخزن **قبل** أي إدراج، فلا رجعة إن فشل ما بعده.
+     * • والصفوف تحمل `teacher_id` صاحبِ النسخة، فترفضها RLS في حسابٍ آخر.
+     * • و`catch` يبتلع كلَّ فشلٍ صامتاً، ثم تُعاد `true` فتقول الواجهة
+     *   «تم الاستيراد ✅» — والمعلّم قد فقد كلَّ شيء.
+     *
+     * فصار: تُهيَّأ الصفوف في الذاكرة بمعرّف الحساب الحاليّ، **ثم تُختبر
+     * كتابةٌ واحدة قبل أن يُمسّ شيء**، ثم يُمسح ويُدرَج، ويُرمى الخطأ إن
+     * فشل صفٌّ واحد — فلا تُقال «تمّ» إلا وقد تمّت.
+     *
+     * والمعرّفات تبقى كما هي عمداً: `students.class_id` يشير إلى
+     * `classes.id`، فتغييرُها يقطع النسبَ بين الجداول.
+     */
     async function importAll(dump) {
         if (!dump || !dump.data) throw new Error('نسخة احتياطية غير صالحة.');
+        const uid = await currentUid();
+        if (!uid) throw new Error('سجّل دخولك أولاً.');
+
+        /* ١) لمن هذه النسخة؟ — الجوابُ يقرّر مصير المعرّفات.
+              • **حسابُه هو:** تُبقى كما هي، فيُستبدل كلُّ صفٍّ بنظيره.
+              • **حسابٌ آخر:** تُبدَّل كلُّها. وإبقاؤها كان يجعل الإدراج
+                **تعديلاً على صفوف صاحبها الأصلي**، فترفضه RLS — قِيس
+                حرفياً: «violates row-level security policy». */
+        let owner = null;
         for (const name of STORE_NAMES) {
             const rows = dump.data[name];
-            if (!Array.isArray(rows)) continue;
+            if (Array.isArray(rows) && rows.length && rows[0] && rows[0].teacher_id) {
+                owner = rows[0].teacher_id; break;
+            }
+        }
+        const mine = !owner || owner === uid;
+
+        const newId = () => (global.crypto && global.crypto.randomUUID)
+            ? global.crypto.randomUUID()
+            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                  const r = Math.random() * 16 | 0;
+                  return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+              });
+
+        /* خريطةُ المعرّفات القديمة إلى الجديدة — تُبنى قبل أي كتابة كي
+           تُحوَّل بها روابطُ الأبناء (`class_id` و`student_id`). فلولاها
+           لصار كلُّ طالبٍ يتيماً من فصله. */
+        const idMap = {};
+        if (!mine) {
+            for (const name of STORE_NAMES) {
+                if (name === 'teachers' || name === 'portfolio' || name === 'settings') continue;
+                (dump.data[name] || []).forEach((r) => {
+                    if (r && r.id && !idMap[r.id]) idMap[r.id] = newId();
+                });
+            }
+        }
+        const LINKS = ['class_id', 'student_id'];
+
+        /* ٢) التهيئة في الذاكرة — بلا لمس القاعدة. */
+        const plan = [];
+        for (const name of STORE_NAMES) {
             if (name === 'teachers') continue;
-            await clear(name);
+            const rows = dump.data[name];
+            if (!Array.isArray(rows) || !rows.length) continue;
+            plan.push([name, rows.map((r) => {
+                const row = Object.assign({}, r);
+                /* كلُّ صفٍّ يصير لصاحب الحساب الحاليّ لا لصاحب النسخة. */
+                if (name === 'portfolio' || 'teacher_id' in row) row.teacher_id = uid;
+                if (!mine) {
+                    if (row.id && idMap[row.id]) row.id = idMap[row.id];
+                    LINKS.forEach((k) => { if (row[k] && idMap[row[k]]) row[k] = idMap[row[k]]; });
+                }
+                return row;
+            })]);
+        }
+        if (!plan.length) throw new Error('لا بيانات في هذه النسخة.');
+
+        /* ٢) اختبارُ كتابةٍ واحدة قبل المسح: لو رفضتها القاعدة لأيّ سبب
+              (صلاحيات، شبكة، مخطّطٌ تغيّر) نتوقّف والبياناتُ سليمة. */
+        const [probeStore, probeRows] = plan[0];
+        try {
+            await put(probeStore, probeRows[0]);
+        } catch (e) {
+            throw new Error('تعذّر الكتابة — لم يُمسّ شيء من بياناتك. (' + e.message + ')');
+        }
+
+        /* ٣) المسح والإدراج، وكلُّ فشلٍ يُحصى ولا يُبتلع. */
+        const failed = [];
+        for (const [name, rows] of plan) {
+            try { await clear(name); }
+            catch (e) { failed.push(name + ': مسح — ' + e.message); continue; }
             for (const row of rows) {
                 try { await put(name, row); }
-                catch (e) { console.warn('[TeacherDB] importAll row failed (' + name + '):', e.message); }
+                catch (e) { failed.push(name + ': ' + e.message); }
             }
+        }
+        if (failed.length) {
+            console.warn('[TeacherDB] importAll failures:', failed);
+            throw new Error('فشل استيراد ' + failed.length + ' صفّاً. أولها: ' + failed[0]);
         }
         return true;
     }
