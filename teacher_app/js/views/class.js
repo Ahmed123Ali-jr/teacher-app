@@ -1727,7 +1727,12 @@
             global.TeacherApp.toast('تم حفظ التعديل.', 'success');
             if (onSaved) onSaved();
         });
-        global.Modal.open({ title: 'تعديل الفصل', body: form });
+        /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح كانت تقفز على «الشعبة» بمجرّد
+           الفتح فتغطّي حقلَ المادة قبل أن يراه المعلّم — ولعلّه جاء
+           يبدّل المادةَ وحدَها. فليضغط الحقلَ الذي يريده.
+           (طلبُه، ٢٢ أغسطس ٢٠٢٦؛ والنظيرُ في «+ خانة جديدة» و«تعديل
+           الخانات» و«طباعة السجل» و«توقيت الحصص».) */
+        global.Modal.open({ title: 'تعديل الفصل', body: form, autofocus: false });
     }
 
     async function deleteClass(cls, onDone) {
