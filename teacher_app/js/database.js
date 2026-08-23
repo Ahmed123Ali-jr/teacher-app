@@ -753,6 +753,36 @@
         const { error } = await sb.from(table).delete().eq('id', key);
         if (error) err(storeName + ' remove', error);
         await Cache.remove(storeName, key);
+
+        /* ── تتالي المخبأ (ق٫٦) ──
+           القاعدةُ تتتالى على الخادم بمفاتيحها الأجنبية، **والمخبأُ لا
+           يعلم**. فتبقى حصصُ الجدول والواجباتُ والاختباراتُ محليّاً، وترسم
+           الرئيسيةُ حصصَ فصلٍ ميّتٍ حتى يُعاد التحميل.
+           وشواهدُ الاستراتيجيات صورُ طلابٍ في التخزين — بقاؤها بعد حذف
+           الفصل خرقُ خصوصيةٍ لا ملفاتٌ يتيمة. */
+        if (storeName === 'classes') await cascadeClassCache(key);
+    }
+
+    /** يمسح من المخبأ كلَّ ما كان معلّقاً بفصلٍ حُذف، ويُزيل شواهده. */
+    async function cascadeClassCache(classId) {
+        const CHILDREN = ['students', 'attendance', 'participation', 'assignments',
+                          'exams', 'worksheets', 'books', 'schedule', 'strategy_logs'];
+        const evidence = [];
+        for (const child of CHILDREN) {
+            let rows = [];
+            try { rows = await Cache.getAll(child); } catch (e) { continue; }
+            for (const r of rows) {
+                if (!r || r.class_id !== classId) continue;
+                if (child === 'strategy_logs' && Array.isArray(r.evidence)) {
+                    r.evidence.forEach((path) => { if (path) evidence.push(path); });
+                }
+                try { await Cache.remove(child, r.id); } catch (e) { /* لا يوقف الباقي */ }
+            }
+        }
+        if (evidence.length) {
+            try { await sb.storage.from('evidence').remove(evidence); }
+            catch (e) { console.warn('[TeacherDB] تعذّر مسح شواهد الفصل المحذوف:', e.message); }
+        }
     }
 
     async function clear(storeName) {
