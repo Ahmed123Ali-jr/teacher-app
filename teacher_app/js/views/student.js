@@ -31,17 +31,22 @@
 
     async function render(container, studentId) {
         const student = await global.TeacherDB.get('students', studentId);
-        if (!student) {
-            /* عنوانُ الشريط اسمُ الطالب — «الطالب» وحدها لا تقول أيَّهم. */
-        if (global.Router && global.Router.setTitle) global.Router.setTitle(student.name);
 
-        container.innerHTML = `
+        /* الطالبُ محذوف: تُرسم الرسالة ويُنتهى. وكان سطرُ العنوان قد وقع
+           **داخل** هذه الكتلة فيقرأ `student.name` من عدم، فيُرمى الخطأ
+           قبل الرسم وتبقى صفحةُ الطالب القديمة حيّةً على الشاشة. (ق٫٧) */
+        if (!student) {
+            if (global.Router && global.Router.setTitle) global.Router.setTitle('الطالب');
+            container.innerHTML = `
                 <div class="container"><div class="empty-state">
                     <div class="icon">⚠️</div><h3>الطالب غير موجود</h3>
                     <a href="#/dashboard" class="btn btn-primary">الرئيسية</a>
                 </div></div>`;
             return;
         }
+
+        /* عنوانُ الشريط اسمُ الطالب — «الطالب» وحدها لا تقول أيَّهم. */
+        if (global.Router && global.Router.setTitle) global.Router.setTitle(student.name);
 
         const cls = await global.TeacherDB.get('classes', student.class_id);
         const teacher = await global.Auth.currentTeacher();
