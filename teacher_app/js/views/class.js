@@ -414,7 +414,11 @@
         } else {
             // Wait for any in-flight saves to land in the cache before reading,
             // otherwise the table can paint with stale data.
-            await flushWrites();
+            /* وفشلُ الكتابة لا يمنع القراءة: المعلّم أُبلغ حين وقع، والشاشةُ
+               الآن تُعيد رسمَ **الحقيقة** من القاعدة — وهو ما يحتاجه ليرى
+               ما حُفظ فعلاً. فيُبتلع هنا وحدَه، ويُصفَّر العدّاد بعده. */
+            try { await flushWrites(); } catch (e) { /* أُبلغ عند وقوعه */ }
+            resetWriteFailures();
             students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
             students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
 
@@ -629,7 +633,7 @@
                 // Drain pending optimistic single-cell writes, then read the
                 // real rows (with ids) so this works even after fast manual
                 // taps left pseudo-rows in the local model.
-                await flushWrites();
+                try { await flushWrites(); } catch (e) { /* أُبلغ عند وقوعه */ }
                 const attNow = (await global.TeacherDB.getAllByIndex('attendance', 'class_id', cls.id))
                     .filter((r) => r.date === today);
                 const byStudent = new Map(attNow.map((r) => [r.student_id, r]));
@@ -821,8 +825,14 @@
                     return;
                 }
                 syncEvalModel(evalToday, sidIndex[sid], sid, colId, value);
-                setEvalValue(cls, sid, today, colId, value);
-                if (showToast) global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
+                /* «تم الحفظ» بعد الحفظ لا قبله — وكانت تُقال والكتابةُ في
+                   الطابور بعد. */
+                const before = _failedWrites;
+                setEvalValue(cls, sid, today, colId, value).then(() => {
+                    if (showToast && _failedWrites === before) {
+                        global.TeacherApp.toast('تم الحفظ.', 'success', 1200);
+                    }
+                });
             };
             inp.addEventListener('input',  () => {
                 clearTimeout(timer);
@@ -1243,11 +1253,39 @@
        Serialising the writes guarantees each save reads the previous one's
        result before computing its own. */
     let _writeQueue = Promise.resolve();
+    /* ── لماذا يُخبَر المعلّم بالفشل ──
+       هذا ممرُّ **كلِّ** كتابات السجلّ: الحضور والتقييم والملاحظات. وكان
+       يبتلع كلَّ فشلٍ في `console.warn` — فمعلّمٌ في فصلٍ بلا تغطيةٍ يضغط
+       ثلاثين زرّاً فتخضرُّ كلُّها ولا شيءَ منها وصل. والكذبةُ تدوم ما دام
+       يعمل، لأن الشاشةَ تُرسم من الذاكرة لا من القاعدة.
+
+       فالشاشةُ تبقى سريعةً كما هي (تُحدَّث قبل الشبكة)، لكنّ الفشلَ
+       **يُقال** ويُعرض زرُّ إعادةِ محاولة. */
+    let _failedWrites = 0;
+
+    function reportWriteFailure(e) {
+        _failedWrites += 1;
+        console.warn('[class.js] write failed:', e);
+        if (global.TeacherApp && global.TeacherApp.toast) {
+            global.TeacherApp.toast(
+                _failedWrites === 1
+                    ? 'تعذّر الحفظ — تحقّق من الاتصال. اضغط «تحديث» لترى المحفوظ فعلاً.'
+                    : 'تعذّر حفظ ' + _failedWrites + ' تغييراً — تحقّق من الاتصال.',
+                'error', 7000);
+        }
+    }
+
     function queueWrite(fn) {
         const next = _writeQueue.then(fn);
-        _writeQueue = next.catch((e) => { console.warn('[class.js] write failed:', e); });
-        return next;
+        /* السلسلةُ تُلتقط كي لا يتوقّف الطابور، والفشلُ يُبلَّغ لا يُبتلع. */
+        _writeQueue = next.catch(reportWriteFailure);
+        /* والمرتجَعُ ملتقَطٌ أيضاً: مناداةٌ بلا `await` (زرُّ الحضور مثلاً)
+           كانت تترك وعداً مرفوضاً في الفراغ. */
+        return next.catch(() => {});
     }
+
+    /** هل فشل شيءٌ منذ آخر رسم؟ — تُصفَّر عند إعادة القراءة من القاعدة. */
+    function resetWriteFailures() { _failedWrites = 0; }
 
     function setAttendance(cls, studentId, date, status) {
         return queueWrite(async () => {
@@ -1297,7 +1335,15 @@
 
     /** Drain any pending writes — callers use this before re-reading
      *  the cache so they don't see stale data. */
-    function flushWrites() { return _writeQueue; }
+    /** ينتظر الطابور، **ويرمي إن فشل شيء** — كان يعيد سلسلةً ملتقَطةً
+     *  فلا ترمي أبداً، فيمضي المنادي كأنّ كلَّ شيءٍ حُفظ. */
+    async function flushWrites() {
+        await _writeQueue;
+        if (_failedWrites) {
+            const n = _failedWrites;
+            throw new Error('لم يُحفظ ' + n + ' تغييراً — تحقّق من الاتصال.');
+        }
+    }
 
     /* كتابات مستقلة تُنفَّذ معاً بسقف متزامن: كل كتابة رحلة شبكة تقارب ربع
        ثانية، فحذف طالب له ٤٠ حضوراً و٤٠ مشاركة كان ثمانين رحلة متتابعة —
