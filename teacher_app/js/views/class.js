@@ -1787,10 +1787,26 @@
             ? `سيتم حذف الفصل و${global.Words.count(students.length)} وجميع سجلاتهم. متأكد؟`
             : 'حذف الفصل؟';
         if (!global.confirm(msg)) return;
-        /* ثلاثة طلاب في وقت واحد لا أكثر: كل طالب يفتح بنفسه ثماني كتابات
-           متزامنة، فثلاثة معاً تعني أربعاً وعشرين — حدٌّ يحتمله المتصفح. */
-        await runPooled(students, (s) => deleteStudent(s.id), 3);
-        await global.TeacherDB.remove('classes', cls.id);
+
+        /* حذفةٌ واحدة، لا حلقةٌ على الطلاب.
+           كان يمرّ على كلِّ طالبٍ فيحذف حضورَه ومشاركتَه ثمّ يحذفه، ثمّ
+           يحذف الفصل. وكلُّ تلك الصفوف **تتتالى من الفصل نفسِه** في
+           القاعدة — فكان يطلب من الشبكة عشراتِ الطلبات لتفعل ما تفعله
+           طلبةٌ واحدة، وبينها نافذةٌ إن انقطعت الشبكةُ فيها بقي فصلٌ نصفَ
+           محذوف: طلابٌ ذهبوا وفصلٌ باقٍ يحملهم.
+           والمخبأُ لا يُنسى: `remove('classes')` يُتلي عليه بنفسه.
+
+           ولم يكن عليها حارسٌ أصلاً — فأيُّ تعثّرٍ يمرّ صامتاً، والمعلّم
+           يرى فصلاً بقي ولا يدري لماذا. */
+        try {
+            await global.TeacherDB.remove('classes', cls.id);
+        } catch (e) {
+            console.error('[class.js] delete class failed:', e);
+            global.TeacherApp.toast(
+                'تعذّر حذف الفصل: ' + (e.message || 'تحقّق من الاتصال') + ' — لم يُحذف شيء.',
+                'error', 7000);
+            return;
+        }
         global.TeacherApp.toast('تم حذف الفصل.', 'info');
         if (onDone) onDone();
         else global.location.hash = '#/dashboard';
