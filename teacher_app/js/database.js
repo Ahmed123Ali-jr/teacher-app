@@ -75,24 +75,132 @@
 
     let _cacheDbPromise = null;
 
+    /* ── تعطّلُ المخزن المحلّي يجب أن يُسمَع ──
+       كلُّ قراءةٍ في التطبيق تمرّ بالمخبأ، و`Cache.getAll` تُرجع `[]` حين لا
+       مخزن. فمخزنٌ ميّتٌ يُري المعلّمَ **تطبيقاً فارغاً** — لا فصولَ ولا
+       طلاب — وبياناتُه سليمةٌ على الخادم. وفارغٌ بلا تفسيرٍ يُقرأ «ضاع
+       عملي»، وهو أسوأُ ممّا لو لم تُفتح الشاشةُ أصلاً.
+       فيُعلَن السببُ صراحةً، وتلتقطه الواجهة. */
+    let _cacheDown = null;
+
+    function markCacheDown(reason) {
+        if (_cacheDown === reason) return;
+        _cacheDown = reason;
+        console.warn('[TeacherDB] مخزنُ الجهاز غير متاح — ' + reason);
+        try {
+            global.dispatchEvent(new CustomEvent('teacherdb:cachedown', { detail: reason }));
+        } catch (e) { /* بيئةٌ بلا أحداث */ }
+    }
+
+    /** وصلةٌ قامت بعد عطل: يُرفع الإعلانُ وإلّا أنذر التطبيقُ بعطلٍ زال. */
+    function markCacheUp() {
+        if (_cacheDown === null) return;
+        _cacheDown = null;
+        console.info('[TeacherDB] عاد مخزنُ الجهاز.');
+        try { global.dispatchEvent(new CustomEvent('teacherdb:cacheup')); }
+        catch (e) { /* بيئةٌ بلا أحداث */ }
+    }
+
     function openCache() {
         if (_cacheDbPromise) return _cacheDbPromise;
-        _cacheDbPromise = new Promise((resolve, reject) => {
+        _cacheDbPromise = new Promise((resolve) => {
             if (!('indexedDB' in global)) {
-                resolve(null);  // graceful degradation: no cache
+                markCacheDown('هذا المتصفّح بلا مخزنٍ محلّي');
+                resolve(null);
                 return;
             }
-            const req = global.indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
-            req.onupgradeneeded = (ev) => {
-                const db = ev.target.result;
-                CACHE_STORES.forEach((def) => {
-                    if (db.objectStoreNames.contains(def.name)) return;
-                    const store = db.createObjectStore(def.name, { keyPath: def.keyPath });
-                    (def.indexes || []).forEach(([col]) => store.createIndex(col, col));
-                });
+
+            let settled = false;
+            /** يُنهي الوعدَ مرّةً واحدة، ويُغلق وصلةً وصلت بعد فوات الأوان. */
+            const finish = (db) => {
+                if (settled) { if (db) { try { db.close(); } catch (e) {} } return; }
+                settled = true;
+                resolve(db);
             };
-            req.onsuccess = () => resolve(req.result);
-            req.onerror   = () => resolve(null);
+
+            const ready = (db) => {
+                /* تبويبٌ آخر يطلب ترقيةَ المخزن: نُغلق وصلتَنا فوراً وإلّا
+                   حبسناه أبداً — وهو بعينه ما يفعله بنا تبويبٌ قديم. ويُنسى
+                   الوعدُ فتُفتح وصلةٌ جديدة عند أوّل طلبٍ بعدها. */
+                db.onversionchange = () => {
+                    try { db.close(); } catch (e) {}
+                    _cacheDbPromise = null;
+                    /* ولا يُعلن العطلُ قبل محاولةِ الوصل من جديد: الغالبُ أن
+                       تنجح في الحال، وإنذارٌ يتراجع بعد لحظةٍ إنذارٌ كاذب —
+                       وهو ما يُفقد الثقةَ بالإنذار الصادق. فلا يُقال شيءٌ
+                       إلّا إن عجزت المحاولة. */
+                    openCache().then((again) => {
+                        if (!again) {
+                            markCacheDown('نافذةٌ أخرى رقّت المخزن إلى نسخةٍ لا تُوافق هذه — أعد فتح التطبيق');
+                        }
+                    });
+                };
+                markCacheUp();
+                finish(db);
+            };
+
+            /** @param {number} [version] رقمُ النسخة، أو لا شيءَ لفتح الموجود. */
+            const attempt = (version) => {
+                let req;
+                try {
+                    req = version === undefined
+                        ? global.indexedDB.open(CACHE_DB_NAME)
+                        : global.indexedDB.open(CACHE_DB_NAME, version);
+                } catch (e) {
+                    markCacheDown('تعذّر فتحُ المخزن — ' + (e.message || e.name));
+                    finish(null);
+                    return;
+                }
+
+                req.onupgradeneeded = (ev) => {
+                    const db = ev.target.result;
+                    CACHE_STORES.forEach((def) => {
+                        if (db.objectStoreNames.contains(def.name)) return;
+                        const store = db.createObjectStore(def.name, { keyPath: def.keyPath });
+                        (def.indexes || []).forEach(([col]) => store.createIndex(col, col));
+                    });
+                };
+
+                req.onsuccess = () => {
+                    const db = req.result;
+                    if (version === undefined) {
+                        /* فُتح مخزنٌ أحدثُ ممّا تعرفه هذه النسخة. لا يُقبل إلّا
+                           إن كان فيه كلُّ ما نقرأ منه — ومتجرٌ ناقصٌ يرمي عند
+                           أوّل معاملة، فالرفضُ الصريحُ أسلم. */
+                        const missing = CACHE_STORES
+                            .filter((d) => !db.objectStoreNames.contains(d.name))
+                            .map((d) => d.name);
+                        if (missing.length) {
+                            try { db.close(); } catch (e) {}
+                            markCacheDown('مخزنُ الجهاز من نسخةٍ لا تُوافق هذه — ينقصه: ' + missing.join('، '));
+                            finish(null);
+                            return;
+                        }
+                    }
+                    ready(db);
+                };
+
+                req.onerror = () => {
+                    const name = req.error && req.error.name;
+                    /* `VersionError`: على الجهاز مخزنٌ **أحدثُ** ممّا تطلبه هذه
+                       النسخة — يقع حين يُرجَع التطبيق إلى إصدارٍ أقدم. فلا
+                       يُترك المعلّم بلا مخبأ: يُعاد الفتحُ بلا رقمٍ فيُقبل ما
+                       هو موجودٌ إن كان وافياً. */
+                    if (name === 'VersionError' && version !== undefined) { attempt(undefined); return; }
+                    markCacheDown('تعذّر فتحُ المخزن — ' + (name || 'خطأٌ غير معروف'));
+                    finish(null);
+                };
+
+                /* وصلةٌ قديمةٌ في نافذةٍ أخرى تحبس الترقية: لا `onsuccess` يأتي
+                   ولا `onerror` — فيبقى الوعدُ معلّقاً أبداً وتتجمّد كلُّ قراءةٍ
+                   وكتابةٍ بشاشةٍ بيضاءَ بلا كلمة. فيُنهى صراحةً بلا مخبأ. */
+                req.onblocked = () => {
+                    markCacheDown('نافذةٌ أخرى من التطبيق تمنع تحديث المخزن — أغلقها ثمّ أعد فتح التطبيق');
+                    finish(null);
+                };
+            };
+
+            attempt(CACHE_DB_VERSION);
         });
         return _cacheDbPromise;
     }
@@ -1072,6 +1180,8 @@
         resetHydration,
         clearLocalCache: (keep) => Cache.clearAll(keep),
         /* أسماءُ المخازن التي تحمل ملفاتٍ لا نسخةَ لها على الخادم. */
-        LOCAL_ONLY: ['book_files']
+        LOCAL_ONLY: ['book_files'],
+        /** سببُ تعطّل المخزن المحلّي، أو `null` إن كان سليماً. */
+        cacheDown: () => _cacheDown
     };
 })(window);

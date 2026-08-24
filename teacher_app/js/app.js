@@ -20,6 +20,23 @@
                 return;
             }
 
+            /* مخزنُ الجهاز إن تعطّل، تُرجع كلُّ قراءةٍ لا شيء — فيرى المعلّم
+               تطبيقاً فارغاً وبياناتُه سليمةٌ على الخادم. فيُقال له صراحةً
+               ما جرى، وإلّا قرأ الفراغَ «ضاع عملي». وشريطٌ ثابتٌ لا نخبةٌ
+               تمرّ: الحالةُ باقيةٌ حتى يُعاد فتحُ التطبيق. */
+            if (global.TeacherDB.cacheDown) {
+                const down = global.TeacherDB.cacheDown();
+                if (down) this.cacheBanner(down);
+                global.addEventListener('teacherdb:cachedown',
+                    (ev) => this.cacheBanner(ev.detail));
+                /* وإن عاد المخزن، يُرفع الشريط: إنذارٌ باقٍ بعد زوال سببه
+                   يُعلّم المعلّمَ ألّا يُصدّق الإنذارات. */
+                global.addEventListener('teacherdb:cacheup', () => {
+                    const el = document.getElementById('cache-down');
+                    if (el) el.remove();
+                });
+            }
+
             // Offline-first boot: render from the local cache immediately and
             // sync from Supabase in the BACKGROUND. Previously boot awaited a
             // full network hydrate before showing anything — slow to open on
@@ -83,6 +100,25 @@
         },
 
         /** Toast helper — available app-wide. */
+        /**
+         * شريطٌ ثابتٌ يعلن تعطّلَ المخزن المحلّي. يُرسم مرّةً واحدة مهما
+         * تكرّر السبب، ولا يزول إلّا بإعادة فتح التطبيق — فالحالةُ نفسُها
+         * لا تزول.
+         */
+        cacheBanner(reason) {
+            if (document.getElementById('cache-down')) return;
+            const el = document.createElement('div');
+            el.id = 'cache-down';
+            el.className = 'cache-down';
+            el.setAttribute('role', 'alert');
+            el.innerHTML = '<b>تعذّر فتحُ مخزن الجهاز.</b> '
+                + 'بياناتُك سليمةٌ في حسابك، لكن هذه الشاشة قد تظهر فارغة. '
+                + '<span class="cd-why"></span>';
+            el.querySelector('.cd-why').textContent = reason || '';
+            const main = document.querySelector('.app-main') || document.body;
+            main.insertBefore(el, main.firstChild);
+        },
+
         toast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toast-container');
             if (!container) { console.log('[toast]', type, message); return; }

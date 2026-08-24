@@ -6372,3 +6372,24 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .set-list .set-row:active {
     background: color-mix(in srgb, var(--text) 5%, transparent);
 }
+
+/* ==========================================================================
+   شريطُ تعطّل المخزن المحلّي
+   ==========================================================================
+   يظهر حين يتعذّر فتحُ `IndexedDB`. عندها تُرجع كلُّ قراءةٍ لا شيء، فتبدو
+   الشاشةُ فارغةً وبياناتُ المعلّم سليمةٌ على الخادم — والفراغُ بلا تفسيرٍ
+   يُقرأ «ضاع عملي». فالشريطُ **ثابتٌ لا نخبةٌ تمرّ**: الحالةُ باقيةٌ حتى
+   يُعاد فتحُ التطبيق، فيبقى ما يشرحها باقياً معها.
+   ========================================================================== */
+.cache-down {
+    margin: var(--space-3);
+    padding: var(--space-4);
+    border-radius: 10px;
+    border: 1px solid #DC2626;
+    background: color-mix(in srgb, #DC2626 8%, var(--mix-base));
+    color: var(--ink-primary);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+}
+.cache-down b { color: #DC2626; }
+.cache-down .cd-why { display: block; color: var(--text-muted); }
