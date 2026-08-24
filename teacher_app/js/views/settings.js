@@ -144,7 +144,14 @@
             const h = await global.TeacherDB.getAllByIndex('assignments', 'class_id', c.id);
             homework += h.length;
             const books = await global.TeacherDB.getAllByIndex('books', 'class_id', c.id);
-            for (const b of books) if (b.file) storageBytes += b.file.size || 0;
+            /* `size_bytes` هو ما يكتبه رفعُ الكتاب فعلاً. وكان يُقرأ
+               `b.file.size` — وحقلُ `file` لا وجود له في الصف، فالشرطُ لا
+               يصدق أبداً والعدّادُ يقول «صفر بايت» مهما رفع المعلّم. */
+            for (const b of books) storageBytes += b.size_bytes || 0;
+            /* ومرفقاتُ توزيع المنهج تشغل الجوالَ كما تشغله الكتب. */
+            if (Array.isArray(c.curriculum_files)) {
+                for (const f of c.curriculum_files) storageBytes += (f && f.size) || 0;
+            }
         }
         const strategies = await global.TeacherDB.getAllByIndex('strategies', 'teacher_id', teacher.id);
         const initiatives= await global.TeacherDB.getAllByIndex('initiatives','teacher_id', teacher.id);
@@ -847,7 +854,7 @@
     function storageNote(stats) {
         return `
             <p class="text-muted" style="font-size: var(--fs-sm); margin: var(--space-5) 0 0;">
-                💾 ملفاتك المرفوعة تشغل <strong>${fmtBytes(stats.storageBytes)}</strong>
+                💾 ملفات الكتب والمنهج تشغل <strong>${fmtBytes(stats.storageBytes)}</strong> من جهازك
                 — و<strong>${stats.classes}</strong> فصلاً و<strong>${stats.students}</strong> طالباً
                 محفوظة في حسابك. التفاصيل الكاملة في شاشة التقارير.
             </p>

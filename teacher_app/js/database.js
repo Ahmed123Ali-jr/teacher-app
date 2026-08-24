@@ -791,6 +791,13 @@
             return;
         }
 
+        /* صفُّ الفصل يُقرأ **قبل** مسحه: مرفقاتُ توزيع المنهج مسجّلةٌ فيه
+           وحده، فبعد المسح لا يبقى ما يدلّ على ملفّاتها المحليّة. */
+        let doomedClass = null;
+        if (storeName === 'classes') {
+            try { doomedClass = await Cache.get('classes', key); } catch (e) { /* المسحُ أولى */ }
+        }
+
         const { error } = await sb.from(table).delete().eq('id', key);
         if (error) err(storeName + ' remove', error);
         await Cache.remove(storeName, key);
@@ -801,14 +808,22 @@
            الرئيسيةُ حصصَ فصلٍ ميّتٍ حتى يُعاد التحميل.
            وشواهدُ الاستراتيجيات صورُ طلابٍ في التخزين — بقاؤها بعد حذف
            الفصل خرقُ خصوصيةٍ لا ملفاتٌ يتيمة. */
-        if (storeName === 'classes') await cascadeClassCache(key);
+        if (storeName === 'classes') await cascadeClassCache(key, doomedClass);
     }
 
-    /** يمسح من المخبأ كلَّ ما كان معلّقاً بفصلٍ حُذف، ويُزيل شواهده. */
-    async function cascadeClassCache(classId) {
+    /**
+     * يمسح من المخبأ كلَّ ما كان معلّقاً بفصلٍ حُذف، ويُزيل شواهده وملفّاته.
+     * @param {object|null} [row] صفُّ الفصل كما كان قبل مسحه — منه تُعرف
+     *        مرفقاتُ توزيع المنهج، إذ لا مخزنَ آخر يذكرها.
+     */
+    async function cascadeClassCache(classId, row) {
         const CHILDREN = ['students', 'attendance', 'participation', 'assignments',
                           'exams', 'worksheets', 'books', 'schedule', 'strategy_logs'];
         const evidence = [];
+        /* ملفّاتُ الكتب والمنهج **لا تتتالى**: هي محليّةٌ لا صفوفٌ في
+           القاعدة، فلا مفتاحَ أجنبيّاً يجرّها. وبقاؤها بعد حذف الفصل
+           يأكل مساحةَ الجوال بما لا سبيل لرؤيته ولا لحذفه. */
+        const files = [];
         for (const child of CHILDREN) {
             let rows = [];
             try { rows = await Cache.getAll(child); } catch (e) { continue; }
@@ -817,8 +832,15 @@
                 if (child === 'strategy_logs' && Array.isArray(r.evidence)) {
                     r.evidence.forEach((path) => { if (path) evidence.push(path); });
                 }
+                if (child === 'books') files.push(r.id);
                 try { await Cache.remove(child, r.id); } catch (e) { /* لا يوقف الباقي */ }
             }
+        }
+        if (row && Array.isArray(row.curriculum_files)) {
+            row.curriculum_files.forEach((f) => { if (f && f.id) files.push(f.id); });
+        }
+        for (const id of files) {
+            try { await BookFiles.remove(id); } catch (e) { /* لا يوقف الباقي */ }
         }
         if (evidence.length) {
             try { await sb.storage.from('evidence').remove(evidence); }
