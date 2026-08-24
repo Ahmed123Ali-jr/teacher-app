@@ -183,9 +183,11 @@
         if (dayIdx > 4) return;                    // الجمعة والسبت
         const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
+        /* أوقاتٌ افتراضيّةٌ لمن لم يضبط أوقاته: كان يخرج هنا صامتاً، فيُفعّل
+           المعلّمُ الجرسَ فلا يرنّ أبداً ولا كلمةَ تقول لماذا. */
         let periods = [];
         try {
-            periods = (await global.TeacherDB.Settings.get('period_times')) || [];
+            periods = await global.PeriodTimes.get();
         } catch { return; }
         if (!periods.length) return;
 

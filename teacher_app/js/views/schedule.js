@@ -15,15 +15,9 @@
         { index: 4, label: 'الخميس' }
     ];
 
-    const DEFAULT_PERIODS = [
-        { n: 1, start: '07:00', end: '07:45' },
-        { n: 2, start: '07:45', end: '08:30' },
-        { n: 3, start: '08:30', end: '09:15' },
-        { n: 4, start: '09:45', end: '10:30' }, // after break
-        { n: 5, start: '10:30', end: '11:15' },
-        { n: 6, start: '11:15', end: '12:00' },
-        { n: 7, start: '12:00', end: '12:45' }
-    ];
+    /* نسخةٌ واحدةٌ من الافتراضيّ في `period-times.js` — ولو كُتبت هنا
+       أيضاً لتغيّرت إحداهما يوماً وبقيت الأخرى. */
+    const DEFAULT_PERIODS = global.PeriodTimes.DEFAULTS;
 
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, (m) => ({
@@ -36,12 +30,10 @@
        أي بيانات قديمة بعدد مختلف تُقصّ أو تُكمَّل من القيم الافتراضية. */
     const PERIOD_COUNT = 7;
 
+    /* المنطقُ انتقل إلى `PeriodTimes` — مُحمَّلٌ دائماً، والجرسُ يحتاجه
+       قبل أن تُفتح هذه الشاشة. ويبقى التصديرُ هنا لمن كان يناديه. */
     async function getPeriodTimes() {
-        const stored = await global.TeacherDB.Settings.get('period_times');
-        const rows = Array.isArray(stored) && stored.length ? stored : DEFAULT_PERIODS;
-        return Array.from({ length: PERIOD_COUNT }, (_, i) => ({
-            ...(rows[i] || DEFAULT_PERIODS[i]), n: i + 1
-        }));
+        return global.PeriodTimes.get();
     }
 
     async function savePeriodTimes(rows) {

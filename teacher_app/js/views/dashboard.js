@@ -224,7 +224,12 @@
 
     function hijriToday() {
         try {
-            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+            /* `-umalqura` صراحةً كما في بقيّة التطبيق. وبدونها يختار
+               المتصفّحُ تقويماً إسلاميّاً آخر يفرق يوماً — **١٨٤ يوماً من
+               كلِّ ٤٠٠**. فيرى المعلّم في رئيسيّته تاريخاً وفي اختباراته
+               تاريخاً آخر، ولا يدري أيّهما يُصدّق. وأمُّ القرى هو التقويم
+               الرسميّ في السعودية، فهو المرجع. */
+            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
                 day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
             }).format(new Date());
         } catch {
@@ -253,10 +258,7 @@
        تقرأ الرمزَ خاماً، فمن لم يفتح محرّرَ التوقيت قطُّ يرى الجدولَ بأوقاتٍ
        والرئيسيةَ بلا ✓ ولا ذهبيّ على أيّ حصّة. */
     async function periodTimes() {
-        if (global.ScheduleView && global.ScheduleView.getPeriodTimes) {
-            return global.ScheduleView.getPeriodTimes();
-        }
-        return (await global.TeacherDB.Settings.get('period_times')) || [];
+        return global.PeriodTimes.get();
     }
 
     function toMins(hhmm) {

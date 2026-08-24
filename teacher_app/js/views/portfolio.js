@@ -170,7 +170,9 @@
         // Pull weekly schedule rows + period times so the printable
         // version can render the grid automatically.
         const scheduleRows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-        const periodTimes  = (await global.TeacherDB.Settings.get('period_times')) || null;
+        /* ومن المصدر الموحّد: الجدولُ المطبوع كان يخرج بلا أوقاتٍ لمن لم
+           يفتح محرّرَ التوقيت — وهي الأوقاتُ التي يراها في شاشة جدوله. */
+        const periodTimes  = await global.PeriodTimes.get();
 
         const counts = {
             certificates: portfolio.certificates.length,

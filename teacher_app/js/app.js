@@ -165,6 +165,31 @@
     /** ما التُقط في هذه الجلسة — يقرؤه فاحصُ الدخان. */
     App.failures = () => _seen.slice();
 
+    /* ==========================================================================
+       دورانُ اليوم والتطبيقُ مفتوح
+       ==========================================================================
+       الجدولُ يُنظّف «انتظارَ اليوم» و«الإسنادَ» عند رسمه، بمقارنة تاريخِ
+       الصفّ بتاريخ **لحظةِ الرسم**. وعلى الجوال لا يُغلق التطبيق: يفتحه
+       المعلّم صباحاً فيرى شاشةَ الأمس كما تركها — انتظارُ أمسِ ما زال في
+       جدوله، ويُطبع في ملفّ إنجازه على أنّه اليوم.
+
+       فيُعاد الرسمُ حين يعود إلى التطبيق **وقد تغيّر اليوم فعلاً** — لا
+       عند كلِّ عودة: إعادةُ رسمٍ لا داعيَ لها تُضيع موضعَ التمرير وما في
+       الحقول. */
+    let _dayStamp = new Date().toDateString();
+
+    function checkDayRollover() {
+        if (document.hidden) return;
+        const now = new Date().toDateString();
+        if (now === _dayStamp) return;
+        _dayStamp = now;
+        console.info('[TeacherApp] تغيّر اليوم — يُعاد رسمُ الشاشة.');
+        if (global.Router && global.Router.resolve) global.Router.resolve();
+    }
+
+    document.addEventListener('visibilitychange', checkDayRollover);
+    global.addEventListener('focus', checkDayRollover);
+
     global.addEventListener('unhandledrejection', (ev) => {
         const r = ev && ev.reason;
         noteFailure('وعدٌ مرفوض بلا ملتقط', (r && (r.message || r.name)) || String(r));
