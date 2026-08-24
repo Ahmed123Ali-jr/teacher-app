@@ -4164,8 +4164,9 @@ body.drawer-open { overflow: hidden; }
     color: var(--ink-primary);
 }
 
-/* المسافةُ بين المجموعات تكفي للفصل بعد أن زالت الخطوط. */
-.set-group { margin-bottom: var(--space-5); }
+/* والمسافةُ بين المجموعات هي ما يفصلها بعد أن زالت الخطوط، فتُوسَّع
+   حتى تُرى فراغاً مقصوداً لا تباعداً عارضاً. */
+.set-group { margin-bottom: 34px; }
 .set-group-t {
     font-size: 12.5px;
     font-weight: var(--fw-black);
@@ -6357,11 +6358,11 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .set-list .set-row {
     background: transparent;
     border-bottom: 0;                 /* بلا خطوطٍ فاصلة — طلبُ المستخدم */
-    padding: 9px var(--space-1);      /* كانت ١٣px */
+    padding: 12px var(--space-1);     /* كانت ١٣px ثم ٩px */
     min-height: 0;
 }
 /* والعنوانُ أصغرُ قليلاً ليتناسب مع صفوفٍ أقصر. */
-.set-list .set-row .t { font-size: var(--fs-sm); }
+.set-list .set-row .t { font-size: 14.5px; }
 /* واللمسُ يُرى بخلفيّةٍ خفيفةٍ تمتدّ عرض الشاشة. */
 .set-list .set-row:active {
     background: color-mix(in srgb, var(--text) 5%, transparent);
