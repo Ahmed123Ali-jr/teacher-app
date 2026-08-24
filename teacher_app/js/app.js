@@ -140,6 +140,42 @@
 
     global.TeacherApp = App;
 
+    /* ==========================================================================
+       الأخطاءُ التي لا يلتقطها أحد
+       ==========================================================================
+       كتابةٌ تفشل في مسارٍ لا ينتظرها أحد تختفي بلا أثر: لا رسالةَ للمعلّم،
+       ولا سطرَ في السجلّ يُسأل عنه بعد شهر. فيُلتقط الرفضُ المهمَل وخطأُ
+       التنفيذ عالمياً.
+
+       ويُقال للمعلّم مرّتين لا أكثر: التكرارُ في شاشةٍ معطوبةٍ يُغرق الشاشةَ
+       بنخبٍ لا تُقرأ ويحجب ما تحتها. وما بعدهما في السجلّ وحده — وهو مكانُه.
+       ========================================================================== */
+    const _seen = [];
+    let _shown = 0;
+
+    function noteFailure(what, detail) {
+        const line = what + ': ' + detail;
+        _seen.push(line);
+        console.error('[TeacherApp] ' + line);
+        if (_shown >= 2) return;
+        _shown += 1;
+        if (App.toast) App.toast('حدث خطأٌ غير متوقّع — إن تكرّر أعد فتح التطبيق.', 'error', 6000);
+    }
+
+    /** ما التُقط في هذه الجلسة — يقرؤه فاحصُ الدخان. */
+    App.failures = () => _seen.slice();
+
+    global.addEventListener('unhandledrejection', (ev) => {
+        const r = ev && ev.reason;
+        noteFailure('وعدٌ مرفوض بلا ملتقط', (r && (r.message || r.name)) || String(r));
+    });
+    global.addEventListener('error', (ev) => {
+        /* أخطاءُ تحميل الصور والملفّات تصل هنا بلا `message` — وهي ليست
+           أعطالَ منطقٍ فلا تُنذر المعلّم. */
+        if (!ev || !ev.message) return;
+        noteFailure('خطأٌ غير ملتقَط', ev.message);
+    });
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => App.init());
     } else {

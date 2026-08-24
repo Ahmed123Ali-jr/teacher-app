@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>فحص المخزن المحلّي — تطبيق إنجاز المعلم</title>
+<style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px;
+           background: #F6F7F9; color: #111; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { font-size: 12px; color: #666; margin: 0 0 12px; line-height: 1.7; }
+    .warn { border: 1px solid #DC2626; background: #FEF2F2; border-radius: 8px;
+            padding: 11px 13px; font-size: 12.5px; line-height: 1.75; margin: 0 0 14px; }
+    .warn b { color: #B42318; }
+    button { font-family: inherit; font-size: 14px; font-weight: 700;
+             padding: 11px 20px; border: 0; border-radius: 8px;
+             background: #0F2C5C; color: #fff; cursor: pointer; }
+    button[disabled] { opacity: .5; cursor: default; }
+    #bar { margin: 12px 0; font-size: 13px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 8px; overflow: hidden; font-size: 13px; }
+    th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #E8EAED; }
+    th { background: #F0F2F5; font-size: 11px; color: #555; }
+    td.st { width: 34px; font-size: 16px; text-align: center; }
+    tr.bad td { background: #FEF2F2; }
+    tr.bad .why { color: #B42318; font-size: 11.5px; }
+    .why { color: #666; font-size: 11.5px; }
+    #stage { position: fixed; bottom: 8px; left: 8px; width: 300px; height: 500px;
+             border: 1px solid #CBD5E1; border-radius: 6px; background: #fff;
+             transform: scale(.42); transform-origin: bottom left; z-index: 5; }
+    @media (max-width: 760px) { #stage { opacity: .25; pointer-events: none; } }
+</style>
+</head>
+<body>
+
+<h1>فحص المخزن المحلّي</h1>
+<p class="sub">
+    فاحصُ الدخان يسأل «هل رُسمت الشاشة؟». وهذا يسأل عمّا تحتها:
+    <b>هل حُفظ ما كُتب؟ هل مُسح ما وجب مسحُه؟ هل بقي ما وجب بقاؤه؟</b>
+    و<b>هل يصمد المخزن حين تتغيّر نسختُه أو يُمسكه تبويبٌ آخر؟</b>
+</p>
+
+<div class="warn">
+    <b>يمسح هذا الفحصُ ملفّاتِ الكتب المحفوظة على هذا الجهاز.</b>
+    الكتبُ وملفّاتُ توزيع المنهج تُحفظ في جهازك وحده بلا نسخةٍ على الخادم،
+    والفحصُ يختبر «مخبأُ معلّمٍ آخر يُمسح» فيمسحها معه — <b>ولا تعود</b>.
+    (وفاحصُ الدخان يفعل هذا أيضاً.)
+    فشغّله على جهاز تجربة، أو بعد أن تُنزّل كتبَك من جديد.
+</div>
+
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table id="out"><thead><tr><th class="st"></th><th>الفحص</th><th>الملاحظة</th></tr></thead><tbody></tbody></table>
+
+<iframe id="stage" src="about:blank"></iframe>
+
+<script>
+const stage = document.getElementById('stage');
+const tbody = document.querySelector('#out tbody');
+const bar   = document.getElementById('bar');
+const wait  = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function row(ok, name, why) {
+    const tr = document.createElement('tr');
+    if (!ok) tr.className = 'bad';
+    tr.innerHTML = '<td class="st">' + (ok ? '✅' : '❌') + '</td><td>' + name
+                 + '</td><td class="why">' + (why || '') + '</td>';
+    tbody.appendChild(tr);
+}
+
+const DB_NAME = 'teacher_app_cache';
+const blobOf = (n) => new Blob([new Uint8Array(n)], { type: 'application/pdf' });
+
+/* ══════════════════════════════════════════════════════════════════
+   الفحوص. كلٌّ منها يُرجع `{ok, why}` — و`why` تقول **ما قِيس**، لا
+   «نجح»: رقمٌ يُقارَن أنفعُ من كلمةٍ تُطمئن.
+   ══════════════════════════════════════════════════════════════════ */
+const CHECKS = [
+
+{ name: 'المخزن يُفتح، ومتاجرُه كاملة', async run(ctx) {
+    const dbs = (await indexedDB.databases?.()) || [];
+    const mine = dbs.find((d) => d.name === DB_NAME);
+    if (!mine) return { ok: false, why: 'لا مخزنَ باسم ' + DB_NAME };
+    const down = ctx.win.TeacherDB.cacheDown();
+    return { ok: !down, why: 'النسخة ' + mine.version + (down ? ' — لكن: ' + down : ' · لا عطل') };
+} },
+
+{ name: 'ذهابٌ وإياب: يُكتب فيُقرأ كما كُتب', async run(ctx) {
+    const name = 'طالبُ الفحص ' + ctx.tag;
+    const id = await ctx.DB.add('students', { teacher_id: ctx.me.id, class_id: ctx.cls, name, notes: 'ملاحظة' });
+    ctx.seeded.push(['students', id]);
+    const back = await ctx.DB.get('students', id);
+    const ok = !!back && back.name === name && back.notes === 'ملاحظة';
+    return { ok, why: ok ? 'الاسمُ والملاحظة عادا كما هما' : 'عاد: ' + JSON.stringify(back || null).slice(0, 70) };
+} },
+
+{ name: 'الفهرس يردّ صفوفَ الفصل', async run(ctx) {
+    const rows = await ctx.DB.getAllByIndex('students', 'class_id', ctx.cls);
+    const ok = rows.length >= 1;
+    return { ok, why: rows.length + ' صفّاً بالفهرس class_id' };
+} },
+
+{ name: 'ملفُّ كتابٍ يُحفظ ويُقرأ بحجمه', async run(ctx) {
+    const id = 'bk-' + ctx.tag;
+    await ctx.DB.BookFiles.save(id, blobOf(5000));
+    const back = await ctx.DB.BookFiles.get(id);
+    ctx.bookId = id;
+    const ok = !!back && back.size === 5000;
+    return { ok, why: back ? back.size + ' بايت (المكتوب ٥٠٠٠)' : 'لم يُقرأ شيء' };
+} },
+
+{ name: 'حذفُ الفصل يمسح كتابَه ومرفقَ منهجه', async run(ctx) {
+    const clsId = await ctx.DB.put('classes', { teacher_id: ctx.me.id, stage: 'primary',
+        grade: 'الأول', section: 'ف' + ctx.tag, subject: 'العلوم' });
+    const bookId = await ctx.DB.put('books', { teacher_id: ctx.me.id, class_id: clsId,
+        title: 'كتاب', size_bytes: 4096, mime_type: 'application/pdf',
+        filename: 'b.pdf', storage_path: 'local' });
+    await ctx.DB.BookFiles.save(bookId, blobOf(4096));
+    const cls = await ctx.DB.get('classes', clsId);
+    const curId = 'cur-' + ctx.tag;
+    cls.curriculum_files = [{ id: curId, filename: 'c.pdf', size: 2048, mime: 'application/pdf' }];
+    await ctx.DB.put('classes', cls);
+    await ctx.DB.BookFiles.save(curId, blobOf(2048));
+
+    const before = (await ctx.DB.BookFiles.has(bookId)) && (await ctx.DB.BookFiles.has(curId));
+    await ctx.DB.remove('classes', clsId);
+    await wait(500);
+    const bookGone = !(await ctx.DB.BookFiles.has(bookId));
+    const curGone  = !(await ctx.DB.BookFiles.has(curId));
+    return { ok: before && bookGone && curGone,
+             why: 'قبل: موجودان · بعد — الكتاب: ' + (bookGone ? 'مُسح' : 'باقٍ')
+                + ' · المنهج: ' + (curGone ? 'مُسح' : 'باقٍ') };
+} },
+
+{ name: 'عدّادُ المساحة يقرأ الحجم لا صفراً', async run(ctx) {
+    const clsId = await ctx.DB.put('classes', { teacher_id: ctx.me.id, stage: 'primary',
+        grade: 'الأول', section: 'م' + ctx.tag, subject: 'العلوم' });
+    ctx.seeded.push(['classes', clsId]);
+    await ctx.DB.put('books', { teacher_id: ctx.me.id, class_id: clsId, title: 'ك',
+        size_bytes: 3 * 1024 * 1024, mime_type: 'application/pdf',
+        filename: 'b.pdf', storage_path: 'local' });
+    const cls = await ctx.DB.get('classes', clsId);
+    cls.curriculum_files = [{ id: 'x-' + ctx.tag, filename: 'c.pdf', size: 1024 * 1024 }];
+    await ctx.DB.put('classes', cls);
+
+    /* يُحسب كما تحسبه شاشةُ النسخ الاحتياطي — لا كما نتمنّى. */
+    let total = 0;
+    for (const c of await ctx.DB.getAllByIndex('classes', 'teacher_id', ctx.me.id)) {
+        for (const b of await ctx.DB.getAllByIndex('books', 'class_id', c.id)) total += b.size_bytes || 0;
+        if (Array.isArray(c.curriculum_files)) for (const f of c.curriculum_files) total += (f && f.size) || 0;
+    }
+    const ok = total >= 4 * 1024 * 1024;
+    return { ok, why: Math.round(total / 1024 / 1024 * 10) / 10 + ' MB (المتوقّع ٤ فأكثر)' };
+} },
+
+{ name: 'ترقيةٌ من نافذةٍ أخرى لا تحبس التطبيق', async run(ctx) {
+    /* وصلةُ التطبيق مفتوحةٌ الآن. فترقيةٌ من هنا تُحبس إلى الأبد ما لم
+       يُفرج التطبيق عن وصلته عند `onversionchange`. */
+    /* والرقمُ يُقرأ ولا يُكتب: طلبُ رقمٍ يساوي الموجود **لا يُرقّي** فلا
+       يُحبس أبداً — ففحصٌ برقمٍ ثابتٍ يمرّ من التشغيلة الثانية مهما كان
+       الحال. (وقع هذا فعلاً: مرّ الفحصُ وحارسُه معطّل.) */
+    const dbs = (await indexedDB.databases?.()) || [];
+    const cur = (dbs.find((d) => d.name === DB_NAME) || {}).version || 4;
+    const next = cur + 1;
+    const bumped = await new Promise((res) => {
+        const t = setTimeout(() => res(null), 8000);
+        const r = indexedDB.open(DB_NAME, next);
+        r.onsuccess = () => { clearTimeout(t); r.result.close(); res('نجحت'); };
+        r.onerror   = () => { clearTimeout(t); res(null); };
+    });
+    return { ok: bumped === 'نجحت',
+             why: bumped ? 'الترقية ' + cur + ' ← ' + next + ' نجحت — أُفرج عن الوصلة'
+                         : 'الترقية ' + cur + ' ← ' + next + ' محبوسةٌ ٨ ثوانٍ — لم تُفرج الوصلة' };
+} },
+
+{ name: 'مخزنٌ أحدثُ من التطبيق: يتعافى ويقرأ', async run(ctx) {
+    /* المخزنُ صار عند ٩٠ والتطبيق يطلب ٤ — وهو حالُ من رُجّع إلى إصدارٍ
+       أقدم. فإمّا يتعافى بفتحٍ بلا رقم، وإمّا بقي بلا مخبأٍ يقرأ منه. */
+    const rows = await Promise.race([
+        ctx.DB.getAllByIndex('students', 'class_id', ctx.cls).then((r) => r.length),
+        wait(7000).then(() => 'تجمّدت')
+    ]);
+    const ok = typeof rows === 'number' && rows >= 1;
+    return { ok, why: ok ? 'قرأ ' + rows + ' صفّاً رغم اختلاف النسخة'
+                         : 'النتيجة: ' + rows + ' · العطل: ' + (ctx.win.TeacherDB.cacheDown() || 'لا شيء') };
+} },
+
+{ name: 'تسجيلُ الخروج يُبقي ملفّات الكتب', async run(ctx) {
+    if (!ctx.bookId) return { ok: false, why: 'لم يُحفظ ملفٌّ في الفحص السابق' };
+    await ctx.win.Auth.logout();
+    await wait(900);
+    const kept = await ctx.DB.BookFiles.has(ctx.bookId);
+    const classesGone = (await ctx.DB.getAll('classes').catch(() => [])).length === 0;
+    return { ok: kept && classesGone,
+             why: 'الكتاب: ' + (kept ? 'باقٍ ✔' : 'مُسح ✘')
+                + ' · بقيّةُ المخبأ: ' + (classesGone ? 'مُسحت ✔' : 'باقية ✘') };
+} },
+
+{ name: 'مخبأُ معلّمٍ آخر يُمسح بالكامل', async run(ctx) {
+    /* حمايةُ خصوصيّة: من يدخل بعدك لا يقرأ كتبَك. فالمسحُ هنا **هو**
+       السلوكُ الصحيح — وهو بعينه ما يجعل هذا الفحصَ يأكل كتبَ الجهاز. */
+    if (!ctx.bookId) return { ok: false, why: 'لا ملفَّ للاختبار' };
+    await ctx.win.Auth.guestLogin();
+    if (ctx.DB.resetHydration) ctx.DB.resetHydration();
+    await ctx.DB.hydrate();
+    await wait(2500);
+    const gone = !(await ctx.DB.BookFiles.has(ctx.bookId));
+    return { ok: gone, why: gone ? 'كتابُ المعلّم السابق مُسح' : 'بقي كتابُ معلّمٍ آخر على الجهاز' };
+} }
+
+];
+
+async function run() {
+    document.getElementById('go').disabled = true;
+    tbody.innerHTML = '';
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    stage.src = 'index.html?dbcheck=' + Date.now();
+    await new Promise((r) => { stage.onload = r; });
+    const win = stage.contentWindow;
+    for (let i = 0; i < 60 && !win.TeacherDB; i++) await wait(200);
+    if (!win.TeacherDB) { bar.textContent = '❌ لم يُحمَّل التطبيق.'; document.getElementById('go').disabled = false; return; }
+
+    const ctx = { win, DB: win.TeacherDB, seeded: [], tag: String(Date.now()).slice(-6) };
+    try {
+        await win.SB.auth.signOut().catch(() => {});
+        await win.Auth.guestLogin();
+        await win.TeacherDB.Settings.set('onboarded', true);
+        ctx.me = await win.Auth.currentTeacher();
+        ctx.cls = await win.TeacherDB.put('classes', { teacher_id: ctx.me.id, stage: 'primary',
+            grade: 'الأول', section: 'أ' + ctx.tag, subject: 'العلوم' });
+        ctx.seeded.push(['classes', ctx.cls]);
+    } catch (e) {
+        bar.textContent = '❌ تعذّر التجهيز: ' + e.message;
+        document.getElementById('go').disabled = false;
+        return;
+    }
+
+    let pass = 0, fail = 0;
+    for (const c of CHECKS) {
+        let res;
+        try { res = await c.run(ctx); }
+        catch (e) { res = { ok: false, why: 'رمى: ' + (e.message || e.name) }; }
+        res.ok ? pass++ : fail++;
+        row(res.ok, c.name, res.why);
+        bar.textContent = '⏳ ' + (pass + fail) + ' من ' + CHECKS.length;
+    }
+
+    /* التنظيف: ما بقي من صفوفٍ ثمّ خروجٌ عبر البابِ نفسِه الذي يستعمله
+       المعلّم — لا `signOut` مباشرةً، وإلّا لم يمرّ الفحصُ يوماً على
+       الطريق الذي يُمشى عليه كلَّ يوم. */
+    bar.textContent = '⏳ يُنظّف…';
+    try {
+        for (const [store, id] of ctx.seeded.reverse()) {
+            await ctx.DB.remove(store, id).catch(() => {});
+        }
+        await win.Auth.logout().catch(() => {});
+    } catch (e) { /* التنظيف لا يُفشل الفحص */ }
+
+    bar.textContent = fail === 0
+        ? '✅ ' + pass + ' فحصاً سليماً — المخزن يفي بوعده.'
+        : '❌ ' + fail + ' من ' + CHECKS.length + ' فيها خلل.';
+    bar.style.color = fail === 0 ? '#067647' : '#B42318';
+    document.getElementById('go').disabled = false;
+}
+
+document.getElementById('go').addEventListener('click', run);
+</script>
+</body>
+</html>
