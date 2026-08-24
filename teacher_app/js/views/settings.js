@@ -1102,7 +1102,8 @@
             <div class="dz">
                 <div class="dz-t">🧹 مسح البيانات</div>
                 <p class="dz-h">
-                    تُحذف فصولك و${global.Words.studentsBare()} واختباراتك وملف إنجازك،
+                    تُحذف فصولك و${global.Words.studentsMine()} واختباراتك وملف إنجازك،
+                    <strong>وكتبك وملفات المنهج والشواهد</strong>،
                     <strong>ويبقى حسابك</strong> فتبدأ من جديد بالبريد نفسه.
                 </p>
                 <p class="dz-h">يُنصح بـ<a href="#" id="link-backup-first">تصدير نسخة احتياطية</a> أولاً.</p>
@@ -1136,12 +1137,30 @@
         container.querySelector('#btn-wipe')?.addEventListener('click', async () => {
             if (!global.confirm('مسح جميع بياناتك؟ حسابك يبقى.')) return;
             if (!global.confirm('تأكيد أخير — لا يمكن التراجع.')) return;
+            const btn = container.querySelector('#btn-wipe');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ المسح…'; }
             try {
+                /* ١) صفوفُ القاعدة. */
                 for (const s of global.TeacherDB.STORES) await global.TeacherDB.clear(s);
+
+                /* ٢) والملفّات — وهي لا تُمسح مع الصفوف. `STORES` أسماءُ
+                   جداولِ القاعدة، و`book_files` ليس منها: فكانت كتبُ المعلّم
+                   تبقى على جهازه بعد «مسح جميع البيانات». وأخطرُ منها
+                   شواهدُ الاستراتيجيات في التخزين — **صورُ طلاب** تبقى على
+                   الخادم بعد أن طلب المعلّم مسحَ كلِّ شيء. */
+                const me = await global.Auth.currentTeacher();
+                if (me && global.Auth.purgeStorage) await global.Auth.purgeStorage(me.id);
+                if (global.TeacherDB.clearLocalCache) await global.TeacherDB.clearLocalCache();
+
                 global.TeacherApp.toast('تم مسح البيانات.', 'info');
                 setTimeout(() => { location.hash = '#/login'; location.reload(); }, 600);
             } catch (err) {
-                global.TeacherApp.toast('فشل: ' + err.message, 'error');
+                /* ولا يُقال «تمّ» وقد بقي شيء: المعلّم الذي يمسح بياناته
+                   قبل أن يُسلّم جهازَه يحتاج أن يعرف أنّ المسحَ لم يكتمل. */
+                if (btn) { btn.disabled = false; btn.textContent = 'مسح جميع البيانات'; }
+                global.TeacherApp.toast(
+                    'لم يكتمل المسح: ' + (err.message || 'خطأ غير معروف')
+                    + ' — أعد المحاولة قبل أن تُسلّم جهازك.', 'error', 8000);
             }
         });
 

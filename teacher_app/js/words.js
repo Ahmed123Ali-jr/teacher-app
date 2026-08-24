@@ -40,6 +40,8 @@
     function students()    { return f().plural; }
     /** «طلاب» أو «طالبات» — الجمع النكرة. */
     function studentsBare(){ return f().many; }
+    /** «طلابك» أو «طالباتك» — الجمع مضافاً إلى المعلّم. */
+    function studentsMine(){ return f().many + 'ك'; }
 
     /** عدد + تمييز صحيح عربياً: «طالب واحد · طالبان · ٣ طلاب · ١٢ طالباً». */
     function count(n) {
@@ -54,5 +56,5 @@
 
     function isGirls() { return gender === 'girls'; }
 
-    global.Words = { reload, student, theStudent, students, studentsBare, count, isGirls };
+    global.Words = { reload, student, theStudent, students, studentsBare, studentsMine, count, isGirls };
 })(window);

@@ -249,31 +249,42 @@
        الترتيب مقصود: ملفات التخزين أولاً لأن حذف الحساب لا يتتالى إليها
        (السطر في storage.objects ليس ابناً للمعلم في قاعدة البيانات)، فلو
        حذفنا الحساب أولاً لبقيت كتبه على الخادم بلا صاحب ولا صلاحية تمسحها. */
+    /**
+     * يُفرغ مجلّدَي المعلّم في التخزين: الكتب والشواهد.
+     *
+     * كلُّ مخزنٍ يُمسح على حدة، وشواهدُ الاستراتيجيات فيها **صورُ طلاب** —
+     * فبقاؤها بعد أن يمسح المعلّم بياناته خرقُ خصوصيةٍ لا ملفاتٌ يتيمة،
+     * ومخالفةٌ لشرط آبل ٥٫١٫١(v).
+     *
+     * وحلقةُ الترقيم لازمة: حدُّ `list()` الافتراضيُّ **مئةُ ملف**، فمعلّمٌ
+     * عنده مئةٌ وعشرون شاهداً كانت تبقى صورُ طلابه في الخادم إلى الأبد.
+     * (ق٫٣)
+     *
+     * @param {string} uid معرّفُ المعلّم — مجلّدُه في كلّ مخزن.
+     */
+    async function purgeStorage(uid) {
+        const PAGE = 100;
+        for (const bucket of ['books', 'evidence']) {
+            for (let guard = 0; guard < 200; guard++) {
+                const { data: files, error } = await sb.storage.from(bucket)
+                    .list(uid, { limit: PAGE });
+                if (error) throw error;
+                if (!files || !files.length) break;
+                const { error: rmErr } = await sb.storage.from(bucket)
+                    .remove(files.map((f) => uid + '/' + f.name));
+                if (rmErr) throw rmErr;
+                /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
+                if (files.length < PAGE) break;
+            }
+        }
+    }
+
     async function deleteAccount() {
         const { data: { user } } = await sb.auth.getUser();
         if (!user) throw new Error('لست مسجّل الدخول.');
 
         try {
-            /* كل مخزن يُمسح على حدة: شواهد الاستراتيجيات فيها صور طلاب،
-               وبقاؤها بعد حذف الحساب خرق للخصوصية لا مجرّد ملفات يتيمة. */
-            /* حلقةُ ترقيمٍ حتى يفرغ المجلد: `list()` حدُّها الافتراضيّ
-               **مئة ملف**، فمعلّمٌ عنده مئةٌ وعشرون شاهداً كانت تبقى صورُ
-               طلابه في الخادم إلى الأبد — خرقُ خصوصيةٍ لا ملفاتٌ يتيمة،
-               ومخالفةٌ لشرط آبل ٥٫١٫١(v). (ق٫٣) */
-            const PAGE = 100;
-            for (const bucket of ['books', 'evidence']) {
-                for (let guard = 0; guard < 200; guard++) {
-                    const { data: files, error } = await sb.storage.from(bucket)
-                        .list(user.id, { limit: PAGE });
-                    if (error) throw error;
-                    if (!files || !files.length) break;
-                    const { error: rmErr } = await sb.storage.from(bucket)
-                        .remove(files.map((f) => user.id + '/' + f.name));
-                    if (rmErr) throw rmErr;
-                    /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
-                    if (files.length < PAGE) break;
-                }
-            }
+            await purgeStorage(user.id);
         } catch (e) {
             /* تعذّر مسح الملفات لا يمنع حذف الحساب — الحساب أولى بالحذف،
                والملفات تبقى بلا صلاحية وصول لأحد. */
@@ -447,7 +458,7 @@
     }
 
     global.Auth = {
-        register, login, logout, logoutLocal, deleteAccount, currentTeacher, guestLogin,
+        register, login, logout, logoutLocal, deleteAccount, purgeStorage, currentTeacher, guestLogin,
         beginGuest, guestPending, whenGuestReady,
         changePassword, updateProfile, onAuthChange
     };
