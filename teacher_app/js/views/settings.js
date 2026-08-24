@@ -182,7 +182,7 @@
         if (!teacher) { global.location.hash = '#/login'; return; }
 
         if (!state.page) {
-            renderMenu(container);
+            renderMenu(container, teacher);
         } else {
             renderPage(container, teacher, state.page);
         }
@@ -194,10 +194,24 @@
 
     /* بلا بطاقة حساب كحلية أعلى الشاشة: كل البنود بمادة واحدة رصاصية،
        و«بياناتي الشخصية» صف كبقية الصفوف يفتح شاشة الملف التعريفي. */
-    function renderMenu(container) {
+    /**
+     * القائمةُ كما يراها هذا المعلّم. الزائرُ يرى «حفظ حسابي» مكان «تغيير
+     * كلمة المرور» — لا كلمةَ مرورٍ له يُغيّرها، وله ما هو أهمّ.
+     */
+    function menuFor(teacher) {
+        if (!teacher || !teacher.is_guest) return MENU_GROUPS;
+        return MENU_GROUPS.map((g) => ({
+            title: g.title,
+            items: g.items.map((it) => (it.page === 'password'
+                ? { page: 'claim', label: '⭐ احفظ حسابك', sub: 'أنت تجرّب كزائر — بياناتك تنتقل معك' }
+                : it))
+        }));
+    }
+
+    function renderMenu(container, teacher) {
         container.innerHTML = `
             <div class="container set-v2">
-                ${MENU_GROUPS.map(groupHtml).join('')}
+                ${menuFor(teacher).map(groupHtml).join('')}
 
                 <button type="button" class="set-logout" id="btn-logout-settings">تسجيل الخروج</button>
 
@@ -215,7 +229,15 @@
         });
 
         container.querySelector('#btn-logout-settings')?.addEventListener('click', async () => {
-            if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
+            /* للزائر تحذيرٌ آخر: خروجُه لا رجعةَ فيه. جلسةُ المجهول لا
+               يُعاد الدخولُ إليها، فبياناتُه تبقى في الخادم بلا صاحبٍ
+               يصل إليها — والزرُّ نفسُه يقول «خروج» كأنّه يعود متى شاء. */
+            if (teacher && teacher.is_guest) {
+                if (!global.confirm(
+                    'أنت تجرّب كزائر. الخروج يُنهي هذا الحساب نهائياً ولا يمكن العودة إليه،'
+                    + ' وتذهب فصولك وطلابك وجدولك.\n\nاحفظ حسابك أولاً من «⭐ احفظ حسابك».'
+                    + '\n\nأتريد الخروج على أي حال؟')) return;
+            } else if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
             await global.Auth.logout();
             global.location.hash = '#/login';
         });
@@ -276,6 +298,8 @@
                 body = backupBody(prefs) + storageNote(await computeQuickStats(teacher));
                 bindFn = bindBackup;
                 break;
+            case 'claim':
+                body = claimBody(teacher); bindFn = bindClaim; break;
             case 'invite':
                 body = inviteBody(); bindFn = bindInvite; break;
             /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
@@ -913,6 +937,76 @@
     /* النص كان يَعِد بشهر مجاني عند الاشتراك، والاشتراكات حُذفت من التطبيق —
        فصار وعداً لا يقابله شيء. الرابط الآن رابط التطبيق نفسه بلا وسم إحالة
        لأن لا شيء يقرأ ذلك الوسم. */
+    /* ==========================================================================
+       حفظُ حساب الزائر
+       ==========================================================================
+       الزائرُ يدخل بجلسةٍ مجهولة، فيبني فصولَه وجدولَه — **ولا بابَ له**:
+       نموذجُ التسجيل في شاشة الدخول وحدها، والموجِّه يردُّ كلَّ داخلٍ عنها.
+       فلم يكن أمامه إلّا «تسجيل الخروج»، وجلسةُ المجهول لا يُعاد الدخولُ
+       إليها أبداً — فيذهب عملُه كلُّه بلا كلمةِ تحذير.
+
+       و`Auth.register` تُرقّي الجلسةَ القائمة بمعرّفها نفسِه، فالبيانات
+       تنتقل ولا تُنسخ. وإنّما كانت تُنادى من حيث لا يصل الزائر.
+       ========================================================================== */
+    function claimBody(teacher) {
+        const name = (teacher && teacher.name) || '';
+        return `
+            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
+                أنت تجرّب التطبيق <strong>كزائر</strong>. فصولك و${global.Words.studentsMine()}
+                وجدولك محفوظة، و<strong>تنتقل معك كما هي</strong> حين تحفظ حسابك —
+                لا تبدأ من جديد.
+            </p>
+
+            <p class="dz-h" style="border-inline-start: 3px solid #DC2626; padding-inline-start: 10px;">
+                ⚠️ <strong>تسجيل الخروج يُنهي حساب الزائر ولا يمكن العودة إليه</strong>،
+                ويذهب معه كل ما أدخلته.
+            </p>
+
+            <div class="field">
+                <label class="label" for="claim-name">الاسم</label>
+                <input class="input" id="claim-name" type="text" value="${name}" autocomplete="name">
+            </div>
+
+            <div class="field">
+                <label class="label" for="claim-email">البريد الإلكتروني</label>
+                <input class="input" id="claim-email" type="email" autocomplete="email" inputmode="email">
+            </div>
+
+            <div class="field">
+                <label class="label" for="claim-pass">كلمة المرور</label>
+                <input class="input" id="claim-pass" type="password" autocomplete="new-password" minlength="6">
+                <div class="field-hint">٦ أحرف على الأقل.</div>
+            </div>
+
+            <button class="btn btn-primary btn-block" id="btn-claim">⭐ احفظ حسابي</button>
+        `;
+    }
+
+    function bindClaim(container) {
+        const btn = container.querySelector('#btn-claim');
+        btn?.addEventListener('click', async () => {
+            const name  = container.querySelector('#claim-name').value.trim();
+            const email = container.querySelector('#claim-email').value.trim();
+            const pass  = container.querySelector('#claim-pass').value;
+            if (!name)  return global.TeacherApp.toast('اكتب اسمك.', 'error');
+            if (!email) return global.TeacherApp.toast('اكتب بريدك.', 'error');
+            if (pass.length < 6) return global.TeacherApp.toast('كلمة المرور ٦ أحرف فأكثر.', 'error');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ الحفظ…';
+            try {
+                await global.Auth.register({ name, email, password: pass });
+                global.TeacherApp.toast('حُفظ حسابك — بياناتك كما هي.', 'success', 4000);
+                state.page = null;
+                render(container.closest('#view-settings') || container);
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = '⭐ احفظ حسابي';
+                global.TeacherApp.toast(err.message || 'تعذّر حفظ الحساب.', 'error', 6000);
+            }
+        });
+    }
+
     function inviteBody() {
         const link = `${global.location.origin}${global.location.pathname}`;
         return `
