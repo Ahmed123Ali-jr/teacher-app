@@ -5847,14 +5847,44 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    الفصل الدراسي (الإعدادات) — تبديل الفصل ونقل الفصول
    ========================================================================== */
 
-.term-now {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: var(--space-4); margin-bottom: var(--space-4);
-    background: var(--primary); color: var(--text-inverse); border-radius: var(--radius-lg);
+/* شريطُ الفصلين — اختيار المستخدم «ب» (٢٥ أغسطس ٢٠٢٦).
+   والشاشةُ قبله كانت تقول «أنت في الفصل الأول» ولا تُري الثاني ولا ما فيه.
+
+   وهو **عرضٌ لا زرّ** عن قصد: الانتقالُ يهاجر بياناتٍ ويُعيد تحميل
+   التطبيق، فلا يُترك خلف لمسةٍ على شريطٍ يبدو مفتاحاً. ولذلك بلا
+   `cursor:pointer` ولا استجابةٍ للمس. */
+.tseg {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: var(--space-4);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
 }
-.term-now-l { font-size: var(--fs-xs); opacity: .72; }
-.term-now-v { font-size: var(--fs-lg); font-weight: 700; }
-.term-now-s { font-size: var(--fs-xs); color: var(--accent); }
+.tseg-i {
+    flex: 1;
+    padding: var(--space-3) var(--space-2);
+    border-radius: 9px;
+    text-align: center;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+}
+.tseg-i.on {
+    background: var(--ink-primary);
+    color: var(--text-inverse);
+}
+
+/* السطرُ تحته يقول ما في كلِّ فصل — وهو ما يعوّض أنّ الشريط لا يُظهر
+   العدد. ولولاه لكان الشريطُ أجملَ وأقلَّ نفعاً ممّا كان. */
+.tseg-n {
+    margin: 0 var(--space-1) var(--space-5);
+    font-size: var(--fs-sm);
+    line-height: 1.85;
+    color: var(--text-muted);
+}
+.tseg-n b { color: var(--ink-primary); }
 
 .term-done {
     background: color-mix(in srgb, var(--success) 12%, transparent);

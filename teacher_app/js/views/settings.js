@@ -415,26 +415,34 @@
                 return;
             }
 
-            /* الرئيسية */
+            /* الرئيسية — شريطُ تبديلٍ يقول أين هو، وسطرٌ يقول ما في كلٍّ،
+               وزرٌّ ينقله. (اختيار المستخدم «ب»، ٢٥ أغسطس ٢٠٢٦.)
+
+               والشريطُ **عرضٌ لا زرّ**: الانتقالُ يهاجر بياناتٍ ويُعيد تحميل
+               التطبيق، فلا يُترك خلف لمسةٍ عابرةٍ على شريطٍ يظنّه المعلّم
+               مفتاحاً. الزرُّ وحده يفعل، وهو يقول ما سيفعل. */
+            const first = TS.TERMS[0] || { k: cur, label: TS.labelOf(cur) };
+            const seg = TS.TERMS.map((t) => `
+                <span class="tseg-i${t.k === cur ? ' on' : ''}">${esc(t.label)}</span>
+            `).join('');
+
             pane.innerHTML = `
-                <div class="term-now">
-                    <span class="term-now-l">أنت الآن في</span>
-                    <b class="term-now-v">${esc(TS.labelOf(cur))}</b>
-                    <span class="term-now-s">${clsWord(mine.length)}</span>
-                </div>
+                <div class="tseg" role="img"
+                     aria-label="أنت الآن في ${esc(TS.labelOf(cur))}">${seg}</div>
+
+                <p class="tseg-n">
+                    أنت في <b>${esc(TS.labelOf(cur))}</b> — وفيه ${clsWord(mine.length)}.<br>
+                    و${esc(other.label)} ${there.length
+                        ? `فيه ${clsWord(there.length)} بالفعل، فالانتقال إليه لا ينقل شيئاً جديداً.`
+                        : 'لا فصول فيه بعد.'}
+                </p>
+
                 ${payload ? `<p class="term-done">${esc(payload)}</p>` : ''}
-                ${there.length ? `
-                    <p class="text-muted" style="font-size: var(--fs-sm);">
-                        ${esc(other.label)} فيه ${clsWord(there.length)} بالفعل —
-                        فالانتقال إليه لا ينقل شيئاً جديداً.
-                    </p>
-                    <button type="button" class="btn btn-primary" data-term-plain>
-                        الانتقال إلى ${esc(other.label)}
-                    </button>`
-                  : `
-                    <button type="button" class="btn btn-primary" data-term-warn>
-                        الانتقال إلى ${esc(other.label)}
-                    </button>`}`;
+
+                <button type="button" class="btn btn-primary btn-block"
+                        data-term-${there.length ? 'plain' : 'warn'}>
+                    الانتقال إلى ${esc(other.label)}
+                </button>`;
         }
 
         async function apply(ids) {
