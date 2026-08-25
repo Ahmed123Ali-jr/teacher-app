@@ -13,6 +13,12 @@
     'use strict';
 
     const sb = global.SB;
+
+    /* دالّةُ الحافّة التي تحذف الحساب وملفاتِه بمفتاح الخدمة.
+       العنوانُ يُشتقّ من عنوان المشروع نفسِه فلا يُكتب مرّتين. */
+    const DELETE_ACCOUNT_URL =
+        (global.SUPABASE_URL || 'https://rbsfpsmolxldmwcclhlc.supabase.co')
+        + '/functions/v1/delete-account';
     if (!sb) {
         console.error('[Auth] Supabase client (window.SB) not initialised.');
         return;
@@ -400,20 +406,48 @@
     async function deleteAccount() {
         const { data: { user } } = await sb.auth.getUser();
         if (!user) throw new Error('لست مسجّل الدخول.');
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session || !session.access_token) throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
 
-        /* تعذّرُ مسح الملفات لا يمنع حذف الحساب — الحسابُ أولى، ولا يُحبس
-           المعلّم فيه لأنّ شبكتَه تعثّرت. وما يفوت هنا تلتقطه
-           `delete_own_account` نفسُها: تحذف سجلّات ملفاته في المعاملة التي
-           تحذف حسابه. */
+        /* ══ مساران: الخادمُ أولاً، والعميلُ احتياطاً ══
+           الأوّل دالّةُ حافّةٍ تحمل مفتاح الخدمة: تمسح الملفات عبر واجهة
+           التخزين ثمّ تحذف الحساب — **خطوةٌ واحدةٌ على الخادم لا تنقطع في
+           منتصفها بانقطاع شبكة الجوّال**، فلا تبقى ملفاتٌ بلا مالكٍ يصل
+           إليها أحد.
+
+           والثاني هو المسار القديم كما كان: مسحٌ من الجهاز ثمّ نداءُ الدالّة
+           في القاعدة. يبقى لأنّ الحسابَ أولى بالحذف من كلّ شيء: دالّةٌ لم
+           تُنشر بعد، أو خطأٌ عارضٌ فيها، أو شبكةٌ ردّت خطأً — لا يجوز أن
+           تترك المعلّمَ حبيسَ حسابٍ طلب حذفَه. (وهو شرطُ آبل 5.1.1(v).) */
+        let deleted = false;
         try {
-            const failed = await purgeStorage(user.id);
-            if (failed.length) console.warn('[Auth] مخازنُ لم تُمسح: ' + failed.join('، '));
+            const res = await fetch(DELETE_ACCOUNT_URL, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', authorization: 'Bearer ' + session.access_token }
+            });
+            const body = await res.json().catch(() => null);
+            if (res.ok && body && body.ok) {
+                deleted = true;
+                if (body.failed && body.failed.length) {
+                    console.warn('[Auth] مخازنُ لم تُمسح على الخادم: ' + body.failed.join('، '));
+                }
+            } else {
+                console.warn('[Auth] دالّةُ الحذف ردّت ' + res.status + ' — يُسلك المسار الاحتياطيّ.');
+            }
         } catch (e) {
-            console.warn('[Auth] storage cleanup failed:', e);
+            console.warn('[Auth] تعذّر بلوغُ دالّة الحذف — يُسلك المسار الاحتياطيّ:', e && e.message);
         }
 
-        const { error } = await sb.rpc('delete_own_account');
-        if (error) throw new Error(error.message || 'تعذّر حذف الحساب.');
+        if (!deleted) {
+            try {
+                const failed = await purgeStorage(user.id);
+                if (failed.length) console.warn('[Auth] مخازنُ لم تُمسح: ' + failed.join('، '));
+            } catch (e) {
+                console.warn('[Auth] storage cleanup failed:', e);
+            }
+            const { error } = await sb.rpc('delete_own_account');
+            if (error) throw new Error(error.message || 'تعذّر حذف الحساب.');
+        }
 
         invalidateTeacher();
         if (global.TeacherDB) {
