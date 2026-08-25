@@ -91,14 +91,30 @@
             ? await global.ImageCompress.compress(file)
             : file;
 
+        /* المرفقُ القديم لم يعد مقصوداً: يُنسى مسارُه من الوثيقة **ويُعاد
+           للمنادي ليحذفه من المخزن بعد نجاح الحفظ** — لا قبله، فحفظٌ يفشل
+           بعد حذفٍ يترك المعلّم بلا مرفقٍ أصلاً. */
+        const stale = item.storage_path || null;
+
         item.file      = out;
         item.filename  = out.name || file.name;
         item.file_type = out.type || file.type || '';
         item.size      = out.size;
+        delete item.storage_path;
+        delete item.file_data;
 
         if (out !== file) {
             console.info('[Portfolio] ضُغطت الصورة: '
                 + Math.round(before / 1024) + 'KB ← ' + Math.round(out.size / 1024) + 'KB');
+        }
+        return stale;
+    }
+
+    /** يحذف مرفقاً من المخزن بلا أن يُفشل شاشةً على المعلّم. */
+    async function dropFiles(paths) {
+        for (const p of (paths || []).filter(Boolean)) {
+            try { await global.TeacherDB.PortfolioFiles.remove(p); }
+            catch (e) { console.warn('[Portfolio] بقي مرفقٌ في المخزن:', e.message); }
         }
     }
 
@@ -521,6 +537,7 @@
             const idx = ctx.portfolio.custom_sections.findIndex((s) => s.id === sec.id);
             if (idx > -1) ctx.portfolio.custom_sections.splice(idx, 1);
             await savePortfolio(ctx.portfolio);
+            await dropFiles((sec.items || []).map((it) => it.storage_path));
             /* ولا يُفتح غيرُه مكانَه: القسمُ حُذف، فالطيُّ أصدقُ من قفزةٍ
                إلى قسمٍ لم يطلبه. */
             state.openSection = null;
@@ -537,24 +554,38 @@
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDel);
                 if (!global.confirm('حذف هذا الملف؟')) return;
-                items.splice(i, 1);
+                const [gone] = items.splice(i, 1);
                 await savePortfolio(ctx.portfolio);
+                await dropFiles([gone && gone.storage_path]);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 renderCustomSection(body, ctx, sec);
             });
         });
 
         body.querySelectorAll('[data-file-download]').forEach((btn) => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDownload);
                 const it = items[i];
-                if (!it.file) return;
-                const url = URL.createObjectURL(it.file);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = it.filename || it.name;
-                a.click();
-                URL.revokeObjectURL(url);
+                const label = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = '⏳';
+                try {
+                    const blob = await global.TeacherDB.PortfolioFiles.ensure(it);
+                    if (!blob) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = it.filename || it.name;
+                    a.click();
+                    /* لا يُبطَل العنوانُ في الحال: بعضُ المتصفّحات تبدأ
+                       التنزيلَ بعد لحظة، فإبطالُه فوراً يُفرغ الملفّ. */
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } catch (e) {
+                    global.TeacherApp.toast('تعذّر فتح المرفق: ' + e.message, 'error', 5000);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = label;
+                }
             });
         });
     }
@@ -678,7 +709,7 @@
                     file:     existing?.file || null,
                     filename: existing?.filename || ''
                 };
-                if (file) await attachFile(item, file);
+                const stale = file ? await attachFile(item, file) : null;
 
                 // Snapshot the previous items so we can roll back on failure.
                 const prev = sec.items.slice();
@@ -696,6 +727,7 @@
                     sec.items = prev;  // roll back local mutation on failure
                     throw saveErr;
                 }
+                await dropFiles([stale]);   /* بعد النجاح وحده */
 
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
@@ -973,29 +1005,46 @@
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDel);
                 if (!global.confirm('حذف هذا الملف؟')) return;
-                ctx.portfolio[field].splice(i, 1);
+                const [gone] = ctx.portfolio[field].splice(i, 1);
                 await savePortfolio(ctx.portfolio);
+                await dropFiles([gone && gone.storage_path]);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 renderFileList(body, ctx, field, typeName, icon);
             });
         });
 
         body.querySelectorAll('[data-file-download]').forEach((btn) => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDownload);
                 const item = items[i];
-                if (!item.file) return;
-                const url = URL.createObjectURL(item.file);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = item.filename || item.name;
-                a.click();
-                URL.revokeObjectURL(url);
+                const label = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = '⏳';
+                try {
+                    const blob = await global.TeacherDB.PortfolioFiles.ensure(item);
+                    if (!blob) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = item.filename || item.name;
+                    a.click();
+                    /* لا يُبطَل العنوانُ في الحال: بعضُ المتصفّحات تبدأ
+                       التنزيلَ بعد لحظة، فإبطالُه فوراً يُفرغ الملفّ. */
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } catch (e) {
+                    global.TeacherApp.toast('تعذّر فتح المرفق: ' + e.message, 'error', 5000);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = label;
+                }
             });
         });
     }
 
     function fileCard(item, i, icon) {
+        /* المرفقُ لم يعد في يد الشاشة — هو في المخزن، والوثيقةُ تحمل حجمَه
+           ومساره. فالسؤالُ «هل له مرفق؟» لا «هل الملفُّ محمَّل؟». */
+        const hasFile = global.TeacherDB.PortfolioFiles.has(item);
         return `
             <div class="file-card">
                 <div class="file-icon">${icon}</div>
@@ -1004,11 +1053,11 @@
                     <div class="file-meta">
                         ${item.type ? `<span class="badge badge-muted">${escapeHtml(item.type)}</span>` : ''}
                         ${item.date ? `<span>📅 ${formatDate(item.date)}</span>` : ''}
-                        ${item.file ? `<span>${formatSize(item.file.size)}</span>` : ''}
+                        ${hasFile ? `<span>${formatSize(item.size || (item.file && item.file.size) || 0)}</span>` : ''}
                     </div>
                 </div>
                 <div class="file-actions">
-                    ${item.file ? `<button class="btn btn-ghost btn-sm" data-file-download="${i}">⬇️</button>` : ''}
+                    ${hasFile ? `<button class="btn btn-ghost btn-sm" data-file-download="${i}">⬇️</button>` : ''}
                     <button class="btn btn-ghost btn-sm" data-file-edit="${i}">✏️</button>
                     <button class="btn btn-ghost btn-sm" data-file-del="${i}">🗑️</button>
                 </div>
@@ -1086,7 +1135,7 @@
                     filename: existing?.filename || ''
                 };
 
-                if (file) await attachFile(item, file);
+                const stale = file ? await attachFile(item, file) : null;
 
                 if (!Array.isArray(ctx.portfolio[field])) ctx.portfolio[field] = [];
                 const prev = ctx.portfolio[field].slice();
@@ -1104,6 +1153,7 @@
                     ctx.portfolio[field] = prev;
                     throw saveErr;
                 }
+                await dropFiles([stale]);   /* بعد النجاح وحده */
 
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');

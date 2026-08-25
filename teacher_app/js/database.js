@@ -44,7 +44,7 @@
     /* ---------- IndexedDB cache layer ---------- */
 
     const CACHE_DB_NAME    = 'teacher_app_cache';
-    const CACHE_DB_VERSION = 4;   // bumped: added `initiative_logs` store
+    const CACHE_DB_VERSION = 5;   // bumped: added `portfolio_blobs` store
 
     /** Cache store schema: keyPath + indexes for fast filtering. */
     const CACHE_STORES = [
@@ -69,6 +69,12 @@
         { name: 'schedule',      keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'reminders',     keyPath: 'id',          indexes: [['teacher_id'], ['date']] },
         { name: 'portfolio',     keyPath: 'teacher_id'  },
+        // مخبأُ مرفقات ملفّ الإنجاز: الملفُّ نفسُه في مخزن Supabase، وهذه
+        // نسخةٌ محلّيةٌ منه ليُفتح بلا شبكةٍ وليُطبع الملفُّ دون تنزيلٍ
+        // متكرّر. مفتاحُها مسارُ الملفّ في المخزن.
+        // **وتُمسح عند الخروج** — بخلاف `book_files` — لأنّ لها أصلاً على
+        // الخادم، ولأنّ ملفاتِ معلّمٍ لا تبقى على جهازٍ سلّمه لغيره.
+        { name: 'portfolio_blobs', keyPath: 'path'       },
         { name: 'settings',      keyPath: 'key'          },
         { name: 'ai_usage',      keyPath: 'id',          indexes: [['teacher_id']] }
     ];
@@ -332,22 +338,111 @@
         });
     }
 
-    /* Portfolio attachments are uploaded as Blobs but Supabase stores
-       the section as JSON. Walk the known file-bearing arrays, swap each
-       Blob → { file_data: dataURL, file_type } on the way out, and
-       reconstruct the Blob on the way in. */
-    const PORTFOLIO_FILE_FIELDS = ['certificates', 'schedules', 'extras'];
+    /* ══════════════════════════════════════════════════════════════════
+       مرفقاتُ ملفّ الإنجاز: الملفُّ في المخزن، وفي الوثيقة إشارةٌ إليه
+       ══════════════════════════════════════════════════════════════════
+       كان المرفقُ يُرمَّز نصّاً (base64) ويُحشى في `data` — فينتفخ ثلثاً،
+       **ويُرفع وينزل مع الصفّ في كلّ حفظٍ وكلّ فتحة**. وقياسٌ على القاعدة
+       (٢٦ أغسطس ٢٠٢٦): صفُّ معلّمٍ واحدٍ سبعةَ عشرَ ميجابايت، فتعديلُ كلمةٍ
+       في الرؤية يرفع شهاداتِه كلَّها معها.
 
-    async function encodeItemFile(item) {
-        if (item && item.file instanceof Blob) {
-            const dataUrl = await blobToDataURL(item.file);
-            const out = Object.assign({}, item);
-            out.file = null;
-            out.file_data = dataUrl;
-            out.file_type = item.file.type || 'application/octet-stream';
-            return out;
+       فصار الملفُّ يصعد إلى مخزن `portfolio` مرّةً واحدة، ويبقى في الوثيقة
+       `storage_path` مع اسمه وحجمه ونوعه. والصفُّ كيلوباياتٌ معدودة.
+
+       **والقديمُ يُهاجر وحده:** صفٌّ فيه `file_data` يُفكّ إلى Blob عند
+       القراءة كما كان، فإذا حُفظ بعدها صعد الملفُّ إلى المخزن وسقط النصُّ
+       من الوثيقة. فلا هجرةَ يدويّةً ولا صفّاً يُترك خلفاً.
+
+       **والمرفقُ لا يُنزَّل إلّا حين يُطلب** — عند فتحه أو طباعة الملفّ —
+       ويُخبَّأ محلياً بعدها. */
+    const PORTFOLIO_FILE_FIELDS = ['certificates', 'schedules', 'extras'];
+    const PORTFOLIO_BUCKET = 'portfolio';
+
+    /** امتدادُ الملفّ من اسمه، وإلّا فمن نوعه، وإلّا `bin`. */
+    function fileExt(filename, type) {
+        const m = String(filename || '').match(/\.([a-z0-9]{1,8})$/i);
+        if (m) return m[1].toLowerCase();
+        if (type === 'application/pdf') return 'pdf';
+        const sub = String(type || '').split('/')[1];
+        return (sub && /^[a-z0-9]{1,8}$/i.test(sub)) ? sub.toLowerCase() : 'bin';
+    }
+
+    function randomName() {
+        if (global.crypto && global.crypto.randomUUID) return global.crypto.randomUUID();
+        return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    async function uploadPortfolioFile(uid, blob, filename) {
+        if (!uid) throw new Error('غير مسجّل دخول.');
+        const path = uid + '/' + randomName() + '.' + fileExt(filename, blob.type);
+        const { error } = await sb.storage.from(PORTFOLIO_BUCKET).upload(path, blob, {
+            contentType: blob.type || 'application/octet-stream',
+            upsert: false
+        });
+        if (error) throw new Error('تعذّر رفع المرفق: ' + error.message);
+        return path;
+    }
+
+    async function downloadPortfolioFile(path) {
+        const cached = await PortfolioBlobs.get(path);
+        if (cached) return cached;
+        const { data, error } = await sb.storage.from(PORTFOLIO_BUCKET).download(path);
+        if (error) throw new Error('تعذّر تحميل المرفق: ' + error.message);
+        await PortfolioBlobs.save(path, data);
+        return data;
+    }
+
+    /* حذفُ ملفٍّ لا يُفشل عمليّةَ المعلّم: العنصرُ زال من وثيقته وهذا ما
+       طلبه. وملفٌّ باقٍ في المخزن بلا إشارةٍ إليه أهونُ من رسالةِ خطأٍ
+       على عمليّةٍ نجحت. */
+    async function removePortfolioFile(path) {
+        if (!path) return;
+        try { await PortfolioBlobs.remove(path); } catch (e) { /* مخبأٌ لا غير */ }
+        try {
+            const { error } = await sb.storage.from(PORTFOLIO_BUCKET).remove([path]);
+            if (error) console.warn('[Portfolio] تعذّر حذفُ المرفق من المخزن:', error.message);
+        } catch (e) {
+            console.warn('[Portfolio] تعذّر حذفُ المرفق من المخزن:', e.message);
         }
-        return item;
+    }
+
+    /**
+     * يُحضر ملفَّ العنصر: من يده، أو من المخبأ، أو من المخزن.
+     * @returns {Promise<Blob|null>} `null` إن كان العنصرُ بلا ملفٍّ أصلاً.
+     */
+    async function ensurePortfolioFile(item) {
+        if (!item) return null;
+        if (item.file instanceof Blob && item.file.size > 0) return item.file;
+        if (!item.storage_path) return null;
+        const blob = await downloadPortfolioFile(item.storage_path);
+        item.file = blob;
+        return blob;
+    }
+
+    /**
+     * @param {object} item
+     * @param {{uid: string, uploaded: string[]}} ctx يُسجَّل فيه ما رُفع،
+     *        فإن فشلت الكتابةُ بعده حُذف ولم يبقَ يتيماً في المخزن.
+     */
+    async function encodeItemFile(item, ctx) {
+        if (!item) return item;
+        const out = Object.assign({}, item);
+
+        /* ملفٌّ في اليد بلا مسار: إمّا مرفقٌ جديد، وإمّا قديمٌ فُكَّ من
+           `file_data` — وكلاهما يصعد الآن. */
+        if (out.file instanceof Blob && out.file.size > 0 && !out.storage_path) {
+            const path = await uploadPortfolioFile(ctx.uid, out.file, out.filename);
+            ctx.uploaded.push(path);
+            out.storage_path = path;
+            out.file_type = out.file.type || out.file_type || '';
+            out.size      = out.file.size;
+            /* يُخبَّأ فورَ رفعه: المعلّم رفعه قبل ثانية، فلا يُنزَّل من جديد. */
+            try { await PortfolioBlobs.save(path, out.file); } catch (e) { /* مخبأٌ لا غير */ }
+        }
+
+        out.file = null;                                  /* Blob لا يُكتب في JSON */
+        if (out.storage_path) delete out.file_data;       /* صعد الملفُّ فسقط نصُّه */
+        return out;
     }
 
     function decodeItemFile(item) {
@@ -368,20 +463,28 @@
         return item;
     }
 
-    async function encodePortfolioFiles(portfolio) {
+    /* الرفعُ **بالتتابع لا بالتوازي**: المعلّم قد يحفظ عشرين مرفقاً دفعةً
+       واحدة في أوّل هجرةٍ لصفّه القديم، وعشرون رفعاً متزامناً من جوّالٍ على
+       شبكةٍ ضعيفةٍ يخنق بعضُها بعضاً. والتتابعُ أبطأ قليلاً وأوثقُ كثيراً. */
+    async function encodePortfolioFiles(portfolio, ctx) {
         const out = Object.assign({}, portfolio);
         for (const f of PORTFOLIO_FILE_FIELDS) {
             if (Array.isArray(out[f])) {
-                out[f] = await Promise.all(out[f].map(encodeItemFile));
+                const list = [];
+                for (const it of out[f]) list.push(await encodeItemFile(it, ctx));
+                out[f] = list;
             }
         }
         if (Array.isArray(out.custom_sections)) {
-            out.custom_sections = await Promise.all(out.custom_sections.map(async (sec) => {
-                const items = Array.isArray(sec.items)
-                    ? await Promise.all(sec.items.map(encodeItemFile))
-                    : [];
-                return Object.assign({}, sec, { items });
-            }));
+            const secs = [];
+            for (const sec of out.custom_sections) {
+                const items = [];
+                if (Array.isArray(sec.items)) {
+                    for (const it of sec.items) items.push(await encodeItemFile(it, ctx));
+                }
+                secs.push(Object.assign({}, sec, { items }));
+            }
+            out.custom_sections = secs;
         }
         return out;
     }
@@ -408,14 +511,22 @@
         return decodePortfolioFiles(merged);
     }
 
-    async function portfolioOut(value, uid) {
+    async function portfolioOut(value, uid, ctx) {
         const teacher_id = value.teacher_id || uid;
-        const encoded = await encodePortfolioFiles(value);
+        const encoded = await encodePortfolioFiles(value, ctx || { uid, uploaded: [] });
         const data = Object.assign({}, encoded);
         delete data.teacher_id;
         const updated_at = data.updated_at || new Date().toISOString();
         delete data.updated_at;
         return { teacher_id, data, updated_at };
+    }
+
+    /* الكتابةُ فشلت بعد أن صعدت المرفقات: تُحذف: ملفٌّ في المخزن لا تشير
+       إليه وثيقةٌ لا يراه أحدٌ ولا يحذفه أحد. */
+    async function discardUploads(ctx) {
+        if (!ctx || !ctx.uploaded || !ctx.uploaded.length) return;
+        for (const p of ctx.uploaded) await removePortfolioFile(p);
+        ctx.uploaded.length = 0;
     }
 
     /* ---------- helpers ---------- */
@@ -723,9 +834,10 @@
 
         if (storeName === 'portfolio') {
             const uid = await currentUid();
-            const row = await portfolioOut(value, uid);
+            const ctx = { uid, uploaded: [] };
+            const row = await portfolioOut(value, uid, ctx);
             const { data, error } = await sb.from(table).upsert(row, { onConflict: 'teacher_id' }).select('*').single();
-            if (error) err('portfolio add', error);
+            if (error) { await discardUploads(ctx); err('portfolio add', error); }
             await Cache.put('portfolio', data);
             return data.teacher_id;
         }
@@ -776,9 +888,10 @@
 
         if (storeName === 'portfolio') {
             const uid = await currentUid();
-            const row = await portfolioOut(value, uid);
+            const ctx = { uid, uploaded: [] };
+            const row = await portfolioOut(value, uid, ctx);
             const { data, error } = await sb.from(table).upsert(row, { onConflict: 'teacher_id' }).select('*').single();
-            if (error) err('portfolio put', error);
+            if (error) { await discardUploads(ctx); err('portfolio put', error); }
             await Cache.put('portfolio', data);
             return row.teacher_id;
         }
@@ -1155,6 +1268,25 @@
         }
     };
 
+    /* ---------- مخبأُ مرفقات ملفّ الإنجاز (نسخةٌ محلّيةٌ لأصلٍ في المخزن) ---- */
+    const PortfolioBlobs = {
+        async save(path, blob) {
+            if (!path || !blob) return;
+            return cacheTx('portfolio_blobs', 'readwrite', (s) =>
+                reqAsPromise(s.put({ path, blob, size: blob.size, type: blob.type || '' }))
+            );
+        },
+        async get(path) {
+            if (!path) return null;
+            const row = await cacheTx('portfolio_blobs', 'readonly', (s) => reqAsPromise(s.get(path)));
+            return row?.blob || null;
+        },
+        async remove(path) {
+            if (!path) return;
+            return cacheTx('portfolio_blobs', 'readwrite', (s) => reqAsPromise(s.delete(path)));
+        }
+    };
+
     /* ---------- bulk writes (one network request for many rows) ----------
        For simple stores (attendance/participation/…) that need no special
        out-mapping. Used by «تحضير الكل» so 32 students = 1-2 requests, not 32. */
@@ -1194,6 +1326,15 @@
         destroy, exportAll, importAll,
         Settings,
         BookFiles,
+        /** مرفقاتُ ملفّ الإنجاز: تُحضَر عند الحاجة، وتُحذف حين يحذفها المعلّم. */
+        PortfolioFiles: {
+            ensure: ensurePortfolioFile,
+            remove: removePortfolioFile,
+            /** هل للعنصر مرفقٌ أصلاً — في اليد أو في المخزن؟ */
+            has: (item) => !!(item && ((item.file instanceof Blob && item.file.size > 0)
+                                       || item.storage_path
+                                       || (typeof item.file_data === 'string' && item.file_data)))
+        },
         Term: {
             current: currentTerm,
             /** يُبطل المذكّرة بعد تغيير `academic_term` — وإلّا ظلّت القراءات

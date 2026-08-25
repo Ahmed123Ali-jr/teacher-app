@@ -397,9 +397,32 @@
         }
     }
 
+    /* ══ المرفقاتُ تُحضَر قبل أن تُبنى الصفحات ══
+       صارت مرفقاتُ ملفّ الإنجاز تسكن مخزنَ Supabase لا الوثيقةَ نفسَها
+       (٢٦ أغسطس ٢٠٢٦)، فالعنصرُ يصل من الخادم بمسارٍ بلا ملفّ. وبقيّةُ هذا
+       الملفّ تسأل `it.file instanceof Blob` في عشرة مواضع — فلو بُنيت
+       الصفحاتُ قبل التحميل لخرجت الشهاداتُ كلُّها «محتوى الملف فقد».
+
+       فتُنزَّل هنا مرّةً واحدةً قبل كلّ شيء، وتُخبَّأ محلياً بعدها فلا
+       تُنزَّل في الطباعة التالية. وما يفشل تنزيلُه يمضي بلا ملفّ — فيُطبع
+       ملفُّ الإنجاز ناقصاً مرفقاً، ولا يسقط كلُّه من أجل واحد. */
+    async function preloadAttachments(portfolio) {
+        const API = global.TeacherDB && global.TeacherDB.PortfolioFiles;
+        if (!API || !portfolio) return;
+        const items = []
+            .concat(portfolio.certificates || [], portfolio.schedules || [], portfolio.extras || [])
+            .concat(...(portfolio.custom_sections || []).map((s) => s.items || []));
+        for (const it of items) {
+            if (!it || it.file instanceof Blob || !it.storage_path) continue;
+            try { await API.ensure(it); }
+            catch (e) { console.warn('[PrintPortfolio] تعذّر تحميل مرفق:', it.name, e.message); }
+        }
+    }
+
     async function buildHtml(ctx, opts) {
         const { teacher, portfolio, exams, worksheets, homework, strategies, initiatives,
                 scheduleRows, periodTimes } = ctx;
+        await preloadAttachments(portfolio);
         const onlyFilled = !!(opts && opts.onlyFilled);
         const want = (n) => !onlyFilled || sectionFilled(n, ctx);
         const secId = (n) => 'pf-sec-' + n;
@@ -676,9 +699,12 @@
      *  Strategies / initiatives use one content page per item (min 1). */
     function calculateTocEntries(ctx) {
         const { portfolio, strategies, initiatives, customSections } = ctx;
-        const certs  = (portfolio.certificates || []).filter((c) => c.file).length;
-        const sched  = (portfolio.schedules    || []).filter((s) => s.file).length;
-        const extras = (portfolio.extras       || []).filter((e) => e.file).length;
+        /* `file || storage_path`: المرفقُ قد يكون في المخزن لم يُنزَّل بعد،
+           وهو مع ذلك صفحةٌ في الفهرس. */
+        const has    = (it) => !!(it.file || it.storage_path);
+        const certs  = (portfolio.certificates || []).filter(has).length;
+        const sched  = (portfolio.schedules    || []).filter(has).length;
+        const extras = (portfolio.extras       || []).filter(has).length;
         const stratPages = Math.max(strategies.length, 1);
         const initPages  = Math.max(initiatives.length, 1);
 
@@ -703,7 +729,7 @@
         add(10, 'مرفقات إضافية',             1, extras);
 
         for (const cs of (customSections || [])) {
-            const csAttach = (cs.items || []).filter((it) => it.file).length;
+            const csAttach = (cs.items || []).filter(has).length;
             entries.push({ n: entries.length + 1, title: cs.name || 'قسم', page: cur });
             cur += 1 + 1 + csAttach;
         }
