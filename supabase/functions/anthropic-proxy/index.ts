@@ -211,6 +211,30 @@ Deno.serve(async (req) => {
     const pages = validatePages(body.pages);
     if (typeof pages === 'string') return json({ error: pages }, 400);
 
+    /* 2.5) الحصّة الشهريّة — **بعد التحقّق لا قبله**: طلبٌ مشوَّهٌ لا يُنقص
+       رصيدَ معلّمٍ لم يُستدعَ له النموذج أصلاً. وقبل نداء أنثروبيك، فلا
+       يُنفَق شيءٌ ثمّ يُرفض.
+
+       والحجزُ يمضي وإن فشل النداءُ بعده: لا مسارَ إرجاع. فمسارُ الإرجاع
+       بابٌ ثانٍ يُطرق، والأربعون ضِعفا ما يحتاجه أثقلُ معلّم — فالسعةُ
+       تكفي، والبساطةُ أسلم. */
+    const { data: quotaRows, error: quotaErr } = await supabase.rpc('claim_ai_quota');
+    if (quotaErr) {
+        console.error('[proxy] quota rpc failed: ' + quotaErr.message);
+        return json({ error: 'تعذّر التحقّق من حصّتك. أعد المحاولة.' }, 500);
+    }
+    const quota = Array.isArray(quotaRows) ? quotaRows[0] : quotaRows;
+    if (!quota || quota.allowed !== true) {
+        const cap = quota?.quota_limit ?? 40;
+        return json({
+            error: 'بلغتَ حدَّ الاستيراد لهذا الشهر (' + cap + ' عمليّة). '
+                 + 'يتجدّد أوّل الشهر القادم — وحتى ذلك الحين أدخل الأسماء والجدول يدوياً.',
+            code:  'quota_exceeded',
+            used:  quota?.used ?? cap,
+            limit: cap,
+        }, 429);
+    }
+
     // 3) الطلب يُبنى هنا — العميل لا يملك منه شيئاً
     let system: string;
     let tool: Record<string, unknown>;

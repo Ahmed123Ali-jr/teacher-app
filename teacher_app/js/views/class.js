@@ -1667,7 +1667,10 @@
                     const panel = document.querySelector('#tab-panel');
                     if (panel) await renderStudents(panel, cls);
                 } catch (err) {
-                    global.TeacherApp.toast(err.message, 'error');
+                    /* ثمانِ ثوانٍ لا ثلاث: رسالةُ بلوغ الحصّة سطران يقولان ما
+                       جرى وما البديل — ونخبةٌ تمضي قبل أن تُقرأ لا تختلف عن
+                       صمت. */
+                    global.TeacherApp.toast(err.message, 'error', 8000);
                 } finally {
                     btn.disabled = false;
                     btn.textContent = origLabel;
