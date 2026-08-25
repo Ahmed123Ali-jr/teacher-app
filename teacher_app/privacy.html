@@ -70,9 +70,44 @@
     margin-top:3rem; padding-top:1.25rem; border-top:1px solid var(--line);
     font-size:.8125rem; color:var(--muted); line-height:1.9;
   }
+
+  /* شريطُ الرجوع الثابت — يُرى ولو نزل المعلّم إلى آخر الصفحة. */
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    background:color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter:saturate(180%) blur(8px);
+    -webkit-backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:.6rem clamp(1rem,4vw,2rem);
+    padding-top:max(.6rem, env(safe-area-inset-top));
+  }
+  .back{
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:none; border:0; padding:.45rem .2rem;
+    font-family:inherit; font-size:.95rem; font-weight:700;
+    color:var(--head); cursor:pointer;
+  }
+  .back span{ font-size:1.05rem; line-height:1; }
+  .back:active{ opacity:.6; }
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     شريطُ الرجوع — ثابتٌ أعلى الصفحة
+     ══════════════════════════════════════════════════════════════════
+     تُفتح هذه الصفحةُ من رابطٍ في `target="_blank"`، فتبويبُها **بلا
+     تاريخٍ يرجع إليه**: كان المعلّم يجد نفسه محبوساً فيها ولا مخرج إلّا
+     إغلاقُ التطبيق. (بلاغُ المستخدم، ٢٥ أغسطس ٢٠٢٦.)
+
+     فالزرُّ يجرّب الرجوعَ أوّلاً؛ فإن لم يكن ثَمّ تاريخٌ عاد إلى التطبيق.
+     ولا يُكتفى بـ`history.back()` وحدَه لهذا السبب بعينه.
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="topbar">
+  <button type="button" class="back" id="btn-back">
+    <span aria-hidden="true">→</span> رجوع
+  </button>
+</div>
 <div class="sheet">
 
   <p class="kicker">تطبيق إنجاز المعلم</p>
@@ -235,5 +270,14 @@
   </p>
 
 </div>
+
+<script>
+/* الرجوعُ أوّلاً، فإن لم يكن ثَمّ تاريخٌ فإلى التطبيق.
+   و`history.length` يبدأ بواحدٍ في تبويبٍ جديد. */
+document.getElementById('btn-back').addEventListener('click', function () {
+  if (window.history.length > 1) { window.history.back(); return; }
+  window.location.href = 'index.html';
+});
+</script>
 </body>
 </html>
