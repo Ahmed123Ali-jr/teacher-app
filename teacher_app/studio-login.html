@@ -15,7 +15,7 @@
   /* الخطُّ يحمل ٤٠٠ و٥٠٠ و٦٠٠ و٧٠٠ فقط (`css/fonts.css`). وما فوقها
      **يزوّره المتصفّح** بتغليظٍ صناعيٍّ فتبدو الحروف متورّمةً لا ثقيلة.
      فالسقفُ ٧٠٠، ولا يُكتب ٨٠٠ في هذا المشروع أبداً. */
-  --w:600;
+  --w:500;
 }
 *{box-sizing:border-box}
 body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:#EFF1F4;
@@ -147,8 +147,8 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
   </div>
 
   <div class="grp">
-    <label>ثقل خطّ الأزرار <span class="val" id="wv">٦٠٠ متوسط</span></label>
-    <input type="range" class="rng" id="w" min="400" max="700" step="100" value="600">
+    <label>ثقل خطّ الأزرار <span class="val" id="wv">٥٠٠ وسط</span></label>
+    <input type="range" class="rng" id="w" min="400" max="700" step="100" value="500">
   </div>
 
   <div class="grp">
@@ -162,13 +162,23 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
   </div>
 
   <div class="grp">
+    <label>نصوصٌ جاهزة</label>
+    <div class="opts" id="copy">
+      <button data-v="0" aria-pressed="true">١</button>
+      <button data-v="1">٢</button>
+      <button data-v="2">٣</button>
+      <button data-v="3">٤</button>
+    </div>
+  </div>
+
+  <div class="grp">
     <label>العنوان</label>
-    <input class="txt" id="ttl" value="أهلاً بعودتك">
+    <input class="txt" id="ttl" value="تطبيق إنجاز المعلم">
   </div>
 
   <div class="grp">
     <label>السطر تحته</label>
-    <input class="txt" id="sub" value="سجّل دخولك لتكمل من حيث توقّفت">
+    <input class="txt" id="sub" value="سجلّاتك الصفّية وملفّ إنجازك — في تطبيقٍ واحد">
   </div>
 </div>
 
@@ -176,13 +186,13 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
   <div class="screen" id="stage" data-look="a" data-try="plain">
     <div class="head">
       <div class="mark">🎓</div>
-      <h2 class="ttl">أهلاً بعودتك</h2>
-      <p class="sub">سجّل دخولك لتكمل من حيث توقّفت</p>
+      <h2 class="ttl">تطبيق إنجاز المعلم</h2>
+      <p class="sub">سجلّاتك الصفّية وملفّ إنجازك — في تطبيقٍ واحد</p>
     </div>
     <div class="body">
       <div class="mark">🎓</div>
-      <h2 class="ttl">أهلاً بعودتك</h2>
-      <p class="sub">سجّل دخولك لتكمل من حيث توقّفت</p>
+      <h2 class="ttl">تطبيق إنجاز المعلم</h2>
+      <p class="sub">سجلّاتك الصفّية وملفّ إنجازك — في تطبيقٍ واحد</p>
 
       <div class="fld"><label>البريد الإلكتروني</label>
         <input type="email" placeholder="name@example.com"></div>
@@ -208,8 +218,21 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 <script>
 /* حالةٌ واحدةٌ تقود الشاشةَ والخلاصةَ معاً — فلا يفترقان. */
 const stage = document.getElementById('stage');
-const state = { look:'a', try:'plain', rad:13, fs:15, w:600,
-                ttl:'أهلاً بعودتك', sub:'سجّل دخولك لتكمل من حيث توقّفت' };
+/* أربعُ صياغات. الأولى اسمُ التطبيق مجرَّداً — وهو ما تفعله التطبيقاتُ
+   الحكوميّةُ والمهنيّة: لا ترحيبَ ولا مجاملة، بل تعريفٌ ووظيفة. */
+const COPY = [
+  { t:'تطبيق إنجاز المعلم',
+    s:'سجلّاتك الصفّية وملفّ إنجازك — في تطبيقٍ واحد' },
+  { t:'إنجاز المعلم',
+    s:'إدارةُ فصولك ومتابعةُ طلابك وبناءُ ملفّ إنجازك' },
+  { t:'تسجيل الدخول',
+    s:'أدخل بياناتك للوصول إلى فصولك وسجلّاتك' },
+  { t:'تطبيق إنجاز المعلم',
+    s:'الحضور · المشاركة · الاختبارات · الجدول · ملفّ الإنجاز' }
+];
+
+const state = { look:'a', try:'plain', rad:13, fs:15, w:500,
+                ttl:COPY[0].t, sub:COPY[0].s };
 
 const NAMES = { a:'أ · هادئ ومركَّز', b:'ب · ترويسة بترولية',
                 c:'ج · ملء الشاشة', d:'د · بطاقة مرفوعة' };
@@ -252,6 +275,20 @@ function group(id, key) {
 }
 group('look', 'look');
 group('try', 'try');
+
+/* اختيارُ نصٍّ جاهزٍ يملأ الحقلين، فيبقى للمستخدم أن يعدّل عليهما بيده. */
+document.getElementById('copy').addEventListener('click', function (e) {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const c = COPY[+b.dataset.v];
+  state.ttl = c.t; state.sub = c.s;
+  document.getElementById('ttl').value = c.t;
+  document.getElementById('sub').value = c.s;
+  document.getElementById('copy').querySelectorAll('button').forEach(function (x) {
+    x.setAttribute('aria-pressed', String(x === b));
+  });
+  paint();
+});
 
 document.getElementById('rad').addEventListener('input', function (e) {
   state.rad = +e.target.value; paint();
