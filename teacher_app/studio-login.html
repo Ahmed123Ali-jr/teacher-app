@@ -12,6 +12,10 @@
   --rad:13px;        /* حوافُّ الأزرار والحقول */
   --fs:15px;         /* حجمُ خطّ الحقول */
   --pad:14px;
+  /* الخطُّ يحمل ٤٠٠ و٥٠٠ و٦٠٠ و٧٠٠ فقط (`css/fonts.css`). وما فوقها
+     **يزوّره المتصفّح** بتغليظٍ صناعيٍّ فتبدو الحروف متورّمةً لا ثقيلة.
+     فالسقفُ ٧٠٠، ولا يُكتب ٨٠٠ في هذا المشروع أبداً. */
+  --w:600;
 }
 *{box-sizing:border-box}
 body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:#EFF1F4;
@@ -25,7 +29,7 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
        padding:12px 13px;margin-bottom:14px}
 .grp{margin-bottom:13px}
 .grp:last-child{margin-bottom:0}
-.grp > label{display:block;font-size:12px;font-weight:800;color:var(--royal);margin-bottom:7px}
+.grp > label{display:block;font-size:12px;font-weight:700;color:var(--royal);margin-bottom:7px}
 .opts{display:flex;gap:6px;flex-wrap:wrap}
 .opts button{flex:1 1 auto;min-width:62px;font-family:inherit;font-size:12.5px;font-weight:700;
    padding:9px 6px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
@@ -34,7 +38,7 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 .txt{width:100%;font-family:inherit;font-size:13.5px;padding:9px 11px;
      border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
 .rng{width:100%;accent-color:var(--royal)}
-.val{float:left;font-size:12px;font-weight:800;color:var(--gold)}
+.val{float:left;font-size:12px;font-weight:700;color:var(--gold)}
 
 /* ── الجوّال ── */
 .phone{border:1px solid #D5D9DE;border-radius:22px;overflow:hidden;background:#fff;
@@ -47,28 +51,28 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 .fld input{width:100%;font-family:inherit;font-size:var(--fs);padding:var(--pad);
    border-radius:var(--rad);border:1px solid var(--line);background:#fff;color:var(--ink)}
 .fld input::placeholder{color:#A9ACB2}
-.go{width:100%;font-family:inherit;font-size:16px;font-weight:800;padding:15px;border:0;
+.go{width:100%;font-family:inherit;font-size:16px;font-weight:var(--w);padding:15px;border:0;
     border-radius:var(--rad);background:var(--royal);color:#fff;cursor:pointer}
 .forgot{text-align:start;margin:-2px 0 14px}
 .forgot a{font-size:12.5px;font-weight:700;color:var(--royal);text-decoration:underline}
-.try{width:100%;font-family:inherit;font-size:14.5px;font-weight:800;padding:14px;
+.try{width:100%;font-family:inherit;font-size:14.5px;font-weight:var(--w);padding:14px;
      border-radius:var(--rad);cursor:pointer}
 .sep{display:flex;align-items:center;gap:10px;margin:15px 0;font-size:12px;color:#9AA0A6}
 .sep::before,.sep::after{content:'';flex:1;height:1px;background:var(--line)}
 .swap{text-align:center;font-size:13px;color:var(--muted);margin:15px 0 0}
-.swap a{font-weight:800;color:var(--royal)}
+.swap a{font-weight:700;color:var(--royal)}
 
 /* الأشكال */
 [data-look="a"] .body{padding:44px 24px 24px}
 [data-look="a"] .mark{width:54px;height:54px;border-radius:16px;background:var(--royal);
    display:grid;place-items:center;font-size:26px;margin-bottom:16px}
-[data-look="a"] .ttl{font-size:25px;font-weight:800;color:var(--royal);margin:0 0 5px;letter-spacing:-.4px}
+[data-look="a"] .ttl{font-size:25px;font-weight:700;color:var(--royal);margin:0 0 5px;letter-spacing:-.4px}
 [data-look="a"] .sub{font-size:13.5px;color:var(--muted);margin:0 0 24px}
 [data-look="a"] .head{display:none}
 
 [data-look="b"] .head{display:block;background:var(--royal);padding:38px 24px 30px;text-align:center}
 [data-look="b"] .head .mark{font-size:36px}
-[data-look="b"] .head .ttl{color:#fff;font-size:21px;font-weight:800;margin:6px 0 4px}
+[data-look="b"] .head .ttl{color:#fff;font-size:21px;font-weight:700;margin:6px 0 4px}
 [data-look="b"] .head .sub{color:rgba(255,255,255,.72);font-size:12.5px;margin:0}
 [data-look="b"] .head::after{content:'';display:block;height:3px;background:var(--gold);
    margin:30px -24px -30px}
@@ -77,7 +81,7 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 
 [data-look="c"] .body{padding:52px 24px 24px}
 [data-look="c"] .mark{display:none}
-[data-look="c"] .ttl{font-size:28px;font-weight:800;color:var(--royal);margin:0 0 6px;
+[data-look="c"] .ttl{font-size:28px;font-weight:700;color:var(--royal);margin:0 0 6px;
    letter-spacing:-.6px;line-height:1.35}
 [data-look="c"] .sub{font-size:13.5px;color:var(--muted);margin:0 0 28px;line-height:1.7}
 [data-look="c"] .head{display:none}
@@ -93,21 +97,25 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 [data-look="d"] .mark{width:56px;height:56px;border-radius:50%;background:var(--royal);
    border:2.5px solid var(--gold);display:grid;place-items:center;font-size:24px;
    margin:-48px auto 12px}
-[data-look="d"] .ttl{text-align:center;font-size:19px;font-weight:800;color:var(--royal);margin:0 0 3px}
+[data-look="d"] .ttl{text-align:center;font-size:19px;font-weight:700;color:var(--royal);margin:0 0 3px}
 [data-look="d"] .sub{text-align:center;font-size:12.5px;color:var(--muted);margin:0 0 20px}
 [data-look="d"] .head{display:none}
 
 /* زرُّ التجربة — ثلاثةُ أشكال */
+[data-try="plain"]   .try{background:none;border:0;color:var(--muted);
+   text-decoration:underline;padding:12px;font-weight:500}
 [data-try="outline"] .try{background:#fff;border:1.5px solid var(--gold);color:#7A6430}
 [data-try="solid"]   .try{background:var(--gold);border:0;color:#2A2411}
 [data-try="hidden"]  .try,[data-try="hidden"] .sep{display:none}
+/* وبلا شيءٍ لا يلزمه فاصلُ «أو» — فهو ليس بديلاً مكافئاً بل بابٌ جانبيّ. */
+[data-try="plain"] .sep{display:none}
 
 /* الخلاصة */
 .out{background:var(--royal);color:#fff;border-radius:12px;padding:13px 15px;
      font-size:13px;line-height:1.9}
 .out h3{margin:0 0 8px;font-size:13px;color:var(--gold)}
 .out code{background:rgba(255,255,255,.12);padding:2px 7px;border-radius:5px;
-   font-family:inherit;font-weight:800}
+   font-family:inherit;font-weight:700}
 </style>
 </head>
 <body>
@@ -139,9 +147,15 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
   </div>
 
   <div class="grp">
+    <label>ثقل خطّ الأزرار <span class="val" id="wv">٦٠٠ متوسط</span></label>
+    <input type="range" class="rng" id="w" min="400" max="700" step="100" value="600">
+  </div>
+
+  <div class="grp">
     <label>زرّ التجربة</label>
     <div class="opts" id="try">
-      <button data-v="outline" aria-pressed="true">إطار ذهبي</button>
+      <button data-v="plain" aria-pressed="true">بلا شيء</button>
+      <button data-v="outline">إطار ذهبي</button>
       <button data-v="solid">ذهبي كامل</button>
       <button data-v="hidden">مخفي</button>
     </div>
@@ -159,7 +173,7 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 </div>
 
 <div class="phone">
-  <div class="screen" id="stage" data-look="a" data-try="outline">
+  <div class="screen" id="stage" data-look="a" data-try="plain">
     <div class="head">
       <div class="mark">🎓</div>
       <h2 class="ttl">أهلاً بعودتك</h2>
@@ -194,29 +208,33 @@ h1{font-size:18px;margin:0 0 4px;color:var(--royal)}
 <script>
 /* حالةٌ واحدةٌ تقود الشاشةَ والخلاصةَ معاً — فلا يفترقان. */
 const stage = document.getElementById('stage');
-const state = { look:'a', try:'outline', rad:13, fs:15,
+const state = { look:'a', try:'plain', rad:13, fs:15, w:600,
                 ttl:'أهلاً بعودتك', sub:'سجّل دخولك لتكمل من حيث توقّفت' };
 
 const NAMES = { a:'أ · هادئ ومركَّز', b:'ب · ترويسة بترولية',
                 c:'ج · ملء الشاشة', d:'د · بطاقة مرفوعة' };
-const TRYN  = { outline:'إطار ذهبي', solid:'ذهبي كامل', hidden:'مخفي' };
+const TRYN  = { plain:'بلا شيء', outline:'إطار ذهبي', solid:'ذهبي كامل', hidden:'مخفي' };
+const WN    = { 400:'٤٠٠ عادي', 500:'٥٠٠ وسط', 600:'٦٠٠ متوسط', 700:'٧٠٠ ثقيل' };
 
 function paint() {
   stage.dataset.look = state.look;
   stage.dataset.try  = state.try;
   stage.style.setProperty('--rad', state.rad + 'px');
   stage.style.setProperty('--fs',  state.fs  + 'px');
+  stage.style.setProperty('--w',   String(state.w));
   /* العنوانُ في موضعين (الترويسة والجسم) — يُكتب فيهما معاً. */
   stage.querySelectorAll('.ttl').forEach(function (el) { el.textContent = state.ttl; });
   stage.querySelectorAll('.sub').forEach(function (el) { el.textContent = state.sub; });
 
   document.getElementById('radv').textContent = state.rad + 'px';
   document.getElementById('fsv').textContent  = state.fs  + 'px';
+  document.getElementById('wv').textContent   = WN[state.w];
 
   document.getElementById('summary').innerHTML =
       'التصميم: <code>' + NAMES[state.look] + '</code><br>' +
       'زرّ التجربة: <code>' + TRYN[state.try] + '</code><br>' +
       'الحواف: <code>' + state.rad + 'px</code> · الخط: <code>' + state.fs + 'px</code><br>' +
+      'ثقل الأزرار: <code>' + WN[state.w] + '</code><br>' +
       'العنوان: <code>' + state.ttl + '</code>';
 }
 
@@ -240,6 +258,9 @@ document.getElementById('rad').addEventListener('input', function (e) {
 });
 document.getElementById('fs').addEventListener('input', function (e) {
   state.fs = +e.target.value; paint();
+});
+document.getElementById('w').addEventListener('input', function (e) {
+  state.w = +e.target.value; paint();
 });
 document.getElementById('ttl').addEventListener('input', function (e) {
   state.ttl = e.target.value; paint();
