@@ -457,6 +457,15 @@
        ══════════════════════════════════════════════════════════════════ */
     const FIRST_PAINT_STORES = ['teachers', 'settings', 'classes', 'schedule', 'reminders'];
 
+    /* ══ مخازنُ تُحمَّل عند طلبها لا عند الإقلاع ══
+       صفُّ ملفّ الإنجاز يحمل مرفقاته **داخله**: صورٌ ومستنداتٌ حتى ثلاثين
+       ميجابايت مكتوبةً نصّاً في عمود `data`. وكان يُسحب في كلّ فتحةٍ باردة
+       ولو لم يفتح المعلّم شاشةَ الإنجاز — وهي واحدةٌ من خمسٍ يفتحها أحياناً.
+       فيدفع ثمنَ ملفِّه في كلّ مرّةٍ يفتح فيها التطبيق ليسجّل حضوراً.
+
+       فيُؤجَّل: يُحمَّل أوّلَ ما تُطلب قراءته، مرّةً واحدةً في الجلسة. */
+    const LAZY_STORES = ['portfolio'];
+
     /* ══ الفشلُ لا يمحو المخبأ ══
        كانت تقرأ `{ data }` وحده وتتجاهل `error`. ومكتبةُ Supabase لا ترمي
        عند فشل الشبكة — تُعيد `{ data: null, error }`. فكانت `rows` تصير
@@ -564,7 +573,8 @@
         /* فشلُ إحداها لا يحبس البقية — `catch` على المجموع لا على كلٍّ. */
         const firstDone = Promise.all(first.map((p) => p.catch(() => {})));
 
-        const rest = STORE_NAMES.filter((s) => FIRST_PAINT_STORES.indexOf(s) < 0);
+        const rest = STORE_NAMES.filter((s) => FIRST_PAINT_STORES.indexOf(s) < 0
+                                              && LAZY_STORES.indexOf(s) < 0);
         const LANES = 4;
         const lanes = Array.from({ length: LANES }, () => firstDone);
         rest.forEach((s, i) => {
@@ -579,9 +589,26 @@
         return _hydratePromise;
     }
 
-    /** ينتظر ترطيبَ مخزنٍ واحدٍ إن كان جارياً — وإلا يعود فوراً. */
+    /** المخازنُ المؤجَّلة: وعدُ تحميلها يُحفظ فلا تُحمَّل مرّتين في جلسة. */
+    const _lazyLoaded = {};
+
+    /**
+     * ينتظر ترطيبَ مخزنٍ واحدٍ إن كان جارياً — وإلا يعود فوراً.
+     * وإن كان مؤجَّلاً ولم يُحمَّل بعد، **حُمِّل الآن**: فالتأجيل تأخيرٌ إلى
+     * وقت الحاجة لا إسقاطٌ للبيانات.
+     */
     async function awaitStore(storeName) {
-        const p = _storeHydration[storeName];
+        if (LAZY_STORES.indexOf(storeName) >= 0 && !_lazyLoaded[storeName]) {
+            _lazyLoaded[storeName] = (async () => {
+                const uid = await currentUid();
+                if (uid) await hydrateStore(storeName, uid);
+            })().catch((e) => {
+                /* الفشلُ لا يُخلّد: تُعاد المحاولةُ عند القراءة التالية. */
+                _lazyLoaded[storeName] = null;
+                console.warn('[TeacherDB] تأجيلُ ' + storeName + ' فشل:', e && e.message);
+            });
+        }
+        const p = _storeHydration[storeName] || _lazyLoaded[storeName];
         if (p) { try { await p; } catch (e) { /* الفشل لا يحبس القراءة */ } }
     }
 
@@ -590,6 +617,8 @@
         _cachedUid = null;
         _term = null;
         for (const k in _storeHydration) _storeHydration[k] = null;
+        /* والمؤجَّلةُ معها: معلّمٌ آخر لا يقرأ ملفَّ إنجاز من سبقه. */
+        for (const k in _lazyLoaded) _lazyLoaded[k] = null;
     }
 
     /* ---------- الفصل الدراسي ----------
