@@ -262,21 +262,42 @@
      *
      * @param {string} uid معرّفُ المعلّم — مجلّدُه في كلّ مخزن.
      */
+    /* مخازنُ ملفات المعلّم — تُذكر هنا وفي دالّة `delete_own_account` في
+       القاعدة (شبكةُ الأمان تحت هذه). مخزنٌ جديدٌ يُضاف في الموضعين. */
+    const USER_BUCKETS = ['books', 'evidence', 'portfolio'];
+
+    /**
+     * يمسح ملفات المعلّم من المخازن قبل حذف حسابه.
+     *
+     * **وفشلُ مخزنٍ لا يُسقط ما بعده.** كان `throw` داخل الحلقة يقطع
+     * المسحَ كلَّه عند أوّل تعثّر، فتعذُّرُ `books` يمنع مسحَ `evidence`
+     * أصلاً — وهي ملفاتٌ لا يستطيع أحدٌ حذفَها بعد زوال الحساب. فصار كلُّ
+     * مخزنٍ يُحاوَل وحده، ويُبلَّغ عن الفشل بعد المحاولة الأخيرة لا قبلها.
+     *
+     * @returns {Promise<string[]>} أسماءُ ما تعذّر مسحُه (فارغةٌ عند النجاح).
+     */
     async function purgeStorage(uid) {
         const PAGE = 100;
-        for (const bucket of ['books', 'evidence']) {
-            for (let guard = 0; guard < 200; guard++) {
-                const { data: files, error } = await sb.storage.from(bucket)
-                    .list(uid, { limit: PAGE });
-                if (error) throw error;
-                if (!files || !files.length) break;
-                const { error: rmErr } = await sb.storage.from(bucket)
-                    .remove(files.map((f) => uid + '/' + f.name));
-                if (rmErr) throw rmErr;
-                /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
-                if (files.length < PAGE) break;
+        const failed = [];
+        for (const bucket of USER_BUCKETS) {
+            try {
+                for (let guard = 0; guard < 200; guard++) {
+                    const { data: files, error } = await sb.storage.from(bucket)
+                        .list(uid, { limit: PAGE });
+                    if (error) throw error;
+                    if (!files || !files.length) break;
+                    const { error: rmErr } = await sb.storage.from(bucket)
+                        .remove(files.map((f) => uid + '/' + f.name));
+                    if (rmErr) throw rmErr;
+                    /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
+                    if (files.length < PAGE) break;
+                }
+            } catch (e) {
+                console.warn('[Auth] تعذّر مسحُ مخزن ' + bucket + ':', e && e.message);
+                failed.push(bucket);
             }
         }
+        return failed;
     }
 
     /* ==========================================================================
@@ -380,11 +401,14 @@
         const { data: { user } } = await sb.auth.getUser();
         if (!user) throw new Error('لست مسجّل الدخول.');
 
+        /* تعذّرُ مسح الملفات لا يمنع حذف الحساب — الحسابُ أولى، ولا يُحبس
+           المعلّم فيه لأنّ شبكتَه تعثّرت. وما يفوت هنا تلتقطه
+           `delete_own_account` نفسُها: تحذف سجلّات ملفاته في المعاملة التي
+           تحذف حسابه. */
         try {
-            await purgeStorage(user.id);
+            const failed = await purgeStorage(user.id);
+            if (failed.length) console.warn('[Auth] مخازنُ لم تُمسح: ' + failed.join('، '));
         } catch (e) {
-            /* تعذّر مسح الملفات لا يمنع حذف الحساب — الحساب أولى بالحذف،
-               والملفات تبقى بلا صلاحية وصول لأحد. */
             console.warn('[Auth] storage cleanup failed:', e);
         }
 
