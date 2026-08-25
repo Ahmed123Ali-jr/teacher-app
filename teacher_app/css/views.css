@@ -6509,33 +6509,26 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    الحساب لا بعده. وتجمع أمرين: ما نفعله ببياناته، وأنّ حسابَه هذا
    **لا سبيل لاستعادته** بلا بريد.
    ========================================================================== */
-.gc-box {
+/* السياسةُ مطويّةٌ بطلب المستخدم: تُفتح لمن أرادها ولا تُطيل الشاشةَ على
+   من لا يريدها. والنمطُ `.set-fold` مستعملٌ كما هو في الإعدادات — لا
+   يُخترع مثلُه فيفترقان عند أوّل تعديل. */
+.gc-fold {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: var(--space-4);
-    margin-bottom: var(--space-5);
-    /* يُمرَّر داخلَه فلا يطول الشاشةَ ولا يُدفن الزرُّ تحته. */
-    max-height: 150px;
-    overflow-y: auto;
-    background: color-mix(in srgb, var(--border) 22%, var(--surface));
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+}
+.gc-body {
+    margin-top: var(--space-3);
     font-size: var(--fs-sm);
     line-height: 1.85;
     color: var(--text);
 }
-.gc-box p { margin: 0 0 var(--space-3); }
-.gc-box b { color: var(--ink-primary); }
-
-/* سطران متقابلان لا فقرةٌ تُقرأ بعناء — الفرقُ يُرى لا يُشرح. */
-.gc-row {
-    display: flex;
-    gap: var(--space-3);
-    align-items: flex-start;
-    margin-bottom: var(--space-3);
-    font-size: var(--fs-sm);
-    line-height: 1.75;
-}
-.gc-row .ic { font-size: 17px; flex-shrink: 0; line-height: 1.4; }
-.gc-row b { color: var(--ink-primary); }
+.gc-body p { margin: 0 0 var(--space-3); }
+.gc-body b { color: var(--ink-primary); }
 
 .gc-warn {
     border-inline-start: 3px solid #DC2626;
@@ -6546,21 +6539,16 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     color: var(--text-muted);
 }
 .gc-warn b { color: #B42318; }
-
-/* البابُ الأسلم يُعرض هادئاً لا مزاحماً: هو اختار التجربة، فلا يُعاكَس
-   قرارُه بزرٍّ أضخم — ولكن لا يُخفى عنه. */
-.btn-safer {
-    display: block;
-    width: 100%;
-    margin-top: var(--space-3);
-    padding: var(--space-3) var(--space-2);
+/* الرابطُ داخل الجملة لا زرٌّ تحتها: يُقرأ في موضعه من الكلام. */
+.gc-link {
     background: none;
     border: 0;
-    font-family: inherit;
-    font-size: var(--fs-sm);
+    padding: 0;
+    font: inherit;
     font-weight: var(--fw-medium);
-    line-height: 1.6;
     color: var(--ink-primary);
     text-decoration: underline;
     cursor: pointer;
 }
+
+

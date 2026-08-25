@@ -64,32 +64,27 @@
                         <h2 class="auth-title">قبل أن تبدأ</h2>
                         <p class="auth-subtitle">هذا ما نفعله ببياناتك — وأين تُحفظ</p>
 
-                        <div class="gc-box">
-                            <p><b>ما نجمعه:</b> ما تُدخله أنت — اسمك ومدرستك وفصولك
-                               وطلابك وجدولك. ولا نطلب بريدك في التجربة.</p>
-                            <p><b>أسماء طلابك:</b> لا تُشارَك مع أحد، ولا تُستعمل في
-                               إعلانات، ولا تُباع.</p>
-                            <p><b>حذفها:</b> تحذف بياناتك أو حسابك كاملاً من داخل
-                               التطبيق، متى شئت.</p>
-                            <p style="margin:0">
-                               <a href="privacy.html" target="_blank" rel="noopener">اقرأ السياسة كاملة ←</a>
-                            </p>
-                        </div>
-
-                        <div class="gc-row">
-                            <span class="ic">📱</span>
-                            <span><b>الآن:</b> بياناتك محفوظة على هذا الجهاز، وتشتغل بلا إنترنت.</span>
-                        </div>
-                        <div class="gc-row">
-                            <span class="ic">☁️</span>
-                            <span><b>إن سجّلت ببريدك:</b> تُحفظ دائماً، وتفتحها من أي جهاز،
-                                  وترجع لك لو ضاع جوالك.</span>
-                        </div>
+                        <!-- مطويّةٌ لا كتلةُ نصّ: من أراد قرأ، ومن لم يُرد لم
+                             يُدفن الزرُّ تحت ما لا يقرؤه. -->
+                        <details class="set-fold gc-fold">
+                            <summary>📜 سياسة الخصوصية</summary>
+                            <div class="gc-body">
+                                <p><b>ما نجمعه:</b> ما تُدخله أنت — اسمك ومدرستك وفصولك
+                                   وطلابك وجدولك. ولا نطلب بريدك في التجربة.</p>
+                                <p><b>أسماء طلابك:</b> لا تُشارَك مع أحد، ولا تُستعمل في
+                                   إعلانات، ولا تُباع.</p>
+                                <p><b>حذفها:</b> تحذف بياناتك أو حسابك كاملاً من داخل
+                                   التطبيق، متى شئت.</p>
+                                <p style="margin:0">
+                                   <a href="privacy.html" target="_blank" rel="noopener">اقرأ السياسة كاملة ←</a>
+                                </p>
+                            </div>
+                        </details>
 
                         <p class="gc-warn">
-                            ⚠️ <b>وبدون بريد، لا سبيل لاستعادتها.</b>
-                            إن حذفت التطبيق أو مُسحت بيانات جهازك، تذهب ولا تعود —
-                            لأنه لا يوجد ما يُثبت أن الحساب لك.
+                            بالدخول كزائر، <b>بياناتك تُحفظ على جهازك فقط</b>.
+                            وللحفاظ عليها ومزامنتها —
+                            <button type="button" class="gc-link" id="btn-guest-register">أنشئ حسابك الآن</button>
                         </p>
 
                         <label class="auth-consent">
@@ -103,10 +98,6 @@
                         <button type="button" class="btn btn-primary btn-lg btn-block"
                                 id="btn-guest-go" disabled>
                             متابعة كزائر
-                        </button>
-
-                        <button type="button" class="btn-safer" id="btn-guest-register">
-                            ⭐ سجّل ببريدك بدلاً من ذلك — بياناتك محفوظة دائماً
                         </button>
 
                         <p class="auth-switch">
