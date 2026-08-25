@@ -805,13 +805,6 @@ body.drawer-open { overflow: hidden; }
     transform: scaleX(-1);
 }
 
-.settings-page-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin: var(--space-6) 0 var(--space-4);
-}
-
 /* School logo preview in Settings */
 .school-logo-preview {
     width: 64px;

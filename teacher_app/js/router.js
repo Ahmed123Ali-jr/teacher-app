@@ -128,6 +128,9 @@
        يكن خلفه شيء (فُتح التطبيق على رابطٍ مباشر) فالرئيسية.
        ══════════════════════════════════════════════════════════════════ */
     function paintChrome(route, params) {
+        /* أيُّ انتقالٍ بين المسارات يُسقط الاستعارة: من استعار السهم
+           لصفحةٍ داخليّةٍ ثم غادر المسار كلَّه لا يترك سلوكَه خلفه. */
+        _backOverride = null;
         const titleEl = document.getElementById('hdr-title');
         const backEl  = document.getElementById('hdr-back');
         const burger  = document.getElementById('btn-open-drawer');
@@ -148,6 +151,32 @@
         const el = document.getElementById('hdr-title');
         if (el && text) el.textContent = text;
     }
+
+    /**
+     * يُظهر سهمَ الرجوع في الشريط العلوي على شاشةٍ جذر، ويربطه بما يشاء
+     * صاحبُها.
+     *
+     * شاشاتُ الجذر (التي يُوصل إليها من الشريط السفلي) بلا سهمِ رجوع —
+     * وهو صحيح. لكنّ الإعدادات تفتح **صفحاتٍ فرعيّةً داخلها** بلا تغيير
+     * المسار، فتبقى «جذراً» ولا سهمَ لها. فكانت تصنع زرّاً أبيضَ بحدٍّ
+     * وظلٍّ داخل الصفحة — في مكانٍ غير مكان الرجوع في بقيّة التطبيق،
+     * وبشكلٍ غير شكله. (بلاغ المستخدم، ٢٥ أغسطس ٢٠٢٦.)
+     *
+     * فالسهمُ نفسُه يُستعار هنا، ويعود إلى حاله عند الخروج.
+     *
+     * @param {(() => void)|null} handler ما يُفعل عند الضغط، أو `null`
+     *        لإعادة السهم إلى سلوكه الأصلي (خطوةٌ في التاريخ) وإخفائه.
+     */
+    function overrideBack(handler) {
+        const back = document.getElementById('hdr-back');
+        const burger = document.getElementById('btn-open-drawer');
+        if (!back) return;
+        _backOverride = handler || null;
+        back.hidden = !handler;
+        if (burger) burger.hidden = !!handler;
+    }
+
+    let _backOverride = null;
 
     async function render(route, params) {
         if (global.Modal) global.Modal.close();
@@ -316,6 +345,8 @@
         const back = document.getElementById('hdr-back');
         if (back) {
             back.addEventListener('click', () => {
+                /* شاشةٌ استعارت السهم تتصرّف به أوّلاً. */
+                if (_backOverride) { _backOverride(); return; }
                 if (global.history.length > 1) global.history.back();
                 else global.location.hash = '#/dashboard';
             });
@@ -324,5 +355,5 @@
         resolve();
     }
 
-    global.Router = { start, resolve, setTitle };
+    global.Router = { start, resolve, setTitle, overrideBack };
 })(window);

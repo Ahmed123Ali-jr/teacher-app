@@ -210,6 +210,9 @@
     }
 
     function renderMenu(container, teacher) {
+        /* القائمةُ شاشةُ جذر: يعود السهمُ مخفيّاً وزرُّ القائمة ظاهراً. */
+        if (global.Router && global.Router.overrideBack) global.Router.overrideBack(null);
+
         container.innerHTML = `
             <div class="container set-v2">
                 ${menuFor(teacher).map(groupHtml).join('')}
@@ -320,25 +323,24 @@
                 state.page = null; render(container); return;
         }
 
+        /* الرجوعُ سهمُ الشريط العلويّ نفسُه — لا زرٌّ أبيضُ داخل الصفحة في
+           مكانٍ غير مكانه في بقيّة التطبيق وبشكلٍ غير شكله. تُستعار من
+           الموجّه لأنّ `/settings` مسارُ جذرٍ لا سهمَ له، والصفحاتُ
+           الفرعيّةُ داخلَه لا تُغيّر المسار. */
         container.innerHTML = `
             <div class="container" style="max-width: 720px;">
-                <!-- سهمُ الرجوع وحدَه بلا اسم القسم: الشاشةُ تقول نفسَها —
-                     حقولُ المدرسة مدرسةٌ، وخياراتُ المظهر مظهر. والاسمُ
-                     فوقها سطرٌ يُقرأ مرّةً ثم لا يُنظر إليه ثانيةً. -->
-                <div class="settings-page-header">
-                    <button type="button" class="btn-back-box" id="btn-back-settings" aria-label="رجوع"></button>
-                </div>
-
                 ${bare
                     ? body
                     : `<div class="card" style="margin-bottom: var(--space-8);">${body}</div>`}
             </div>
         `;
 
-        container.querySelector('#btn-back-settings').addEventListener('click', () => {
-            state.page = null;
-            render(container);
-        });
+        if (global.Router && global.Router.overrideBack) {
+            global.Router.overrideBack(() => {
+                state.page = null;
+                render(container);
+            });
+        }
 
         if (bindFn) bindFn(container, teacher);
     }
