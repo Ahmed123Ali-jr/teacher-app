@@ -7,7 +7,9 @@
 
 
     function render(container) {
-        let mode = 'login'; // or 'register'
+        /* الوضعُ من المسار لا من متغيّرٍ عابر: `#/reset-password` يصمد عبر
+           إعادةِ رسمٍ أو تحديثِ صفحة، والمتغيّرُ يُستهلك مرّةً ويضيع. */
+        let mode = /reset-password/.test(global.location.hash) ? 'reset' : 'login';
 
         function html() {
             if (mode === 'login') {
@@ -30,6 +32,12 @@
                                        autocomplete="current-password" required>
                             </div>
 
+                            <!-- فوق الزرّ لا تحته: المعلّم الذي فشلت كلمتُه
+                                 ينظر إلى الخانة التي فشلت، لا إلى أسفل الشاشة. -->
+                            <p class="auth-forgot">
+                                <button type="button" id="btn-forgot">نسيت كلمة المرور؟</button>
+                            </p>
+
                             <button type="submit" class="btn btn-primary btn-lg btn-block">
                                 تسجيل الدخول
                             </button>
@@ -45,6 +53,62 @@
                             ليس لديك حساب؟
                             <button type="button" id="btn-switch-register">إنشاء حساب جديد</button>
                         </p>
+                    </div>
+                `;
+            }
+
+            if (mode === 'forgot') {
+                return `
+                    <div class="auth-card">
+                        <div class="auth-logo">🔑</div>
+                        <h2 class="auth-title">نسيت كلمة المرور</h2>
+                        <p class="auth-subtitle">اكتب بريدك، ونرسل لك رابطاً تختار به كلمةً جديدة</p>
+
+                        <form id="form-forgot" novalidate>
+                            <div class="field">
+                                <label class="label" for="fp-email">البريد الإلكتروني</label>
+                                <input class="input" id="fp-email" type="email" required
+                                       autocomplete="email" inputmode="email"
+                                       placeholder="name@example.com">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                أرسل الرابط
+                            </button>
+                        </form>
+
+                        <p class="auth-switch">
+                            تذكّرتها؟ <button type="button" id="btn-switch-login">رجوع لتسجيل الدخول</button>
+                        </p>
+                    </div>
+                `;
+            }
+
+            if (mode === 'reset') {
+                return `
+                    <div class="auth-card">
+                        <div class="auth-logo">🔑</div>
+                        <h2 class="auth-title">كلمة مرور جديدة</h2>
+                        <p class="auth-subtitle">اخترها ثم ادخل بها</p>
+
+                        <form id="form-reset" novalidate>
+                            <div class="field">
+                                <label class="label" for="rp-new">كلمة المرور الجديدة</label>
+                                <input class="input" id="rp-new" type="password" required
+                                       autocomplete="new-password" minlength="6">
+                                <div class="field-hint">٦ أحرف على الأقل</div>
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="rp-confirm">تأكيد كلمة المرور</label>
+                                <input class="input" id="rp-confirm" type="password" required
+                                       autocomplete="new-password">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                حفظ والدخول
+                            </button>
+                        </form>
                     </div>
                 `;
             }
@@ -108,6 +172,54 @@
 
             const guestBtn = container.querySelector('#btn-guest');
             if (guestBtn) guestBtn.addEventListener('click', onGuest);
+
+            const forgot = container.querySelector('#btn-forgot');
+            if (forgot) forgot.addEventListener('click', () => { mode = 'forgot'; paint(); });
+
+            const fpForm = container.querySelector('#form-forgot');
+            if (fpForm) fpForm.addEventListener('submit', onForgot);
+
+            const rpForm = container.querySelector('#form-reset');
+            if (rpForm) rpForm.addEventListener('submit', onReset);
+        }
+
+        async function onForgot(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ الإرسال…';
+            try {
+                await global.Auth.requestPasswordReset(container.querySelector('#fp-email').value);
+                /* جوابٌ واحدٌ سواءٌ وُجد البريد أم لا — راجع `requestPasswordReset`. */
+                global.TeacherApp.toast(
+                    'إن كان لديك حساب بهذا البريد فستصلك رسالة خلال دقائق. '
+                    + 'تحقّق من «المهملات» إن لم تجدها.', 'success', 9000);
+                mode = 'login';
+                paint();
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'أرسل الرابط';
+                global.TeacherApp.toast(err.message || 'تعذّر الإرسال.', 'error', 6000);
+            }
+        }
+
+        async function onReset(e) {
+            e.preventDefault();
+            const pw = container.querySelector('#rp-new').value;
+            const ok = container.querySelector('#rp-confirm').value;
+            if (pw !== ok) return global.TeacherApp.toast('الكلمتان غير متطابقتين.', 'error', 4000);
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '⏳ جارٍ الحفظ…';
+            try {
+                await global.Auth.setNewPassword(pw);
+                global.TeacherApp.toast('حُفظت كلمتك الجديدة. أهلاً بعودتك!', 'success', 4000);
+                global.location.hash = '#/dashboard';
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'حفظ والدخول';
+                global.TeacherApp.toast(err.message || 'تعذّر الحفظ.', 'error', 7000);
+            }
         }
 
         /* الزرّ يُعطَّل حتى يعود الخادم — بلا كلمةٍ تُكتب ولا رمزٍ يظهر.

@@ -12,6 +12,24 @@
         async init() {
             console.info('[TeacherApp] init', this.version);
 
+            /* رمزُ الاستعادة يُلتقط **قبل الموجّه**: العميلُ مضبوطٌ على
+               `detectSessionInUrl: false` لأنّ التطبيق يتنقّل بالـhash، فلو
+               تُرك لمضى الموجّهُ بعنوانٍ لا يفهمه — أو دخل المعلّمُ إلى
+               رئيسيّته بجلسةٍ مؤقّتةٍ بلا أن يُسأل عن كلمةٍ جديدة. */
+            try {
+                const recovery = global.Auth && global.Auth.consumeRecoveryLink
+                    ? await global.Auth.consumeRecoveryLink() : null;
+                if (recovery === 'recovery') {
+                    global.location.hash = '#/reset-password';
+                } else if (recovery === 'error') {
+                    global.location.hash = '#/login';
+                    this.toast('انتهت صلاحية الرابط أو استُعمل من قبل. اطلب رابطاً جديداً.',
+                               'error', 8000);
+                }
+            } catch (e) {
+                console.warn('[TeacherApp] recovery link:', e && e.message);
+            }
+
             try {
                 await global.TeacherDB.open();
             } catch (err) {
@@ -73,7 +91,13 @@
             // navigation and hashchange are untouched (this runs once, at boot).
             if (me) {
                 const path = (global.location.hash || '').replace(/^#/, '').split('?')[0];
-                if (path !== '/login') global.location.hash = '#/dashboard';
+                /* و`/reset-password` يُستثنى مثلَ `/login`: الداخلُ برابط
+                   الاستعادة **له جلسةٌ قائمة**، فكان يُقذف إلى رئيسيّته
+                   بجلسةٍ مؤقّتةٍ بلا أن يُسأل عن كلمةٍ جديدة — فيظنّ الرابطَ
+                   معطوباً، وكلمتُه القديمة المنسيّة باقية. */
+                if (path !== '/login' && path !== '/reset-password') {
+                    global.location.hash = '#/dashboard';
+                }
             }
 
             this._bindGlobalUI();

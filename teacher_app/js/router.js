@@ -24,6 +24,10 @@
        ══════════════════════════════════════════════════════════════════ */
     const routes = [
         { pattern: /^\/login$/,                    view: 'login',     auth: false, chrome: false },
+        /* مسارٌ مستقلٌّ لاختيار كلمةٍ جديدة. ولا يكون `/login` لأنّ الداخلَ
+           برابط الاستعادة **له جلسةٌ قائمة**، والموجّهُ يردّ أصحابَ الجلسات
+           عن شاشة الدخول — فكان يُقذف إلى رئيسيّته بلا أن يُسأل عن كلمة. */
+        { pattern: /^\/reset-password$/,           view: 'login',     auth: false, chrome: false },
         { pattern: /^\/setup$/,                    view: 'setup',     auth: true,  chrome: false },
         { pattern: /^\/dashboard$/,                view: 'dashboard', auth: true,  chrome: true, title: 'الرئيسية',        root: true },
         { pattern: /^\/reminders$/,                view: 'reminders', auth: true,  chrome: true, title: 'التذكيرات' },

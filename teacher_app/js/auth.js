@@ -279,6 +279,103 @@
         }
     }
 
+    /* ==========================================================================
+       استرجاع كلمة المرور
+       ==========================================================================
+       لم يكن في التطبيق كلُّه سبيلٌ لاستعادة كلمةٍ منسيّة — فمعلّمٌ ينساها
+       يفقد حسابه وكلَّ ما فيه، تماماً كالزائر الذي مُسح تخزينُه. وهذا يصير
+       أشدَّ مع الاشتراك: يفقد حساباً **دفع** فيه.
+
+       ثلاثُ خطوات: يطلب رابطاً، فيصله بريدٌ، فيفتحه فيختار كلمةً جديدة.
+       ========================================================================== */
+
+    /**
+     * يُرسل رابطَ الاستعادة.
+     * **ولا يقول هل البريد مسجَّلٌ أم لا** — ولا حتى بالخطأ الراجع: لو
+     * فرّقنا بين «أُرسل» و«غير موجود» لصار بإمكان أيّ غريبٍ أن يجرّب
+     * بريداً بريداً ليعرف من سجّل في التطبيق. فالجوابُ واحدٌ في الحالتين.
+     */
+    async function requestPasswordReset(email) {
+        const clean = String(email || '').trim();
+        if (!clean) throw new Error('اكتب بريدك الإلكتروني.');
+        /* يعود إلى صفحة التطبيق نفسِها؛ ويلتقط `consumeRecoveryLink` الرمزَ
+           من العنوان عند الإقلاع. */
+        const redirectTo = global.location.origin + global.location.pathname;
+        const { error } = await sb.auth.resetPasswordForEmail(clean, { redirectTo });
+        if (error) {
+            /* حدُّ الإرسال يُقال صراحةً — وهو الخطأ الوحيد الذي يفيد المعلّمَ
+               علمُه، ولا يكشف عن أحد. */
+            if (/rate|limit|seconds|frequency/i.test(error.message || '')) {
+                throw new Error('طُلب الرابط قبل قليل. انتظر دقيقةً ثمّ أعد المحاولة.');
+            }
+            console.warn('[Auth] reset request failed:', error.message);
+        }
+        return true;
+    }
+
+    /**
+     * يلتقط رمزَ الاستعادة من عنوان الصفحة إن وُجد، ويفتح به جلسةً مؤقّتة.
+     *
+     * والعميلُ مضبوطٌ على `detectSessionInUrl: false` لأنّ التطبيق يتنقّل
+     * بالـhash — فلو التقطها بنفسه لتضاربت مع مسارات الشاشات. فتُلتقط هنا
+     * **قبل أن يعمل الموجّه**، ويُمسح العنوان بعدها فلا يبقى رمزٌ في شريط
+     * المتصفّح ولا في سجلّ التصفّح.
+     *
+     * @returns {Promise<'recovery'|'error'|null>}
+     */
+    async function consumeRecoveryLink() {
+        const raw = String(global.location.hash || '').replace(/^#/, '');
+        if (!raw || raw.indexOf('=') < 0) return null;
+        const q = new URLSearchParams(raw);
+
+        if (q.get('error') || q.get('error_description')) {
+            const d = q.get('error_description') || q.get('error');
+            clearHash();
+            console.warn('[Auth] recovery link error:', d);
+            return 'error';
+        }
+        if (q.get('type') !== 'recovery') return null;
+
+        const access_token  = q.get('access_token');
+        const refresh_token = q.get('refresh_token');
+        if (!access_token || !refresh_token) { clearHash(); return 'error'; }
+
+        const { error } = await sb.auth.setSession({ access_token, refresh_token });
+        clearHash();
+        if (error) {
+            console.warn('[Auth] setSession from recovery failed:', error.message);
+            return 'error';
+        }
+        invalidateTeacher();
+        return 'recovery';
+    }
+
+    function clearHash() {
+        try {
+            global.history.replaceState(null, '',
+                global.location.pathname + global.location.search);
+        } catch (e) { global.location.hash = ''; }
+    }
+
+    /** يحفظ الكلمة الجديدة للجلسة المفتوحة بالرابط. */
+    async function setNewPassword(password) {
+        const pw = String(password || '');
+        if (pw.length < 6) throw new Error('كلمة المرور ٦ أحرف على الأقل.');
+        const { data, error } = await sb.auth.updateUser({ password: pw });
+        if (error) {
+            if (/same|different from the old/i.test(error.message || '')) {
+                throw new Error('هذه كلمتك الحالية — اختر كلمةً غيرها.');
+            }
+            if (/session|expired|invalid|token/i.test(error.message || '')) {
+                throw new Error('انتهت صلاحية الرابط. اطلب رابطاً جديداً.');
+            }
+            throw new Error(error.message || 'تعذّر حفظ كلمة المرور.');
+        }
+        if (!data || !data.user) throw new Error('تعذّر حفظ كلمة المرور.');
+        invalidateTeacher();
+        return true;
+    }
+
     async function deleteAccount() {
         const { data: { user } } = await sb.auth.getUser();
         if (!user) throw new Error('لست مسجّل الدخول.');
@@ -459,6 +556,7 @@
 
     global.Auth = {
         register, login, logout, logoutLocal, deleteAccount, purgeStorage, currentTeacher, guestLogin,
+        requestPasswordReset, consumeRecoveryLink, setNewPassword,
         beginGuest, guestPending, whenGuestReady,
         changePassword, updateProfile, onAuthChange
     };
