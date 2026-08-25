@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>تصاميم شاشة الدخول</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D25">
+<link rel="stylesheet" href="css/components.css?v=8">
+<link rel="stylesheet" href="css/views.css?v=D247">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=14">
+<link rel="stylesheet" href="css/theme-white.css?v=17">
+<style>
+    /* ألوانُ الهُويّة كما هي في التطبيق — لا تُخترع هنا. */
+    :root { --royal: #0A3F4A; --gold: #C9A961; --ink: #2C2C2A; --muted: #6B6B68; --line: #E4E6EA; }
+    body { background: #F4F5F7; margin: 0; padding: 14px 10px 60px; }
+    .pv-h { max-width: 430px; margin: 0 auto 18px; }
+    .pv-h h1 { font-size: 19px; margin: 0 0 6px; color: var(--royal); }
+    .pv-h p  { font-size: 12.5px; color: #555; line-height: 1.8; margin: 0; }
+    .pv-sec { max-width: 430px; margin: 0 auto 30px; }
+    .pv-lbl { display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
+              font-size: 14.5px; font-weight: 800; color: var(--royal); }
+    .pv-lbl b { background: var(--royal); color: #fff; min-width: 27px; height: 27px;
+                border-radius: 50%; display: grid; place-items: center; font-size: 13px; }
+    .pv-note { font-size: 12px; color: #666; line-height: 1.75; margin: 9px 2px 0; }
+    /* إطارُ جوّالٍ ليُرى التصميمُ كما يُرى على الجهاز، بحوافّه وحدوده. */
+    .phone { border: 1px solid #D8DBE0; border-radius: 20px; overflow: hidden;
+             background: #fff; box-shadow: 0 3px 14px rgba(10,63,74,.10); }
+    .screen { min-height: 560px; display: flex; flex-direction: column; }
+
+    /* عناصرُ مشتركة */
+    .fld { margin-bottom: 13px; }
+    .fld label { display: block; font-size: 12.5px; font-weight: 700;
+                 color: var(--muted); margin-bottom: 5px; }
+    .fld input { width: 100%; box-sizing: border-box; font-family: inherit;
+                 font-size: 15px; padding: 13px 14px; border-radius: 11px;
+                 border: 1px solid var(--line); background: #fff; color: var(--ink); }
+    .fld input::placeholder { color: #A9ACB2; }
+    .go { width: 100%; font-family: inherit; font-size: 16px; font-weight: 800;
+          padding: 15px; border: 0; border-radius: 13px; background: var(--royal);
+          color: #fff; cursor: pointer; }
+    .forgot { text-align: start; margin: -4px 0 15px; }
+    .forgot a { font-size: 12.5px; font-weight: 700; color: var(--royal);
+                text-decoration: underline; }
+    .try { width: 100%; font-family: inherit; font-size: 14.5px; font-weight: 800;
+           padding: 14px; border-radius: 13px; background: #fff; cursor: pointer;
+           border: 1.5px solid var(--gold); color: #7A6430; }
+    .sep { display: flex; align-items: center; gap: 10px; margin: 16px 0;
+           font-size: 12px; color: #9AA0A6; }
+    .sep::before, .sep::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+    .swap { text-align: center; font-size: 13px; color: var(--muted); margin: 16px 0 0; }
+    .swap a { font-weight: 800; color: var(--royal); }
+
+    /* ── أ: هادئ ومركّز ── */
+    .a-wrap { padding: 46px 26px 26px; }
+    .a-mark { width: 54px; height: 54px; border-radius: 16px; background: var(--royal);
+              display: grid; place-items: center; font-size: 26px; margin-bottom: 18px; }
+    .a-ttl { font-size: 25px; font-weight: 800; color: var(--royal); margin: 0 0 5px; letter-spacing: -.4px; }
+    .a-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 26px; }
+
+    /* ── ب: ترويسة بترولية ── */
+    .b-head { background: var(--royal); padding: 40px 26px 34px; text-align: center; }
+    .b-head .ic { font-size: 38px; }
+    .b-head h2 { color: #fff; font-size: 21px; font-weight: 800; margin: 8px 0 4px; }
+    .b-head p  { color: rgba(255,255,255,.72); font-size: 12.5px; margin: 0; }
+    .b-rule { height: 3px; background: var(--gold); }
+    .b-body { padding: 26px 24px; }
+
+    /* ── ج: بلا بطاقة، ملء الشاشة ── */
+    .c-wrap { padding: 56px 26px 26px; }
+    .c-ttl { font-size: 29px; font-weight: 800; color: var(--royal); margin: 0 0 6px;
+             letter-spacing: -.6px; line-height: 1.3; }
+    .c-ttl span { display: block; color: var(--gold); }
+    .c-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 30px; line-height: 1.7; }
+    .c-wrap .fld input { border: 0; border-bottom: 1.5px solid var(--line);
+                         border-radius: 0; padding: 12px 2px; background: transparent; }
+    .c-wrap .go { border-radius: 30px; }
+
+    /* ── د: بطاقة بلمسة ذهبية ── */
+    .d-bg { background: var(--royal); padding: 34px 16px; }
+    .d-card { background: #fff; border-radius: 18px; padding: 26px 22px;
+              box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+    .d-badge { width: 58px; height: 58px; border-radius: 50%; background: var(--royal);
+               border: 2.5px solid var(--gold); display: grid; place-items: center;
+               font-size: 25px; margin: -50px auto 14px; }
+    .d-ttl { text-align: center; font-size: 19px; font-weight: 800; color: var(--royal); margin: 0 0 3px; }
+    .d-sub { text-align: center; font-size: 12.5px; color: var(--muted); margin: 0 0 22px; }
+
+    .pv-cmp { max-width: 430px; margin: 0 auto; background: #fff; border: 1px solid var(--line);
+              border-radius: 12px; padding: 15px 17px; }
+    .pv-cmp h3 { font-size: 14px; margin: 0 0 10px; color: var(--royal); }
+    .pv-cmp table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .pv-cmp td { padding: 8px 4px; border-bottom: 1px solid #F0F1F3; vertical-align: top; line-height: 1.7; }
+    .pv-cmp td:first-child { width: 26px; font-weight: 800; color: var(--gold); }
+    .pv-cmp tr:last-child td { border-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="pv-h">
+    <h1>شاشة الدخول — أربعة تصاميم</h1>
+    <p>كلُّها بألوان التطبيق نفسِها: <b style="color:#0A3F4A">البترولي</b>
+       و<b style="color:#8A6D2F">الذهبي</b> — لا ألوانَ مخترَعة.<br>
+       وكلُّها تحمل نفسَ العناصر، والفرقُ في <b>الترتيب والوزن</b>.
+       اختر حرفاً.</p>
+</div>
+
+<!-- أ -->
+<div class="pv-sec">
+    <div class="pv-lbl"><b>أ</b> هادئ ومركَّز</div>
+    <div class="phone"><div class="screen"><div class="a-wrap">
+        <div class="a-mark">🎓</div>
+        <h2 class="a-ttl">أهلاً بعودتك</h2>
+        <p class="a-sub">سجّل دخولك لتكمل من حيث توقّفت</p>
+
+        <div class="fld"><label>البريد الإلكتروني</label>
+            <input type="email" placeholder="name@example.com" disabled></div>
+        <div class="fld"><label>كلمة المرور</label>
+            <input type="password" placeholder="••••••••" disabled></div>
+        <p class="forgot"><a href="#">نسيت كلمة المرور؟</a></p>
+
+        <button class="go">تسجيل الدخول</button>
+        <div class="sep">أو</div>
+        <button class="try">✨ جرّب التطبيق — فصل واحد مجاناً</button>
+        <p class="swap">ليس لديك حساب؟ <a href="#">إنشاء حساب</a></p>
+    </div></div></div>
+    <p class="pv-note">بلا زخرفة. العنوانُ كبيرٌ ومحاذٍ لليمين كالنصّ العربيّ،
+       والفراغُ يقود العينَ إلى الحقول. <b>الأقربُ لما عندك اليوم، وأنضفُ منه.</b></p>
+</div>
+
+<!-- ب -->
+<div class="pv-sec">
+    <div class="pv-lbl"><b>ب</b> ترويسة بترولية</div>
+    <div class="phone"><div class="screen">
+        <div class="b-head">
+            <div class="ic">🎓</div>
+            <h2>تطبيق إنجاز المعلم</h2>
+            <p>سجّلك ومتابعتك في مكانٍ واحد</p>
+        </div>
+        <div class="b-rule"></div>
+        <div class="b-body">
+            <div class="fld"><label>البريد الإلكتروني</label>
+                <input type="email" placeholder="name@example.com" disabled></div>
+            <div class="fld"><label>كلمة المرور</label>
+                <input type="password" placeholder="••••••••" disabled></div>
+            <p class="forgot"><a href="#">نسيت كلمة المرور؟</a></p>
+
+            <button class="go">تسجيل الدخول</button>
+            <div class="sep">أو</div>
+            <button class="try">✨ جرّب التطبيق — فصل واحد مجاناً</button>
+            <p class="swap">ليس لديك حساب؟ <a href="#">إنشاء حساب</a></p>
+        </div>
+    </div></div>
+    <p class="pv-note">كتلةٌ بترولية تحمل الاسم، وخيطٌ ذهبيٌّ يفصلها.
+       <b>الأقوى هُويّةً</b> — يُعرف التطبيقُ من لقطةٍ واحدة، وهذا يفيدك في المتجر.</p>
+</div>
+
+<!-- ج -->
+<div class="pv-sec">
+    <div class="pv-lbl"><b>ج</b> بلا بطاقة — ملء الشاشة</div>
+    <div class="phone"><div class="screen"><div class="c-wrap">
+        <h2 class="c-ttl">إنجاز<span>المعلم</span></h2>
+        <p class="c-sub">فصولك وطلابك وجدولك — في جيبك</p>
+
+        <div class="fld"><label>البريد الإلكتروني</label>
+            <input type="email" placeholder="name@example.com" disabled></div>
+        <div class="fld"><label>كلمة المرور</label>
+            <input type="password" placeholder="••••••••" disabled></div>
+        <p class="forgot"><a href="#">نسيت كلمة المرور؟</a></p>
+
+        <button class="go">تسجيل الدخول</button>
+        <div class="sep">أو</div>
+        <button class="try">✨ جرّب التطبيق — فصل واحد مجاناً</button>
+        <p class="swap">ليس لديك حساب؟ <a href="#">إنشاء حساب</a></p>
+    </div></div></div>
+    <p class="pv-note">بلا صندوقٍ ولا إطار — المحتوى على الشاشة مباشرةً، والحقولُ
+       خطوطٌ لا مربّعات. <b>أقربُ شكلٍ للتطبيقات الأصليّة</b>، ويليق بك بعد التغليف.</p>
+</div>
+
+<!-- د -->
+<div class="pv-sec">
+    <div class="pv-lbl"><b>د</b> بطاقة مرفوعة بلمسة ذهبية</div>
+    <div class="phone"><div class="screen d-bg" style="justify-content:center;">
+        <div class="d-card">
+            <div class="d-badge">🎓</div>
+            <h2 class="d-ttl">تطبيق إنجاز المعلم</h2>
+            <p class="d-sub">سجّل دخولك للمتابعة</p>
+
+            <div class="fld"><label>البريد الإلكتروني</label>
+                <input type="email" placeholder="name@example.com" disabled></div>
+            <div class="fld"><label>كلمة المرور</label>
+                <input type="password" placeholder="••••••••" disabled></div>
+            <p class="forgot"><a href="#">نسيت كلمة المرور؟</a></p>
+
+            <button class="go">تسجيل الدخول</button>
+            <div class="sep">أو</div>
+            <button class="try">✨ جرّب التطبيق — فصل واحد مجاناً</button>
+            <p class="swap">ليس لديك حساب؟ <a href="#">إنشاء حساب</a></p>
+        </div>
+    </div></div>
+    <p class="pv-note">بطاقةٌ بيضاء ترتفع على أرضيةٍ بترولية، والشعارُ يتدلّى منها
+       بحلقةٍ ذهبية. <b>الأفخم</b> — وأثقلُها على الشاشات الصغيرة.</p>
+</div>
+
+<div class="pv-cmp">
+    <h3>وما لا يتغيّر في الأربعة</h3>
+    <table>
+        <tr><td>◆</td><td><b>«نسيت كلمة المرور؟» فوق الزرّ</b> — اخترتَه، وهو يعمل الآن.</td></tr>
+        <tr><td>◆</td><td><b>«جرّب التطبيق — فصل واحد مجاناً»</b> بإطارٍ ذهبيٍّ لا أرضيةٍ صمّاء: يُرى ولا يُزاحم زرّ الدخول.</td></tr>
+        <tr><td>◆</td><td><b>الحقولُ أكبرُ ممّا هي اليوم</b> (١٥px) — أصابعُ المعلّمين لا مؤشّرات فأرة.</td></tr>
+    </table>
+</div>
+
+</body>
+</html>
