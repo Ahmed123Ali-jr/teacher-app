@@ -67,6 +67,41 @@
         return p;
     }
 
+    /* ══ إرفاقُ ملفٍ بعنصر — الموضعُ الوحيد ══
+       كلُّ مرفقٍ في هذي الشاشة يمرّ من هنا: الشهاداتُ والجداولُ والإضافاتُ
+       والأقسامُ المخصّصة. كان الفحصُ والإسنادُ مكرَّرَين في نافذتين، فصارا
+       واحداً.
+
+       **والصورةُ تُضغط قبل أن تُحفظ.** كانت تُحفظ كما جاءت من الجوّال ثمّ
+       تُرمَّز نصّاً في صفّ ملفّ الإنجاز — فثلاثُ لقطاتٍ صارت ١٧ ميجابايت في
+       صفٍّ واحد (قياسٌ على القاعدة، ٢٦ أغسطس ٢٠٢٦). والضغطُ يردّ الأصلَ
+       نفسَه إن فشل أو لم يوفّر شيئاً، فلا يخسر المعلّم مرفقاً بحال.
+
+       والحجمُ والنوعُ يُكتبان في العنصر: فالشاشةُ تعرض حجمَ المرفق بلا أن
+       تحمله في يدها — وهو ما يحتاجه نقلُ الملفات إلى المخزن لاحقاً. */
+    async function attachFile(item, file) {
+        const isImg = (file.type || '').startsWith('image/');
+        const cap = isImg ? 15 : 30;  // MB
+        if (file.size > cap * 1024 * 1024) {
+            throw new Error('حجم الملف كبير (أقصى ' + cap + ' MB لـ '
+                + (isImg ? 'الصور' : 'المستندات') + ').');
+        }
+        const before = file.size;
+        const out = (isImg && global.ImageCompress)
+            ? await global.ImageCompress.compress(file)
+            : file;
+
+        item.file      = out;
+        item.filename  = out.name || file.name;
+        item.file_type = out.type || file.type || '';
+        item.size      = out.size;
+
+        if (out !== file) {
+            console.info('[Portfolio] ضُغطت الصورة: '
+                + Math.round(before / 1024) + 'KB ← ' + Math.round(out.size / 1024) + 'KB');
+        }
+    }
+
     async function savePortfolio(portfolio) {
         portfolio.updated_at = new Date().toISOString();
         await global.TeacherDB.put('portfolio', portfolio);
@@ -643,16 +678,7 @@
                     file:     existing?.file || null,
                     filename: existing?.filename || ''
                 };
-                if (file) {
-                    const isImg = (file.type || '').startsWith('image/');
-                    const cap = isImg ? 15 : 30;  // MB
-                    if (file.size > cap * 1024 * 1024) {
-                        throw new Error('حجم الملف كبير (أقصى ' + cap + ' MB لـ '
-                            + (isImg ? 'الصور' : 'المستندات') + ').');
-                    }
-                    item.file = file;
-                    item.filename = file.name;
-                }
+                if (file) await attachFile(item, file);
 
                 // Snapshot the previous items so we can roll back on failure.
                 const prev = sec.items.slice();
@@ -1060,16 +1086,7 @@
                     filename: existing?.filename || ''
                 };
 
-                if (file) {
-                    const isImg = (file.type || '').startsWith('image/');
-                    const cap = isImg ? 15 : 30;  // MB
-                    if (file.size > cap * 1024 * 1024) {
-                        throw new Error('حجم الملف كبير (أقصى ' + cap + ' MB لـ '
-                            + (isImg ? 'الصور' : 'المستندات') + ').');
-                    }
-                    item.file = file;
-                    item.filename = file.name;
-                }
+                if (file) await attachFile(item, file);
 
                 if (!Array.isArray(ctx.portfolio[field])) ctx.portfolio[field] = [];
                 const prev = ctx.portfolio[field].slice();
