@@ -6509,27 +6509,6 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    الحساب لا بعده. وتجمع أمرين: ما نفعله ببياناته، وأنّ حسابَه هذا
    **لا سبيل لاستعادته** بلا بريد.
    ========================================================================== */
-/* السياسةُ مطويّةٌ بطلب المستخدم: تُفتح لمن أرادها ولا تُطيل الشاشةَ على
-   من لا يريدها. والنمطُ `.set-fold` مستعملٌ كما هو في الإعدادات — لا
-   يُخترع مثلُه فيفترقان عند أوّل تعديل. */
-.gc-fold {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: 0;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: var(--space-3) var(--space-4);
-    margin-bottom: var(--space-4);
-}
-.gc-body {
-    margin-top: var(--space-3);
-    font-size: var(--fs-sm);
-    line-height: 1.85;
-    color: var(--text);
-}
-.gc-body p { margin: 0 0 var(--space-3); }
-.gc-body b { color: var(--ink-primary); }
-
 .gc-warn {
     border-inline-start: 3px solid #DC2626;
     padding-inline-start: var(--space-3);
