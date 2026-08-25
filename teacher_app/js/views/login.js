@@ -139,7 +139,19 @@
                             <div class="field-hint">٦ أحرف على الأقل</div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-lg btn-block">
+                        <!-- موافقةٌ صريحةٌ لا سطرٌ تحت الزرّ (اختيار المستخدم «أ»):
+                             التطبيقُ يحمل أسماءَ طلابٍ ودرجاتِهم، وسيأخذ اشتراكاً —
+                             والصريحُ أحوطُ في الاثنين. والزرُّ مقفولٌ حتى يُعلَّم. -->
+                        <label class="auth-consent">
+                            <input type="checkbox" id="reg-agree">
+                            <span>أوافق على
+                                <a href="privacy.html" target="_blank" rel="noopener">سياسة الخصوصية</a>
+                                و<a href="terms.html" target="_blank" rel="noopener">شروط الاستخدام</a>
+                            </span>
+                        </label>
+
+                        <button type="submit" class="btn btn-primary btn-lg btn-block"
+                                id="btn-register" disabled>
                             إنشاء الحساب
                         </button>
                     </form>
@@ -169,6 +181,15 @@
 
             const regForm = container.querySelector('#form-register');
             if (regForm) regForm.addEventListener('submit', onRegister);
+
+            /* الزرُّ يفتح بالموافقة ويُقفل بسحبها — لا مرّةً واحدة. */
+            const agree = container.querySelector('#reg-agree');
+            const regBtn = container.querySelector('#btn-register');
+            if (agree && regBtn) {
+                agree.addEventListener('change', function () {
+                    regBtn.disabled = !agree.checked;
+                });
+            }
 
             const guestBtn = container.querySelector('#btn-guest');
             if (guestBtn) guestBtn.addEventListener('click', onGuest);
@@ -255,6 +276,13 @@
 
         async function onRegister(e) {
             e.preventDefault();
+            /* وتعطيلُ الزرّ وحده لا يكفي: يُرفع بأدوات المتصفّح في ثانية.
+               فالموافقةُ تُفحص هنا أيضاً — حيث لا تُتجاوز. */
+            const agreed = container.querySelector('#reg-agree');
+            if (!agreed || !agreed.checked) {
+                return global.TeacherApp.toast(
+                    'وافق على سياسة الخصوصية وشروط الاستخدام أولاً.', 'error', 5000);
+            }
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
             try {

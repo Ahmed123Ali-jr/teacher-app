@@ -6474,3 +6474,30 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     cursor: pointer;
 }
 .auth-guest:active { color: var(--ink-primary); }
+
+/* موافقةُ إنشاء الحساب — مربّعٌ صريحٌ باختيار المستخدم (٢٥ أغسطس).
+   ومساحةُ اللمس ١٧px لا ١٣: إصبعٌ لا مؤشّرُ فأرة. */
+.auth-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 var(--space-5);
+    font-size: var(--fs-sm);
+    line-height: 1.75;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.auth-consent input {
+    width: 17px;
+    height: 17px;
+    margin-top: 3px;
+    flex-shrink: 0;
+    accent-color: var(--ink-primary);
+}
+.auth-consent a {
+    color: var(--ink-primary);
+    font-weight: var(--fw-medium);
+    text-decoration: underline;
+}
+/* والزرُّ المقفول يُرى مقفولاً — لا يُترك كامل اللون فيُظنّ عاطلاً. */
+.view-auth .btn-primary:disabled { opacity: .45; }
