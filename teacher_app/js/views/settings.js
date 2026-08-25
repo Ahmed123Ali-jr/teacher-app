@@ -204,7 +204,7 @@
         return MENU_GROUPS.map((g) => ({
             title: g.title,
             items: g.items.map((it) => (it.page === 'password'
-                ? { page: 'claim', label: '⭐ احفظ حسابك', sub: 'أنت تجرّب كزائر — بياناتك تنتقل معك' }
+                ? { page: 'claim', label: 'اربط حسابك', sub: 'أنت تجرّب كزائر — بياناتك تنتقل معك' }
                 : it))
         }));
     }
@@ -236,7 +236,7 @@
             if (teacher && teacher.is_guest) {
                 if (!global.confirm(
                     'أنت تجرّب كزائر. الخروج يُنهي هذا الحساب نهائياً ولا يمكن العودة إليه،'
-                    + ' وتذهب فصولك وطلابك وجدولك.\n\nاحفظ حسابك أولاً من «⭐ احفظ حسابك».'
+                    + ' وتذهب فصولك وطلابك وجدولك.\n\nاربط حسابك ببريدك أولاً — من الإعدادات.'
                     + '\n\nأتريد الخروج على أي حال؟')) return;
             } else if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
             await global.Auth.logout();
@@ -1021,7 +1021,7 @@
                 <div class="field-hint">٦ أحرف على الأقل.</div>
             </div>
 
-            <button class="btn btn-primary btn-block" id="btn-claim">⭐ احفظ حسابي</button>
+            <button class="btn btn-primary btn-block" id="btn-claim">اربط حسابي</button>
         `;
     }
 
@@ -1044,7 +1044,7 @@
                 render(container.closest('#view-settings') || container);
             } catch (err) {
                 btn.disabled = false;
-                btn.textContent = '⭐ احفظ حسابي';
+                btn.textContent = 'اربط حسابي';
                 global.TeacherApp.toast(err.message || 'تعذّر حفظ الحساب.', 'error', 6000);
             }
         });
