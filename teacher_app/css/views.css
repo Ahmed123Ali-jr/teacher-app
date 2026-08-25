@@ -6402,3 +6402,75 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     font-family: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold);
     color: var(--primary); cursor: pointer; text-decoration: underline;
 }
+
+/* ==========================================================================
+   شاشاتُ الدخول — التصميم «د» (اختيار المستخدم، ٢٥ أغسطس ٢٠٢٦)
+   ==========================================================================
+   بطاقةٌ بيضاءُ ترتفع على أرضيّةٍ بلون الهُويّة، وشعارٌ يتدلّى منها بحلقةٍ
+   ذهبية. اختاره من استوديو المعاينة بعد تجربة الأربعة.
+
+   وتشمل الشاشاتِ الأربعَ كلَّها — الدخول والتسجيل والاسترجاع واختيارَ
+   الكلمة الجديدة — فهي بابٌ واحدٌ لا أربعة.
+   ========================================================================== */
+.view-auth {
+    background: var(--ink-primary);
+    background-attachment: scroll;
+    padding: var(--space-6) var(--space-4);
+}
+/* والنقطُ الضوئيّةُ تُطفأ: كانت تُلطّف تدرّجاً، ولا معنى لها على لونٍ صافٍ. */
+.view-auth::before { display: none; }
+
+.view-auth .auth-card {
+    max-width: 420px;
+    border-radius: 18px;
+    padding: var(--space-6) var(--space-5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .20);
+    /* مساحةٌ للشعار المتدلّي — وإلّا لصق العنوانُ بالحافّة. */
+    margin-top: 30px;
+}
+
+/* الشعارُ حلقةٌ تتجاوز حافّةَ البطاقة إلى أعلى. */
+.view-auth .auth-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--ink-primary);
+    border: 2.5px solid var(--accent);
+    display: grid;
+    place-items: center;
+    font-size: 25px;
+    margin: -48px auto var(--space-3);
+}
+
+.view-auth .auth-title {
+    font-size: 19.5px;
+    font-weight: var(--fw-bold);
+    margin-bottom: 3px;
+}
+.view-auth .auth-subtitle {
+    font-size: var(--fs-sm);
+    margin-bottom: var(--space-5);
+    line-height: 1.7;
+}
+
+/* ثقلُ ٥٠٠ باختياره. والخطُّ لا يحمل ٨٠٠ أصلاً (`css/fonts.css`) —
+   فما فوق ٧٠٠ يصطنعه المتصفّحُ تغليظاً فتتورّم الحروف. */
+.view-auth .btn-primary { font-weight: var(--fw-medium); }
+
+/* «الدخول كزائر» بلا شيء: نصٌّ هادئٌ لا زرٌّ يزاحم. ويسقط معه فاصلُ
+   «أو» — فهو لم يعد بديلاً مكافئاً بل باباً جانبيّاً. */
+.view-auth .auth-divider { display: none; }
+.auth-guest {
+    display: block;
+    width: 100%;
+    background: none;
+    border: 0;
+    padding: var(--space-4) 0 0;
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.auth-guest:active { color: var(--ink-primary); }

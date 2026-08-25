@@ -53,7 +53,9 @@ body:where(:not(.theme-dark)),
 :where(body:not(.theme-dark)) #app,
 :where(body:not(.theme-dark)) #app-main,
 :where(body:not(.theme-dark)) #view,
-:where(body:not(.theme-dark)) [id^="view-"] {
+/* و`#view-login` مستثناةٌ عمداً: شاشةُ الدخول أرضيّتُها لونُ الهُويّة
+   بقرار المستخدم (٢٥ أغسطس) — البطاقةُ البيضاء ترتفع عليها. */
+:where(body:not(.theme-dark)) [id^="view-"]:not(#view-login) {
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
     background-image: none !important;
@@ -67,7 +69,8 @@ body:where(:not(.theme-dark)),
 :where(body:not(.theme-dark)) .auth-wrap,
 :where(body:not(.theme-dark)) .ac-wrap,
 :where(body:not(.theme-dark)) [class*="-page"],
-:where(body:not(.theme-dark)) [class*="view-"] {
+/* و`.view-auth` مستثناةٌ: أرضيّتُها لونُ الهُويّة بقرار المستخدم. */
+:where(body:not(.theme-dark)) [class*="view-"]:not(.view-auth) {
     background: transparent !important;
 }
 
@@ -165,6 +168,8 @@ body:where(:not(.theme-dark)),
    فيه المظهران.
    ========================================================================== */
 
+/* و`.auth-subtitle` أُخرجت من القائمة (٢٥ أغسطس): لم تعد شرحاً لزرٍّ
+   بل **تعريفاً بالتطبيق** كتبه المستخدم بنفسه لشاشة الدخول. */
 .set-row .h,         /* وصف كل صفٍّ في الإعدادات */
 .sch-hint,           /* «اضغط أي خانة لإضافة حصة» */
 .sched-hint,
@@ -172,7 +177,6 @@ body:where(:not(.theme-dark)),
 .setup-note,
 .field-hint,
 .fgrp-h,
-.auth-subtitle,
 .ac-band .sub,
 .imp-new-t span,
 .sch-card .s,

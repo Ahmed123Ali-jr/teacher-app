@@ -16,8 +16,8 @@
                 return `
                     <div class="auth-card">
                         <div class="auth-logo">🎓</div>
-                        <h2 class="auth-title">تطبيق إنجاز المعلم</h2>
-                        <p class="auth-subtitle">سجّل دخولك للمتابعة</p>
+                        <h2 class="auth-title">إنجاز المعلم</h2>
+                        <p class="auth-subtitle">منظومة متكاملة لإدارة الطلاب وإنجاز المعلم</p>
 
                         <form id="form-login" novalidate>
                             <div class="field">
@@ -45,8 +45,8 @@
 
                         <div class="auth-divider">أو</div>
 
-                        <button type="button" class="btn btn-secondary btn-lg btn-block" id="btn-guest">
-                            👤 دخول كزائر (لتجربة التطبيق)
+                        <button type="button" class="auth-guest" id="btn-guest">
+                            الدخول كزائر
                         </button>
 
                         <p class="auth-switch">
