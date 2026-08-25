@@ -57,6 +57,65 @@
                 `;
             }
 
+            if (mode === 'guest') {
+                return `
+                    <div class="auth-card">
+                        <div class="auth-logo">🔒</div>
+                        <h2 class="auth-title">قبل أن تبدأ</h2>
+                        <p class="auth-subtitle">هذا ما نفعله ببياناتك — وأين تُحفظ</p>
+
+                        <div class="gc-box">
+                            <p><b>ما نجمعه:</b> ما تُدخله أنت — اسمك ومدرستك وفصولك
+                               وطلابك وجدولك. ولا نطلب بريدك في التجربة.</p>
+                            <p><b>أسماء طلابك:</b> لا تُشارَك مع أحد، ولا تُستعمل في
+                               إعلانات، ولا تُباع.</p>
+                            <p><b>حذفها:</b> تحذف بياناتك أو حسابك كاملاً من داخل
+                               التطبيق، متى شئت.</p>
+                            <p style="margin:0">
+                               <a href="privacy.html" target="_blank" rel="noopener">اقرأ السياسة كاملة ←</a>
+                            </p>
+                        </div>
+
+                        <div class="gc-row">
+                            <span class="ic">📱</span>
+                            <span><b>الآن:</b> بياناتك محفوظة على هذا الجهاز، وتشتغل بلا إنترنت.</span>
+                        </div>
+                        <div class="gc-row">
+                            <span class="ic">☁️</span>
+                            <span><b>إن سجّلت ببريدك:</b> تُحفظ دائماً، وتفتحها من أي جهاز،
+                                  وترجع لك لو ضاع جوالك.</span>
+                        </div>
+
+                        <p class="gc-warn">
+                            ⚠️ <b>وبدون بريد، لا سبيل لاستعادتها.</b>
+                            إن حذفت التطبيق أو مُسحت بيانات جهازك، تذهب ولا تعود —
+                            لأنه لا يوجد ما يُثبت أن الحساب لك.
+                        </p>
+
+                        <label class="auth-consent">
+                            <input type="checkbox" id="guest-agree">
+                            <span>أوافق على
+                                <a href="privacy.html" target="_blank" rel="noopener">سياسة الخصوصية</a>
+                                و<a href="terms.html" target="_blank" rel="noopener">شروط الاستخدام</a>
+                            </span>
+                        </label>
+
+                        <button type="button" class="btn btn-primary btn-lg btn-block"
+                                id="btn-guest-go" disabled>
+                            متابعة كزائر
+                        </button>
+
+                        <button type="button" class="btn-safer" id="btn-guest-register">
+                            ⭐ سجّل ببريدك بدلاً من ذلك — بياناتك محفوظة دائماً
+                        </button>
+
+                        <p class="auth-switch">
+                            <button type="button" id="btn-switch-login">رجوع</button>
+                        </p>
+                    </div>
+                `;
+            }
+
             if (mode === 'forgot') {
                 return `
                     <div class="auth-card">
@@ -191,8 +250,34 @@
                 });
             }
 
+            /* الزرُّ يفتح شاشةَ التعريف ولا يُنشئ جلسةً — فالموافقةُ قبل
+               الحساب لا بعده. وإنشاءُ الجلسة في `#btn-guest-go`. */
             const guestBtn = container.querySelector('#btn-guest');
-            if (guestBtn) guestBtn.addEventListener('click', onGuest);
+            if (guestBtn) guestBtn.addEventListener('click', function () {
+                mode = 'guest'; paint();
+            });
+
+            const guestGo = container.querySelector('#btn-guest-go');
+            if (guestGo) guestGo.addEventListener('click', function () {
+                const ok = container.querySelector('#guest-agree');
+                if (!ok || !ok.checked) {
+                    return global.TeacherApp.toast(
+                        'وافق على سياسة الخصوصية وشروط الاستخدام أولاً.', 'error', 5000);
+                }
+                onGuest();
+            });
+
+            const guestAgree = container.querySelector('#guest-agree');
+            if (guestAgree && guestGo) {
+                guestAgree.addEventListener('change', function () {
+                    guestGo.disabled = !guestAgree.checked;
+                });
+            }
+
+            const guestReg = container.querySelector('#btn-guest-register');
+            if (guestReg) guestReg.addEventListener('click', function () {
+                mode = 'register'; paint();
+            });
 
             const forgot = container.querySelector('#btn-forgot');
             if (forgot) forgot.addEventListener('click', () => { mode = 'forgot'; paint(); });
