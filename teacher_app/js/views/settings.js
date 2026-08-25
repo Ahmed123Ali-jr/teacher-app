@@ -167,7 +167,8 @@
             school_logo:      await getPref('school_logo',      null),
             theme:            await getPref('theme',            'light'),
             last_backup:      await getPref('last_backup',      null),
-            education_dept:   await getPref('education_dept',   '')
+            education_dept:   await getPref('education_dept',   ''),
+            school_gender:    await getPref('school_gender',    '')
         };
     }
 
@@ -537,6 +538,12 @@
     /* بطاقة رسمية كحلية أعلى الشاشة (النموذج أ) ثم صفوف تُلمس فتفتح للكتابة —
        نفس أسلوب «بياناتي». «إدارة التعليم» و«المنطقة» تعيشان هنا لأنهما بيانا
        مدرسة لا بيانا معلّم. */
+    /* بنين وبنات — كما في `setup.js`. ولو كُتبت مرّتين لاختلفتا يوماً. */
+    const SCHOOL_GENDERS = [
+        { k: 'boys',  label: 'بنين' },
+        { k: 'girls', label: 'بنات' }
+    ];
+
     function schoolBody(teacher, prefs) {
         const rows = [
             { k: 'school_name',    label: 'اسم المدرسة',   value: teacher.school_name,   req: true },
@@ -571,6 +578,16 @@
 
             <div class="fgrp-t">التعريف</div>
             <div class="flist">${rows.map(fieldRow).join('')}</div>
+
+            <!-- خيارٌ من اثنين، فحبّتان لا صفُّ كتابة. والحبّةُ هي المستعملة
+                 في شاشة التهيئة نفسِها — لا يُخترع لها شكلٌ ثانٍ. -->
+            <div class="fgrp-t">نوع المدرسة</div>
+            <div class="fchips" id="st-gender">
+                ${SCHOOL_GENDERS.map((g) => `
+                    <button type="button" class="fchip ${prefs.school_gender === g.k ? 'on' : ''}"
+                            data-gender="${g.k}">${g.label}</button>
+                `).join('')}
+            </div>
 
             <div class="fgrp-t">العام الدراسي</div>
             <div class="flist">${yearRows.map(fieldRow).join('')}</div>
@@ -711,6 +728,25 @@
         });
         bindFieldRows(container);
 
+        /* الحبّاتُ تُبدَّل في الشاشة، والكتابةُ عند «حفظ» مع البقيّة —
+           فلا يُكتب في القاعدة عند كلّ لمسة. */
+        /* القيمةُ تُقرأ من الحبّة المضاءة لا من `prefs`: `bindFn` تُنادى
+           بـ`(container, teacher)` وحدهما، فلا تفضيلاتٍ في يدها. والشاشةُ
+           رُسمت منها للتوّ، فهي مصدرٌ صادق. */
+        const genderBox = container.querySelector('#st-gender');
+        let pickedGender = genderBox
+            ? (genderBox.querySelector('.fchip.on') || {}).dataset?.gender || ''
+            : '';
+        if (genderBox) {
+            genderBox.addEventListener('click', (e) => {
+                const b = e.target.closest('[data-gender]');
+                if (!b) return;
+                pickedGender = b.dataset.gender;
+                genderBox.querySelectorAll('.fchip')
+                    .forEach((x) => x.classList.toggle('on', x === b));
+            });
+        }
+
         container.querySelector('#btn-save-school')?.addEventListener('click', () => {
             /* الحقل المفتوح للكتابة قد لا يكون فقد التركيز بعد، فنقرأ من الحقل
                نفسه لا من الصف المعروض وإلا ضاعت آخر كلمة كتبها المعلم. */
@@ -744,8 +780,15 @@
                 global.TeacherDB.put('teachers', teacher),
                 setPref('education_dept', dept),
                 setPref('academic_year',  year),
-                setPref('principal_name', principal)
-            ]), () => render(container));
+                setPref('principal_name', principal),
+                pickedGender ? setPref('school_gender', pickedGender) : Promise.resolve()
+            ]).then(() => {
+                /* نوعُ المدرسة يقلب «طالب» إلى «طالبة» في كلّ شاشة — والألفاظُ
+                   محفوظةٌ في `Words` منذ الإقلاع. فتُقرأ من جديد، وإلّا بقيت
+                   الشاشاتُ تقول ما لم يعد صحيحاً حتى يُعاد فتحُ التطبيق. */
+                return global.Words && global.Words.reload
+                     ? global.Words.reload() : null;
+            }), () => render(container));
         });
     }
 
