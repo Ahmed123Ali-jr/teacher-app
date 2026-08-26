@@ -45,9 +45,12 @@
 
                         <div class="auth-divider">أو</div>
 
+                        <!-- اسمٌ واحدٌ لا اسمان: جُرّب أن يتبدّل إلى «العودة إلى
+                             بياناتي» لمن له حسابٌ على الجهاز، فرُدّ — الزرُّ عَلَمٌ
+                             يعرفه المعلّم بمكانه وشكله، وتبدُّلُ اسمه يجعله زرّاً
+                             آخر يُقرأ من جديد. والفرقُ في السلوك لا في الاسم. -->
                         <button type="button" class="auth-guest" id="btn-guest">
-                            ${(global.Auth && global.Auth.hasSavedGuest && global.Auth.hasSavedGuest())
-                                ? 'العودة إلى بياناتي' : 'الدخول كزائر'}
+                            الدخول كزائر
                         </button>
 
                         <p class="auth-switch">
@@ -338,14 +341,14 @@
             }
 
             const btn = container.querySelector('#btn-guest');
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ فتح بياناتك…'; }
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
             try {
                 await global.Auth.beginGuest();
                 /* إلى الرئيسيّة، ويحكم الموجّهُ بما وجد: فإن كانت جلستُه قد
                    انطفأت وأُنشئ له حسابٌ جديد ردّه إلى التهيئة بنفسه. */
                 global.location.hash = '#/dashboard';
             } catch (err) {
-                if (btn) { btn.disabled = false; btn.textContent = 'العودة إلى بياناتي'; }
+                if (btn) { btn.disabled = false; btn.textContent = 'الدخول كزائر'; }
                 global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
             }
         }
