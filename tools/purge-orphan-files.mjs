@@ -116,14 +116,18 @@ const main = async () => {
 
         let files = 0, bytes = 0;
         const paths = [];
-        for (const f of orphans) {
-            for (const o of await list(bucket, f)) {
-                if (o.id === null) continue;                   // مجلّدٌ متداخل — نادر
-                paths.push(`${f}/${o.name}`);
+        /* غوصٌ في المجلّدات الفرعيّة: `list` تُرجع مستوىً واحداً، والمجلّدُ
+           يأتي مدخلاً بـ`id = null`. وتجاهلُه يترك ما تحته إلى الأبد. */
+        const walk = async (prefix, depth = 0) => {
+            if (depth > 8) return;
+            for (const o of await list(bucket, prefix)) {
+                if (o.id === null) { await walk(`${prefix}/${o.name}`, depth + 1); continue; }
+                paths.push(`${prefix}/${o.name}`);
                 files++;
                 bytes += Number(o.metadata?.size || 0);
             }
-        }
+        };
+        for (const f of orphans) await walk(f);
 
         console.log(`📦 ${bucket}`);
         console.log(`   مجلّدات: ${folders.length}  ·  بلا صاحب: ${orphans.length}`);

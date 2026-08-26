@@ -287,17 +287,31 @@
         const failed = [];
         for (const bucket of USER_BUCKETS) {
             try {
-                for (let guard = 0; guard < 200; guard++) {
-                    const { data: files, error } = await sb.storage.from(bucket)
-                        .list(uid, { limit: PAGE });
-                    if (error) throw error;
-                    if (!files || !files.length) break;
-                    const { error: rmErr } = await sb.storage.from(bucket)
-                        .remove(files.map((f) => uid + '/' + f.name));
-                    if (rmErr) throw rmErr;
-                    /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
-                    if (files.length < PAGE) break;
-                }
+                /* غوصٌ في المجلّدات الفرعيّة: `list` تُرجع مستوىً واحداً،
+                   والمجلّدُ يأتي مدخلاً بـ`id = null` لا ملفاً — وتمريرُه إلى
+                   `remove` لا يحذفه ولا ما تحته. فمن رفع في `uid/sub/x.jpg`
+                   بقيت ملفاتُه بعد زوال حسابه بلا سبيلٍ لأحدٍ إليها. */
+                const walk = async (prefix, depth = 0) => {
+                    if (depth > 8) return;
+                    for (let guard = 0; guard < 200; guard++) {
+                        const { data: entries, error } = await sb.storage.from(bucket)
+                            .list(prefix, { limit: PAGE, offset: guard * PAGE });
+                        if (error) throw error;
+                        if (!entries || !entries.length) break;
+                        const files = entries.filter((e) => e.id !== null)
+                                             .map((e) => prefix + '/' + e.name);
+                        if (files.length) {
+                            const { error: rmErr } = await sb.storage.from(bucket).remove(files);
+                            if (rmErr) throw rmErr;
+                        }
+                        for (const e of entries.filter((e) => e.id === null)) {
+                            await walk(prefix + '/' + e.name, depth + 1);
+                        }
+                        /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
+                        if (entries.length < PAGE) break;
+                    }
+                };
+                await walk(uid);
             } catch (e) {
                 console.warn('[Auth] تعذّر مسحُ مخزن ' + bucket + ':', e && e.message);
                 failed.push(bucket);

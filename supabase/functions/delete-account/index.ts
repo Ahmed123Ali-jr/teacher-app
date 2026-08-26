@@ -47,23 +47,45 @@ function json(payload: unknown, status = 200): Response {
     });
 }
 
-/** يُفرغ مجلّدَ المعلّم في مخزنٍ واحد. يرمي عند الفشل ليُسجَّل باسم مخزنه. */
-async function purgeBucket(admin: ReturnType<typeof createClient>, bucket: string, uid: string) {
-    let removed = 0;
+/* ══ المسحُ يغوص في المجلّدات الفرعيّة ══
+   `list` تُرجع مستوىً واحداً، والمجلّدُ الفرعيُّ يأتي فيها **مدخلاً
+   بـ`id = null`** لا ملفاً. وكان يُمرَّر إلى `remove` كأنّه ملفّ، فلا
+   يُحذف ولا ما فيه — فمن رفع في `uid/sub/x.jpg` بقيت ملفاتُه بعد زوال
+   حسابه، بلا سبيلٍ لأحدٍ إليها. (كُشف بالاختبار، ٢٦ أغسطس ٢٠٢٦.)
+
+   ومسارات التطبيق كلُّها مسطّحة (`uid/ملفّ`)، فالفجوةُ لمن يصنع مساره
+   بيده — وهو بعينه من يُتوقّع منه ذلك. */
+async function purgeFolder(
+    admin: ReturnType<typeof createClient>, bucket: string, prefix: string, depth = 0
+): Promise<number> {
+    if (depth > 8) return 0;   /* عمقٌ لا يبلغه استعمالٌ سويّ */
+
+    const entries: { name: string; id: string | null }[] = [];
     for (let i = 0; i < GUARD; i++) {
-        const { data: files, error } = await admin.storage.from(bucket).list(uid, { limit: PAGE });
+        const { data, error } = await admin.storage.from(bucket)
+            .list(prefix, { limit: PAGE, offset: i * PAGE });
         if (error) throw error;
-        if (!files || !files.length) break;
-
-        const paths = files.map((f: { name: string }) => `${uid}/${f.name}`);
-        const { error: rmErr } = await admin.storage.from(bucket).remove(paths);
-        if (rmErr) throw rmErr;
-
-        removed += paths.length;
-        /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
-        if (files.length < PAGE) break;
+        if (!data || !data.length) break;
+        entries.push(...data);
+        if (data.length < PAGE) break;
     }
+
+    const files   = entries.filter((e) => e.id !== null).map((e) => `${prefix}/${e.name}`);
+    const folders = entries.filter((e) => e.id === null).map((e) => `${prefix}/${e.name}`);
+
+    let removed = 0;
+    for (let i = 0; i < files.length; i += PAGE) {
+        const chunk = files.slice(i, i + PAGE);
+        const { error } = await admin.storage.from(bucket).remove(chunk);
+        if (error) throw error;
+        removed += chunk.length;
+    }
+    for (const f of folders) removed += await purgeFolder(admin, bucket, f, depth + 1);
     return removed;
+}
+
+async function purgeBucket(admin: ReturnType<typeof createClient>, bucket: string, uid: string) {
+    return purgeFolder(admin, bucket, uid);
 }
 
 Deno.serve(async (req) => {
