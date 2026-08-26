@@ -15,27 +15,19 @@
        reaches the client. */
     const PROXY_URL = 'https://rbsfpsmolxldmwcclhlc.supabase.co/functions/v1/anthropic-proxy';
 
-    async function getApiKey() {
-        return (await global.TeacherDB.Settings.get('anthropic_api_key')) || '';
-    }
+    /* ══ لا مفتاحَ في جهاز المعلّم ولا نموذجَ يختاره ══
+       كان كلُّ معلّمٍ يلصق مفتاحَ أنثروبيك الخاصّ به في الإعدادات، ويُخزَّن
+       في `app_settings`، ويُنادى أنثروبيك من المتصفّح مباشرةً. ثمّ صار
+       النداءُ يمرّ بالبروكسي بمفتاحٍ واحدٍ على الخادم، فحُذفت الشاشةُ
+       وحُذف النداءُ المباشر — **وبقيت دوالُّ القراءة والكتابة بلا منادٍ**،
+       ومعها مفتاحٌ حقيقيٌّ نائمٌ في قاعدة البيانات منذ ٥ مايو ٢٠٢٦ (وُجد
+       في تدقيق ٢٦ أغسطس، وأُبطل ومُسح).
 
-    async function setApiKey(key) {
-        if (key && key.trim()) await global.TeacherDB.Settings.set('anthropic_api_key', key.trim());
-        else await global.TeacherDB.Settings.unset('anthropic_api_key');
-    }
+       فحُذفت كلُّها: لا يبقى في التطبيق مسارٌ يكتب مفتاحاً في القاعدة.
+       والنموذجُ يُثبَّت في البروكسي فلا يُطلب من العميل. */
 
-    async function getModel() {
-        return (await global.TeacherDB.Settings.get('anthropic_model')) || DEFAULT_MODEL;
-    }
-
-    async function setModel(model) {
-        if (model) await global.TeacherDB.Settings.set('anthropic_model', model);
-    }
-
-    /** AI is reachable when either the user has set a personal key or the
-     *  Edge Function proxy is configured (i.e. there's an active session). */
-    async function hasApiKey() {
-        if (await getApiKey()) return true;
+    /** هل الذكاءُ متاح؟ — والجوابُ جلسةٌ قائمة، فالمفتاحُ في الخادم. */
+    async function isAvailable() {
         try {
             const { data } = await global.SB.auth.getSession();
             return !!(data && data.session);
@@ -186,8 +178,7 @@
     }
 
     global.AI = {
-        getApiKey, setApiKey, hasApiKey,
-        getModel, setModel,
+        isAvailable,
         extractScheduleFromImage,
         extractStudentNamesFromImage,
         getUsage, clearUsage, estimateCost, PRICES,

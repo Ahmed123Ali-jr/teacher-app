@@ -529,8 +529,8 @@
             goBtn.disabled = true;
             try {
                 if (!file) throw new Error('اختر ملفاً أولاً.');
-                if (!(await global.AI.hasApiKey())) {
-                    throw new Error('مفتاح Claude API غير معرّف. أضفه من الإعدادات أولاً.');
+                if (!(await global.AI.isAvailable())) {
+                    throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
                 }
                 if (file.size > 20 * 1024 * 1024) throw new Error('الملف كبير جداً (أقصى ٢٠ ميجابايت).');
                 /* لا حارسَ على «بلا فصول»: الاستيراد صار يُنشئها. وكان
