@@ -315,12 +315,39 @@
            يشعر المعلّم أن شيئاً «يُحمَّل». */
         /* لا انتظارَ بين الضغطة والشاشة: التسجيلُ يبدأ وتُفتح التهيئةُ في
            النَّفَس نفسه. وإن فشل التسجيل رجع المعلّم إلى هنا مع سبب. */
-        function onGuest() {
-            global.Auth.beginGuest().catch((err) => {
+        async function onGuest() {
+            /* ══ الجديدُ يُهيّأ، والعائدُ يرجع إلى بياناته ══
+               كان الزرُّ يقصد `#/setup` في الحالتين، فالعائدُ يُستقبل بشاشةِ
+               «عرّفنا بنفسك» وقد عرّف مرّةً وحفظ مدرستَه وموادَّه — فيظنّ
+               بياناتِه ضاعت.
+
+               والفرقُ في الانتظار كذلك: **الجديدُ لا ينتظر** — شاشةُ التهيئة
+               حقولُها فارغةٌ على أي حال، فتُفتح والتسجيلُ يمضي خلفها. أمّا
+               العائدُ فوجهتُه تتوقّف على ما لديه، ولا يُعرف ما لديه قبل أن
+               تُفتح جلستُه — فلو مضى قبلها حكم الموجّهُ على مخبأٍ مُسِح عند
+               الخروج، فردّه إلى التهيئة من حيث فررنا. */
+            const returning = !!(global.Auth.hasSavedGuest && global.Auth.hasSavedGuest());
+
+            if (!returning) {
+                global.Auth.beginGuest().catch((err) => {
+                    global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
+                    global.location.hash = '#/login';
+                });
+                global.location.hash = '#/setup';
+                return;
+            }
+
+            const btn = container.querySelector('#btn-guest');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ فتح بياناتك…'; }
+            try {
+                await global.Auth.beginGuest();
+                /* إلى الرئيسيّة، ويحكم الموجّهُ بما وجد: فإن كانت جلستُه قد
+                   انطفأت وأُنشئ له حسابٌ جديد ردّه إلى التهيئة بنفسه. */
+                global.location.hash = '#/dashboard';
+            } catch (err) {
+                if (btn) { btn.disabled = false; btn.textContent = 'العودة إلى بياناتي'; }
                 global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
-                global.location.hash = '#/login';
-            });
-            global.location.hash = '#/setup';
+            }
         }
 
         async function onLogin(e) {

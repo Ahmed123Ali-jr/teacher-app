@@ -93,11 +93,24 @@
                 return;
             }
             if (!me) { global.location.hash = '#/login'; return; }
-            /* التهيئة إلزامية: أي شاشة قبل إكمالها تُحوّل إليها — وإلا رأى
-               المعلم تطبيقاً لا يعرف مدرسته ولا نوعها. */
-            if (path !== '/setup' && global.SetupView) {
-                if (!(await global.SetupView.isDone(me))) {
-                    global.location.hash = '#/setup';
+            /* ══ التهيئةُ بوّابةٌ في الاتجاهين ══
+               إلزاميّةٌ قبل إكمالها: أي شاشةٍ تُحوّل إليها — وإلا رأى المعلّم
+               تطبيقاً لا يعرف مدرسته ولا نوعها.
+
+               **وممنوعةٌ بعد إكمالها.** كان `/setup` وحده خارج الحكم، فمن
+               قصده قصداً دخله ولو كان مهيّأً منذ شهر: يجد حقولَه فارغةً
+               ويُسأل عن مدرسته من أوّلها كأنّه لم يدخل قطّ. وهو ما كان يقع
+               لكلّ زائرٍ يعود إلى بياناته — زرُّ الدخول يقصد `#/setup` رأساً
+               ولا بوّابةَ تردّه. فالشاشةُ الآن لمن **لم** يُتمّها لا غير.
+
+               ويُستثنى من الردّ من حسابُه يُنشأ الآن (`guestPending`): بطاقتُه
+               قد تسبق حسابَه بجزءٍ من ثانية، فلا يُطرد من شاشةٍ هي شاشتُه. */
+            if (global.SetupView) {
+                const done    = await global.SetupView.isDone(me);
+                const pending = !!(global.Auth.guestPending && global.Auth.guestPending());
+                if (!done && path !== '/setup') { global.location.hash = '#/setup';     return; }
+                if (done && path === '/setup' && !pending) {
+                    global.location.hash = '#/dashboard';
                     return;
                 }
             }
