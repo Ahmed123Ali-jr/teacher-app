@@ -46,7 +46,8 @@
                         <div class="auth-divider">أو</div>
 
                         <button type="button" class="auth-guest" id="btn-guest">
-                            الدخول كزائر
+                            ${(global.Auth && global.Auth.hasSavedGuest && global.Auth.hasSavedGuest())
+                                ? 'العودة إلى بياناتي' : 'الدخول كزائر'}
                         </button>
 
                         <p class="auth-switch">
@@ -225,9 +226,16 @@
             }
 
             /* الزرُّ يفتح شاشةَ التعريف ولا يُنشئ جلسةً — فالموافقةُ قبل
-               الحساب لا بعده. وإنشاءُ الجلسة في `#btn-guest-go`. */
+               الحساب لا بعده. وإنشاءُ الجلسة في `#btn-guest-go`.
+
+               **إلّا العائد**: من له حسابُ زائرٍ على هذا الجهاز فقد وافق
+               مرّةً عند أوّل دخول، ولا تُعاد عليه الموافقةُ كلّما رجع إلى
+               بياناته — وإلّا صار الإقرارُ طقساً يُنقر بلا قراءة. */
             const guestBtn = container.querySelector('#btn-guest');
             if (guestBtn) guestBtn.addEventListener('click', function () {
+                if (global.Auth && global.Auth.hasSavedGuest && global.Auth.hasSavedGuest()) {
+                    return onGuest();
+                }
                 mode = 'guest'; paint();
             });
 

@@ -14,6 +14,53 @@
 
     const sb = global.SB;
 
+    /* ══════════════════════════════════════════════════════════════════
+       حسابُ الزائر يعود إلى صاحبه — لا يُنشأ ثانٍ في كلّ دخول
+       ══════════════════════════════════════════════════════════════════
+       كان كلُّ ضغطةٍ على «دخول كزائر» تُنشئ حساباً جديداً. فمن خرج ثمّ عاد
+       وجد تطبيقاً فارغاً، **وحسابُه القديم لا سبيلَ إليه أبداً**: لا بريدَ
+       له ولا كلمةَ مرور، والجلسةُ كانت مفتاحَه الوحيد. فيفقد فصولَه
+       وطلابَه وجدولَه بضغطةٍ ظنّها عودةً.
+
+       ومن ذلك تراكم في القاعدة **٣٧٤ حساباً يتيماً** (قياسُ ٢٦ أغسطس
+       ٢٠٢٦) — كلٌّ منها يحمل بياناتِ معلّمٍ لا يصل إليها هو ولا غيرُه.
+
+       **وبابٌ ثانٍ يُغلق معه:** حصّةُ الاستيراد أربعون شهرياً **لكلّ
+       حساب** — فمن بلغها كان يخرج ويدخل فيأخذ أربعين جديدة. صار الجهازُ
+       حساباً واحداً، فالحصّةُ حصّةٌ واحدة.
+
+       والوسيلةُ رمزُ التجديد يُحفظ تحت مفتاحٍ **لا يمسحه الخروج**. ويُجدَّد
+       كلّما جدّدت المكتبةُ الجلسة، وإلّا بطل بعد أوّل تدوير.
+
+       ── وما يبقى بيد المعلّم ──
+       • «مسح جميع البيانات» في الإعدادات: يمحو المحتوى **ويُبقي الحساب**،
+         فيعود إليه فارغاً.
+       • «حذف حسابي نهائياً»: يزول الحساب، ويُنسى الرمز — والدخولُ بعده
+         بدايةٌ جديدة.
+       • وربطُ الحساب ببريد: لم يعد زائراً، فيُنسى الرمزُ كذلك.
+
+       ── وحدُّه الذي يُقال ──
+       الجهازُ المشترك: من يمسك الجهازَ بعده يدخل كزائرٍ فيرى بياناته.
+       ولذلك يبقى «مسح جميع البيانات» في متناوله — وهو قرارُ المستخدم بعد
+       عرض الأمرين (٢٦ أغسطس ٢٠٢٦).
+       ══════════════════════════════════════════════════════════════════ */
+    const GUEST_KEY   = 'teacher-app-guest';         /* علامةُ «لهذا الجهاز حسابُ زائر» */
+    const GUEST_PAUSE = 'teacher-app-guest-paused';  /* خرج محلّياً وجلستُه حيّة */
+
+    const flag = {
+        set(k)   { try { global.localStorage.setItem(k, '1'); } catch (e) {} },
+        has(k)   { try { return global.localStorage.getItem(k) === '1'; } catch (e) { return false; } },
+        clear(k) { try { global.localStorage.removeItem(k); } catch (e) {} }
+    };
+
+    function markGuest()   { flag.set(GUEST_KEY); }
+    function forgetGuest() { flag.clear(GUEST_KEY); flag.clear(GUEST_PAUSE); }
+    function pauseGuest()  { flag.set(GUEST_PAUSE); }
+    function resumeGuest() { flag.clear(GUEST_PAUSE); }
+
+    /** هل لهذا الجهاز حسابُ زائر؟ — تسأله شاشةُ الدخول لتغيّر كلامها. */
+    function hasSavedGuest() { return flag.has(GUEST_KEY); }
+
     /* دالّةُ الحافّة التي تحذف الحساب وملفاتِه بمفتاح الخدمة.
        العنوانُ يُشتقّ من عنوان المشروع نفسِه فلا يُكتب مرّتين. */
     const DELETE_ACCOUNT_URL =
@@ -133,7 +180,21 @@
         const current = session && session.data && session.data.session
             ? session.data.session.user : null;
 
-        if (current && current.is_anonymous) {
+        /* ══ الزائرُ المطويُّ لا يُرقّى ══
+           جلستُه حيّةٌ بعد «الخروج» (طيٌّ لا خروج)، فمن سجّل حساباً على
+           جهازٍ طواه غيرُه كان يرث بياناته — أسماءَ طلابِ معلّمٍ آخر
+           وحضورَهم. فالطيُّ يعني «لستُ أنا»: تُغلق جلستُه ويُبدأ حسابٌ
+           نظيف. أمّا من ربط حسابه قبل أن يخرج فيُرقّى كما كان. */
+        if (current && current.is_anonymous && flag.has(GUEST_PAUSE)) {
+            try { await sb.auth.signOut(); } catch (e) { /* المضيُّ أولى */ }
+            forgetGuest();
+            invalidateTeacher();
+            session = { data: {} };
+        }
+        const active = (session && session.data && session.data.session)
+            ? session.data.session.user : null;
+
+        if (active && active.is_anonymous) {
             const { data: up, error: upErr } = await sb.auth.updateUser({
                 email, password, data: { full_name: name.trim() }
             });
@@ -143,7 +204,9 @@
                 }
                 throw new Error(upErr.message || 'تعذّر إنشاء الحساب.');
             }
-            const me = (up && up.user) || current;
+            const me = (up && up.user) || active;
+            /* صار له بريدٌ وكلمةُ مرور — فلا يعود «دخول كزائر» إليه. */
+            forgetGuest();
             invalidateTeacher();
             /* الملفُّ موجودٌ منذ كان زائراً — يُحدَّث اسمُه لا يُنشأ. */
             await ensureProfile(me.id, { full_name: name.trim() });
@@ -195,6 +258,7 @@
             }
             throw new Error(error.message || 'تعذّر تسجيل الدخول.');
         }
+        forgetGuest();         // دخل بحسابه — لم يعد زائرَ هذا الجهاز
         invalidateTeacher();   // معلّمٌ آخر — انظر التعليق في `guestLogin`
         /* الترطيبُ يُطلق ولا يُنتظر: كان الدخولُ يقف حتى تصل جداولُ الطبقة
            الأولى (٦٣٣ ملّي ثانية مقيسة) قبل أن يرى المعلّم شيئاً. وكلُّ
@@ -242,13 +306,36 @@
      * لقرأ الحسابُ الجديد مخبأَ من قبله.
      */
     async function logout() {
+        /* ══ خروجُ الزائر طيٌّ لا خروج ══
+           جُرّب حفظُ رمز التجديد لتُستعاد الجلسةُ بعد الخروج، **فلم ينفع**:
+           سوبابيس تُبطل الرمزَ على الخادم حتى في الخروج المحلّيّ
+           (`scope=local`) — قيس بالنداء الخام يوم ٢٦ أغسطس ٢٠٢٦:
+               تجديدٌ قبل الخروج → 200 · وبعده → 400 Refresh Token Not Found
+           وحسابُ الزائر بلا بريدٍ ولا كلمة مرور، فلا وسيلةَ أخرى للعودة.
+
+           فخروجُه **لا يمسّ الخادم**: تُمسح شاشاتُه ويُرفع عَلَمُ الطيّ،
+           فتراه الشاشاتُ خارجاً وجلستُه حيّةٌ في مكانها. و«العودة إلى
+           بياناتي» تُنزل العَلَم فيعود كما كان.
+
+           وصاحبُ البريد خروجُه كامل: له وسيلةُ عودةٍ، وإبطالُ جلسته أحفظُ
+           لحسابه. */
+        const guest = await isAnonymousNow();
         invalidateTeacher();
         if (global.TeacherDB) {
             try { await global.TeacherDB.clearLocalCache(global.TeacherDB.LOCAL_ONLY); }
             catch (e) { console.warn('[Auth] تعذّر مسح المخبأ:', e && e.message); }
             try { global.TeacherDB.resetHydration(); } catch (e) { /* لا يوقف الخروج */ }
         }
+        if (guest) { pauseGuest(); return; }
         await sb.auth.signOut();
+    }
+
+    /** أصاحبُ الجلسة الحاليّةِ زائرٌ مجهول؟ — سؤالٌ محلّيٌّ لا يمسّ الشبكة. */
+    async function isAnonymousNow() {
+        try {
+            const { data } = await sb.auth.getSession();
+            return !!(data && data.session && data.session.user && data.session.user.is_anonymous);
+        } catch (e) { return false; }
     }
 
     /* حذف الحساب نهائياً — تشترطه آبل على كل تطبيق يُنشئ حسابات.
@@ -468,6 +555,8 @@
         }
 
         invalidateTeacher();
+        /* الحسابُ زال، فلا شيءَ يُعاد إليه. */
+        forgetGuest();
         if (global.TeacherDB) {
             /* هنا تُمحى ملفاتُ الكتب أيضاً — الحسابُ ذهب، ولا معنى
                لإبقاء ملفاته على الجهاز. وهو عكسُ `logout` عن قصد. */
@@ -496,6 +585,8 @@
         const { data } = await sb.auth.getSession();
         const user = data && data.session ? data.session.user : null;
         if (!user) { invalidateTeacher(); return null; }
+        /* زائرٌ طوى جلستَه: حيٌّ عند الخادم، خارجٌ عند الشاشات. */
+        if (user.is_anonymous && flag.has(GUEST_PAUSE)) { invalidateTeacher(); return null; }
         const profile = await fetchProfile(user.id);
         _teacherCache = mapProfile(user, profile);
         _teacherCacheAt = Date.now();
@@ -530,11 +621,30 @@
     }
 
     async function guestLogin() {
+        /* ══ عودةٌ إلى حساب هذا الجهاز ══
+           الجلسةُ لم تُغلق أصلاً — رُفع عنها الطيُّ فحسب. */
+        resumeGuest();
+        try {
+            const { data: cur } = await sb.auth.getSession();
+            const live = cur && cur.session ? cur.session.user : null;
+            if (live && live.is_anonymous) {
+                markGuest();
+                invalidateTeacher();
+                if (global.TeacherDB && global.TeacherDB.hydrate) {
+                    global.TeacherDB.resetHydration();
+                    global.TeacherDB.hydrate();
+                }
+                const prof = await fetchProfile(live.id);
+                return mapProfile(live, prof || { full_name: 'معلم زائر' });
+            }
+        } catch (e) { /* لا جلسة — يُنشأ حسابٌ جديد أدناه */ }
+
         const { data, error } = await sb.auth.signInAnonymously();
         if (error) {
             throw new Error(error.message || 'تعذّر الدخول كزائر.');
         }
         const user = data.user;
+        markGuest();
 
         /* إبطالُ ذاكرة المعلّم هنا لا في مُستمع الجلسة وحده: المستمعُ يعمل
            في دورةٍ لاحقة، فبين الدخول ونداء `currentTeacher` قد تُعاد
@@ -633,7 +743,7 @@
     global.Auth = {
         register, login, logout, logoutLocal, deleteAccount, purgeStorage, currentTeacher, guestLogin,
         requestPasswordReset, consumeRecoveryLink, setNewPassword,
-        beginGuest, guestPending, whenGuestReady,
+        beginGuest, guestPending, whenGuestReady, hasSavedGuest, forgetGuest,
         changePassword, updateProfile, onAuthChange
     };
 })(window);
