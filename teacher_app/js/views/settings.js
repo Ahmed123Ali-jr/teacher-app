@@ -219,6 +219,15 @@
 
                 <button type="button" class="set-logout" id="btn-logout-settings">تسجيل الخروج</button>
 
+                ${teacher && teacher.is_guest ? '' : `
+                <button type="button" class="set-logout" id="btn-logout-all"
+                        style="color: var(--danger, #DC2626);">
+                    تسجيل الخروج من كل الأجهزة
+                </button>
+                <p class="text-muted" style="font-size: var(--fs-xs); text-align: center; margin-top: 6px;">
+                    لو نسيت حسابك مفتوحاً على جهاز آخر، أو شككت أن أحداً دخل عليه.
+                </p>`}
+
             </div>
         `;
 
@@ -252,6 +261,27 @@
             } else if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
             await global.Auth.logout();
             global.location.hash = '#/login';
+        });
+
+        /* ══ خروجٌ من كلّ الأجهزة ══
+           لا يُعرض للزائر: جلستُه مفتاحُ حسابه الوحيد، والخروجُ الشامل
+           يضيّعه إلى الأبد. و`Auth.logoutEverywhere` ترفضه كذلك من داخلها
+           فلا يُعتمد على إخفاء الزرّ وحده. */
+        container.querySelector('#btn-logout-all')?.addEventListener('click', async () => {
+            if (!global.confirm(
+                'تسجيل الخروج من كل الأجهزة؟'
+                + '\n\nتُغلق جلستك على كل جهاز دخلت منه — بما فيه هذا الجهاز.'
+                + ' بياناتك لا تُمسّ، وتعود إليها بتسجيل الدخول من جديد.')) return;
+            const btn = container.querySelector('#btn-logout-all');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الإغلاق…'; }
+            try {
+                await global.Auth.logoutEverywhere();
+                global.location.hash = '#/login';
+                global.TeacherApp.toast('أُغلقت جلساتك على كل الأجهزة ✅', 'success', 5000);
+            } catch (err) {
+                if (btn) { btn.disabled = false; btn.textContent = 'تسجيل الخروج من كل الأجهزة'; }
+                global.TeacherApp.toast(err.message || 'تعذّر الإغلاق.', 'error', 6000);
+            }
         });
     }
 
@@ -1018,9 +1048,14 @@
                 لا تبدأ من جديد.
             </p>
 
+            <!-- كان هنا: «تسجيل الخروج يُنهي حساب الزائر ولا يمكن العودة إليه».
+                 وكان صادقاً يوم كان كلُّ دخولٍ يُنشئ حساباً جديداً — وصار
+                 الجهازُ يعود إلى حسابه (٢٦ أغسطس ٢٠٢٦)، فبقي التحذيرُ يُخيف
+                 من زرٍّ لا يضرّ. والخطرُ الحقيقيُّ غيرُه: الجهاز. -->
             <p class="dz-h" style="border-inline-start: 3px solid #DC2626; padding-inline-start: 10px;">
-                ⚠️ <strong>تسجيل الخروج يُنهي حساب الزائر ولا يمكن العودة إليه</strong>،
-                ويذهب معه كل ما أدخلته.
+                ⚠️ <strong>بياناتك على هذا الجهاز وحده.</strong>
+                لو ضاع الجهاز أو مُسحت بيانات المتصفّح، ذهبت معه ولا سبيل لاستعادتها —
+                لأنّ حساب الزائر بلا بريد ولا كلمة مرور.
             </p>
 
             <div class="field">

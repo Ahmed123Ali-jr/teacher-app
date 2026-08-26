@@ -340,6 +340,40 @@
         await sb.auth.signOut();
     }
 
+    /**
+     * خروجٌ من **كلّ الأجهزة** — لا من هذا وحده.
+     *
+     * ── لماذا يحتاجها المعلّم ──
+     * من نسي حسابه مفتوحاً على حاسب المدرسة، أو أعار جواله، أو شكّ أنّ
+     * أحداً دخل عليه — لا يملك اليوم إلّا تغييرَ كلمة المرور. وهو يعمل
+     * (قيس ٢٦ أغسطس: تغييرُ الكلمة يقتل جلساتِ بقيّة الأجهزة فوراً) لكنّه
+     * يفرض عليه اختراعَ كلمةٍ جديدةٍ وحفظَها لأجل خروجٍ من جهازٍ نسيه.
+     *
+     * و`scope: 'global'` تُبطل الجلساتِ كلَّها في الخادم — بما فيها هذه.
+     * فرمزُ الوصول يموت في حينه لا بعد ساعة: سوبابيس تُطابق الجلسةَ في
+     * كلّ نداء، فالمسروقُ يصير ورقةً بلا قيمة (قيس: `403 Session from
+     * session_id claim in JWT does not exist`).
+     *
+     * ── ولا تُعرض على الزائر ──
+     * جلستُه **مفتاحُ حسابه الوحيد** — لا بريدَ له ولا كلمةَ مرور. فخروجٌ
+     * شاملٌ يعني ضياعَ حسابه إلى الأبد، وهي نفسُ الحفرة التي سُدّت في
+     * `logout` و`logoutLocal`. فتُرفض هنا صراحةً، ولا يُكتفى بإخفاء الزرّ.
+     */
+    async function logoutEverywhere() {
+        if (await isAnonymousNow()) {
+            throw new Error('حساب الزائر جلستُه مفتاحُه الوحيد — اربط حسابك ببريدك أوّلاً.');
+        }
+        invalidateTeacher();
+        if (global.TeacherDB) {
+            try { await global.TeacherDB.clearLocalCache(global.TeacherDB.LOCAL_ONLY); }
+            catch (e) { console.warn('[Auth] تعذّر مسح المخبأ:', e && e.message); }
+            try { global.TeacherDB.resetHydration(); } catch (e) { /* لا يوقف الخروج */ }
+        }
+        const { error } = await sb.auth.signOut({ scope: 'global' });
+        if (error) throw new Error(error.message || 'تعذّر تسجيل الخروج من الأجهزة.');
+        return true;
+    }
+
     /** أصاحبُ الجلسة الحاليّةِ زائرٌ مجهول؟ — سؤالٌ محلّيٌّ لا يمسّ الشبكة. */
     async function isAnonymousNow() {
         try {
@@ -751,7 +785,7 @@
     }
 
     global.Auth = {
-        register, login, logout, logoutLocal, deleteAccount, purgeStorage, currentTeacher, guestLogin,
+        register, login, logout, logoutLocal, logoutEverywhere, deleteAccount, purgeStorage, currentTeacher, guestLogin,
         requestPasswordReset, consumeRecoveryLink, setNewPassword,
         beginGuest, guestPending, whenGuestReady, hasSavedGuest, forgetGuest,
         changePassword, updateProfile, onAuthChange
