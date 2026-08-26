@@ -38,15 +38,10 @@
         const local = await global.TeacherDB.BookFiles.get(book.id);
         if (local) return local.arrayBuffer();
 
-        /* رُفع من جهازٍ آخر: نجلبه ونحفظه هنا، فلا يُطلب مرّتين. */
-        if (book.storage_path && book.storage_path !== 'local' && global.SB) {
-            const { data, error } = await global.SB.storage
-                .from('books').createSignedUrl(book.storage_path, 3600);
-            if (error) throw new Error('تعذّر جلب الكتاب من الخادم.');
-            const blob = await (await fetch(data.signedUrl)).blob();
-            try { await global.TeacherDB.BookFiles.save(book.id, blob); } catch (e) { /* الحفظ ترفٌ */ }
-            return blob.arrayBuffer();
-        }
+        /* كان هنا جلبٌ من مخزن `books` للكتب المرفوعة من جهازٍ آخر. وأُقفل
+           المخزنُ ثمّ حُذف (٢٦ أغسطس ٢٠٢٦): الكتبُ محليّةٌ منذ ١٢ مايو، فلم
+           يبقَ فيه إلّا كتبٌ من التصميم القديم، وقرّر المستخدم إزالتها.
+           فلا يُطلب من الخادم شيء، ورسالةُ الأسفل تقول للمعلّم الصواب. */
         if (book.file instanceof Blob) return book.file.arrayBuffer();   // صفوف قديمة
         throw new Error('الملف غير محفوظ على هذا الجهاز. افتح الكتاب من الجهاز الذي رُفع منه، أو أعد رفعه.');
     }

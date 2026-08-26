@@ -35,7 +35,7 @@
 const URL_BASE = process.env.SUPABASE_URL || 'https://rbsfpsmolxldmwcclhlc.supabase.co';
 const KEY      = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const APPLY    = process.argv.includes('--apply');
-const BUCKETS  = ['books', 'evidence', 'portfolio'];
+const BUCKETS  = ['evidence', 'portfolio'];   // books أُقفل وحُذف ٢٦ أغسطس ٢٠٢٦
 const PAGE     = 1000;
 
 if (!KEY) {

@@ -30,7 +30,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 /* مخازنُ ملفات المعلّم. القائمةُ نفسُها في ثلاثة مواضع:
    `USER_BUCKETS` في js/auth.js · `BUCKETS` في delete-account · وهنا.
    مخزنٌ جديدٌ يُضاف في الثلاثة. */
-const BUCKETS = ['books', 'evidence', 'portfolio'];
+const BUCKETS = ['evidence', 'portfolio'];   /* books أُقفل وحُذف ٢٦ أغسطس */
 
 const PAGE  = 100;
 const GUARD = 500;

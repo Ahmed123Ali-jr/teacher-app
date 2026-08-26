@@ -29,7 +29,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
 /* مخازنُ ملفات المعلّم — والقائمةُ نفسُها في `USER_BUCKETS` في auth.js.
    مخزنٌ جديدٌ يُضاف في الموضعين. */
-const BUCKETS = ['books', 'evidence', 'portfolio'];
+const BUCKETS = ['evidence', 'portfolio'];   /* books أُقفل وحُذف ٢٦ أغسطس */
 
 const PAGE  = 100;
 const GUARD = 500;   // سقفُ الدورات: ٥٠ ألف ملفٍّ للمعلّم الواحد
