@@ -2720,6 +2720,20 @@ body.drawer-open { overflow: hidden; }
     transform: scale(1.05);
 }
 
+/* ── حالتان تُحدَّد ولا تُملأ: ⏰ و📝 ──
+   الرمزان إيموجي ملوّنة، والتعبئةُ تبتلعهما فلا يُقرآن. فالمختارُ يُعلَن
+   بحدٍّ سميكٍ وحلقةٍ حوله، والأرضيّةُ تبقى كما هي.
+   الغامقُ هنا لأنّ الأرضيّةَ بيضاء: ‎7.09‎ للمتأخّر و‎6.70‎ للمستأذن.
+   والداكنُ يقلبه إلى الفاتح في theme-dark.css — قاعدةً لا رمزاً، وهناك
+   بيانُ السبب. */
+.att-btn.outline.active {
+    background: var(--surface);
+    border-color: var(--att-ink);
+    border-width: 3px;
+    color: var(--att-ink);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--att-ink) 28%, transparent);
+}
+
 /* Smaller inline inputs */
 .input-sm, .select-sm {
     min-height: 36px;

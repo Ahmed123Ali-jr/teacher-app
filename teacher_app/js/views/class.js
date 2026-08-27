@@ -28,8 +28,13 @@
     const ATTENDANCE = {
         present: { label: 'حاضر',   icon: '✓',  color: '#10B981', ink: '#0B6B4A' },
         absent:  { label: 'غائب',   icon: '✗',  color: '#EF4444', ink: '#B91C1C' },
-        late:    { label: 'متأخر',  icon: '⏰', color: '#F59E0B', ink: '#92400E' },
-        excused: { label: 'مستأذن', icon: '📝', color: '#3B82F6', ink: '#1D4ED8' }
+        /* ⏰ و📝 تُحدَّد ولا تُملأ — بقرار المعلّم (٢٧ أغسطس ٢٠٢٦)، وله
+           سببٌ يُرى: الرمزان **إيموجي ملوّنة**، والتعبئةُ تبتلعهما فلا
+           يُقرآن. أمّا ✓ و✗ فمحرفان يأخذان لونَ النصّ، فالتعبئةُ تُبرزهما.
+           وفائدةٌ ثانية: الحاضرُ والغائبُ يُقرآن بطرَف العين في فصلٍ من
+           ثلاثين، والمتأخّرُ والمستأذنُ حالتان نادرتان لا تُزاحمهما. */
+        late:    { label: 'متأخر',  icon: '⏰', color: '#F59E0B', ink: '#92400E', outline: true },
+        excused: { label: 'مستأذن', icon: '📝', color: '#3B82F6', ink: '#1D4ED8', outline: true }
     };
 
     const COLUMN_TYPES = {
@@ -1148,7 +1153,7 @@
     function attendanceButtons(studentId, todayRow) {
         const current = todayRow ? todayRow.status : null;
         return Object.entries(ATTENDANCE).map(([key, meta]) => `
-            <button type="button" class="att-btn ${current === key ? 'active' : ''}"
+            <button type="button" class="att-btn ${current === key ? 'active' : ''}${meta.outline ? ' outline' : ''}"
                     data-att-btn data-sid="${studentId}" data-status="${key}"
                     title="${meta.label}" style="--att-color:${meta.color};--att-ink:${meta.ink};">
                 ${meta.icon}

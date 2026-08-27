@@ -545,5 +545,21 @@ body.theme-auto.dark-active .pf-chip {
     border-color: color-mix(in srgb, #7FCBDD 26%, var(--mix-base));
 }
 
+/* حدُّ زرّ الحضور المُحدَّد (⏰ و📝): في الفاتح يُرسم بـ`--att-ink`
+   الغامق، وهو يختفي هنا — قيس على `#161C27`: المتأخّرُ ‎2.41‎ والمستأذنُ
+   ‎2.55‎، وعتبةُ الحدود ‎3‎. فيُقلب إلى `--att-color` الفاتح: ‎7.95‎ و‎4.64‎.
+
+   ولمَ قاعدةٌ لا رمزٌ في الشقّ؟ جُرّب `--att-edge: var(--att-ink)` على
+   `body` فخرج **فارغاً**: `--att-ink` سطريٌّ على كلّ زرّ ولا وجودَ له عند
+   `body`، والرمزُ يُحسب حيث يُعلَن لا حيث يُستعمل — فبطل، ورسم الاحتياطيُّ
+   الغامقَ في الوضعين. كشفه قياسُ `borderColor` في المتصفّح لا قراءةُ
+   الملفّ. فالقاعدةُ تُوصف مرّتين لأنّ الرمزَ لا يقدر أن يحملها. */
+body.theme-dark .att-btn.outline.active,
+body.theme-auto.dark-active .att-btn.outline.active {
+    border-color: var(--att-color);
+    color: var(--att-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--att-color) 28%, transparent);
+}
+
 /* شريطُ التمرير ولونُ واجهة المتصفّح يتبعان المظهر. */
 body.theme-dark, body.theme-auto.dark-active { color-scheme: dark; }
