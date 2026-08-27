@@ -16,8 +16,8 @@
                 return `
                     <div class="auth-card">
                         <div class="auth-logo">🎓</div>
-                        <h2 class="auth-title">إنجاز المعلم</h2>
-                        <p class="auth-subtitle">منظومة متكاملة لإدارة الطلاب وإنجاز المعلم</p>
+                        <h2 class="auth-title">فصولي</h2>
+                        <p class="auth-subtitle">فصولك وطلابك وحضورهم ودرجاتهم في مكان واحد</p>
 
                         <form id="form-login" novalidate>
                             <div class="field">

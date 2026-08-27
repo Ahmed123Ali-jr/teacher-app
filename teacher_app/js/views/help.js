@@ -95,7 +95,7 @@
             <div class="container" style="max-width: 880px;">
 
                 <div class="card help-intro">
-                    <h3 style="margin-top: 0;">أهلاً بك في تطبيق إنجاز المعلم 🎓</h3>
+                    <h3 style="margin-top: 0;">أهلاً بك في فصولي 🎓</h3>
                     <p style="margin: 0;">
                         دليل مختصر لكل الميزات. كل قسم قابل للطيّ — اضغط العنوان لفتحه أو إغلاقه.
                     </p>

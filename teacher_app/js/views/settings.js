@@ -1128,8 +1128,8 @@
             else shareBtn.addEventListener('click', async () => {
                 try {
                     await navigator.share({
-                        title: 'تطبيق إنجاز المعلم',
-                        text: 'جرّب تطبيق إنجاز المعلم',
+                        title: 'فصولي',
+                        text: 'جرّب تطبيق فصولي',
                         url: container.querySelector('#invite-link').value
                     });
                 } catch { /* أغلق المعلم لوحة المشاركة — لا شيء نفعله */ }
@@ -1219,7 +1219,7 @@
                 <tbody>
                     <tr><th>الإصدار</th><td>${APP_VERSION}</td></tr>
                     <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
-                    <tr><th>الاسم</th><td>تطبيق إنجاز المعلم</td></tr>
+                    <tr><th>الاسم</th><td>فصولي</td></tr>
                     <tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>
                     <tr><th>رقم البناء</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                 </tbody>
