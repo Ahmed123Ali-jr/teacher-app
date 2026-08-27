@@ -246,8 +246,12 @@ body.drawer-open { overflow: hidden; }
        (كحليٌّ تحته) فيبلغ ‎4.69:1‎، وعلى أفتحِها ‎7.26:1‎. */
     color: #575753;
     text-decoration: none;
-    font-size: 11px;
-    font-weight: var(--fw-bold);
+    /* ‎10‎ وعاديٌّ لا عريض — بقرار المعلّم. وهو مقاسُ آبل نفسُه في شريط
+       تبويباتها، ولا يُنزَل تحته في العربية.
+       واللونُ لم يُمسّ: النحافةُ لا تغيّر نسبةَ التباين، فتبقى ‎4.69:1‎
+       على أغمقِ أرضيةٍ يصنعها الزجاج و‎7.26:1‎ على أفتحها. */
+    font-size: 10px;
+    font-weight: var(--fw-regular);
     line-height: 1.2;
 }
 
@@ -267,7 +271,10 @@ body.drawer-open { overflow: hidden; }
 }
 .bottom-nav .bn-item.is-active {
     color: #fff;
-    font-weight: var(--fw-black);
+    /* ‎500‎ لا ‎900‎: الخطُّ يحمّل ‎400/500/600/700‎ فقط، فـ‎900‎ وزنٌ لا وجودَ
+       له كان المتصفّحُ يزوّره بتغليظٍ صناعيّ. والحبّةُ البتروليةُ والحبرُ
+       الأبيضُ يُعلنان النشطَ وحدَهما — فلا يحتاج عرضاً فوق ذلك. */
+    font-weight: var(--fw-medium);
 }
 .bottom-nav .bn-item.is-active::before {
     background: linear-gradient(150deg, var(--primary-lift) 0%, var(--primary) 55%, var(--primary-deep) 100%);
@@ -276,12 +283,12 @@ body.drawer-open { overflow: hidden; }
 }
 
 .bottom-nav .bn-icon {
-    /* ‎17‎ لا ‎20‎ — بقرار المعلّم (٢٨ أغسطس ٢٠٢٦) بعد أن رأى خمسةَ مقاسات.
-       ولا يُنزَل تحت ‎15‎: 📅 و⚙️ فيهما تفصيلٌ داخليٌّ (رقمُ اليوم وأسنانُ
-       الترس) يذوب قبل غيره فتصيران لطختين.
+    /* ‎15‎ لا ‎20‎ — بقرار المعلّم (٢٨ أغسطس ٢٠٢٦) بعد أن رأى خمسةَ مقاسات.
+       وهو القاع: تحته يذوب تفصيلُ 📅 و⚙️ الداخليّ — رقمُ اليوم وأسنانُ
+       الترس — فتصيران لطختين.
        وارتفاعُ الشريط ومساحةُ اللمس لا تتبعان هذا الرقم — فالزرُّ لا يصغر
        بصغر رمزه، والقياسُ من `--bottom-nav-height` و`min-height`. */
-    font-size: 17px;
+    font-size: 15px;
     line-height: 1;
     margin-bottom: 2px;
     transition: transform var(--dur-fast) var(--ease);
@@ -289,7 +296,7 @@ body.drawer-open { overflow: hidden; }
 .bottom-nav .bn-item.is-active .bn-icon { transform: scale(1.05); }
 
 .bottom-nav .bn-label {
-    font-size: var(--fs-xs);
+    /* يرث ‎10px‎ من `.bn-item` — و`--fs-xs` هنا كان يعيده إلى ‎11‎. */
     letter-spacing: -0.1px;
 }
 
