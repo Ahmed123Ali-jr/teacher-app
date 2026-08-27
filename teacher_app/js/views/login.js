@@ -16,7 +16,7 @@
                 return `
                     <div class="auth-card">
                         <div class="auth-logo">🎓</div>
-                        <h2 class="auth-title">فصولي</h2>
+                        <h2 class="auth-title">فصول</h2>
                         <p class="auth-subtitle">فصولك وطلابك وحضورهم ودرجاتهم في مكان واحد</p>
 
                         <form id="form-login" novalidate>

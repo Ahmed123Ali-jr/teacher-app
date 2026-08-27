@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="فصولي — سجل الطلاب والاختبارات وملف الإنجاز">
+    <meta name="description" content="فصول — سجل الطلاب والاختبارات وملف الإنجاز">
     <meta name="theme-color" content="#1E40AF">
 
     <!-- Always re-fetch index.html so new ?v= cache-busts on JS/CSS take effect immediately. -->
@@ -11,7 +11,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>فصولي</title>
+    <title>فصول</title>
 
     <!-- الخط مستضاف محلياً: من نطاق خارجي كان يسقط بلا إنترنت فيتغيّر
          شكل التطبيق كلّه، ومعالج الخدمة لا يخزّن الطلبات الخارجية.
@@ -54,7 +54,7 @@
          the first view renders; 15s failsafe fades it if boot ever hangs. -->
     <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#FFFFFF; font-family:'IBM Plex Sans Arabic',system-ui,sans-serif; transition:opacity 250ms ease;">
         <!-- شعار التطبيق: قبعة تخرج بالأزرق الملكي والذهبي (SVG داخلي = يظهر فوراً) -->
-        <svg width="104" height="104" viewBox="0 0 96 96" aria-label="شعار فصولي">
+        <svg width="104" height="104" viewBox="0 0 96 96" aria-label="شعار فصول">
             <defs>
                 <linearGradient id="splash-bg" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0" stop-color="#1A3A6E"/>
@@ -68,7 +68,7 @@
             <path d="M75 43 v11.5" stroke="#C9A961" stroke-width="2.6" stroke-linecap="round"/>
             <circle cx="75" cy="58" r="3.2" fill="#C9A961"/>
         </svg>
-        <div style="font-size:21px; font-weight:700; color:#0F2C5C;">فصولي</div>
+        <div style="font-size:21px; font-weight:700; color:#0F2C5C;">فصول</div>
         <div style="width:26px; height:26px; border:3px solid #E2E8F0; border-top-color:#C9A961; border-radius:50%; animation:splash-spin .8s linear infinite;"></div>
         <style>@keyframes splash-spin { to { transform: rotate(360deg); } }</style>
     </div>
@@ -162,7 +162,7 @@
 
         <footer class="app-footer" id="app-footer" hidden>
             <div class="container">
-                <small class="text-muted">فصولي — نموذج أولي</small>
+                <small class="text-muted">فصول — نموذج أولي</small>
             </div>
         </footer>
 
@@ -252,14 +252,14 @@
     <script src="js/components/bottom-nav.js?v=C4"></script>
     <script src="js/components/dept-picker.js?v=2"></script>
     <script src="js/components/subject-picker.js?v=2"></script>
-    <script src="js/views/login.js?v=21"></script>
+    <script src="js/views/login.js?v=22"></script>
     <script src="js/views/setup.js?v=13"></script>
     <script src="js/views/dashboard.js?v=C43"></script>
     <script src="js/views/classes.js?v=S23"></script>
     <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C7"></script>
     <script src="js/views/profile.js?v=D24"></script>
     <script src="js/views/reminders.js?v=S5"></script>
-    <script src="js/views/settings.js?v=D49"></script>
+    <script src="js/views/settings.js?v=D50"></script>
     <script type="text/lazy-view" data-view="class-books" data-src="js/views/class-books.js?v=S21"></script>
     <script type="text/lazy-view" data-view="class-curriculum" data-src="js/views/class-curriculum.js?v=D12"></script>
     <script type="text/lazy-view" data-view="class-exams" data-src="js/views/class-exams.js?v=S18"></script>
@@ -273,7 +273,7 @@
     <script type="text/lazy-view" data-view="portfolio" data-src="js/views/portfolio.js?v=D30"></script>
     <script src="js/views/calendar-card.js?v=8"></script>
     <script src="js/views/schedule.js?v=S62"></script>
-    <script type="text/lazy-view" data-view="help" data-src="js/views/help.js?v=13"></script>
+    <script type="text/lazy-view" data-view="help" data-src="js/views/help.js?v=14"></script>
     <script type="text/lazy-view" data-view="reports" data-src="js/views/reports.js?v=C18"></script>
     <script src="js/view-loader.js?v=1"></script>
     <script src="js/router.js?v=S14"></script>
