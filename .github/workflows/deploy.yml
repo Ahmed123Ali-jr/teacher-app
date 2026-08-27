@@ -34,18 +34,12 @@ jobs:
       # وكلُّها تُحزَم مع التطبيق عند التغليف لولا هذا السطر.
       # وحُذفت هنا لا نُقلت إلى مجلّد: مساراتُها إلى js/ وcss/ نسبيّة،
       # فالنقلُ يكسرها كلَّها.
+      # القائمةُ في tools/dev-pages.txt — **مكانٌ واحدٌ** يقرؤه النشرُ
+      # والتغليفُ معاً، فلا تُنسى أداةٌ في أحدهما فتُنشر من حيث لا نشعر.
+      # والسكربتُ يسقط البناءَ إن بقيت صفحةُ أداةٍ في المُخرَج — لأنّ
+      # `rm -f` وحده يتجاهل المفقودَ بصمت، وذاك ما أخفى عطبَ اليوم.
       - name: Strip dev tools from the published site
-        # كتلةٌ (|) لا سطرٌ مطويّ: `run:` العاديّ يطوي الأسطر بمسافة، فتصير
-        # الشرطةُ المائلة حرفاً يُهرِّب المسافة، فيُطلب ملفٌّ اسمُه يبدأ بفراغ
-        # و`rm -f` يتجاهل المفقودَ بصمت. نجا بذلك smoke وreset حتى كشفهما
-        # فحصُ الموقع الحيّ (٢٧ أغسطس ٢٠٢٦).
-        run: |
-          rm -f teacher_app/eval.html
-          rm -f teacher_app/contrast.html
-          rm -f teacher_app/smoke.html
-          rm -f teacher_app/diag-print.html
-          rm -f teacher_app/reset.html
-          echo "— بقي من صفحات HTML:"; ls -1 teacher_app/*.html
+        run: tools/strip-dev-pages.sh teacher_app
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
