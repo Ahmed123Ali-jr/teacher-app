@@ -35,9 +35,17 @@ jobs:
       # وحُذفت هنا لا نُقلت إلى مجلّد: مساراتُها إلى js/ وcss/ نسبيّة،
       # فالنقلُ يكسرها كلَّها.
       - name: Strip dev tools from the published site
-        run: rm -f teacher_app/eval.html teacher_app/contrast.html \
-                   teacher_app/smoke.html teacher_app/diag-print.html \
-                   teacher_app/reset.html
+        # كتلةٌ (|) لا سطرٌ مطويّ: `run:` العاديّ يطوي الأسطر بمسافة، فتصير
+        # الشرطةُ المائلة حرفاً يُهرِّب المسافة، فيُطلب ملفٌّ اسمُه يبدأ بفراغ
+        # و`rm -f` يتجاهل المفقودَ بصمت. نجا بذلك smoke وreset حتى كشفهما
+        # فحصُ الموقع الحيّ (٢٧ أغسطس ٢٠٢٦).
+        run: |
+          rm -f teacher_app/eval.html
+          rm -f teacher_app/contrast.html
+          rm -f teacher_app/smoke.html
+          rm -f teacher_app/diag-print.html
+          rm -f teacher_app/reset.html
+          echo "— بقي من صفحات HTML:"; ls -1 teacher_app/*.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
