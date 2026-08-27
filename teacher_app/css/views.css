@@ -276,7 +276,12 @@ body.drawer-open { overflow: hidden; }
 }
 
 .bottom-nav .bn-icon {
-    font-size: 20px;
+    /* ‎17‎ لا ‎20‎ — بقرار المعلّم (٢٨ أغسطس ٢٠٢٦) بعد أن رأى خمسةَ مقاسات.
+       ولا يُنزَل تحت ‎15‎: 📅 و⚙️ فيهما تفصيلٌ داخليٌّ (رقمُ اليوم وأسنانُ
+       الترس) يذوب قبل غيره فتصيران لطختين.
+       وارتفاعُ الشريط ومساحةُ اللمس لا تتبعان هذا الرقم — فالزرُّ لا يصغر
+       بصغر رمزه، والقياسُ من `--bottom-nav-height` و`min-height`. */
+    font-size: 17px;
     line-height: 1;
     margin-bottom: 2px;
     transition: transform var(--dur-fast) var(--ease);

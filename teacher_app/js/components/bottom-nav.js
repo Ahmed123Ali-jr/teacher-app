@@ -18,7 +18,12 @@
             matches: (p) => p === '/dashboard' || p === '' || p === '/'
         },
         {
-            key: 'classes',   label: 'الفصول',   icon: '📚',
+            /* 👥 لا 📚 — بقرار المعلّم (٢٨ أغسطس ٢٠٢٦). و📚 كانت تعمل
+               عملين: شارةَ هذا التبويب، وشارةَ «الواجبات» في سبعة مواضعَ
+               أخرى. والفصلُ عند المعلّم طلابُه لا كتبُه.
+               وسقطت 🚪 وهي أوّلُ ما خطر له — فهي شارةُ «تسجيل الخروج» في
+               القائمة الجانبية (index.html)، فبابان بمعنيين. */
+            key: 'classes',   label: 'الفصول',   icon: '👥',
             href: '#/classes',
             // Also highlight while inside a specific class page
             matches: (p) => p === '/classes' || p.startsWith('/class/')
