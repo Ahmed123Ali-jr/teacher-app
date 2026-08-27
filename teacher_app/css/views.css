@@ -282,6 +282,14 @@ body.drawer-open { overflow: hidden; }
     transition: transform var(--dur-fast) var(--ease);
 }
 .bottom-nav .bn-item.is-active .bn-icon { transform: scale(1.05); }
+
+/* شارةُ «الفصول» مرسومةٌ لا إيموجي، و`font-size` لا يقيس رسماً: يُعطى
+   قياسَه صراحةً ليجلس بحجم إخوته الأربعة تماماً. */
+.bottom-nav .bn-icon svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+}
 .bottom-nav .bn-label {
     font-size: var(--fs-xs);
     letter-spacing: -0.1px;
