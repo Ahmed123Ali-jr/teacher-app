@@ -1944,6 +1944,23 @@ body.drawer-open { overflow: hidden; }
 .mark-bar-miss b { color: var(--text); }
 .mark-bar-miss:empty { display: none; }
 
+/* دليلُ الرموز: ⏰ و📝 لا يُفهمان بلا تعريف. يُدفع إلى آخر الشريط،
+   وينزل سطراً على الجوّال بدل أن يزحم الزرّ. */
+.mark-bar-key {
+    margin-inline-start: auto;
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+.mark-bar-key .mk { white-space: nowrap; }
+.mark-bar-key b { font-weight: var(--fw-normal); margin-inline-end: 2px; }
+@media (max-width: 480px) {
+    .mark-bar { flex-wrap: wrap; }
+    .mark-bar-key { width: 100%; margin-inline-start: 0; }
+}
+
 /* Tab bar */
 /* TODO(phase-c): on mobile use horizontal scroll with scroll-snap-align,
    show both icon+label for active tab, larger tap targets (min 44px),
@@ -2692,12 +2709,13 @@ body.drawer-open { overflow: hidden; }
     justify-content: center;
 }
 .att-btn:hover { border-color: var(--att-color); color: var(--att-color); }
-/* الزرُّ المضغوطُ بلونِ الهُويّة لا بالأخضر والأحمر — بقرار المعلّم.
-   والرمزُ يفرّق بينها: ✓ للحاضر و✗ للغائب و⏰ للمتأخّر. و`--att-color`
-   يبقى حيّاً لأن الإحصاءَ والتقاريرَ والطباعةَ تقرؤه. */
+/* الزرُّ المضغوطُ بلونِ حالته — بقرار المعلّم (٢٧ أغسطس ٢٠٢٦، عكسُ قرارٍ
+   سابقٍ كان يوحّدها بلون الهُويّة). فالأخضرُ والأحمرُ يُقرآن بطرَف العين
+   في فصلٍ فيه ثلاثون طالباً، والمعلّمُ يمرّ عليهم بسرعة.
+   و`--att-ink` لا `--att-color`: الأخيرُ فاتحٌ لا يحمل نصّاً أبيض. */
 .att-btn.active {
-    background: var(--primary);
-    border-color: var(--primary);
+    background: var(--att-ink, var(--primary));
+    border-color: var(--att-ink, var(--primary));
     color: #fff;
     transform: scale(1.05);
 }
@@ -5623,7 +5641,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .ac-tx { flex: 1; min-width: 0; }
 .ac-tx .nm { display: block; font-size: 13.5px; font-weight: var(--fw-black); color: var(--ink-primary); }
 .ac-tx .sub { display: block; font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-.ac-tx .sub b { color: #8A6E2E; font-weight: var(--fw-black); }
+.ac-tx .sub b { color: var(--gold-ink); font-weight: var(--fw-black); }
 
 /* السهم مرسومٌ بحدود لا بحرف: الحروف المرآتية تنقلب مع الاتجاه.
    والحدود ماديّة لا منطقية، ليشير إلى أسفل في الاتجاهين معاً. */
@@ -5798,7 +5816,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 .ac-dy.off { background: #C9A961; color: #fff; border-color: #A8873F; }
 .ac-det-note {
     margin-top: 7px; padding-top: 7px; border-top: 1px dashed #E2D3AC;
-    font-size: 10.5px; font-weight: var(--fw-black); color: #8A6E2E; line-height: 1.65;
+    font-size: 10.5px; font-weight: var(--fw-black); color: var(--gold-ink); line-height: 1.65;
 }
 
 /* ---------- فواصل التقويم: عودة المعلمين والإجازات ---------- */

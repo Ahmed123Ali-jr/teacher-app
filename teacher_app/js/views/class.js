@@ -18,11 +18,18 @@
         { key: 'strategies', label: 'الاستراتيجيات', icon: '🎯' }
     ];
 
+    /* لونان لكلّ حالة، ولذلك سبب:
+       `color` فاتحٌ يُرى على أرضيّةٍ بيضاء — وهو ما تقرؤه الإحصاءاتُ
+       والتقاريرُ والطباعة. أمّا الزرُّ المضغوطُ فتُملأ أرضيّتُه ويصير
+       نصُّه أبيض، والفاتحُ لا يحمل أبيضَ: قيس فوجد `#10B981` عند 2.54:1
+       و`#F59E0B` عند 2.15:1 — والعتبةُ 4.5. فأُضيف `ink` وهو نفسُ اللون
+       غامقاً، وكلُّه فوق العتبة (6.53 · 6.47 · 7.09 · 6.70).
+       وهذا الدرسُ نفسُه وقع في زرّ «تحضير الكل» (انظر views.css:1918). */
     const ATTENDANCE = {
-        present: { label: 'حاضر',  icon: '✓', color: '#10B981' },
-        absent:  { label: 'غائب',  icon: '✗', color: '#EF4444' },
-        late:    { label: 'متأخر', icon: '⏰', color: '#F59E0B' },
-        excused: { label: 'مستأذن', icon: '📝', color: '#3B82F6' }
+        present: { label: 'حاضر',   icon: '✓',  color: '#10B981', ink: '#0B6B4A' },
+        absent:  { label: 'غائب',   icon: '✗',  color: '#EF4444', ink: '#B91C1C' },
+        late:    { label: 'متأخر',  icon: '⏰', color: '#F59E0B', ink: '#92400E' },
+        excused: { label: 'مستأذن', icon: '📝', color: '#3B82F6', ink: '#1D4ED8' }
     };
 
     const COLUMN_TYPES = {
@@ -543,6 +550,12 @@
                 <div class="mark-bar">
                     <button class="mark-bar-btn" id="btn-mark-all"></button>
                     <div class="mark-bar-miss" id="mark-miss"></div>
+                    <!-- ✓ و✗ يفهمهما كلُّ أحد. أمّا ⏰ و📝 فلا — فيُعرَّفان
+                         هنا بجانب الزرّ، لا في شاشةِ مساعدةٍ لا تُفتح. -->
+                    <div class="mark-bar-key">
+                        <span class="mk"><b>⏰</b> متأخر</span>
+                        <span class="mk"><b>📝</b> مستأذن</span>
+                    </div>
                 </div>
             ` : ''}
 
@@ -1137,7 +1150,7 @@
         return Object.entries(ATTENDANCE).map(([key, meta]) => `
             <button type="button" class="att-btn ${current === key ? 'active' : ''}"
                     data-att-btn data-sid="${studentId}" data-status="${key}"
-                    title="${meta.label}" style="--att-color:${meta.color};">
+                    title="${meta.label}" style="--att-color:${meta.color};--att-ink:${meta.ink};">
                 ${meta.icon}
             </button>
         `).join('');
