@@ -143,19 +143,14 @@ body {
    ========================================================================== */
 /* وحدُّ هذه كحدِّ `.card` سواءً — كانت وحدَها ذهبيّةً بين البطاقات، فتُرى
    شاذّةً في التوزيع كما تُرى في ملف الإنجاز. */
-.portfolio-card,
 .file-card,
 .auto-item {
     background: var(--pf-white);
     border: 1px solid var(--border);
     transition: border-color var(--dur-fast) var(--ease);
 }
-.portfolio-card:hover,
 .file-card:hover {
     border-color: var(--border-strong);
-}
-.portfolio-card-header h4 {
-    color: var(--pf-royal);
 }
 .file-name {
     color: var(--pf-charcoal);

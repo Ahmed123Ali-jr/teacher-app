@@ -66,7 +66,6 @@ body:where(:not(.theme-dark)),
 :where(body:not(.theme-dark)) .set-v2,
 :where(body:not(.theme-dark)) .sched-v2,
 :where(body:not(.theme-dark)) .setup-v1,
-:where(body:not(.theme-dark)) .auth-wrap,
 :where(body:not(.theme-dark)) .ac-wrap,
 :where(body:not(.theme-dark)) [class*="-page"],
 /* و`.view-auth` مستثناةٌ: أرضيّتُها لونُ الهُويّة بقرار المستخدم. */
@@ -150,9 +149,7 @@ body:where(:not(.theme-dark)),
 
 /* آخرُ ما بقي ذهبياً بعد القياس: حلقة الرمز وإطار حبّة الحساب. */
 :where(body:not(.theme-dark)) .avatar,
-:where(body:not(.theme-dark)) [class*="ava"],
-:where(body:not(.theme-dark)) .dash-ava,
-:where(body:not(.theme-dark)) .idc-photo {
+:where(body:not(.theme-dark)) [class*="ava"] {
     border-color: #E4E6EA !important;
     box-shadow: none !important;
 }
@@ -174,7 +171,6 @@ body:where(:not(.theme-dark)),
 .sch-hint,           /* «اضغط أي خانة لإضافة حصة» */
 .sched-hint,
 .impg-hint,
-.setup-note,
 .field-hint,
 .fgrp-h,
 .ac-band .sub,
@@ -186,13 +182,10 @@ body:where(:not(.theme-dark)),
 .hub-featured-sub,        /* «التحضير والغياب والمشاركة» تحت سجل الطلاب */
 .home-hero-alt .ha-s,     /* «يومك خالٍ من الحصص — وقت مناسب لـ…» */
 .mv-hint,                 /* «صياغات رسمية مبنية على المعايير…» */
-.sch-wbox .h,
 .sch-cur .h,
 .flogo .h,
 .bell-row .h,
-.source-desc,
 .rem-ss,
-.class-subtitle,
 .wiz-step,
 .qe-head .sub,            /* «اختر نوع السؤال من الأسفل…» */
 .pdates label,
@@ -209,6 +202,6 @@ body:where(:not(.theme-dark)),
    القاعدة: يُحذف ما يشرح الواجهة، ويبقى ما يخبر عن الواقع أو يحذّر. */
 .dz-h, .bell-note, .callout, .callout-warn, .imp-warn, .imp-skip,
 .cls-s, .class-card-subject, .stat-label, .att-stat, .home-hij,
-.reminder-meta, .file-meta, .exam-stats {
+.reminder-meta, .file-meta {
     display: revert !important;
 }

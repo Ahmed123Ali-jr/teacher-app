@@ -207,8 +207,6 @@ body.theme-dark .hub-featured,
 body.theme-auto.dark-active .hub-featured,
 body.theme-dark .hub-tile,
 body.theme-auto.dark-active .hub-tile,
-body.theme-dark .portfolio-item,
-body.theme-auto.dark-active .portfolio-item,
 body.theme-dark .class-card,
 body.theme-auto.dark-active .class-card {
     background: var(--surface) !important;
@@ -372,8 +370,6 @@ body.theme-dark .stat-label,
 body.theme-auto.dark-active .stat-label,
 body.theme-dark .field-hint,
 body.theme-auto.dark-active .field-hint,
-body.theme-dark .settings-item-chev,
-body.theme-auto.dark-active .settings-item-chev,
 body.theme-dark .chev,
 body.theme-auto.dark-active .chev,
 body.theme-dark .cls-s,
@@ -399,8 +395,6 @@ body.theme-dark .sched-wait-btn:not(.on),
 body.theme-auto.dark-active .sched-wait-btn:not(.on),
 body.theme-dark .sched-v2.is-picking .sched-cell.is-pick .sched-box.empty,
 body.theme-auto.dark-active .sched-v2.is-picking .sched-cell.is-pick .sched-box.empty,
-body.theme-dark .sch-note .t,
-body.theme-auto.dark-active .sch-note .t,
 body.theme-dark .sch-card.wait .g,
 body.theme-auto.dark-active .sch-card.wait .g,
 body.theme-dark .sch-card.wait .s,
@@ -411,10 +405,6 @@ body.theme-dark .sch-cur .t,
 body.theme-auto.dark-active .sch-cur .t,
 body.theme-dark .sch-cur .x,
 body.theme-auto.dark-active .sch-cur .x,
-body.theme-dark .sch-subbtn,
-body.theme-auto.dark-active .sch-subbtn,
-body.theme-dark .rd-past,
-body.theme-auto.dark-active .rd-past,
 body.theme-dark .callout-warn,
 body.theme-auto.dark-active .callout-warn {
     color: var(--warning) !important;
@@ -433,9 +423,7 @@ body.theme-auto.dark-active .dz-btn,
 body.theme-dark .set-logout,
 body.theme-auto.dark-active .set-logout,
 body.theme-dark .set-row.is-danger .t,
-body.theme-auto.dark-active .set-row.is-danger .t,
-body.theme-dark .dz-title,
-body.theme-auto.dark-active .dz-title {
+body.theme-auto.dark-active .set-row.is-danger .t {
     color: var(--danger) !important;
 }
 
@@ -462,17 +450,13 @@ body.theme-auto.dark-active #view-portfolio a {
 body.theme-dark .btn-primary,
 body.theme-auto.dark-active .btn-primary,
 body.theme-dark .btn-danger,
-body.theme-auto.dark-active .btn-danger,
-body.theme-dark .btn-success,
-body.theme-auto.dark-active .btn-success {
+body.theme-auto.dark-active .btn-danger {
     color: #FFFFFF !important;
 }
 
 /* الذهبيُّ سطحاً: كتابتُه تبقى داكنة — وهو أفتحُ من أن يُكتب عليه بالأبيض. */
 body.theme-dark .badge-warning,
-body.theme-auto.dark-active .badge-warning,
-body.theme-dark .chip-gold,
-body.theme-auto.dark-active .chip-gold {
+body.theme-auto.dark-active .badge-warning {
     background: #C9A961 !important;
     color: #1A1508 !important;
 }

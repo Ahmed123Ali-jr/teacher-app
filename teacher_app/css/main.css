@@ -229,9 +229,6 @@ small { font-size: var(--fs-sm); }
 
 /* Helpers */
 .text-muted  { color: var(--text-muted); }
-.text-center { text-align: center; }
-.text-right  { text-align: right; }
-.text-left   { text-align: left; }
 
 .hidden { display: none !important; }
 
@@ -247,15 +244,6 @@ small { font-size: var(--fs-sm); }
    موضعاً كان النصُّ فيها أبيضَ على أبيض.
    ========================================================================== */
 
-.sr-only {
-    position: absolute;
-    width: 1px; height: 1px;
-    padding: 0; margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
 
 /* Layout primitives */
 .container {
@@ -296,17 +284,7 @@ small { font-size: var(--fs-sm); }
     gap: var(--space-3);
 }
 
-.brand-logo {
-    font-size: 28px;
-    line-height: 1;
-}
 
-.brand-name {
-    margin: 0;
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
-    color: var(--ink-primary);
-}
 
 /* ==========================================================================
    عنوانُ الشاشة ورجوعُها
