@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>بصمة الشكل — فصول</title>
+<style>
+    :root { color-scheme: light; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px;
+           background: #F6F7F9; color: #111; }
+    h1 { font-size: 19px; margin: 0 0 4px; }
+    .sub { font-size: 12px; color: #666; margin: 0 0 14px; line-height: 1.9; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button { font-family: inherit; font-size: 14px; font-weight: 700;
+             padding: 11px 18px; border: 0; border-radius: 8px;
+             background: #0F2C5C; color: #fff; cursor: pointer; }
+    button.ghost { background: #fff; color: #0F2C5C; border: 1px solid #CBD5E1; }
+    button.danger { background: #fff; color: #B42318; border: 1px solid #F0C6C0; }
+    button[disabled] { opacity: .45; cursor: default; }
+    #base { margin: 11px 0 0; font-size: 12.5px; color: #475569; line-height: 1.9; }
+    #bar { margin: 12px 0; font-size: 14px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 8px; overflow: hidden; font-size: 12.5px; }
+    th, td { padding: 7px 9px; text-align: right; border-bottom: 1px solid #E8EAED;
+             vertical-align: top; }
+    th { background: #F0F2F5; font-size: 11px; color: #555; }
+    tr.head td { background: #EEF2F7; font-weight: 700; }
+    tr.warn td { background: #FFF7ED; }
+    td.was { color: #B42318; } td.now { color: #067647; }
+    code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+    #stage { position: fixed; bottom: 8px; left: 8px; width: 390px; height: 780px;
+             border: 1px solid #CBD5E1; border-radius: 6px; background: #fff;
+             transform: scale(.30); transform-origin: bottom left; z-index: 5; }
+    @media (max-width: 900px) { #stage { opacity: .18; pointer-events: none; } }
+</style>
+</head>
+<body>
+
+<h1>بصمة الشكل</h1>
+<p class="sub">
+    تمشي على ثماني عشرة شاشة في الوضعين الفاتح والداكن، وتسجّل لكلّ عنصرٍ مرئيٍّ
+    <b>عشرين خاصّيةً محسوبة</b> — لونَه وحجمَه وحدودَه وموضعَه وخطَّه.<br>
+    <b>التقط الأساس</b> قبل التعديل، ثمّ <b>قارن</b> بعده: تقول «صفرُ فروق»، أو تعدّ
+    ما تغيّر عنصراً وخاصّيةً وقيمةً قبلُ وبعدُ.<br>
+    تعمل بحسابٍ منفصلٍ وتنظّف بعدها، ولا تمسّ بياناتك.
+</p>
+
+<div class="row">
+    <button id="cap">📸 التقط الأساس</button>
+    <button id="cmp" class="ghost">🔍 قارن بالأساس</button>
+    <button id="clr" class="danger">🗑️ امسح الأساس</button>
+</div>
+<div id="base"></div>
+<div id="bar"></div>
+
+<table id="tbl" hidden>
+    <thead><tr><th>الشاشة / العنصر</th><th>الخاصّية</th><th>كان</th><th>صار</th></tr></thead>
+    <tbody id="tbody"></tbody>
+</table>
+
+<iframe id="stage" title="مسرح القياس"></iframe>
+
+<script>
+/* ==========================================================================
+   بصمة الشكل — حارسٌ يكشف أيَّ تغيّرٍ غيرِ مقصودٍ في الرسم.
+   ==========================================================================
+   العينُ لا تكفي. يوم ٢٨ أغسطس ٢٠٢٦ حُذف تنسيقٌ ميّتٌ فبدت الشاشاتُ سليمةً
+   بالنظر، وكان `.table-wrapper` قد فقد إطارَه وظلَّه، و`<th>` فقد ثباتَه
+   عند التمرير — عيبان لا يُريان إلا بفتح التقارير وتمرير الجدول. فكُتبت
+   هذه.
+
+   ── لماذا تُقاس القيمُ المحسوبة لا الملفّات ──
+   الملفُّ يقول ما كُتب، والمحسوبُ يقول ما رُسم. وبينهما تسقط الأخطاء:
+   قاعدةٌ يغلبها غيرُها، ووزنٌ يزوّره المتصفّح، ومحدِّدٌ لا يطابق أحداً.
+
+   ── وما يجعل القياسَ صادقاً ──
+   لا يكفي أن تُقاس مرّتين؛ يجب أن يكون الفرقُ الوحيدُ بين المرّتين هو
+   تعديلُك. فيُثبَّت كلُّ ما عداه:
+     · مقاسُ المسرح ثابتٌ بالبكسل — لا يتبع نافذةَ المتصفّح
+     · تُنتظر الخطوطُ حتى تُحمَّل (`document.fonts.ready`)، وإلّا قِيست
+       أحجامٌ بخطٍّ احتياطيّ
+     · تُجمَّد الانتقالاتُ والحركات، وإلّا قِيس عنصرٌ في منتصف ذوبانه
+     · يُعاد التمريرُ إلى الصفر — الشريطُ اللاصقُ يتغيّر بموضع التمرير
+     · تُنزع الطبقاتُ العابرة: التلميحات، والتنبيهات، وبانرُ التحديث
+     · وحسابٌ جديدٌ ببذرةٍ ثابتة في كلّ جولة
+   وما لا يُملَك تثبيتُه — ساعةُ اليوم وكثافةُ الشاشة وأرقامُ الأصول —
+   يُسجَّل في الأساس، ويُنبَّه عليه عند المقارنة.
+   ========================================================================== */
+
+/* الخصائصُ العشرون: ما يُرى منه اللونُ والحجمُ والحدُّ والموضعُ والخطّ.
+   ولا تُقاس `transform` ولا `filter`: تتغيّران بالحركة لا بالتنسيق. */
+const PROPS = [
+    'display', 'position', 'color', 'backgroundColor',
+    'borderColor', 'borderWidth', 'borderRadius',
+    'fontSize', 'fontWeight', 'padding', 'margin',
+    'width', 'height',
+    'flexDirection', 'justifyContent', 'alignItems', 'gap',
+    'opacity', 'boxShadow', 'textAlign'
+];
+
+/* الشاشاتُ نفسُها التي يمشي عليها `contrast.html` — مصدرٌ واحدٌ للحقيقة.
+   و`need` محدِّدٌ لا يظهر إلا بعد أن تكتمل الشاشة، فيُنتظر. */
+const SCREENS = [
+    { hash: '#/dashboard',            name: 'الرئيسية',        need: '#view-dashboard' },
+    { hash: '#/classes',              name: 'الفصول',          need: '#btn-add-class' },
+    { hash: '#/class/:id',            name: 'صفحة الفصل',      need: '#view-class' },
+    { hash: '#/class/:id/students',   name: 'سجل الطلاب',      need: '#btn-add-students' },
+    { hash: '#/class/:id/curriculum', name: 'توزيع المنهج',    need: '#view-class' },
+    { hash: '#/class/:id/exams',      name: 'الاختبارات',      need: '#view-class' },
+    { hash: '#/class/:id/worksheets', name: 'أوراق العمل',     need: '#view-class' },
+    { hash: '#/class/:id/homework',   name: 'الواجبات',        need: '#view-class' },
+    { hash: '#/class/:id/books',      name: 'الكتب',           need: '#view-class' },
+    { hash: '#/schedule',             name: 'الجدول الأسبوعي', need: '#btn-edit' },
+    { hash: '#/reminders',            name: 'التذكيرات',       need: '#view-reminders' },
+    { hash: '#/reports',              name: 'التقارير',        need: '#view-reports' },
+    { hash: '#/portfolio',            name: 'ملف الإنجاز',     need: '#view-portfolio' },
+    { hash: '#/initiatives',          name: 'المبادرات',       need: '#view-initiatives' },
+    { hash: '#/shortcuts',            name: 'الاختصارات',      need: '#view-shortcuts' },
+    { hash: '#/profile',              name: 'الملف التعريفي',  need: '#view-profile' },
+    { hash: '#/settings',             name: 'الإعدادات',       need: '#view-settings' },
+    { hash: '#/help',                 name: 'المساعدة',        need: '#view-help' }
+];
+
+const THEMES = [['theme-light', 'الفاتح'], ['theme-dark', 'الداكن']];
+const KEY    = 'fp_baseline_v1';
+
+const stage = document.getElementById('stage');
+const bar   = document.getElementById('bar');
+const tbody = document.getElementById('tbody');
+const tbl   = document.getElementById('tbl');
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc  = (s) => String(s == null ? '' : s)
+    .replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+
+/* ── انتظارُ اكتمال الشاشة ──
+   مهلةٌ سخيّةٌ لأنّ بعضَ الشاشات تنتظر الشبكة. والفشلُ لا يُسكت: يُسجَّل. */
+async function settle(win, need, ms) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < (ms || 9000)) {
+        const el = win.document.querySelector(need);
+        if (el && el.offsetParent !== null && el.textContent.trim().length) return true;
+        await wait(150);
+    }
+    return false;
+}
+
+/* ── إعادةُ الحساب قسراً ──
+   المظهرُ يُبدَّل بصنفٍ على `body` بعد أن رُسمت الصفحة بألوان المظهر
+   الآخر، وبعضُ العناصر تحتفظ بقيمها المحسوبة القديمة. وإخفاءُ الجذر
+   لحظةً يُبطل التنسيق كلَّه فيُعاد بناؤه. (الدرسُ من contrast.html.) */
+function forceRestyle(win) {
+    const r = win.document.documentElement;
+    const prev = r.style.display;
+    r.style.display = 'none';
+    void r.offsetHeight;
+    r.style.display = prev;
+    void r.offsetHeight;
+}
+
+/* ── تجميدُ الحركة ──
+   إعادةُ التنسيق وحدَها لا تُنهي انتقالاً — تُنهيه مدّةُ صفر. */
+function freeze(win) {
+    if (win.document.getElementById('__fp_freeze')) return;
+    const s = win.document.createElement('style');
+    s.id = '__fp_freeze';
+    s.textContent = '*, *::before, *::after {'
+        + ' transition: none !important; animation: none !important;'
+        + ' caret-color: transparent !important; }';
+    win.document.head.appendChild(s);
+}
+
+/* ── الطبقاتُ العابرة ──
+   تظهر وتذهب بمؤقّتات، فتُقاس في جولةٍ ولا تُقاس في أخرى — وهي أكبرُ
+   مصدرٍ لفروقٍ كاذبة. لافتةُ الزائر تنبيهٌ مدّتُه تسع ثوانٍ (guest-notice)،
+   والتلميحُ طبقةٌ تُعرض مرّةً لكلّ حساب (hints)، وبانرُ التحديث يظهر
+   حين يحطّ عاملُ خدمةٍ جديد. */
+function strip(win) {
+    const d = win.document;
+    ['#toast-container', '.hint-layer', '#sw-update-banner', '#cache-down']
+        .forEach((sel) => d.querySelectorAll(sel).forEach((el) => {
+            if (sel === '#toast-container') el.innerHTML = ''; else el.remove();
+        }));
+    if (d.activeElement && d.activeElement.blur) d.activeElement.blur();
+    win.scrollTo(0, 0);
+    const main = d.querySelector('.app-main');
+    if (main) main.scrollTop = 0;
+}
+
+/* ── القياس ──
+   يُقاس كلُّ عنصرٍ تحت `body`. والمفتاحُ ترتيبُه في الشجرة لا محدِّدُه:
+   المحدِّداتُ تتكرّر، والترتيبُ لا. ويُسجَّل معه الوسمُ والأصنافُ ليكون
+   التقريرُ مقروءاً. */
+function measure(win) {
+    const out = [];
+    win.document.body.querySelectorAll('*').forEach((el, i) => {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'script' || tag === 'style' || tag === 'link') return;
+        const c = win.getComputedStyle(el);
+        const cls = (typeof el.className === 'string' ? el.className : '').trim().slice(0, 48);
+        out.push(i + '' + tag + '' + cls + ''
+                 + PROPS.map((p) => c[p]).join(''));
+    });
+    return out;
+}
+
+/* ── ما لا يُملَك تثبيتُه ──
+   يُسجَّل ليُنبَّه عليه: ساعةُ اليوم تغيّر التحيّة وطولَها، وكثافةُ الشاشة
+   تغيّر التقريبَ في الأبعاد، وأرقامُ الأصول تقول أيَّ نسخةٍ قِيست. */
+function env(win) {
+    const d = win.document;
+    const ver = [...d.querySelectorAll('link[href*="?v="], script[src*="?v="]')]
+        .map((n) => (n.getAttribute('href') || n.getAttribute('src')))
+        .map((s) => s.split('/').pop()).sort().join(' ');
+    return {
+        w: stage.clientWidth, h: stage.clientHeight,
+        dpr: win.devicePixelRatio,
+        hour: new Date().getHours(),
+        day: new Date().getDay(),
+        ver: ver
+    };
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   الجولة
+   ══════════════════════════════════════════════════════════════════════ */
+async function sweep() {
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+    stage.src = 'index.html?fp=' + Date.now();
+    await new Promise((r) => { stage.onload = r; });
+    const win = stage.contentWindow;
+
+    for (let i = 0; i < 80 && !win.TeacherDB; i++) await wait(200);
+    if (!win.TeacherDB) throw new Error('لم يُحمَّل التطبيق في المسرح.');
+
+    /* حسابٌ منفصلٌ ببذرةٍ ثابتة — كي تكون الشاشتان في الجولتين متطابقتَي
+       المحتوى، فلا يُنسب إلى التنسيق فرقٌ سببُه البيانات. */
+    const seeded = [];
+    let cls = null;
+    try {
+        await win.SB.auth.signOut().catch(() => {});
+        await win.Auth.guestLogin();
+        const S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        /* التلميحاتُ تُعلَّم مقروءةً سلفاً: طبقتُها تُعرض مرّةً لكلّ حساب،
+           وظهورُها يتعلّق بتوقيتِ رحلةِ شبكة — فتظهر في جولةٍ وتغيب في
+           أخرى. (`hints.js` يقرأ `hint_<الاسم>` من الإعدادات.) */
+        for (const h of ['sched_edit', 'class_open'])
+            await S.set('hint_' + h, true);
+
+        const me = await win.Auth.currentTeacher();
+        me.name = 'بصمة الشكل'; me.school_name = 'مدرسة القياس';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+
+        cls = await win.ClassCreate.create({
+            teacher_id: me.id, stage: 'intermediate',
+            grade: 'الصف الأول المتوسط', section: 'أ', subject: 'العلوم' });
+        seeded.push(['classes', cls.id]);
+        const sid = await win.TeacherDB.add('students',
+            { teacher_id: me.id, class_id: cls.id, name: 'طالب القياس', notes: '' });
+        seeded.push(['students', sid]);
+        const rid = await win.TeacherDB.add('schedule',
+            { teacher_id: me.id, day: 0, period: 1, class_id: cls.id });
+        seeded.push(['schedule', rid]);
+    } catch (e) {
+        throw new Error('تعذّر التجهيز: ' + (e && e.message || e));
+    }
+
+    /* الخطوطُ قبل القياس: قبل تحميلها تُقاس الأحجامُ بخطٍّ احتياطيّ. */
+    try { await win.document.fonts.ready; } catch (e) { /* لا يوقف */ }
+    freeze(win);
+
+    /* ── دورةُ تسخين ──
+       تُمشى الشاشاتُ مرّةً بلا قياس. وهي ليست ترفاً: ملفّاتُ الشاشات
+       مؤجَّلةُ التحميل (`text/lazy-view`)، فأوّلُ زيارةٍ تنتظر الملفَّ
+       والشبكةَ، والثانيةُ لا تنتظر. وبلا تسخينٍ كانت الجولةُ الأولى تُقاس
+       باردةً والثانيةُ ساخنة، فيخرج الفرقُ بعشرات الألوف وهو من التوقيت
+       لا من التنسيق — جُرّب فأبلغ عن ‎192,427‎ فرقاً بلا سببٍ حقيقيّ. */
+    bar.textContent = '⏳ تسخين…';
+    for (const s of SCREENS) {
+        win.location.hash = s.hash.replace(':id', cls.id);
+        await wait(260);
+        await settle(win, s.need, 6000);
+    }
+
+    const data = {}, missed = [];
+    let done = 0;
+    const total = THEMES.length * SCREENS.length;
+
+    for (const [cls_, themeName] of THEMES) {
+        const b = win.document.body;
+        b.classList.remove('theme-light', 'theme-dark', 'theme-auto', 'dark-active');
+        b.classList.add(cls_);
+        forceRestyle(win);
+        data[cls_] = {};
+
+        for (const s of SCREENS) {
+            win.location.hash = s.hash.replace(':id', cls.id);
+            await wait(330);
+            const ok = await settle(win, s.need);
+            if (!ok) missed.push(themeName + ' · ' + s.name);
+            await wait(160);
+            strip(win);
+            forceRestyle(win);
+            await wait(60);
+            data[cls_][s.name] = measure(win);
+            done++;
+            bar.textContent = '⏳ ' + done + ' من ' + total + ' — ' + themeName + ' · ' + s.name;
+        }
+    }
+
+    const meta = env(win);
+
+    /* التنظيف: ما زُرع يُحذف، والجلسةُ تُغلق. ولا يُفشل الفحصَ فشلُه. */
+    try {
+        for (const [store, id] of seeded.reverse())
+            await win.TeacherDB.remove(store, id).catch(() => {});
+        await win.SB.auth.signOut().catch(() => {});
+    } catch (e) { /* لا شيء */ }
+
+    return { at: new Date().toISOString(), env: meta, missed: missed, data: data };
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   المقارنة
+   ══════════════════════════════════════════════════════════════════════ */
+function diff(A, B) {
+    const rows = [];
+    let cells = 0, changed = 0;
+
+    for (const [cls_, themeName] of THEMES) {
+        for (const s of SCREENS) {
+            const a = (A.data[cls_] || {})[s.name] || [];
+            const b = (B.data[cls_] || {})[s.name] || [];
+            if (a.length !== b.length) {
+                rows.push({ head: true, txt: '⚠️ ' + themeName + ' · ' + s.name
+                    + ' — عددُ العناصر ' + a.length + ' ← ' + b.length
+                    + ' (تغيّرت البنية، فالمقارنةُ بعدها غيرُ موثوقة)' });
+            }
+            const n = Math.min(a.length, b.length);
+            const local = [];
+            for (let i = 0; i < n; i++) {
+                cells += PROPS.length;
+                if (a[i] === b[i]) continue;
+                const pa = a[i].split(''), pb = b[i].split('');
+                const va = (pa[3] || '').split(''), vb = (pb[3] || '').split('');
+                for (let j = 0; j < PROPS.length; j++) {
+                    if (va[j] === vb[j]) continue;
+                    changed++;
+                    local.push({ tag: pa[1], cls: pa[2], prop: PROPS[j],
+                                 was: va[j], now: vb[j] });
+                }
+            }
+            if (local.length) {
+                rows.push({ head: true, txt: '❌ ' + themeName + ' · ' + s.name
+                    + ' — ' + local.length + ' فرقاً' });
+                local.slice(0, 40).forEach((r) => rows.push(r));
+                if (local.length > 40)
+                    rows.push({ head: true, txt: '… و' + (local.length - 40) + ' فرقاً أخرى في هذه الشاشة' });
+            }
+        }
+    }
+    return { rows, cells, changed };
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   الواجهة
+   ══════════════════════════════════════════════════════════════════════ */
+function readBase() {
+    try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; }
+    catch (e) { return null; }
+}
+
+function showBase() {
+    const b = readBase();
+    const el = document.getElementById('base');
+    if (!b) { el.innerHTML = '<b>لا أساسَ محفوظ.</b> ابدأ بـ«التقط الأساس».'; return; }
+    const d = new Date(b.at);
+    let n = 0;
+    for (const t in b.data) for (const s in b.data[t]) n += b.data[t][s].length;
+    el.innerHTML = '<b>الأساس:</b> ' + d.toLocaleString('ar-SA')
+        + ' · ' + n.toLocaleString('ar') + ' عنصراً × ' + PROPS.length + ' خاصّية = <b>'
+        + (n * PROPS.length).toLocaleString('ar') + '</b> قيمة'
+        + (b.missed && b.missed.length
+            ? '<br>⚠️ لم تكتمل: ' + b.missed.join(' · ') : '');
+}
+
+function envWarn(A, B) {
+    const w = [];
+    if (A.env.w !== B.env.w || A.env.h !== B.env.h)
+        w.push('مقاسُ المسرح تغيّر (' + A.env.w + '×' + A.env.h + ' ← ' + B.env.w + '×' + B.env.h + ')');
+    if (A.env.dpr !== B.env.dpr) w.push('كثافةُ الشاشة تغيّرت');
+    if (A.env.hour !== B.env.hour)
+        w.push('ساعةُ اليوم تغيّرت (' + A.env.hour + ' ← ' + B.env.hour + ') — التحيّةُ وطولُها يتبعانها');
+    if (A.env.day !== B.env.day) w.push('يومُ الأسبوع تغيّر — الرئيسيةُ تتبعه');
+    return w;
+}
+
+async function guard(fn) {
+    ['cap', 'cmp', 'clr'].forEach((id) => { document.getElementById(id).disabled = true; });
+    tbl.hidden = true; tbody.innerHTML = '';
+    try { await fn(); }
+    catch (e) { bar.textContent = '❌ ' + (e && e.message || e); bar.style.color = '#B42318'; }
+    finally { ['cap', 'cmp', 'clr'].forEach((id) => { document.getElementById(id).disabled = false; }); }
+}
+
+document.getElementById('cap').addEventListener('click', () => guard(async () => {
+    bar.style.color = '';
+    const fp = await sweep();
+    try { localStorage.setItem(KEY, JSON.stringify(fp)); }
+    catch (e) { throw new Error('تعذّر حفظ الأساس (المساحة): ' + e.message); }
+    showBase();
+    bar.style.color = '#067647';
+    bar.textContent = '✅ التُقط الأساس. عدّل ما تشاء ثمّ اضغط «قارن».';
+}));
+
+document.getElementById('cmp').addEventListener('click', () => guard(async () => {
+    const A = readBase();
+    if (!A) { bar.textContent = '✋ لا أساسَ محفوظ — التقطه أوّلاً.'; return; }
+    bar.style.color = '';
+    const B = await sweep();
+
+    const warns = envWarn(A, B);
+    const { rows, cells, changed } = diff(A, B);
+
+    const html = [];
+    warns.forEach((w) => html.push('<tr class="warn"><td colspan="4">⚠️ ' + esc(w) + '</td></tr>'));
+    if (B.missed && B.missed.length)
+        html.push('<tr class="warn"><td colspan="4">⚠️ لم تكتمل في هذه الجولة: '
+                  + esc(B.missed.join(' · ')) + '</td></tr>');
+    rows.forEach((r) => {
+        if (r.head) { html.push('<tr class="head"><td colspan="4">' + esc(r.txt) + '</td></tr>'); return; }
+        html.push('<tr><td><code>&lt;' + esc(r.tag) + '</code>'
+            + (r.cls ? ' <code>.' + esc(r.cls.split(/\s+/).join('.')) + '</code>' : '')
+            + '</td><td><code>' + esc(r.prop) + '</code></td>'
+            + '<td class="was"><code>' + esc(r.was) + '</code></td>'
+            + '<td class="now"><code>' + esc(r.now) + '</code></td></tr>');
+    });
+    tbody.innerHTML = html.join('');
+    tbl.hidden = !html.length;
+
+    bar.style.color = changed ? '#B42318' : '#067647';
+    bar.textContent = changed
+        ? '❌ ' + changed.toLocaleString('ar') + ' فرقاً من ' + cells.toLocaleString('ar') + ' قيمة'
+        : '✅ صفرُ فروق — ' + cells.toLocaleString('ar') + ' قيمةً قِيست ولم يتحرّك منها شيء';
+}));
+
+document.getElementById('clr').addEventListener('click', () => {
+    localStorage.removeItem(KEY);
+    showBase(); tbl.hidden = true; tbody.innerHTML = '';
+    bar.style.color = ''; bar.textContent = '🗑️ مُسح الأساس.';
+});
+
+showBase();
+</script>
+</body>
+</html>
