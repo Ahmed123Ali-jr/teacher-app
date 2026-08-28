@@ -1952,7 +1952,11 @@ body.drawer-open { overflow: hidden; }
     min-height: 55px; width: 100%;
     border-radius: 14px;
     background: var(--primary); color: #fff;
-    font-family: inherit; font-weight: var(--fw-bold); font-size: 17px;
+    /* ‎600‎ لا ‎700‎ — بقراره (٢٨ أغسطس ٢٠٢٦): «الخطوط بولد بزياده».
+       والزرُّ لا يخسر حضورَه: أرضيّتُه بترولية وحبرُه أبيضُ وارتفاعُه ‎55‎،
+       يُعلن نفسَه بها لا بثِقَل حروفه. والعربيةُ حروفُها متّصلةٌ فتلتحم عند
+       التغليظ أكثرَ من اللاتينية. */
+    font-family: inherit; font-weight: var(--fw-semibold); font-size: 17px;
     border: 0; cursor: pointer; text-decoration: none;
     position: relative;
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .22), 0 5px 13px color-mix(in srgb, var(--primary) 30%, transparent);
@@ -1965,7 +1969,7 @@ body.drawer-open { overflow: hidden; }
     min-height: 52px;
     border-radius: 14px;
     color: var(--ink-primary);
-    font-family: inherit; font-weight: var(--fw-bold); font-size: 15px;
+    font-family: inherit; font-weight: var(--fw-semibold); font-size: 15px;
     background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
     border: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
     box-shadow: inset 0 1.5px 0 var(--sheen), 0 5px 11px rgba(16, 24, 40, .12);
