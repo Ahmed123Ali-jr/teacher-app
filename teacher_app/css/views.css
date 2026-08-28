@@ -5341,6 +5341,32 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 .local-note b { color: var(--text); font-weight: var(--fw-bold); }
 
+/* ══ مراجعةُ الأسماء المستورَدة قبل الحفظ ══
+   لافتةٌ تقول من أين جاءت الأسماء وما احتمالُ خطئها. وصبغتُها ذهبيّةٌ
+   خفيفة كلافتات البدء — تنبيهٌ لا إنذار: الأسماءُ في الغالب صحيحة،
+   والمطلوبُ نظرةٌ لا تدقيق. */
+.rev-note {
+    margin: 0 0 var(--space-4);
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+}
+.rev-note b {
+    display: block;
+    font-size: 14.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+}
+.rev-note span {
+    display: block; margin-top: 3px;
+    font-size: 12.5px; line-height: 1.75; color: var(--text);
+}
+/* العدّادُ يتبع ما يكتبه المعلّم، فيرى أثرَ حذفِ سطرٍ قبل أن يحفظ. */
+.rev-count {
+    margin-inline-start: 6px;
+    font-weight: var(--fw-bold);
+    color: var(--primary);
+}
+
 /* ==========================================================================
    الإعدادات: خطٌّ واحدٌ لا صندوق — طلبُ المستخدم (٢١–٢٤ أغسطس)
    ==========================================================================

@@ -1479,7 +1479,7 @@
                 const origLabel = btn.textContent;
                 try {
                     let names = [];
-                    let fromText = false;      /* قُرئت من نصّ الملفّ لا بالذكاء */
+                    let source = 'ai';         /* من أين جاءت — تقوله لافتةُ المراجعة */
                     /* المكتوبُ يسبق المرفوع: إن كتب شيئاً فهو قصدُه، وإلّا
                        فالملفُّ — ولا يُسأل أيَّهما أراد. */
                     const typed = parseNameList(form.querySelector('#paste-names').value);
@@ -1492,6 +1492,7 @@
                             || file.type === 'text/csv' || file.type === 'text/plain';
                         if (isText) {
                             names = parseCSV(await file.text());
+                            source = 'csv';
                         } else {
                             btn.textContent = '⏳ جارٍ القراءة...';
                             /* طبقةُ نصّ الـPDF أوّلاً: كشوفُ «نور» تُصدَّر
@@ -1502,7 +1503,7 @@
                                اختصارٌ حين يصحّ. */
                             if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
                                 const t = await global.RosterText.fromPdf(file);
-                                if (t.ok) { names = t.names; fromText = true; }
+                                if (t.ok) { names = t.names; source = 'pdftext'; }
                                 else if (global.console) console.info('[roster-text] ' + t.why);
                             }
                         }
@@ -1528,20 +1529,16 @@
                         }
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
-                    btn.textContent = '⏳ جارٍ الإضافة...';
-                    await runPooled(names, (name) => global.TeacherDB.add('students', {
-                        teacher_id: cls.teacher_id,
-                        class_id:   cls.id,
-                        name,
-                        notes: ''
-                    }));
-                    await updateClassStudentCount(cls.id);
-                    global.Modal.close();
-                    global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅'
-                        + (fromText ? ' — قُرئت من نصّ الملفّ مباشرةً' : ''), 'success',
-                        fromText ? 6000 : undefined);
-                    const panel = document.querySelector('#tab-panel');
-                    if (panel) await renderStudents(panel, cls);
+                    /* المكتوبُ بيده لا يُراجَع — رآه وهو يكتبه. وأمّا
+                       المستورَدُ فيُعرض قبل الحفظ: قِيس يوم ٢٨ أغسطس ٢٠٢٦
+                       فأخطأ الذكاءُ في خمسةٍ من خمسةٍ وعشرين، وثلاثةٌ منها
+                       ألقابٌ **مخترعة** لا زلّةَ حرف — والعددُ مطابقٌ فلا
+                       شيءَ ينبّه. والاسمُ يبقى في السجلّ العامَ كلَّه. */
+                    if (typed.length) {
+                        await save(names, false);
+                    } else {
+                        paintReview(names, source);
+                    }
                 } catch (err) {
                     /* ثمانِ ثوانٍ لا ثلاث: رسالةُ بلوغ الحصّة سطران يقولان ما
                        جرى وما البديل — ونخبةٌ تمضي قبل أن تُقرأ لا تختلف عن
@@ -1550,6 +1547,80 @@
                 } finally {
                     btn.disabled = false;
                     btn.textContent = origLabel;
+                }
+            });
+        }
+
+        /** الحفظُ الفعليّ — مشتركٌ بين المكتوب والمراجَع. */
+        async function save(names, reviewed) {
+            await runPooled(names, (name) => global.TeacherDB.add('students', {
+                teacher_id: cls.teacher_id,
+                class_id:   cls.id,
+                name,
+                notes: ''
+            }));
+            await updateClassStudentCount(cls.id);
+            global.Modal.close();
+            global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅',
+                'success');
+            const panel = document.querySelector('#tab-panel');
+            if (panel) await renderStudents(panel, cls);
+            return reviewed;
+        }
+
+        /* ── شاشةُ المراجعة ──
+           سطرٌ لكلّ اسمٍ في مربّعِ كتابةٍ واحد، لا خانةٌ لكلّ اسم: على
+           الجوّال يُصلَح الحرفُ في مكانه ويُحذف السطرُ بلمسة، وثلاثون خانةً
+           تصير شاشةً تُمرَّر لا تُراجَع. والعدّادُ يتبع ما يكتب. */
+        /* نصُّ اللافتة يتبع المصدرَ الحقيقيّ: ملفُّ CSV يُقرأ في الجهاز ولا
+           يمرّ بالذكاء، فلا يُقال للمعلّم إنّه مرّ به. */
+        const SRC_NOTE = {
+            csv:     'قُرئت من الملفّ كما هي — سطراً سطراً.',
+            pdftext: 'قُرئت من نصّ الملفّ مباشرةً، بلا ذكاء اصطناعيّ.',
+            ai:      'قُرئت بالذكاء الاصطناعيّ — وقد يخطئ في الألقاب، '
+                   + 'والعددُ الصحيحُ لا يعني أنّ كلَّ اسمٍ صحيح.'
+        };
+
+        function paintReview(names, source) {
+            form.innerHTML = `
+                <div class="rev-note">
+                    <b>راجع الأسماء قبل الحفظ</b>
+                    <span>${SRC_NOTE[source] || SRC_NOTE.ai}</span>
+                </div>
+                <div class="field" style="margin-bottom: 0;">
+                    <label class="label" for="rev-names">
+                        الأسماء <span class="rev-count" id="rev-count">${global.Words.count(names.length)}</span>
+                    </label>
+                    <textarea class="textarea" id="rev-names" rows="12"
+                              spellcheck="false">${escapeHtml(names.join('\n'))}</textarea>
+                    <div class="field-hint">اسمٌ في كل سطر. صحّح ما تشاء، واحذف سطراً لتُسقط اسمه.</div>
+                </div>
+                <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                    <button type="button" class="btn btn-primary" data-rev-save>حفظ</button>
+                    <button type="button" class="btn btn-ghost" data-rev-back>رجوع</button>
+                </div>
+            `;
+            const ta = form.querySelector('#rev-names');
+            const cnt = form.querySelector('#rev-count');
+            const recount = () => { cnt.textContent = global.Words.count(parseNameList(ta.value).length); };
+            ta.addEventListener('input', recount);
+
+            form.querySelector('[data-rev-back]').addEventListener('click', () => paint());
+            form.querySelector('[data-rev-save]').addEventListener('click', async (e) => {
+                const b = e.currentTarget;
+                const list = parseNameList(ta.value);
+                if (!list.length) {
+                    global.TeacherApp.toast('لم يبقَ اسمٌ يُحفظ.', 'warning');
+                    return;
+                }
+                b.disabled = true;
+                b.textContent = '⏳ جارٍ الحفظ...';
+                try {
+                    await save(list, true);
+                } catch (err) {
+                    global.TeacherApp.toast(err.message, 'error', 6000);
+                    b.disabled = false;
+                    b.textContent = 'حفظ';
                 }
             });
         }
