@@ -10,15 +10,6 @@
     const APP_RELEASE_DATE = '2026-04';
     const SUPPORT_EMAIL = 'support@teacher-app.local';
 
-    const KIND_LABELS = {
-        exam:        'اختبارات',
-        exam_regen:  'إعادة توليد سؤال',
-        worksheet:   'أوراق عمل',
-        strategy:    'تقارير استراتيجيات',
-        initiative:  'تقارير مبادرات',
-        mission:     'رسالة ورؤية',
-        other:       'أخرى'
-    };
 
     const CHANGELOG = [
         { v: '0.9.0', date: '2026-04', items: [
@@ -77,13 +68,6 @@
     /* ==========================================================================
        Helpers
        ========================================================================== */
-
-    function fmtNum(n) {
-        if (typeof n !== 'number') n = Number(n) || 0;
-        if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
-        if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
-        return String(n);
-    }
     function fmtBytes(bytes) {
         if (!bytes) return '0 KB';
         const kb = bytes / 1024;

@@ -2527,7 +2527,6 @@ body.drawer-open { overflow: hidden; }
 .students-table.compact { min-width: 0; }
 
 /* Notes focus: the note box takes the remaining width, name column stays tight */
-.notes-table .st-name { width: 40%; }
 .st-note { width: 60%; padding: var(--space-2); }
 .st-note-input {
     display: block;

@@ -63,23 +63,10 @@
     /* ---------- تاريخ السجل ----------
        السجل كان مقفولاً على اليوم، فمن نسي التحضير أمس لا يملك طريقة. صار
        له تاريخ مختار يُقرأ ويُكتب عليه، ويعود لليوم عند فتح فصل جديد. */
-    const AR_DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    const STRIP_DAYS = 30;   // ثلاثون يوم دراسة ≈ ستة أسابيع، وما قبلها من التقويم
 
     let _regDate = null;
 
-    function isoOf(d) {
-        return d.getFullYear() + '-' +
-               String(d.getMonth() + 1).padStart(2, '0') + '-' +
-               String(d.getDate()).padStart(2, '0');
-    }
-
     function regDate() { return _regDate || todayISO(); }
-
-    function dayLabel(iso) {
-        const d = new Date(iso + 'T00:00:00');
-        return { dow: AR_DAYS[d.getDay()], num: d.getDate() };
-    }
 
     function humanDate(iso) {
         try {
@@ -87,18 +74,6 @@
                 weekday: 'long', day: 'numeric', month: 'long'
             }).format(new Date(iso + 'T00:00:00'));
         } catch { return iso; }
-    }
-
-    /** أيام الدراسة (الأحد–الخميس) من اليوم رجوعاً — الأحدث أولاً. */
-    function schoolDaysBack(count) {
-        const out = [];
-        const d = new Date();
-        let guard = 0;
-        while (out.length < count && guard++ < count * 3) {
-            if (d.getDay() <= 4) out.push(isoOf(d));
-            d.setDate(d.getDate() - 1);
-        }
-        return out;
     }
 
     function escapeHtml(s) {
@@ -943,86 +918,6 @@
                 يمكنك كتابة الأرقام بالعربية (٠-٩) أو الإنجليزية.
             </p>`;
 
-    function colHeader(c) {
-        return `<th>${escapeHtml(c.name)}${c.type === 'number' ? ` <span class="text-muted" style="font-weight:normal;">(من ${c.max})</span>` : ''}</th>`;
-    }
-
-    /* Focus mode: one compact table that fits the screen (no h-scroll). */
-    function studentsTable(students, attToday, evalToday, columns, showAttendance = true) {
-        const rows = students.map((s, i) => {
-            const att = attToday[i];
-            const values = readValues(evalToday[i]);
-            const cells = columns.map((col) => `<td class="st-col">${renderCell(s.id, col, values[col.id])}</td>`).join('');
-
-            return `
-                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
-                    <td class="st-num num">${i + 1}</td>
-                    <td class="st-name">
-                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
-                            ${escapeHtml(s.name)}
-                        </a>
-                    </td>
-                    ${showAttendance ? `<td class="st-att">${attendanceButtons(s.id, att)}</td>` : ''}
-                    ${cells}
-                    <td class="st-del">
-                        <button class="btn btn-ghost btn-sm"
-                                data-del-student="${s.id}"
-                                data-name="${escapeHtml(s.name)}"
-                                title="حذف">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        return `
-            <div class="table-wrapper">
-                <table class="students-table compact">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            ${showAttendance ? '<th>الحضور اليوم</th>' : ''}
-                            ${columns.map(colHeader).join('')}
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-            ${TABLE_HINT}
-        `;
-    }
-
-    /* Notes focus: name + a comfortable notes box per student. The note is
-       the student's own free-text note (same field shown on the student page,
-       single source of truth). Saved in the background — no re-render — so the
-       keyboard/cursor is never lost mid-typing. */
-    function studentsNotesTable(students) {
-        const rows = students.map((s, i) => `
-            <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
-                <td class="st-num num">${i + 1}</td>
-                <td class="st-name">
-                    <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
-                        ${escapeHtml(s.name)}
-                    </a>
-                </td>
-                <td class="st-note">
-                    <textarea class="input st-note-input" data-note-sid="${s.id}" rows="1"
-                              placeholder="اكتب ملاحظة…">${escapeHtml(s.notes || '')}</textarea>
-                </td>
-            </tr>
-        `).join('');
-        return `
-            <div class="table-wrapper">
-                <table class="students-table compact notes-table">
-                    <thead><tr><th>#</th><th>الاسم</th><th>📝 الملاحظات</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-            ${TABLE_HINT}
-        `;
-    }
-
     /* ==========================================================================
        Register CARDS — بطاقةٌ لكل طالب: رقمُه واسمُه وأزرارُ حالته.
        بلا شريطٍ ملوَّنٍ وبلا سطر حالةٍ تحت الاسم (قرارُ المعلّم،
@@ -1074,62 +969,6 @@
                 </div>
             </div>`).join('');
         return `<div class="st-cards">${cards}</div>${TABLE_HINT}`;
-    }
-
-    /* «الكل» view: SPLIT register — the #/name columns live in their own
-       fixed table OUTSIDE the horizontal scroller, so nothing is sticky and
-       the iOS "blank names while scrolling" bug is structurally impossible.
-       Row heights are synced by syncSplitRowHeights() after every render. */
-    function studentsTableSplit(students, attToday, evalToday, columns) {
-        const frozenRows = [];
-        const dataRows = [];
-        students.forEach((s, i) => {
-            const att = attToday[i];
-            const values = readValues(evalToday[i]);
-            const cells = columns.map((col) => `<td class="st-col">${renderCell(s.id, col, values[col.id])}</td>`).join('');
-            frozenRows.push(`
-                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
-                    <td class="st-num num">${i + 1}</td>
-                    <td class="st-name">
-                        <a href="#/student/${s.id}" class="st-name-link" data-id="${s.id}">
-                            ${escapeHtml(s.name)}
-                        </a>
-                    </td>
-                </tr>`);
-            dataRows.push(`
-                <tr class="st-row" data-sid="${s.id}" data-name="${escapeHtml(s.name)}">
-                    <td class="st-att">${attendanceButtons(s.id, att)}</td>
-                    ${cells}
-                    <td class="st-del">
-                        <button class="btn btn-ghost btn-sm"
-                                data-del-student="${s.id}"
-                                data-name="${escapeHtml(s.name)}"
-                                title="حذف">🗑️</button>
-                    </td>
-                </tr>`);
-        });
-
-        return `
-            <div class="register-split" id="register-split">
-                <table class="students-table frozen-cols">
-                    <thead><tr><th>#</th><th>الاسم</th></tr></thead>
-                    <tbody>${frozenRows.join('')}</tbody>
-                </table>
-                <div class="table-scroll">
-                    <table class="students-table data-cols">
-                        <thead>
-                            <tr>
-                                <th>الحضور اليوم</th>
-                                ${columns.map(colHeader).join('')}
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>${dataRows.join('')}</tbody>
-                    </table>
-                </div>
-            </div>
-            ${TABLE_HINT}
-        `;
     }
 
     /** Make each frozen row exactly as tall as its data row (and vice versa)
