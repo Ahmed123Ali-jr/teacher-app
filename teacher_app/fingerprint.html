@@ -229,7 +229,7 @@ async function sweep() {
     bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
     stage.src = 'index.html?fp=' + Date.now();
     await new Promise((r) => { stage.onload = r; });
-    const win = stage.contentWindow;
+    let win = stage.contentWindow;
 
     for (let i = 0; i < 80 && !win.TeacherDB; i++) await wait(200);
     if (!win.TeacherDB) throw new Error('لم يُحمَّل التطبيق في المسرح.');
@@ -269,6 +269,23 @@ async function sweep() {
         seeded.push(['schedule', rid]);
     } catch (e) {
         throw new Error('تعذّر التجهيز: ' + (e && e.message || e));
+    }
+
+    /* ── إعادةُ إقلاعٍ بعد التجهيز ──
+       الحسابُ يُنشأ ثمّ تُكتب `onboarded`، وبين الاثنين يمرّ الموجّه: إن
+       قرأ العلامةَ قبل أن تُكتب رسم شاشةَ التهيئة، فبقيت عناصرُها في
+       الصفحة إلى آخر الجولة. فتخرج جولةٌ بأربعةٍ وعشرين عنصراً زائداً عن
+       أختها، وتُقارَن عناصرُ بغير نظائرها — أبلغت الأداةُ عن ‎269,389‎
+       فرقاً وهي من هذا السباق لا من التنسيق.
+       والإقلاعُ من جديدٍ يقطعه: العلامةُ مكتوبةٌ قبل أن يبدأ الموجّه. */
+    stage.src = 'index.html?fp=' + Date.now();
+    await new Promise((r) => { stage.onload = r; });
+    win = stage.contentWindow;
+    for (let i = 0; i < 80 && !win.TeacherDB; i++) await wait(200);
+    if (!win.TeacherDB) throw new Error('لم يُحمَّل التطبيق بعد التجهيز.');
+    for (let i = 0; i < 60; i++) {
+        if (await win.Auth.currentTeacher().catch(() => null)) break;
+        await wait(200);
     }
 
     /* الخطوطُ قبل القياس: قبل تحميلها تُقاس الأحجامُ بخطٍّ احتياطيّ. */
