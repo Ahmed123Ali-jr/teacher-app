@@ -271,7 +271,13 @@ body.drawer-open { overflow: hidden; }
 }
 .bottom-nav .bn-item.is-active {
     color: #fff;
-    font-weight: var(--fw-black);
+    /* ‎700‎ لا ‎900‎: `fonts.css` يحمّل ‎400/500/600/700‎ فقط، فـ‎900‎ وزنٌ لا
+       وجودَ له كان المتصفّحُ يزوّره — يمطّ حروفَ الـ‎700‎ بلا خطٍّ حقيقيٍّ
+       خلفها، فتخرج غليظةً مشوّهةً على الشاشات الكثيفة.
+       ولا يخسر النشطُ شيئاً: الحبّةُ البتروليةُ والحبرُ الأبيضُ يُعلنانه.
+       (وبقي `--fw-black` معرَّفاً — تستعمله ‎١٧٣‎ موضعاً أخرى خارجَ
+       الشريط، وإصلاحُها شغلٌ آخر لم يُطلَب.) */
+    font-weight: var(--fw-bold);
 }
 .bottom-nav .bn-item.is-active::before {
     background: linear-gradient(150deg, var(--primary-lift) 0%, var(--primary) 55%, var(--primary-deep) 100%);
