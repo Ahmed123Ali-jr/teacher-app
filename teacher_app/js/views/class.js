@@ -1479,6 +1479,7 @@
                 const origLabel = btn.textContent;
                 try {
                     let names = [];
+                    let fromText = false;      /* قُرئت من نصّ الملفّ لا بالذكاء */
                     /* المكتوبُ يسبق المرفوع: إن كتب شيئاً فهو قصدُه، وإلّا
                        فالملفُّ — ولا يُسأل أيَّهما أراد. */
                     const typed = parseNameList(form.querySelector('#paste-names').value);
@@ -1492,6 +1493,22 @@
                         if (isText) {
                             names = parseCSV(await file.text());
                         } else {
+                            btn.textContent = '⏳ جارٍ القراءة...';
+                            /* طبقةُ نصّ الـPDF أوّلاً: كشوفُ «نور» تُصدَّر
+                               بنصٍّ رقميٍّ لا صورة، فتُقرأ حرفاً بحرف بلا
+                               حصّةٍ من الذكاء وبلا أن يخرج الكشفُ من
+                               الجهاز. وهي تردّ فارغاً ما لم تجتز بوّاباتِها
+                               كلَّها — فالمسارُ الذي بعدها هو الأصل، وهذه
+                               اختصارٌ حين يصحّ. */
+                            if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+                                const t = await global.RosterText.fromPdf(file);
+                                if (t.ok) { names = t.names; fromText = true; }
+                                else if (global.console) console.info('[roster-text] ' + t.why);
+                            }
+                        }
+                        /* `!isText` شرطٌ لازم: ملفٌّ نصّيٌّ لم يُخرج أسماءً
+                           لا يُعاد إرسالُه صورةً — يُقال للمعلّم إنّه فارغ. */
+                        if (!names.length && !isText) {
                             if (!(await global.AI.isAvailable())) {
                                 throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
                             }
@@ -1520,7 +1537,9 @@
                     }));
                     await updateClassStudentCount(cls.id);
                     global.Modal.close();
-                    global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅', 'success');
+                    global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅'
+                        + (fromText ? ' — قُرئت من نصّ الملفّ مباشرةً' : ''), 'success',
+                        fromText ? 6000 : undefined);
                     const panel = document.querySelector('#tab-panel');
                     if (panel) await renderStudents(panel, cls);
                 } catch (err) {
