@@ -183,45 +183,6 @@
         return 'مساء الخير';
     }
 
-    function nextClassWidgetHtml(info) {
-        if (!info) return '';
-        if (info.state === 'done') {
-            return `
-                <div class="next-class-widget done">
-                    <span class="nc-icon">🎉</span>
-                    <div>
-                        <div class="nc-title">انتهت حصصك اليوم</div>
-                        <div class="nc-sub">استمتع بباقي يومك</div>
-                    </div>
-                </div>
-            `;
-        }
-        if (info.state === 'now') {
-            return `
-                <a href="#/class/${info.cls.id}" class="next-class-widget live">
-                    <span class="nc-icon">▶️</span>
-                    <div>
-                        <div class="nc-title">حصتك الآن: ${info.cls.grade} / ${info.cls.section}</div>
-                        <div class="nc-sub">${info.cls.subject} · حصة ${info.period.n} — تنتهي ${info.period.end}</div>
-                    </div>
-                </a>
-            `;
-        }
-        if (info.state === 'upcoming') {
-            const label = info.minsUntil <= 5 ? 'بعد دقائق ⏰' : `بعد ${info.minsUntil} دقيقة`;
-            return `
-                <a href="#/class/${info.cls.id}" class="next-class-widget upcoming">
-                    <span class="nc-icon">🔔</span>
-                    <div>
-                        <div class="nc-title">حصتك القادمة: ${info.cls.grade} / ${info.cls.section} — ${label}</div>
-                        <div class="nc-sub">${info.cls.subject} · حصة ${info.period.n} — ${info.period.start}</div>
-                    </div>
-                </a>
-            `;
-        }
-        return '';
-    }
-
     function hijriToday() {
         try {
             /* `-umalqura` صراحةً كما في بقيّة التطبيق. وبدونها يختار
@@ -653,80 +614,6 @@
             e.stopPropagation();   // لا يطوي البطاقة معه
             global.RemindersView.openSheet(teacher, null, () => render(container));
         });
-    }
-
-    /* ---------- Today's periods modal ---------- */
-    const DAY_LABELS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
-
-    async function openTodayPeriodsModal(teacher) {
-        const jsDay = new Date().getDay();
-        const todayIdx = (jsDay >= 0 && jsDay <= 4) ? jsDay : -1;
-
-        const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-        const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
-        const periods = await periodTimes();
-        const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
-
-        const today = todayIdx === -1
-            ? []
-            : rows.filter((r) => r.day === todayIdx).sort((a, b) => a.period - b.period);
-
-        const body = document.createElement('div');
-        if (todayIdx === -1) {
-            body.innerHTML = `<p class="text-muted" style="text-align:center; padding:var(--space-4);">
-                اليوم عطلة (الجمعة/السبت).
-            </p>`;
-        } else if (today.length === 0) {
-            body.innerHTML = `<p class="text-muted" style="text-align:center; padding:var(--space-4);">
-                لا توجد حصص مسجّلة لليوم.
-                <br><br>
-                <a href="#/schedule" class="btn btn-secondary btn-sm" data-modal-close>إعداد الجدول الأسبوعي</a>
-            </p>`;
-        } else {
-            const escape = (s) => String(s || '').replace(/[&<>"']/g, (m) => ({
-                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-            }[m]));
-            body.innerHTML = `
-                <p class="text-muted" style="font-size:var(--fs-sm); margin:0 0 var(--space-4);">
-                    📅 ${DAY_LABELS[todayIdx]} — ${today.length} حصص
-                </p>
-                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
-                    ${today.map((r) => {
-                        const cls = classById[r.class_id];
-                        const p   = periodByN[r.period];
-                        const time = p ? `${p.start} — ${p.end}` : '';
-                        const isWaiting = !cls;
-                        // شريط جانبي فاتح لا يظهر — استخدم الرفيق الغامق
-                        const color = isWaiting ? '#F59E0B' : StageColors.deepFor(cls?.color || DEFAULT_CLASS_COLOR);
-                        const title = isWaiting
-                            ? '⏳ حصة انتظار'
-                            : `${escape(cls.grade)} / ${escape(cls.section)} — ${escape(cls.subject)}`;
-                        const tag = isWaiting ? 'div' : 'a';
-                        const hrefAttr = isWaiting ? '' : `href="#/class/${cls.id}" data-modal-close`;
-                        return `
-                            <${tag} ${hrefAttr} class="card"
-                               style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); text-decoration:none;
-                                      border-right:4px solid ${color}; ${isWaiting ? 'background:#FEF3C7;' : ''}">
-                                <div style="flex:0 0 56px; text-align:center;">
-                                    <div style="font-size:var(--fs-lg); font-weight:var(--fw-bold); color:${isWaiting ? '#78350F' : 'var(--primary)'};">${r.period}</div>
-                                    <div style="font-size:var(--fs-xs); color:var(--text-muted);">الحصة</div>
-                                </div>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="font-weight:var(--fw-bold); color:${isWaiting ? '#78350F' : 'var(--text)'};">${title}</div>
-                                    ${r.topic ? `<div class="text-muted" style="font-size:var(--fs-sm); margin-top:2px;">${escape(r.topic)}</div>` : ''}
-                                    ${time ? `<div class="text-muted" style="font-size:var(--fs-xs); margin-top:2px;">⏰ ${time}</div>` : ''}
-                                </div>
-                            </${tag}>
-                        `;
-                    }).join('')}
-                </div>
-                <div style="text-align:center; margin-top:var(--space-4);">
-                    <a href="#/schedule" class="btn btn-ghost btn-sm" data-modal-close>عرض الجدول الكامل</a>
-                </div>
-            `;
-        }
-        global.Modal.open({ title: '📅 حصص اليوم', body });
     }
 
     /* ---------- Add class modal ---------- */
