@@ -78,29 +78,29 @@
     .ex-logo-ph { width: 78px; height: 78px; }
     .ex-rule  { border: 0; border-top: 2px solid #111; margin: 10px 0 0; }
     .ex-rule2 { border: 0; border-top: 1px solid #111; margin: 2px 0 14px; }
-    .ex-title { text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 14px !important; }
+    .ex-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 14px !important; }
     .ex-info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
     .ex-info td { border: 1px solid #111; padding: 9px 10px; font-size: 14px; font-weight: 700; }
     .ex-note { font-size: 13px; line-height: 1.9; margin-bottom: 14px !important; }
     .ex-sec {
         display: flex; align-items: baseline; gap: 8px;
-        font-size: 15.5px; font-weight: 900; margin: 18px 0 10px;
+        font-size: 15.5px; font-weight: 700; margin: 18px 0 10px;
         border-bottom: 1.5px solid #111; padding-bottom: 5px;
     }
     .ex-sec .g { margin-inline-start: auto; font-size: 13px; font-weight: 700; }
     .ex-cont {
-        font-size: 13px; font-weight: 900; color: #555;
+        font-size: 13px; font-weight: 700; color: #555;
         margin: 0 0 10px; padding-bottom: 4px; border-bottom: 1px dashed #BBB;
     }
     .ex-q { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
-    .ex-q .n { font-weight: 900; font-size: 15px; line-height: 1.9; }
+    .ex-q .n { font-weight: 700; font-size: 15px; line-height: 1.9; }
     .ex-q .t { font-size: 15px; line-height: 1.9; }
     .ex-q .m { margin-inline-start: auto; font-size: 12.5px; color: #555; white-space: nowrap; }
     .ex-opts { display: flex; flex-wrap: wrap; gap: 4px 26px; margin: 0 0 16px 0; padding-inline-start: 22px; }
     .ex-opts li { font-size: 14.5px; line-height: 1.9; }
     .ex-tbl { width: 100%; border-collapse: collapse; }
     .ex-tbl th, .ex-tbl td { border: 1px solid #111; padding: 9px 10px; font-size: 14.5px; }
-    .ex-tbl th { background: #F0F0F0; font-weight: 900; font-size: 13.5px; }
+    .ex-tbl th { background: #F0F0F0; font-weight: 700; font-size: 13.5px; }
     .ex-tbl .c { text-align: center; width: 62px; }
     .ex-tbl .m { text-align: center; width: 40px; }
     .ex-tbl-wrap { margin-bottom: 16px; }
@@ -108,8 +108,8 @@
     .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
     .ex-key { width: 100%; border-collapse: collapse; }
     .ex-key td, .ex-key th { border: 1px solid #111; padding: 8px 10px; font-size: 14px; }
-    .ex-key th { background: #F0F0F0; font-weight: 900; font-size: 13px; }
-    .ex-key .m { text-align: center; width: 46px; font-weight: 900; }
+    .ex-key th { background: #F0F0F0; font-weight: 700; font-size: 13px; }
+    .ex-key .m { text-align: center; width: 46px; font-weight: 700; }
     `;
 
     const TF_HEAD  = '<tr><th class="m">م</th><th>العبارة</th>'
@@ -246,7 +246,7 @@
         groups.forEach((g, gi) => {
             const secNo = gi + 1;
             out.push({ kind: 'q', sec: secNo, html:
-                `<div class="ex-q" style="margin-top:10px;"><span class="t" style="font-weight:900;">`
+                `<div class="ex-q" style="margin-top:10px;"><span class="t" style="font-weight: 700;">`
                 + `السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}</span></div>` });
             /* الخلطُ يُعاد بالبذرة نفسِها، فالحرفُ هنا هو الحرفُ هناك. */
             const bCol = g.type === 'match' ? shuffleB(g.items) : null;
