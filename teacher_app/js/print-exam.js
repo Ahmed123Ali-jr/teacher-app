@@ -119,8 +119,10 @@
     .ex-key .m { text-align: center; width: 46px; font-weight: 700; }
     `;
 
+    /* خانةٌ واحدةٌ لا خانتان: الطالبُ يرسم فيها ✓ أو ✗ كما يقول رأسُ القسم،
+       بدل أن يعلّم في إحدى خانتين. والعبارةُ تكسب عرضَ العمود المحذوف. */
     const TF_HEAD  = '<tr><th class="m">م</th><th>العبارة</th>'
-                   + '<th class="c">صح</th><th class="c">خطأ</th></tr>';
+                   + '<th class="c">الإجابة</th></tr>';
     const KEY_HEAD = '<tr><th class="m">م</th><th>الإجابة</th></tr>';
 
     /* رأسُ الاختيار من متعدد يتبع عددَ الخيارات، وهو أكثرُ ما في القسم لا
@@ -243,7 +245,7 @@
                 if (g.type === 'tf') {
                     blocks.push({ kind: 'row', sec: secNo, head: TF_HEAD, tcls: 'ex-tbl', html:
                         `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
-                        + `<td class="c">&nbsp;</td><td class="c">&nbsp;</td></tr>` });
+                        + '<td class="c">&nbsp;</td></tr>' });
                     return;
                 }
                 if (g.type === 'mcq') {
