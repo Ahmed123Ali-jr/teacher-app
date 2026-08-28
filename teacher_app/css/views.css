@@ -5269,6 +5269,13 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     display: block; width: 100%; max-width: var(--container-max);
     margin-inline: auto; pointer-events: auto;
 }
+/* و`start-cta` تحمل عرضَها وتوسيطَها بنفسها — يبقى لها الحدُّ الأقصى
+   وقابليّةُ الضغط، فالحاويةُ `pointer-events: none`. */
+.classes-fab .start-cta {
+    max-width: var(--container-max);
+    margin-inline: auto;
+    pointer-events: auto;
+}
 
 /* والمحتوى يترك له مكاناً فلا تختفي آخرُ بطاقةٍ تحته. */
 .classes-v2 { padding-bottom: 91px; }
