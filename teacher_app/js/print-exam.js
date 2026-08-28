@@ -96,13 +96,19 @@
     .ex-q .n { font-weight: 700; font-size: 15px; line-height: 1.9; }
     .ex-q .t { font-size: 15px; line-height: 1.9; }
     .ex-q .m { margin-inline-start: auto; font-size: 12.5px; color: #555; white-space: nowrap; }
-    .ex-opts { display: flex; flex-wrap: wrap; gap: 4px 26px; margin: 0 0 16px 0; padding-inline-start: 22px; }
-    .ex-opts li { font-size: 14.5px; line-height: 1.9; }
     .ex-tbl { width: 100%; border-collapse: collapse; }
     .ex-tbl th, .ex-tbl td { border: 1px solid #111; padding: 9px 10px; font-size: 14.5px; }
     .ex-tbl th { background: #F0F0F0; font-weight: 700; font-size: 13.5px; }
     .ex-tbl .c { text-align: center; width: 62px; }
     .ex-tbl .m { text-align: center; width: 40px; }
+    /* جدولُ الاختيار من متعدد. وتثبيتُ التخطيط ليس تجميلاً: الرصُّ
+       يقيس الصفَّ وحدَه خارج جدوله، فلو وُزّعت الأعمدةُ بالمحتوى لاختلف
+       عرضُها بين القياس والرسم وفاض الجدولُ على الورقة. وبه صار الفرقُ
+       واحدَ بكسل ثابتاً — حدَّ الجدول المنهار. */
+    .ex-mcq { table-layout: fixed; }
+    .ex-mcq .q { width: 38%; }
+    .ex-mcq .o { text-align: center; }
+    .ex-mcq td { overflow-wrap: anywhere; }
     .ex-tbl-wrap { margin-bottom: 16px; }
     .ex-lines { margin-bottom: 16px; }
     .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
@@ -115,6 +121,27 @@
     const TF_HEAD  = '<tr><th class="m">م</th><th>العبارة</th>'
                    + '<th class="c">صح</th><th class="c">خطأ</th></tr>';
     const KEY_HEAD = '<tr><th class="m">م</th><th>الإجابة</th></tr>';
+
+    /* رأسُ الاختيار من متعدد يتبع عددَ الخيارات، وهو أكثرُ ما في القسم لا
+       ما في السؤال: رأسٌ واحدٌ يسع الجميع فتبقى صفوفُ القسم جدولاً واحداً.
+       (الرصُّ يفتح جدولاً جديداً كلّما اختلف الرأس.) */
+    const MCQ_HEAD = (cols) => '<tr><th class="m">م</th><th class="q">السؤال</th>'
+        + LETTERS.slice(0, cols).map((L) => `<th class="o">${L}</th>`).join('') + '</tr>';
+
+    const optCount = (items) => {
+        let n = 0;
+        items.forEach((q) => { n = Math.max(n, (q.options || []).length); });
+        return Math.min(Math.max(n, 2), LETTERS.length);
+    };
+
+    /* خيارٌ تركه المعلّم فارغاً يبقى خانةً فارغة — لا يُطوى العمود، فحرفُه
+       في الرأس قائمٌ وموضعُه محجوز. */
+    const optCells = (q, cols) => {
+        const o = q.options || [];
+        let out = '';
+        for (let k = 0; k < cols; k++) out += `<td class="o">${escapeHtml(o[k] || '') || '&nbsp;'}</td>`;
+        return out;
+    };
     const MATCH_HEAD = '<tr><th class="m">م</th><th>العمود (أ)</th>'
                      + '<th class="c">الإجابة</th>'
                      + '<th class="m">م</th><th>العمود (ب)</th></tr>';
@@ -192,6 +219,7 @@
                بسؤالٍ واحد فرأسه قاله سلفاً — فلا يُكتب مرّتين. */
             const perQ = g.items.length > 1;
             const bCol = g.type === 'match' ? shuffleB(g.items) : null;
+            const cols = g.type === 'mcq' ? optCount(g.items) : 0;
 
             g.items.forEach((q, i) => {
                 const n = ar(i + 1);
@@ -210,11 +238,9 @@
                     return;
                 }
                 if (g.type === 'mcq') {
-                    blocks.push({ kind: 'q', sec: secNo, html:
-                        `<div class="ex-q"><span class="n">${n}-</span>`
-                        + `<span class="t">${escapeHtml(q.text)}</span></div>`
-                        + `<ol class="ex-opts">${(q.options || []).map((o, k) =>
-                            `<li>☐ ${LETTERS[k] || ''}) ${escapeHtml(o)}</li>`).join('')}</ol>` });
+                    blocks.push({ kind: 'row', sec: secNo, head: MCQ_HEAD(cols), tcls: 'ex-tbl ex-mcq', html:
+                        `<tr><td class="m">${n}</td><td class="q">${escapeHtml(q.text)}</td>`
+                        + optCells(q, cols) + '</tr>' });
                     return;
                 }
                 if (g.type === 'fill') {
