@@ -419,7 +419,7 @@
     function startFirstClassHtml() {
         return `
             <div class="start-note">
-                <b>بقيت فصولك</b>
+                <b>لا يوجد لديك فصول</b>
                 <span>ارفع جدولك فتُنشأ فصولك وحصصك معاً</span>
             </div>
             <div class="start-gap"></div>
