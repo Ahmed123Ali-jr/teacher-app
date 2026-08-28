@@ -146,10 +146,38 @@ async function settle(win, need, ms) {
     return false;
 }
 
+/* ── انتظارُ السكون ──
+   `settle` تقول إنّ الشاشةَ ظهرت، لا إنّها اكتملت: التطبيقُ يُكمل الرسمَ
+   بعدها (صور، وقوائمُ تُملأ، وأرقامٌ تُحسب). ولو قِيست وهي تتحرّك لأُجبر
+   المتصفّح على إعادة حساب الأنماط عند **كلّ** قراءة بدل مرّةٍ واحدة —
+   وهو ما رفع القياسَ من ثانيتين إلى ‎120‎، وجعله يتذبذب بين الجولات على
+   الشاشة نفسِها. فيُنتظر حتى تهدأ الشجرةُ مدّةً متّصلة، ثمّ يُقاس. */
+async function quiet(win, still, max) {
+    still = still || 420; max = max || 7000;
+    return new Promise((resolve) => {
+        let t = null;
+        const done = (why) => { try { obs.disconnect(); } catch (e) {}
+                                clearTimeout(t); clearTimeout(cap); resolve(why); };
+        const obs = new win.MutationObserver(() => {
+            clearTimeout(t); t = setTimeout(() => done('هدأت'), still);
+        });
+        obs.observe(win.document.body, { childList: true, subtree: true,
+                                         attributes: true, characterData: true });
+        t = setTimeout(() => done('هدأت'), still);
+        const cap = setTimeout(() => done('انتهت المهلة'), max);
+    });
+}
+
 /* ── إعادةُ الحساب قسراً ──
    المظهرُ يُبدَّل بصنفٍ على `body` بعد أن رُسمت الصفحة بألوان المظهر
    الآخر، وبعضُ العناصر تحتفظ بقيمها المحسوبة القديمة. وإخفاءُ الجذر
-   لحظةً يُبطل التنسيق كلَّه فيُعاد بناؤه. (الدرسُ من contrast.html.) */
+   لحظةً يُبطل التنسيق كلَّه فيُعاد بناؤه. (الدرسُ من contrast.html.)
+
+   **وتُنادى مرّةً لكلّ مظهرٍ لا لكلّ شاشة.** كانت تُنادى قبل كلّ قياس،
+   فتُبطل أنماطَ الصفحة كلِّها — ومعها آلافُ العناصر المخفيّة المتراكمة
+   من الشاشات المزارة — فيُعاد حسابُها جميعاً. فارتفع القياسُ من ‎4‎ مللي
+   ثانية (قِيست داخل الصفحة) إلى عشراتِ الثواني، وتضخّم كلّما تقدّمت
+   الجولة. والمظهرُ لا يتبدّل بين الشاشات، فلا حاجةَ إليها هناك. */
 function forceRestyle(win) {
     const r = win.document.documentElement;
     const prev = r.style.display;
@@ -189,20 +217,63 @@ function strip(win) {
 }
 
 /* ── القياس ──
-   يُقاس كلُّ عنصرٍ تحت `body`. والمفتاحُ ترتيبُه في الشجرة لا محدِّدُه:
-   المحدِّداتُ تتكرّر، والترتيبُ لا. ويُسجَّل معه الوسمُ والأصنافُ ليكون
-   التقريرُ مقروءاً. */
+   يُقاس ما يُرى وحدَه: الترويسةُ، والشاشةُ المفتوحة، والشريطُ السفليّ،
+   والدُّرج إن كان مفتوحاً. والمفتاحُ ترتيبُ العنصر لا محدِّدُه —
+   المحدِّداتُ تتكرّر والترتيبُ لا — ويُسجَّل معه الوسمُ والأصنافُ ليكون
+   التقريرُ مقروءاً.
+
+   ── ولماذا لا يُقاس `body` كلُّه؟ ──
+   شاشاتُ التطبيق تبقى في الصفحة مخفيّةً بعد زيارتها، فتتراكم. فكان
+   القياسُ يمشي على آلافٍ لا تُرى، ويثقُل كلّما تقدّمت الجولة: ‎2‎ ثوانٍ
+   في أوّلها و‎120‎ في آخرها. وقياسُ المخفيّ لا يفيد أصلاً — البصمةُ
+   تحرس ما يراه المعلّم. وفيه ضررٌ ثالث: بقايا شاشةٍ رُسمت في جولةٍ ولم
+   تُرسم في أخرى تُزحزح الترتيبَ فتُقارَن عناصرُ بغير نظائرها. */
+/* ── ولماذا تُبنى الدالّةُ داخلَ الإطار؟ ──
+   الإطارُ عالَمٌ آخر، وكلُّ قراءةِ خاصّيةٍ منه تعبر الحدَّ بينهما. وفي
+   شاشةٍ فيها ثلاثةُ آلافِ عنصرٍ × عشرين خاصّيةً = ستّون ألفَ عبور —
+   قِيست ‎120‎ ثانيةً على «ملفّ الإنجاز» وحدَه، والانتظارُ صفر. فالبطءُ
+   كان منّي لا من الشبكة، وكشفه عرضُ التوقيت في شريط التقدّم.
+   فتُبنى الدالّةُ بـ`new win.Function` فتسكن عالَمَ الإطار، وتُقرأ
+   الخصائصُ هناك كلُّها، ويعبر الحدَّ **نصٌّ واحد**.
+
+   وقائمةُ الخصائص تُمرَّر نصّاً لا مصفوفة: المصفوفةُ تبقى من عالَمي،
+   فقراءةُ `PROPS[j]` تعبر الحدَّ عشرين مرّةً لكلّ عنصر — وهو أبطأُ من
+   قراءة الأنماط نفسِها. جُرّبت مصفوفةً فصار القياسُ ‎22‎ ثانية.
+
+   والذاكرةُ مربوطةٌ بالمستند لا بالنافذة، وهذا ليس تدقيقاً: `contentWindow`
+   يعيد الكائنَ نفسَه بعد كلّ إبحار، فلو قِيست الهويّةُ به لبقيت الدالّةُ
+   مترجَمةً في عالَمِ المستند الأوّل تقرأ مستنداً مهجوراً. وقع هذا فعلاً:
+   الأساسُ صحيحٌ ثمّ المقارنةُ ‎135‎ عنصراً في الشاشات الستّ والثلاثين
+   كلِّها — وهي عناصرُ آخرِ شاشةٍ في جولة الأساس. والمستندُ يُستبدَل فيُقاس به. */
+let _measureIn = null, _measureDoc = null;
 function measure(win) {
-    const out = [];
-    win.document.body.querySelectorAll('*').forEach((el, i) => {
-        const tag = el.tagName.toLowerCase();
-        if (tag === 'script' || tag === 'style' || tag === 'link') return;
-        const c = win.getComputedStyle(el);
-        const cls = (typeof el.className === 'string' ? el.className : '').trim().slice(0, 48);
-        out.push(i + '' + tag + '' + cls + ''
-                 + PROPS.map((p) => c[p]).join(''));
-    });
-    return out;
+    if (_measureDoc !== win.document) {
+        _measureIn = new win.Function('P', ""
+            + "const PROPS = JSON.parse(P);"
+            + "const out = [];"
+            + "const roots = [];"
+            + "const add = (n) => { if (n && !n.hidden) roots.push(n); };"
+            + "add(document.getElementById('app-header'));"
+            + "add(document.querySelector('.view:not([hidden])'));"
+            + "add(document.getElementById('bottom-nav'));"
+            + "add(document.getElementById('drawer-root'));"
+            + "const els = [];"
+            + "for (const r of roots) { els.push(r); for (const d of r.querySelectorAll('*')) els.push(d); }"
+            + "for (let i = 0; i < els.length; i++) {"
+            + "  const el = els[i];"
+            + "  const tag = el.tagName.toLowerCase();"
+            + "  if (tag === 'script' || tag === 'style' || tag === 'link') continue;"
+            + "  const c = getComputedStyle(el);"
+            + "  const cls = (typeof el.className === 'string' ? el.className : '').trim().slice(0, 48);"
+            + "  let v = '';"
+            + "  for (let j = 0; j < PROPS.length; j++) v += (j ? '' : '') + c[PROPS[j]];"
+            + "  out.push(i + '' + tag + '' + cls + '' + v);"
+            + "}"
+            + "return out.join('');");
+        _measureDoc = win.document;
+    }
+    const s = _measureIn(JSON.stringify(PROPS));
+    return s ? s.split('') : [];
 }
 
 /* ── ما لا يُملَك تثبيتُه ──
@@ -317,17 +388,24 @@ async function sweep() {
         data[cls_] = {};
 
         for (const s of SCREENS) {
+            const t0 = Date.now();
             win.location.hash = s.hash.replace(':id', cls.id);
             await wait(330);
+            const tNav = Date.now();
             const ok = await settle(win, s.need);
             if (!ok) missed.push(themeName + ' · ' + s.name);
-            await wait(160);
+            await quiet(win);
+            const tSettle = Date.now();
             strip(win);
-            forceRestyle(win);
             await wait(60);
             data[cls_][s.name] = measure(win);
+            const tAll = Date.now();
             done++;
-            bar.textContent = '⏳ ' + done + ' من ' + total + ' — ' + themeName + ' · ' + s.name;
+            /* التوقيتُ يُعرض: بلا هذا كنتُ أظنّ البطءَ من الشبكة وهو قد
+               يكون من القياس نفسِه — والظنُّ لا يُصلح أداة. */
+            bar.textContent = '⏳ ' + done + ' من ' + total + ' — ' + themeName + ' · ' + s.name
+                + '  (انتظار ' + ((tSettle - tNav) / 1000).toFixed(1) + 'ث · قياس '
+                + ((tAll - tSettle) / 1000).toFixed(1) + 'ث · الكلّ ' + ((tAll - t0) / 1000).toFixed(1) + 'ث)';
         }
     }
 
