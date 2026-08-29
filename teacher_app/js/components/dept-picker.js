@@ -25,7 +25,6 @@
         const body = document.createElement('div');
         body.className = 'sch-sheet';
         body.innerHTML = `
-            <p class="dp-hint">اختر إدارتك — تُملأ المنطقة تلقائياً.</p>
             <div class="dp-list">
                 ${E.all().map((d) => `
                     <button type="button" class="dp-item ${bare === d.name ? 'on' : ''}"
