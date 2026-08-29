@@ -422,6 +422,12 @@
             <button type="button" class="start-add-class" data-add-class>+ إضافة فصل</button>`;
     }
 
+    /* علمٌ لليوم الوطنيّ وحدَه، مقروناً باسمه كما يَرِد في التقويم. ولا
+       يُعمَّم على كلّ إجازة: «إجازة إضافية» و«إجازة الخريف» تبقيان نصّاً.
+       (اختاره المعلّم من معاينة flag.html، ٢٩ أغسطس ٢٠٢٦ — العلمُ قبل
+       الاسم.) واسمٌ يتغيّر في التقويم يسقط علمُه بلا عطب: يبقى النصّ. */
+    const HOLIDAY_MARK = { 'اليوم الوطني': '🇸🇦' };
+
     /* أسماءُ الأيّام السبعة بترتيب `getDay()` — ليوم العودة من الإجازة. */
     const DAY_FULL = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس',
                       'الجمعة', 'السبت'];
@@ -460,9 +466,11 @@
             const back = off && off.back
                 ? 'نلقاك ' + DAY_FULL[off.back.getDay()] + ' بإذن الله'
                 : 'إجازة سعيدة';
+            const name = (off && off.name) || 'إجازة';
+            const mark = HOLIDAY_MARK[name] ? HOLIDAY_MARK[name] + ' ' : '';
             return `
                 <div class="home-hero-alt">
-                    <div class="ha-t">${esc((off && off.name) || 'إجازة')}</div>
+                    <div class="ha-t">${mark}${esc(name)}</div>
                     <div class="ha-s">${back}</div>
                 </div>`;
         }
