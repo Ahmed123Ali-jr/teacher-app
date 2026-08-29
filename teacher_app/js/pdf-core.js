@@ -579,6 +579,14 @@
     /* والصورةُ العريضة لا تُقطَّع: التقطيعُ أفقيٌّ، وهو يفيد الصفحةَ
        الطويلة ذاتَ الصفوف. */
     const SLICE_RATIO = 1.15;
+    /* ── مقياسُ رسم الـPDF حين يُقطَّع ──
+       كان ‎1.5‎ (نحو ‎108‎ نقطة/بوصة) فلا تبلغ الصفحةُ عتبةَ التقطيع أصلاً.
+       و‎2.6‎ تُخرج صفحةَ A4 بعرض ‎1547‎ — **دون ‎1568‎ بقليل**، وهو الحدُّ
+       الذي يُصغّر النموذجُ ما فوقه. فتصل الشريحةُ بلا تصغيرٍ ثانٍ، وبدقّةٍ
+       فعليّةٍ نحو ‎187‎ نقطة/بوصة — قريبةٌ من ‎190‎ التي قِيست على كشف
+       المستخدم الحقيقيّ يوم ٢٨ أغسطس (أصابت المقطَّعةُ خمسَ كلماتٍ
+       والكاملةُ صفراً، بحكم طبقة نصّ الملفّ نفسِه). */
+    const SLICE_PDF_SCALE = 2.6;
 
     function sliceCount(w, h) {
         if (Math.max(w, h) < SLICE_EDGE) return 1;
@@ -587,8 +595,8 @@
     }
 
     /** يقطّع صورةً محمّلةً إلى شرائحَ أفقيّةٍ متداخلة. */
-    function cutStrips(src, w, h, maxSide) {
-        const n = sliceCount(w, h);
+    function cutStrips(src, w, h, maxSide, forceN) {
+        const n = forceN || sliceCount(w, h);
         const side = maxSide || 2000;
         const step = h / n;
         const pad  = n > 1 ? Math.round(step * OVERLAP) : 0;
@@ -648,17 +656,30 @@
         /* السقف الافتراضي هو سقف النموذج نفسه: مئة صورةٍ في الطلب الواحد.
            فما دون ذلك ليس قيداً منّا. */
         const n = Math.min(doc.numPages, maxPages || MAX_IMAGE_PAGES);
+        /* والتقطيعُ يضاعف عددَ الصور، فيُخفَّض إن تجاوز السقفَ — ولا يُسقط
+           صفحاتٍ من أجله: صفحةٌ ناقصةٌ خسارةُ طلابٍ، وشريحةٌ أقلُّ خسارةُ
+           دقّة. */
+        const per = slice ? Math.max(1, Math.min(SLICES, Math.floor(MAX_IMAGE_PAGES / n))) : 1;
         const pages = [];
         pages.total   = doc.numPages;
         pages.skipped = doc.numPages - n;
         for (let i = 1; i <= n; i++) {
             const page = await doc.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
+            const viewport = page.getViewport({ scale: per > 1 ? SLICE_PDF_SCALE : 1.5 });
             const canvas = document.createElement('canvas');
             canvas.width = viewport.width;
             canvas.height = viewport.height;
             await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            pages.push({ base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1], mediaType: 'image/jpeg' });
+            /* `sliceCount` تُستشار هنا أيضاً: صفحةٌ صغيرةٌ أو عريضةٌ لا
+               تُقطَّع ولو كان الملفُّ في وضع التقطيع. */
+            const cuts = per > 1 ? Math.min(per, sliceCount(canvas.width, canvas.height)) : 1;
+            if (cuts > 1) {
+                cutStrips(canvas, canvas.width, canvas.height, SLICE_EDGE - 32, cuts)
+                    .forEach((p) => pages.push(p));
+            } else {
+                pages.push({ base64: canvas.toDataURL('image/jpeg', 0.85).split(',')[1],
+                             mediaType: 'image/jpeg' });
+            }
             canvas.width = canvas.height = 0;
             page.cleanup();
         }
