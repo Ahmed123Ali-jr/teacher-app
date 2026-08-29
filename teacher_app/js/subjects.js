@@ -12,6 +12,30 @@
     'use strict';
 
     /* القائمة الكاملة — تُستعمل حيث لا مرحلةَ معلومة (التهيئة، التعديل). */
+    /* أسماءُ المواد بالإنجليزيّة — لورقة معلّم الإنجليزيّة. وما ليس في
+       الجدول يبقى كما كتبه المعلّم: اسمٌ لا نعرفه لا يُترجَم بالتخمين. */
+    const EN = {
+        'القرآن الكريم': 'Holy Quran',
+        'التربية الإسلامية': 'Islamic Education',
+        'اللغة العربية': 'Arabic Language',
+        'اللغة الإنجليزية': 'English',
+        'الرياضيات': 'Mathematics',
+        'العلوم': 'Science',
+        'الأحياء': 'Biology',
+        'الفيزياء': 'Physics',
+        'الكيمياء': 'Chemistry',
+        'الاجتماعيات': 'Social Studies',
+        'التاريخ': 'History',
+        'الجغرافيا': 'Geography',
+        'المهارات الرقمية': 'Digital Skills',
+        'المهارات الحياتية والأسرية': 'Life and Family Skills',
+        'التفكير الناقد': 'Critical Thinking',
+        'الحاسب وتقنية المعلومات': 'Computer and IT',
+        'التربية الفنية': 'Art Education',
+        'التربية البدنية': 'Physical Education'
+    };
+    const en = (name) => EN[String(name || '').trim()] || String(name || '');
+
     const ALL = [
         'القرآن الكريم', 'التربية الإسلامية', 'اللغة العربية', 'اللغة الإنجليزية',
         'الرياضيات', 'العلوم', 'الأحياء', 'الفيزياء', 'الكيمياء',
@@ -65,5 +89,5 @@
         return out;
     }
 
-    global.Subjects = { ALL, BY_STAGE, ofTeacher, ofStage, merge };
+    global.Subjects = { ALL, BY_STAGE, ofTeacher, ofStage, merge, en };
 })(window);

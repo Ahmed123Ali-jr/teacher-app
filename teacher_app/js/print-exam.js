@@ -100,6 +100,15 @@
     /* «اللغة الإنجليزية» هو الاسمُ في قائمة المواد، والباقي احتياطٌ لمن
        كتب مادّته بيده. */
     const isEnglish = (subject) => /إنجليزي|انجليزي|english/i.test(String(subject || ''));
+
+    /* ما يكتبه المعلّمُ عربيّاً وله مقابلٌ إنجليزيٌّ معروف: الإدارةُ والمادّةُ
+       والصفُّ والشعبة. قوائمُها الأربعُ مغلقةٌ ومعدودة، فالترجمةُ جدولٌ
+       يُراجَع لا تخميناً يُطلق؛ وما ليس في جدوله يبقى كما كتبه المعلّم.
+       ولا تُترجم أسماءُ المدارس ولا أسماءُ المعلّمين: أعلامٌ لا مصطلحات. */
+    const tDept    = (H, v) => (H === EN && global.EduDepts)   ? global.EduDepts.enName(v)     : v;
+    const tSubject = (H, v) => (H === EN && global.Subjects)   ? global.Subjects.en(v)         : v;
+    const tGrade   = (H, v) => (H === EN && global.ClassCreate) ? global.ClassCreate.enGrade(v)   : v;
+    const tSection = (H, v) => (H === EN && global.ClassCreate) ? global.ClassCreate.enSection(v) : v;
     const ar = (n) => L.num(n);
 
     const marks = (n) => L.marks(n);
@@ -145,6 +154,8 @@
     .ex-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 14px !important; }
     .ex-info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
     .ex-info td { border: 1px solid #111; padding: 9px 10px; font-size: 14px; font-weight: 700; }
+    /* خانةُ الدرجة موسَّطةٌ في اللغتين — و«important» لسبب الملاحظة أسفلَه. */
+    .ex-info .mk { text-align: center !important; }
     .ex-note { font-size: 13px; line-height: 1.9; margin-bottom: 14px !important; }
     .ex-sec {
         display: flex; align-items: baseline; gap: 8px;
@@ -183,8 +194,16 @@
     .ex-ltr .ex-head { direction: rtl; }
     .ex-ltr .ex-head .side   { direction: ltr; text-align: right; }
     .ex-ltr .ex-head .side.l { direction: ltr; text-align: left; }
-    .ex-ltr .ex-title, .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m,
-    .ex-ltr .ex-key .m, .ex-ltr .ex-mcq .o { text-align: center; }
+    .ex-ltr .ex-title { text-align: center; }
+    /* «important» ليست ترفاً هنا: تنسيقُ الطباعة العامّ يُحقن في مسرح
+       التصدير محصوراً بمعرّفه، وفيه «th, td { text-align: right }» —
+       ومعرّفٌ يغلب كلَّ صنفٍ في هذا الملف. والعربيّةُ أخفت ذلك لأنّ اليمين
+       صوابُها، فلم ينكشف إلّا يوم صارت الورقةُ إنجليزيّة. */
+    .ex-ltr .ex-tbl th, .ex-ltr .ex-tbl td,
+    .ex-ltr .ex-key  th, .ex-ltr .ex-key  td,
+    .ex-ltr .ex-info td { text-align: left !important; }
+    .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m, .ex-ltr .ex-key .m,
+    .ex-ltr .ex-mcq .o, .ex-ltr .ex-info .mk { text-align: center !important; }
     .ex-tbl-wrap { margin-bottom: 16px; }
     .ex-lines { margin-bottom: 16px; }
     .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
@@ -411,13 +430,14 @@
         const right = [
             H.kingdom,
             H.ministry,
-            escapeHtml(p.educationDept || teacher?.education_dept || ''),
+            escapeHtml(tDept(H, p.educationDept || teacher?.education_dept || '')),
             escapeHtml(teacher?.school_name || H.school)
         ].filter(Boolean).join('<br>');
 
         const left = [
-            cls?.subject ? `${H.subject}: ${escapeHtml(cls.subject)}` : '',
-            cls?.grade ? `${H.grade}: ${escapeHtml(cls.grade)}${cls.section ? ' / ' + escapeHtml(cls.section) : ''}` : '',
+            cls?.subject ? `${H.subject}: ${escapeHtml(tSubject(H, cls.subject))}` : '',
+            cls?.grade ? `${H.grade}: ${escapeHtml(tGrade(H, cls.grade))}`
+                + `${cls.section ? ' / ' + escapeHtml(tSection(H, cls.section)) : ''}` : '',
             s.include_teacher && teacher?.name ? `${H.teacherL}: ${escapeHtml(teacher.name)}` : '',
             /* تاريخٌ يكتبه المعلّم، لا تاريخُ اليوم: الاختبارُ يُعدّ قبل
                موعده. وفراغُه نقاطٌ تُملأ بالقلم لا يومُ الطباعة. */
@@ -441,7 +461,7 @@
             <table class="ex-info"><tr>
                 <td style="width:${withGrade ? 58 : 70}%;">${L.studentName}: ${L.dots}</td>
                 <td>${withGrade ? L.seatNo + ': ' + L.dotsShort : L.klass + ': ' + L.dotsShort}</td>
-                ${withGrade ? `<td style="width:15%; text-align:center;">${L.mark}<br>&nbsp;</td>` : ''}
+                ${withGrade ? `<td class="mk" style="width:15%;">${L.mark}<br>&nbsp;</td>` : ''}
             </tr></table>` : '';
 
         /* تعليمات المعلم إن كتبها (ورقة العمل)، وإلّا فالنصّ المعتاد. */

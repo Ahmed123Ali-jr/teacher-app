@@ -21,6 +21,25 @@
         secondary:    ['الصف الأول الثانوي','الصف الثاني الثانوي','الصف الثالث الثانوي']
     };
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
+
+    /* ── أسماءٌ إنجليزيّةٌ للمطبوعات الإنجليزيّة ──
+       الصفُّ يُكتب رقماً ومرحلةً («5 Primary») لا ترجمةً حرفيّةً للعدد
+       الترتيبيّ — أوجزُ وأوضحُ لمن يقرأ الورقة. ويأتي بعد كلمة «Class»
+       في الترويسة فلا يحمل الكلمةَ في نفسه. وما ليس في القائمة يبقى
+       عربيّاً كما هو. */
+    const EN_STAGE = { primary: 'Primary', intermediate: 'Intermediate', secondary: 'Secondary' };
+    const EN_SECTION = { 'أ': 'A', 'ب': 'B', 'ج': 'C', 'د': 'D',
+                         'هـ': 'E', 'و': 'F', 'ز': 'G', 'ح': 'H' };
+
+    function enGrade(grade) {
+        const g = String(grade || '').trim();
+        for (const st of Object.keys(GRADES)) {
+            const i = GRADES[st].indexOf(g);
+            if (i >= 0) return (i + 1) + ' ' + EN_STAGE[st];
+        }
+        return g;
+    }
+    const enSection = (sec) => EN_SECTION[String(sec || '').trim()] || String(sec || '');
     const SECTIONS = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح'];
 
     /* بقرار المستخدم (٢٠٢٦-٠٨-٠٤): لونٌ واحد موحّد لكل الفصول. */
@@ -184,6 +203,7 @@
     global.ClassCreate = {
         GRADES, STAGE_LABELS, SECTIONS, DEFAULT_COLOR,
         fold, foldSubject, stageOf, ordinalIndex, parseGrade, gradeAt,
-        splitLabel, parseSection, normalizeSubject, findExisting, create, label
+        splitLabel, parseSection, normalizeSubject, findExisting, create, label,
+        enGrade, enSection
     };
 })(window);
