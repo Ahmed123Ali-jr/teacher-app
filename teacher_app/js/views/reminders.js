@@ -97,8 +97,11 @@
             const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
             const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
 
+            /* الزرُّ عائمٌ بصنفَي شاشة الفصول أنفسِهما — لا بصنفٍ يحاكيهما:
+               موضعُه ومقاسُه يتبعان «إضافة فصل جديد» أبداً، فإن تحرّك
+               تحرّكا معاً. (طلبُ المعلّم ٢٩ أغسطس ٢٠٢٦.) */
             container.innerHTML = `
-                <div class="container">
+                <div class="container rm-v2">
                     ${heroHtml(open, done, today)}
                     <div class="rm-seg">
                         <button type="button" class="pseg${filter === 'open' ? ' on' : ''}"
@@ -108,7 +111,9 @@
                     </div>
                     ${items.length === 0 ? emptyHtml() : `
                         <div class="rm-list">${items.map((r) => itemHtml(r, classById, today)).join('')}</div>`}
-                    <button type="button" class="rm-add" id="btn-add-reminder">إضافة تذكير</button>
+                </div>
+                <div class="classes-fab">
+                    <button type="button" class="start-cta" id="btn-add-reminder">+ إضافة تذكير</button>
                 </div>
             `;
 

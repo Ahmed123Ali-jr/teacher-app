@@ -5865,10 +5865,6 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     font-weight: var(--fw-bold); line-height: 1.9;
 }
 
-.rm-add {
-    display: block; width: 100%; min-height: 50px; border: 0; border-radius: 15px;
-    cursor: pointer; font-family: inherit; font-size: 15px;
-    font-weight: var(--fw-bold); color: #fff; background: var(--primary);
-    box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
-    margin-top: var(--space-6);
-}
+/* لا صنفَ للزرّ هنا: هو `start-cta` داخل `classes-fab` — زرُّ شاشة الفصول
+   بعينه. والحشوُ السفليُّ هو حشوُها (91px) ليمرَّ آخرُ سطرٍ من تحته. */
+.rm-v2 { padding-bottom: 91px; }
