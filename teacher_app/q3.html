@@ -104,6 +104,15 @@
         background: var(--primary); margin-top: var(--space-4);
         box-shadow: 0 5px 15px color-mix(in srgb, var(--primary) 30%, transparent);
     }
+    /* ── «د»: القسمُ المنتهي يُطوى إلى رأسه البتروليّ ──
+       ولا لونَ جديد: رأسُ القسم في التطبيق بترولـيٌّ أصلاً. الطيُّ إخفاءُ
+       جسدِه لا صبغُ رأسه. */
+    .tp-fold .qe-items, .tp-fold .qe-add-in { display: none; }
+    .tp-fold { cursor: pointer; }
+    .tp-fold .qe-sec-head::before {
+        content: "▾"; align-self: center; font-size: 12px; opacity: .8;
+        margin-inline-end: 2px;
+    }
     .pv-hide { display: none !important; }
 </style>
 </head>
@@ -115,6 +124,7 @@
             <button type="button" data-m="a">أ</button>
             <button type="button" data-m="b">ب</button>
             <button type="button" data-m="c">ج</button>
+            <button type="button" data-m="d">د</button>
         </div>
         <p class="pv-say" id="say"></p>
         <button type="button" class="pv-reset" id="reset">ابدأ من جديد</button>
@@ -142,13 +152,17 @@
         b: '<b>ب — شريطٌ دائمٌ تحت آخر قسم.</b> تكتب، تنزل، تضغط النوعَ ' +
            'التالي. بلا زرٍّ وبلا ورقةٍ منبثقة، والاختبارُ كلُّه أمامك.',
         c: '<b>ج — نوعٌ واحدٌ في الشاشة.</b> تختار، تكتب، تضغط «تم»، ثمّ ' +
-           'تختار الذي بعده. وبقيّةُ الورقة محجوبةٌ أثناء الكتابة.'
+           'تختار الذي بعده. وبقيّةُ الورقة محجوبةٌ أثناء الكتابة.',
+        d: '<b>د — لا شيء أوّلَ ما تدخل.</b> تضغط «أضف سؤالاً» فتظهر ' +
+           'القائمة، تكتب، تضغط «تم» — فيُطوى ما أنهيتَه إلى شريطٍ ' +
+           'بتروليٍّ باسمه فوق ما بعده. <b>واضغط الشريطَ ليُفتح ثانية.</b>'
     };
 
     const S = {
         a: { title: 'اختبار الفصل الأول', qs: [] },
         b: { title: 'اختبار الفصل الأول', qs: [] },
-        c: { title: 'اختبار الفصل الأول', qs: [], open: null }
+        c: { title: 'اختبار الفصل الأول', qs: [], open: null },
+        d: { title: 'اختبار الفصل الأول', qs: [], open: null, picking: false }
     };
     let mode = 'a';
 
@@ -227,6 +241,40 @@
             }
         }
 
+        if (mode === 'd') {
+            const empty = stage.querySelector('.qe-empty');
+            if (empty) empty.remove();
+
+            /* كلُّ قسمٍ مطويٌّ إلّا المفتوح — ورأسُه يبقى ظاهراً دائماً،
+               فالمعلّمُ يرى ما أنجزه ويعود إليه بضغطة. */
+            stage.querySelectorAll('.qe-sec').forEach((el) => {
+                const del = el.querySelector('[data-qe-sec-del]');
+                const t = del && del.dataset.qeSecDel;
+                el.dataset.tpType = t;
+                if (t === s.open) return;
+                el.classList.add('tp-fold');
+                /* الشريطُ المطويُّ يقول نوعَه لا ترويسةَ طباعته: «السؤال
+                   الأول: اختيار من متعدد». الترويسةُ الطويلةُ تنفع مفتوحاً
+                   حيث يراجعها بعينه، ولا تنفع سطراً مطويّاً يُلمح لمحاً. */
+                const bEl = el.querySelector('.qe-sec-head .tx b');
+                const sEl = el.querySelector('.qe-sec-head .tx span');
+                if (bEl) bEl.textContent =
+                    bEl.textContent.split(':')[0].trim() + ': ' + QE.TYPE_LABELS[t];
+                if (sEl) sEl.textContent = sEl.textContent.split('—').pop().trim();
+            });
+
+            if (s.open) {
+                secs.insertAdjacentHTML('afterend',
+                    '<button type="button" class="tp-done" data-done>تم</button>');
+                dock.classList.add('pv-hide');
+            } else if (s.picking) {
+                secs.insertAdjacentHTML('afterend',
+                    panelHtml(s.qs, s.qs.length ? 'اختر النوع الذي بعده:' : 'نوعُ السؤال:'));
+                dock.classList.add('pv-hide');
+            }
+            /* وإلّا فلا شيء إلّا زرُّ «أضف سؤالاً» — وهذا حالُ الدخول. */
+        }
+
         QE.bind(stage, s.qs, {
             points: true,
             rerender: render,
@@ -236,10 +284,30 @@
 
     /* في «ج» يُلتقط النوعُ قبل أن يعمل الرابط، ليُفتح قسمُه وحدَه. */
     stage.addEventListener('click', (e) => {
+        /* الرأسُ المطويُّ يُفتح بالضغط — إلّا سلّةَ الحذف فيه، فهي أسبق. */
+        if (mode === 'd' && !e.target.closest('[data-qe-sec-del]')) {
+            const fold = e.target.closest('.tp-fold');
+            if (fold) {
+                e.stopPropagation(); e.preventDefault();
+                S.d.open = fold.dataset.tpType; S.d.picking = false;
+                return render();
+            }
+        }
         const b = e.target.closest('button');
         if (!b) return;
-        if (b.dataset.done !== undefined) { S.c.open = null; return render(); }
+        if (b.dataset.done !== undefined) {
+            S[mode].open = null;
+            if (mode === 'd') S.d.picking = false;
+            return render();
+        }
+        if (b.dataset.qeOpen !== undefined && mode === 'd') {
+            e.stopPropagation(); e.preventDefault();
+            S.d.picking = true; return render();
+        }
         if (mode === 'c' && b.dataset.qeAdd !== undefined) S.c.open = b.dataset.qeAdd;
+        if (mode === 'd' && b.dataset.qeAdd !== undefined) {
+            S.d.open = b.dataset.qeAdd; S.d.picking = false;
+        }
     }, true);
 
     document.querySelectorAll('.pv-tabs button').forEach((b) => {
@@ -256,6 +324,7 @@
     document.getElementById('reset').addEventListener('click', () => {
         S[mode].qs.length = 0;
         if (mode === 'c') S.c.open = null;
+        if (mode === 'd') { S.d.open = null; S.d.picking = false; }
         render();
     });
 
