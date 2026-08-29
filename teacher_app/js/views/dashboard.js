@@ -468,7 +468,7 @@
         }
         return `
             <div class="home-hero-alt">
-                <div class="ha-t">🌤️ لا حصص لك اليوم</div>
+                <div class="ha-t">لا حصص لك اليوم</div>
                 <div class="ha-s">يومك خالٍ من الحصص — وقت مناسب لتجهيز الاختبارات وأوراق العمل</div>
                 <a href="#/schedule" class="home-alt-lk">📅 الجدول كاملاً ←</a>
             </div>`;
@@ -479,7 +479,7 @@
         if (!info || info.state === 'done') {
             return `
                 <div class="home-hero-alt">
-                    <div class="ha-t">🎉 انتهت حصصك اليوم</div>
+                    <div class="ha-t">انتهت حصصك اليوم</div>
                     <div class="ha-s">استمتع بباقي يومك</div>
                 </div>`;
         }
