@@ -3407,25 +3407,6 @@ body.drawer-open { overflow: hidden; }
 .enjaz-tile .t { font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary); }
 .enjaz-tile .h { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); }
 
-/* زر «+ إضافة فصل» الرصاصي أعلى صفحة الفصول — نفس مادة بطاقات الفصول. */
-.btn-add-gray {
-    display: inline-flex;
-    align-items: center;
-    min-height: 40px;
-    padding: 0 16px;
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: var(--fw-bold);
-    color: var(--ink-primary);
-    white-space: nowrap;
-    cursor: pointer;
-    background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
-    border: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
-    box-shadow: inset 0 1.5px 0 var(--sheen), 0 3px 8px rgba(16, 24, 40, .1);
-}
-.btn-add-gray:active { transform: scale(.98); }
-
 /* ‫التعبئة التلقائية لأوقات الحصص: بداية + مدة + فسحة → الباقي يُحسب. */
 .tf-box {
     background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
@@ -3588,8 +3569,7 @@ body.drawer-open { overflow: hidden; }
     /* Section headers stack — إلا رأس الفصول: عنوانه كلمة واحدة فيسع
        الاثنان على سطر، والزر يبقى في الطرف المقابل. */
     .section-header:not(.classes-header) { flex-direction: column; align-items: stretch; }
-    .section-header:not(.classes-header) > .btn,
-    .section-header:not(.classes-header) > .btn-add-gray { align-self: flex-start; }
+    .section-header:not(.classes-header) > .btn{ align-self: flex-start; }
 
     /* Class screen compact */
     .class-topbar { gap: var(--space-2); }

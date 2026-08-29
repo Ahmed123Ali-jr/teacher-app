@@ -308,11 +308,13 @@
                    نفس المكوّن يخدم الموضعين. */
                 const el = document.getElementById('view-initiatives');
                 el.hidden = false;
+                /* ولا زرَّ رجوعٍ في متنها: سهمُ الشريط العلويّ يخرج بها، وهو
+                   مكانُ الرجوع الوحيد في التطبيق كلِّه — وهذه الشاشةُ ليست
+                   جذراً فالسهمُ ظاهرٌ فيها. وكان هنا زرٌّ ثانٍ يرجع بها،
+                   سهمُه «←» في تطبيقٍ سهمُ رجوعه «→»، وصنفُه صنفَ زرِّ
+                   إضافةٍ لا رجوع. (بلاغُ المعلّم ٢٩ أغسطس ٢٠٢٦.) */
                 el.innerHTML = `
                     <div class="container">
-                        <div class="section-header classes-header" style="margin-top: var(--space-6);">
-                            <a href="#/shortcuts" class="btn-add-gray">← إنجاز</a>
-                        </div>
                         <div id="ini-panel"></div>
                     </div>`;
                 await global.PortfolioInitiatives.render(
