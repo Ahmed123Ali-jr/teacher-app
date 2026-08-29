@@ -5783,14 +5783,17 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
-.rm-hero .k { font-size: 12px; font-weight: var(--fw-bold); opacity: .8; }
+.rm-hero .k { font-size: 12.5px; font-weight: var(--fw-bold); opacity: .8; }
 
+/* رقمٌ صريحٌ لا رمزٌ من السلّم: `--fs-display` ينزل إلى ٢٦ على الجوّال —
+   وهو مقاسُ عنوانٍ في صفحةٍ ضيّقة، لا مقاسُ رقمٍ يُقرأ من بعيدٍ في صدرها.
+   جُرّب فانكمش الرقمُ من ٤٤ إلى ٢٦. */
 .rm-hero .v {
     font-size: 44px; font-weight: var(--fw-bold); line-height: 1.1;
     margin-top: 2px; font-variant-numeric: tabular-nums;
 }
 
-.rm-hero .s { font-size: 12.5px; opacity: .88; margin-top: 5px; }
+.rm-hero .s { font-size: var(--fs-sm); opacity: .88; margin-top: 5px; }
 
 .rm-hero .row {
     display: flex; gap: 8px; margin-top: 15px;
@@ -5798,17 +5801,19 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 .rm-hero .row > div { flex: 1; text-align: center; }
-.rm-hero .row .n { font-size: 18px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
-.rm-hero .row .c { font-size: 10.5px; opacity: .8; margin-top: 1px; }
+.rm-hero .row .n { font-size: 20px; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.rm-hero .row .c { font-size: var(--fs-xs); opacity: .8; margin-top: 1px; }
 
 .rm-seg { display: flex; gap: 6px; margin: var(--space-5) 0 var(--space-2); }
-.rm-seg .pseg { flex: 1; padding: 0 10px; font-size: 12.5px; }
+/* بلا مقاسٍ خاصّ: يرث ١٣٫٥ من مقسّم التطبيق، فلا يصغُر حرفُه في مربّعه. */
+.rm-seg .pseg { flex: 1; padding: 0 10px; }
 
 .rm-list { display: flex; flex-direction: column; }
 
+/* الحشوُ يتبع الحرف: كبُر العنوانُ فارتفع السطرُ معه، وإلّا ضاق حولَه. */
 .rm-row {
     display: flex; align-items: center; gap: 10px;
-    padding: 12px 2px; border-bottom: 1px solid var(--border);
+    padding: 13px 2px; border-bottom: 1px solid var(--border);
 }
 
 .rm-row:last-child { border-bottom: 0; }
@@ -5831,17 +5836,17 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 .rm-row .bd .t {
-    font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+    font-size: 14.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 .rm-row .bd .m {
-    font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted);
+    font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--text-muted);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 .rm-row .when {
-    font-size: 11px; font-weight: var(--fw-bold); flex: none; color: var(--text-muted);
+    font-size: 11.5px; font-weight: var(--fw-bold); flex: none; color: var(--text-muted);
 }
 
 /* المتأخّرُ يقولها بلونه — والتأخيرُ يبدأ من «أمس». */
@@ -5861,7 +5866,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 
 .rm-empty {
     text-align: center; padding: var(--space-8) var(--space-4);
-    color: var(--text-muted); font-size: 13px;
+    color: var(--text-muted); font-size: var(--fs-sm);
     font-weight: var(--fw-bold); line-height: 1.9;
 }
 

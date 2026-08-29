@@ -20,12 +20,14 @@
 (function (global) {
     'use strict';
 
+    /* بلا أيقونات: رُفعت من الشاشة واللوحة معاً بطلبه (٢٩ أغسطس ٢٠٢٦)،
+       فسقط حقلُها من البيانات — لا يبقى في الجدول ما لا يُقرأ. */
     const TYPE_META = {
-        exam:     { label: 'اختبار',     icon: '📝', color: '#EF4444' },
-        homework: { label: 'واجب',       icon: '📚', color: '#F59E0B' },
-        meeting:  { label: 'اجتماع',     icon: '👥', color: '#8B5CF6' },
-        activity: { label: 'نشاط',       icon: '🎯', color: '#0EA5E9' },
-        other:    { label: 'أخرى',       icon: '🔔', color: '#64748B' }
+        exam:     { label: 'اختبار',  color: '#EF4444' },
+        homework: { label: 'واجب',    color: '#F59E0B' },
+        meeting:  { label: 'اجتماع',  color: '#8B5CF6' },
+        activity: { label: 'نشاط',    color: '#0EA5E9' },
+        other:    { label: 'أخرى',    color: '#64748B' }
     };
 
     const TRASH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
@@ -270,7 +272,7 @@
                         <button type="button" class="sch-chip ${!customDate && pick.date === q.d ? 'on' : ''}"
                                 data-quick="${q.d}">${q.label}</button>
                     `).join('')}
-                    <button type="button" class="sch-chip ${customDate ? 'on' : ''}" data-date-other>✎ تاريخ آخر</button>
+                    <button type="button" class="sch-chip ${customDate ? 'on' : ''}" data-date-other>تاريخ آخر</button>
                 </div>
                 ${customDate ? `
                     <input type="date" class="input" id="rm-date" value="${esc(pick.date)}"
@@ -280,7 +282,7 @@
                 <div class="sch-chips">
                     ${Object.entries(TYPE_META).map(([k, v]) => `
                         <button type="button" class="sch-chip ${pick.type === k ? 'on' : ''}"
-                                data-type="${k}">${v.icon} ${v.label}</button>
+                                data-type="${k}">${v.label}</button>
                     `).join('')}
                 </div>
 
@@ -294,7 +296,7 @@
                 </div>
 
                 <button type="button" class="fsave" id="rm-save">
-                    ${existing ? '💾 حفظ التعديل' : '💾 حفظ التذكير'}
+                    ${existing ? 'حفظ التعديل' : 'حفظ التذكير'}
                 </button>
             `;
             body.querySelector('#rm-title').addEventListener('input', (e) => { pick.title = e.target.value; });
@@ -338,7 +340,7 @@
 
             /* اللوحة تُغلق قبل الكتابة — الكتابة رحلة شبكة تقارب ربع ثانية. */
             global.Modal.close();
-            global.TeacherApp.toast(existing ? 'تم حفظ التعديل ✅' : 'تمت إضافة التذكير ✅', 'success', 1200);
+            global.TeacherApp.toast(existing ? 'تم حفظ التعديل' : 'تمت إضافة التذكير', 'success', 1200);
             try {
                 await global.TeacherDB.put('reminders', row);
             } catch (err) {
@@ -348,7 +350,7 @@
             if (onSaved) await onSaved();
         });
 
-        global.Modal.open({ title: existing ? '🔔 تعديل التذكير' : '🔔 تذكير جديد', body });
+        global.Modal.open({ title: existing ? 'تعديل التذكير' : 'تذكير جديد', body });
     }
 
     function shortGrade(grade) {
