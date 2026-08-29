@@ -448,7 +448,7 @@
         if (kind === 'weekend') {
             return `
                 <div class="home-hero-alt">
-                    <div class="ha-t">🌴 إجازة سعيدة</div>
+                    <div class="ha-t">إجازة سعيدة</div>
                     <div class="ha-s">نلقاك الأحد بإذن الله</div>
                 </div>`;
         }
@@ -462,7 +462,7 @@
                 : 'إجازة سعيدة';
             return `
                 <div class="home-hero-alt">
-                    <div class="ha-t">🌴 ${esc((off && off.name) || 'إجازة')}</div>
+                    <div class="ha-t">${esc((off && off.name) || 'إجازة')}</div>
                     <div class="ha-s">${back}</div>
                 </div>`;
         }
