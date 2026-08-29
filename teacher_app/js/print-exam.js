@@ -99,6 +99,24 @@
     let L = AR;
     /* «اللغة الإنجليزية» هو الاسمُ في قائمة المواد، والباقي احتياطٌ لمن
        كتب مادّته بيده. */
+    /* ── نصٌّ عربيٌّ في ورقةٍ إنجليزيّة ──
+       اسمُ المعلّم واسمُ المدرسةِ يبقيان عربيّين: أعلامٌ لا تُترجَم. لكنّ
+       سطراً واحداً فيه اتّجاهان يُقسَم عند حدّهما، ومحرّكُ الرسم يقيس كلَّ
+       قسمٍ ثمّ يرسمه وحدَه — فإن وقع القسمُ داخل كلمةٍ عربيّةٍ خرجت حروفُها
+       مفكّكةً أو في غير موضعها. جُرّب في متصفّح المكتب فلم ينكسر، وانكسر
+       في جهاز المستخدم: المحرّكاتُ تختلف في موضع القسم، فلا يُبنى على أنّ
+       أحدَها لا يقسم.
+
+       والعلاجُ ألّا نترك القسمَ للمحرّك: يُغلَّف كلُّ عربيٍّ في عنصرٍ يحمل
+       اتّجاهه، فيصير قسماً قائماً برأسه لا يُقسَّم. وفي الورقة العربيّة لا
+       يفعل شيئاً — لا يُغيَّر ما اعتُمد. */
+    const HAS_AR = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    function esc(v) {
+        const t = escapeHtml(v);
+        return (L === EN && HAS_AR.test(String(v == null ? '' : v)))
+            ? '<span dir="rtl">' + t + '</span>' : t;
+    }
+
     const isEnglish = (subject) => /إنجليزي|انجليزي|english/i.test(String(subject || ''));
 
     /* ما يكتبه المعلّمُ عربيّاً وله مقابلٌ إنجليزيٌّ معروف: الإدارةُ والمادّةُ
@@ -242,7 +260,7 @@
         const o = q.options || [];
         let out = '';
         for (let k = 0; k < cols; k++) {
-            const t = escapeHtml(o[k] || '');
+            const t = esc(o[k] || '');
             out += `<td class="o">${L.letters[k]}) ${t || '&nbsp;'}</td>`;
         }
         return out;
@@ -332,15 +350,15 @@
                 const n = ar(i + 1);
                 if (g.type === 'match') {
                     blocks.push({ kind: 'row', sec: secNo, head: MATCH_HEAD(), tcls: 'ex-tbl', html:
-                        `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
+                        `<tr><td class="m">${n}</td><td>${esc(q.text)}</td>`
                         + '<td class="c">&nbsp;</td>'
                         + `<td class="m">${bLetter(i)}</td>`
-                        + `<td>${escapeHtml(bCol[i].text)}</td></tr>` });
+                        + `<td>${esc(bCol[i].text)}</td></tr>` });
                     return;
                 }
                 if (g.type === 'tf') {
                     blocks.push({ kind: 'row', sec: secNo, head: TF_HEAD(), tcls: 'ex-tbl', html:
-                        `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
+                        `<tr><td class="m">${n}</td><td>${esc(q.text)}</td>`
                         + '<td class="c">&nbsp;</td></tr>' });
                     return;
                 }
@@ -350,7 +368,7 @@
                        ينكسر لو افترقا. */
                     blocks.push({ kind: 'row', sec: secNo, head: MCQ_HEAD(cols), tcls: 'ex-tbl ex-mcq', html:
                         `<tr><td class="m" rowspan="2">${n}</td>`
-                        + `<td class="q" colspan="${cols}">${escapeHtml(q.text)}</td></tr>`
+                        + `<td class="q" colspan="${cols}">${esc(q.text)}</td></tr>`
                         + `<tr>${optCells(q, cols)}</tr>` });
                     return;
                 }
@@ -360,13 +378,13 @@
                     const withBlank = /\.{4,}|…|_{3,}/.test(t) ? t : t + ' ...............';
                     blocks.push({ kind: 'q', sec: secNo, html:
                         `<div class="ex-q" style="margin-bottom:14px;"><span class="n">${L.qNum(n)}</span>`
-                        + `<span class="t">${escapeHtml(withBlank)}</span></div>` });
+                        + `<span class="t">${esc(withBlank)}</span></div>` });
                     return;
                 }
                 /* مقالي: سؤالٌ ومساحة كتابة، كتلةً واحدة. */
                 blocks.push({ kind: 'q', sec: secNo, html:
                     `<div class="ex-q"><span class="n">${L.qNum(n)}</span>`
-                    + `<span class="t">${escapeHtml(q.text).replace(/\n/g, '<br>')}</span>`
+                    + `<span class="t">${esc(q.text).replace(/\n/g, '<br>')}</span>`
                     + (perQ && pts(q) > 0 ? `<span class="m">(${marks(pts(q))})</span>` : '')
                     + '</div>' + lines(opts.answerLines || 4) });
             });
@@ -392,7 +410,7 @@
                     ? `${letterFor(bCol, i)}) ${String(q.answer || '')}`
                     : answerText(q);
                 out.push({ kind: 'row', sec: secNo, head: KEY_HEAD(), tcls: 'ex-key', html:
-                    `<tr><td class="m">${ar(i + 1)}</td><td>${escapeHtml(ans)}</td></tr>` });
+                    `<tr><td class="m">${ar(i + 1)}</td><td>${esc(ans)}</td></tr>` });
             });
         });
         return out;
@@ -430,20 +448,20 @@
         const right = [
             H.kingdom,
             H.ministry,
-            escapeHtml(tDept(H, p.educationDept || teacher?.education_dept || '')),
-            escapeHtml(teacher?.school_name || H.school)
+            esc(tDept(H, p.educationDept || teacher?.education_dept || '')),
+            esc(teacher?.school_name || H.school)
         ].filter(Boolean).join('<br>');
 
         const left = [
-            cls?.subject ? `${H.subject}: ${escapeHtml(tSubject(H, cls.subject))}` : '',
-            cls?.grade ? `${H.grade}: ${escapeHtml(tGrade(H, cls.grade))}`
-                + `${cls.section ? ' / ' + escapeHtml(tSection(H, cls.section)) : ''}` : '',
-            s.include_teacher && teacher?.name ? `${H.teacherL}: ${escapeHtml(teacher.name)}` : '',
+            cls?.subject ? `${H.subject}: ${esc(tSubject(H, cls.subject))}` : '',
+            cls?.grade ? `${H.grade}: ${esc(tGrade(H, cls.grade))}`
+                + `${cls.section ? ' / ' + esc(tSection(H, cls.section)) : ''}` : '',
+            s.include_teacher && teacher?.name ? `${H.teacherL}: ${esc(teacher.name)}` : '',
             /* تاريخٌ يكتبه المعلّم، لا تاريخُ اليوم: الاختبارُ يُعدّ قبل
                موعده. وفراغُه نقاطٌ تُملأ بالقلم لا يومُ الطباعة. */
             s.include_date
                 ? `${H.date}: ${String(s.exam_date || '').trim()
-                    ? escapeHtml(String(s.exam_date).trim()) : '................'}`
+                    ? esc(String(s.exam_date).trim()) : '................'}`
                 : '',
             s.include_grade !== false && total ? `${H.total}: ${H.num(total)}` : ''
         ].filter(Boolean).join('<br>');
@@ -452,7 +470,7 @@
             ? `<img class="ex-logo" src="${p.logoDataUrl}" alt="">`
             : '<div class="ex-logo-ph"></div>';
 
-        const term = p.academicYear ? ` — ${escapeHtml(p.academicYear)}` : '';
+        const term = p.academicYear ? ` — ${esc(p.academicYear)}` : '';
 
         /* خانة الدرجة تسقط مع الدرجات: ورقة العمل لا تُصحَّح بدرجة،
            فصندوقٌ فارغ اسمه «الدرجة» يُربك الطالب ووليّه. */
@@ -470,7 +488,7 @@
                 ? L.instructions
                 : '');
         const note = noteText
-            ? `<p class="ex-note"><strong>${L.notesLabel}:</strong> ${escapeHtml(noteText)}</p>`
+            ? `<p class="ex-note"><strong>${L.notesLabel}:</strong> ${esc(noteText)}</p>`
             : '';
 
         /* المعلم قد يُطفئ الترويسة الرسمية (ورقةٌ داخلية، أو ورق مطبوعٌ
@@ -484,7 +502,7 @@
             <hr class="ex-rule"><hr class="ex-rule2">`;
 
         return `${official}
-            <h1 class="ex-title">${escapeHtml(exam.title || 'اختبار')}${term}</h1>
+            <h1 class="ex-title">${esc(exam.title || 'اختبار')}${term}</h1>
             ${info}${note}`;
     }
 
@@ -659,7 +677,7 @@
             if (opts.includeAnswers) {
                 /* العنوانُ لا يكرّر «نموذج الإجابة» مع الشريط تحته: في
                    الإنجليزيّة يكتفي بعنوان الاختبار. */
-                const keyHead = `<h1 class="ex-title">${escapeHtml(L.keyHead(exam.title || ''))}</h1>`;
+                const keyHead = `<h1 class="ex-title">${esc(L.keyHead(exam.title || ''))}</h1>`;
                 keyPages = paginate(buildKeyBlocks(exam), stage.el, keyHead, names);
             }
 
