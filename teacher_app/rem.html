@@ -66,65 +66,6 @@
         line-height: 1.9;
     }
 
-    /* ══════════ «أ» — مجموعاتٌ بالوقت ══════════ */
-    .rma-h {
-        font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text-muted);
-        margin: 18px 2px 8px; display: flex; align-items: baseline; gap: 7px;
-    }
-    .rma-h .n { margin-inline-start: auto; font-size: 11px; }
-    .rma-h.late { color: var(--danger); }
-    .rma-card {
-        background: var(--surface); border: 1.5px solid var(--border);
-        border-radius: 16px; overflow: hidden;
-        box-shadow: 0 2px 6px rgba(16, 24, 40, .05);
-    }
-    .rma-row {
-        display: flex; align-items: center; gap: 10px;
-        padding: 11px 12px; border-bottom: 1px solid var(--border);
-    }
-    .rma-row:last-child { border-bottom: 0; }
-    .rma-row .bd { flex: 1; min-width: 0; }
-    .rma-row .t {
-        font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .rma-row .m { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 2px; }
-    .rma-row .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-    .rm-done .t { text-decoration: line-through; color: var(--text-muted); }
-
-    /* ══════════ «ب» — بطاقةٌ بحافّةٍ بلون نوعها ══════════ */
-    .rmb-list { display: flex; flex-direction: column; gap: 10px; }
-    .rmb-card {
-        position: relative; overflow: hidden;
-        background: var(--surface); border: 1.5px solid var(--border);
-        border-radius: 16px; padding: 13px 15px 13px 13px;
-        box-shadow: 0 2px 6px rgba(16, 24, 40, .05);
-        display: flex; align-items: flex-start; gap: 11px;
-    }
-    /* الحافّةُ تقول النوعَ بلونها — لا إيموجي يُقرأ حرفاً حرفاً. */
-    .rmb-card::before {
-        content: ""; position: absolute; inset-block: 0; inset-inline-end: 0;
-        width: 5px; background: var(--tc, var(--primary));
-    }
-    .rmb-card .bd { flex: 1; min-width: 0; }
-    .rmb-card .t { font-size: 14.5px; font-weight: var(--fw-bold); color: var(--ink-primary); }
-    .rmb-card .m { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 5px; }
-    .rmb-card .m .k {
-        font-size: 10.5px; font-weight: var(--fw-bold); padding: 2px 8px;
-        border-radius: 999px; background: color-mix(in srgb, var(--tc) 14%, var(--mix-base));
-        color: var(--tc);
-    }
-    .rmb-card .m .d { font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); }
-    .rmb-card .m .late {
-        font-size: 10.5px; font-weight: var(--fw-bold); padding: 2px 8px; border-radius: 999px;
-        background: color-mix(in srgb, var(--danger) 12%, var(--mix-base)); color: var(--danger);
-    }
-    .rmb-card .nt {
-        font-size: 11.5px; font-weight: 500; color: var(--text-muted);
-        margin-top: 6px; line-height: 1.7;
-    }
-    .rmb-card.rm-done { opacity: .62; }
-
     /* ══════════ «ج» — صدرٌ ثمّ قائمةٌ مضغوطة ══════════ */
     .rmc-hero {
         background: var(--primary); border-radius: var(--radius-lg);
@@ -153,7 +94,14 @@
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .rmc-row .m { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 2px; }
-    .rmc-row .when { font-size: 11px; font-weight: var(--fw-bold); flex: none; }
+    .rmc-row .when {
+        font-size: 11px; font-weight: var(--fw-bold); flex: none; color: var(--text-muted);
+    }
+    .rmc-row .when.late {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 11%, var(--mix-base));
+        padding: 3px 9px; border-radius: 999px;
+    }
 </style>
 </head>
 <body>
@@ -162,9 +110,7 @@
     <div class="pv-bar">
         <div class="pv-tabs">
             <button type="button" data-m="now">الحالي</button>
-            <button type="button" data-m="a">أ</button>
-            <button type="button" data-m="b">ب</button>
-            <button type="button" data-m="c">ج</button>
+            <button type="button" data-m="c">المعتمَد (ج)</button>
         </div>
         <p class="pv-say" id="say"></p>
     </div>
@@ -210,24 +156,26 @@
     /* الفلترُ الأوّل في الثلاثة الجديدة يشمل المتأخّرات، وفي «الحالي» لا
        يشملها كما هو اليوم — والفرقُ يُرى بالتبديل بينهما.
        فتذكيرٌ فات موعدُه يختفي من أوّل ما يُفتح، وهو أولى ما يُرى. */
+    /* شريحتان لا ثلاث: «القائمة» كلُّ ما لم يُنجَز، و«المنجزة» ما أُنجز.
+       فالتعليمُ ينقله من الأولى إلى الثانية ولا يبقى له أثرٌ فيها. */
     let filter = 'open';
-    const isOpen = (r) => !r.done;
     const counts = () => ({
-        open: R.filter(isOpen).length,
+        open: R.filter((r) => !r.done).length,
         cur:  R.filter((r) => !r.done && r.d >= 0).length,
         all:  R.length,
         done: R.filter((r) => r.done).length
     });
+    /* الأقدمُ أوّلاً: المتأخّرُ في رأس القائمة لا في ذيلها. */
+    const byDate = (a, b) => a.d - b.d;
     const list = (legacy) => {
-        if (filter === 'done') return R.filter((r) => r.done);
-        if (filter === 'all')  return R.slice();
-        return legacy ? R.filter((r) => !r.done && r.d >= 0) : R.filter(isOpen);
+        if (filter === 'done') return R.filter((r) => r.done).sort(byDate);
+        if (legacy) return R.filter((r) => !r.done && r.d >= 0).sort(byDate);
+        return R.filter((r) => !r.done).sort(byDate);
     };
 
     const seg = () => { const c = counts(); return `
         <div class="rm-seg">
-            <button type="button" class="pseg${filter === 'open' ? ' on' : ''}" data-f="open">المتبقية ${ar(c.open)}</button>
-            <button type="button" class="pseg${filter === 'all' ? ' on' : ''}" data-f="all">الكل ${ar(c.all)}</button>
+            <button type="button" class="pseg${filter === 'open' ? ' on' : ''}" data-f="open">القائمة ${ar(c.open)}</button>
             <button type="button" class="pseg${filter === 'done' ? ' on' : ''}" data-f="done">المنجزة ${ar(c.done)}</button>
         </div>`; };
 
@@ -272,59 +220,7 @@
             </article>`; }).join('')}</div>`;
     }
 
-    /* ══════════ أ — مجموعاتٌ بالوقت ══════════ */
-    const GROUPS = [
-        { k: 'late',  t: 'متأخرة',      f: (r) => !r.done && r.d < 0 },
-        { k: 'today', t: 'اليوم',       f: (r) => r.d === 0 },
-        { k: 'tom',   t: 'غداً',        f: (r) => r.d === 1 },
-        { k: 'week',  t: 'هذا الأسبوع', f: (r) => r.d > 1 && r.d <= 7 },
-        { k: 'later', t: 'لاحقاً',      f: (r) => r.d > 7 },
-        { k: 'done',  t: 'منجزة',       f: (r) => r.done }
-    ];
-    function A() {
-        const items = list();
-        if (!items.length) return seg() + empty() + addBtn();
-        let out = seg();
-        GROUPS.forEach((g) => {
-            const rs = items.filter(g.f);
-            if (!rs.length) return;
-            out += `<div class="rma-h${g.k === 'late' ? ' late' : ''}">${g.t}
-                        <span class="n">${ar(rs.length)}</span></div>
-                    <div class="rma-card">${rs.map((r) => {
-                        const m = TYPE[r.ty];
-                        return `<div class="rma-row${r.done ? ' rm-done' : ''}">
-                            ${tick(r)}
-                            <span class="dot" style="background:${m.c}"></span>
-                            <div class="bd"><div class="t">${r.t}</div>
-                                <div class="m">${m.l}${r.cls ? ' · ' + r.cls : ''}</div></div>
-                            ${del(r)}
-                        </div>`; }).join('')}</div>`;
-        });
-        return out + addBtn();
-    }
 
-    /* ══════════ ب — بطاقةٌ بحافّةٍ بلون نوعها ══════════ */
-    function B() {
-        const items = list();
-        if (!items.length) return seg() + empty() + addBtn();
-        return seg() + `<div class="rmb-list">${items.map((r) => {
-            const m = TYPE[r.ty]; const late = !r.done && r.d < 0;
-            return `
-            <div class="rmb-card${r.done ? ' rm-done' : ''}" style="--tc:${m.c}">
-                ${tick(r)}
-                <div class="bd">
-                    <div class="t">${r.t}</div>
-                    <div class="m">
-                        <span class="k">${m.l}</span>
-                        <span class="d">${rel(r.d)}</span>
-                        ${r.cls ? `<span class="d">· ${r.cls}</span>` : ''}
-                        ${late ? '<span class="late">متأخر</span>' : ''}
-                    </div>
-                    ${r.nt ? `<div class="nt">${r.nt}</div>` : ''}
-                </div>
-                ${del(r)}
-            </div>`; }).join('')}</div>` + addBtn();
-    }
 
     /* ══════════ ج — صدرٌ ثمّ قائمةٌ مضغوطة ══════════ */
     function C_() {
@@ -346,33 +242,32 @@
         </div>
         <div style="margin-top:var(--space-5)">${seg()}</div>
         ${items.length === 0 ? empty() : `<div class="rmc-list">${items.map((r) => {
+            /* المتأخّرُ يقولها بالأحمر، وكم تأخّر في سطر بيانه — والتأخيرُ
+               يبدأ من «أمس»: يومُ الموعد نفسُه ليس تأخيراً. */
             const m = TYPE[r.ty]; const late = !r.done && r.d < 0;
+            const meta = [m.l, r.cls, late ? rel(r.d) : ''].filter(Boolean).join(' · ');
             return `<div class="rmc-row${r.done ? ' rm-done' : ''}">
                 ${tick(r)}
                 <div class="bd"><div class="t">${r.t}</div>
-                    <div class="m">${m.l}${r.cls ? ' · ' + r.cls : ''}</div></div>
-                <span class="when" style="color:${late ? 'var(--danger)' : 'var(--text-muted)'}">${rel(r.d)}</span>
+                    <div class="m">${meta}</div></div>
+                <span class="when${late ? ' late' : ''}">${late ? 'متأخرة' : rel(r.d)}</span>
                 ${del(r)}
             </div>`; }).join('')}</div>`}
         ${addBtn()}`;
     }
 
     const SAY = {
-        now: '<b>الحالي</b> — إيموجي في كلّ سطر، ومربّعُ تعليمٍ صغير، وشاراتٌ ' +
-             'متجاورةٌ تُقرأ واحدةً واحدة. <b>وفلترُه الأوّل يُخفي المتأخّرات</b> ' +
-             '— جرّبه واعدد، ثمّ انظرها في الثلاثة.',
-        a: '<b>أ — مجموعاتٌ بالوقت.</b> متأخرة · اليوم · غداً · هذا الأسبوع · ' +
-           'لاحقاً. الوقتُ هو ترتيبُ التذكير، فيصير عنواناً لا شارةً في السطر.',
-        b: '<b>ب — بطاقةٌ لكلّ تذكير.</b> حافّةٌ ملوّنةٌ بلون نوعه تُعرَف بلمحة، ' +
-           'والعنوانُ كبير، والملاحظةُ تحته.',
-        c: '<b>ج — صدرٌ ثمّ قائمة.</b> «كم عليّ اليوم؟» في صدرٍ كحليٍّ كالتقارير، ' +
-           'ثمّ سطورٌ مضغوطةٌ يمينُها موعدُها.'
+        now: '<b>الحالي</b> — للمقارنة. إيموجي في كلّ سطر، ومربّعُ تعليمٍ صغير، ' +
+             'وثلاثُ شرائح، <b>وأوّلُها يُخفي المتأخّرات</b>: اعدد فيه ثمّ في المعتمَد.',
+        c: '<b>ج المعتمَد.</b> شريحتان: <b>القائمة</b> بالأقدم أوّلاً و«متأخرة» ' +
+           'بالأحمر لما فات موعدُه، و<b>المنجزة</b>. والتعليمُ ينقل التذكيرَ ' +
+           'بينهما فلا يبقى له أثرٌ في القائمة.'
     };
 
     const stage = document.getElementById('stage');
     const say = document.getElementById('say');
-    let mode = 'now';
-    const REN = { now: now, a: A, b: B, c: C_ };
+    let mode = 'c';
+    const REN = { now: now, c: C_ };
 
     function draw() {
         stage.innerHTML = REN[mode]();
