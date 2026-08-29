@@ -345,7 +345,9 @@ async function run() {
     let cls = null, seeded = [];
     try {
         await win.SB.auth.signOut().catch(() => {});
-        await win.Auth.guestLogin();
+        /* `allowNew` للأدوات وحدَها: حسابُها حسابُ فحصٍ يُنشأ عمداً،
+           والمنعُ إنّما وُضع لئلّا يُنشأ حسابُ معلّمٍ في صمت. */
+        await win.Auth.guestLogin({ allowNew: true });
         const S = win.TeacherDB.Settings;
         await S.set('onboarded', true);
         await S.set('education_dept', 'إدارة تعليم عسير');

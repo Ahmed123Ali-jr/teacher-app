@@ -341,14 +341,31 @@
             }
 
             const btn = container.querySelector('#btn-guest');
+            const rest = () => { if (btn) { btn.disabled = false; btn.textContent = 'الدخول كزائر'; } };
             if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
             try {
                 await global.Auth.beginGuest();
-                /* إلى الرئيسيّة، ويحكم الموجّهُ بما وجد: فإن كانت جلستُه قد
-                   انطفأت وأُنشئ له حسابٌ جديد ردّه إلى التهيئة بنفسه. */
                 global.location.hash = '#/dashboard';
             } catch (err) {
-                if (btn) { btn.disabled = false; btn.textContent = 'الدخول كزائر'; }
+                rest();
+                /* ══ جلسةٌ ماتت: يُسأل ولا يُنشأ في صمت ══
+                   كان التطبيقُ يُنشئ حساباً جديداً ويردّه إلى التهيئة، فيجد
+                   المعلّمُ نفسَه يملأ بياناته من جديدٍ ولا يدري لماذا —
+                   وحسابُه القديمُ يبقى في القاعدة يتيماً لا يصله أحد.
+                   (بلاغُ المعلّم ٢٩ أغسطس ٢٠٢٦.)
+                   فصار يُقال له ما جرى، ولا يمضي إلّا بإقراره. */
+                if (err && err.code === 'guest-session-lost') {
+                    if (!global.confirm(err.message + '\n\nهل تريد إنشاء حساب زائر جديد؟')) return;
+                    if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
+                    try {
+                        await global.Auth.beginGuest({ allowNew: true });
+                        global.location.hash = '#/setup';
+                    } catch (e2) {
+                        rest();
+                        global.TeacherApp.toast(e2.message || 'تعذّر الدخول كزائر.', 'error', 5000);
+                    }
+                    return;
+                }
                 global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
             }
         }
