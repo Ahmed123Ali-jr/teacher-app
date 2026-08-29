@@ -6,8 +6,19 @@
        الإجابة الصحيحة».
      · و**الفقرات** تحته، كلُّ فقرةٍ سؤالٌ من ذلك النوع مرقّمٌ داخله.
      · و«+ فقرة» تحت آخر فقرةٍ تزيد من النوع نفسِه بلا قائمةٍ ولا اختيار.
-     · و«+ أضف سؤالاً» في الشريط السفلي يفتح الأنواعَ لقسمٍ جديد.
    (طلبُ المعلّم ٢١ أغسطس ٢٠٢٦، واعتُمد على معاينة q2.html.)
+
+   ── وقسمٌ واحدٌ مفتوح ──
+   الشاشةُ تُفتح خاليةً، و«+ أضف سؤالاً» يُظهر لوحةَ الأنواع في متن
+   الصفحة — لا ورقةً منبثقةً فوقها. ويُكتب القسمُ ثمّ يُضغط «تم» فيُطوى
+   إلى رأسه البتروليِّ باسم نوعه، ويعود الزرُّ لما بعده. والمطويُّ يُفتح
+   بضغطةٍ عليه فينطوي المفتوحُ مكانَه.
+   (طلبُ المعلّم ٢٩ أغسطس ٢٠٢٦، واعتُمد على معاينة q3.html — الشكل «د».)
+
+   ولا سلّةَ حذفٍ في المطويّ **بشرطه**: حذفُ سؤالٍ بفقراته ضغطةٌ لا
+   تُستدرك، فلا تُتاح إلّا وهو مفتوحٌ يرى ما يحذف. والمنعُ بالسلوك لا
+   بالإخفاء — `display:none` يمنع الإصبعَ ولا يمنع الحدث، فأيُّ ضغطةٍ
+   داخل شريطٍ مطويٍّ تفتحه ولا شيءَ غير ذلك.
 
    وثمرةُ ذلك أن نوع السؤال يُختار مرّةً للقسم كلِّه، فتسقط قائمةٌ منسدلة
    كانت تتكرّر مع كل فقرة.
@@ -227,7 +238,40 @@
         </div>`;
     }
 
-    function secHtml(g, gi, o) {
+    /* ══ حالةُ الطيّ ══
+       قسمٌ واحدٌ مفتوحٌ في كل مرّة، وما أنهاه المعلّم يُطوى إلى رأسه فوقَه.
+       (طلبُ المعلّم ٢٩ أغسطس ٢٠٢٦، واعتُمد على معاينة q3.html — الشكل «د».)
+
+       والحالةُ مقرونةٌ بمصفوفة الأسئلة نفسِها لا بالوحدة: المحرّرُ مشتركٌ
+       بين الاختبارات وأوراق العمل، فلو كانت الحالةُ للوحدة لانتقل «المفتوح»
+       من ورقةٍ إلى أخرى. ومقارنةُ الهويّة تُصفّرها عند تبدّل الورقة. */
+    let FOLD = { qs: null, open: null, picking: false };
+    function foldState(qs) {
+        if (FOLD.qs !== qs) FOLD = { qs: qs, open: null, picking: false };
+        return FOLD;
+    }
+
+    function secHtml(g, gi, o, folded) {
+        /* المطويُّ يقول نوعَه لا ترويسةَ طباعته: الترويسةُ الطويلةُ تنفع
+           مفتوحاً حيث تُراجَع بالعين، ولا تنفع سطراً يُلمح لمحاً. */
+        if (folded) {
+            return `
+        <section class="qe-sec qe-fold" data-qe-sec="${g.type}">
+            <div class="qe-sec-head">
+                <div class="tx">
+                    <b>السؤال ${ORDINALS[gi] || arDigits(gi + 1)}: ${escapeHtml(typeOf(g.type).n)}</b>
+                    <span>${pWord(g.items.length)}</span>
+                </div>
+                ${o.points && g.items.reduce((x, y) => x + (y.q.points || 0), 0)
+                    ? `<span class="g">${mWord(g.items.reduce((x, y) => x + (y.q.points || 0), 0))}</span>`
+                    : ''}
+            </div>
+        </section>`;
+        }
+        return secOpenHtml(g, gi, o);
+    }
+
+    function secOpenHtml(g, gi, o) {
         const sum = g.items.reduce((s, x) => s + (x.q.points || 0), 0);
         return `
         <section class="qe-sec" data-qe-sec="${g.type}">
@@ -247,36 +291,31 @@
         </section>`;
     }
 
-    /* ورقةُ الأنواع: زرٌّ واحدٌ يفتحها بدل صفٍّ من خمسة أزرارٍ مبثوثة.
-       والنوعُ المفتوح يبقى معروضاً لا يُخفى، لأن إخفاءه يجعل الزرَّ يفقد
-       خياراته واحداً بعد واحدٍ حتى يصير بلا معنى. */
-    function sheetHtml(qs) {
+    /* لوحةُ الأنواع: في متن الصفحة لا ورقةً منبثقةً فوقها. المنبثقةُ كانت
+       طبقةً ثالثةً بين المعلّم وورقته، وهنا الأنواعُ في مكان القسم الذي
+       ستفتحه — فالنظرُ لا ينتقل والإصبعُ لا يعود.
+       والنوعُ المفتوح يبقى معروضاً لا يُخفى، لأن إخفاءه يجعل القائمةَ تفقد
+       خياراتها واحداً بعد واحدٍ حتى تصير بلا معنى. */
+    function panelHtml(qs, head) {
         const used = new Set(qs.map(kindOf));
         return `
-        <div class="qe-sheet" data-qe-sheet hidden>
-            <div class="qe-sheet-in" role="dialog" aria-label="نوع السؤال">
-                <div class="h">نوعُ السؤال</div>
-                ${TYPES.map((t) => `
-                    <button type="button" class="${used.has(t.k) ? 'used' : ''}" data-qe-add="${t.k}">
-                        <b>${escapeHtml(t.n)}</b>
-                        <small>${used.has(t.k)
-                            ? 'مفتوحٌ أصلاً — تُضاف فقرةٌ إليه'
-                            : escapeHtml(leadOf(t.k))}</small>
-                    </button>`).join('')}
-            </div>
+        <div class="qe-panel" role="group" aria-label="نوع السؤال">
+            <div class="h">${head}</div>
+            ${TYPES.map((t) => `
+                <button type="button" class="${used.has(t.k) ? 'used' : ''}" data-qe-add="${t.k}">
+                    <b>${escapeHtml(t.n)}</b>
+                    <small>${used.has(t.k)
+                        ? 'مفتوحٌ أصلاً — تُضاف فقرةٌ إليه'
+                        : escapeHtml(leadOf(t.k))}</small>
+                </button>`).join('')}
         </div>`;
     }
 
-    /** زرُّ فتح ورقة الأنواع. تضعه الشاشةُ في شريطها السفلي الثابت. */
-    const addBtnHtml = () =>
-        '<button type="button" class="qe-addsec" data-qe-open>+ أضف سؤالاً</button>';
-
-    /* بلا شرحٍ تحته: الزرُّ في قاع الشاشة يقول ما يُفعل، وسطرٌ يشرحه
-       تكرارٌ لا يقرؤه أحدٌ مرّتين. (طلبُ المعلّم، ٢٢ أغسطس ٢٠٢٦.) */
-    const EMPTY_HINT = `
-        <div class="qe-empty">
-            <p>لا أسئلة بعد.</p>
-        </div>`;
+    /** زرُّ إظهار لوحة الأنواع. تضعه الشاشةُ في شريطها السفلي الثابت.
+        ويسقط ما دام قسمٌ مفتوحاً أو اللوحةُ ظاهرة: زرٌّ يفتح ما هو مفتوحٌ
+        زرٌّ يكذب. ويُنادى بعد `editorHtml` في الشاشتين، فالحالةُ مضبوطة. */
+    const addBtnHtml = () => (FOLD.open || FOLD.picking) ? ''
+        : '<button type="button" class="qe-addsec" data-qe-open>+ أضف سؤالاً</button>';
 
     /**
      * يرسم المحرّر: الرأس ثم الأقسام ثم ورقة الأنواع (مطويّة).
@@ -295,10 +334,22 @@
         o = o || {};
         LTR = !!o.ltr;
         const groups = groupByType(qs);
-        const secs = groups.map((g, gi) => secHtml(g, gi, o)).join('');
+        const F = foldState(qs);
+
+        /* قسمٌ حُذف وهو مفتوح: لولا هذا لبقي «تم» معروضاً وزرُّ الإضافة
+           ساقطاً، فلا يجد المعلّم بابَ خروجٍ من شاشةٍ فارغة. */
+        if (F.open && !groups.some((g) => g.type === F.open)) F.open = null;
+
+        const secs = groups.map((g, gi) => secHtml(g, gi, o, g.type !== F.open)).join('');
+        const tail = F.open
+            ? '<button type="button" class="qe-done" data-qe-done>تم</button>'
+            : (F.picking
+                ? panelHtml(qs, groups.length ? 'اختر النوع الذي بعده:' : 'نوعُ السؤال:')
+                : '');
+
         return headHtml(title, qs, groups, o)
-             + `<div class="qe-secs">${groups.length ? secs : EMPTY_HINT}</div>`
-             + sheetHtml(qs);
+             + `<div class="qe-secs">${secs}</div>`
+             + tail;
     }
 
     /* ------------------------------------------------------------------
@@ -314,14 +365,6 @@
            فلولا نزع سابقيه لتراكمت المستمعات مع كل إعادة رسم، فتُحذف
            بضغطةٍ واحدة عدّة فقرات. */
         if (root.__qeOff) root.__qeOff();
-
-        const sheet = () => root.querySelector('[data-qe-sheet]');
-        const openSheet = (on) => {
-            const el = sheet();
-            if (!el) return;
-            el.hidden = !on;
-            el.classList.toggle('on', !!on);
-        };
 
         /* بعد الإضافة: الفقرةُ الجديدة إلى وسط الشاشة والمؤشّر فيها —
            فالمعلّم أضافها ليكتبها، لا لينزل إليها بإصبعه. */
@@ -355,16 +398,33 @@
             }
         };
 
+        const F = foldState(qs);
+
         const onClick = (e) => {
-            /* النقرُ على العتمة خلف الورقة يُغلقها. ولا بدّ أن يسبق البحثَ
-               عن زرّ: العتمةُ ليست زرّاً، فيسقط النقرُ صامتاً. */
-            const sh = sheet();
-            if (sh && e.target === sh) return openSheet(false);
+            /* الشريطُ المطويُّ يُفتح بالضغط أيّاً كان موضعُ الإصبع منه.
+               ولا سلّةَ حذفٍ فيه أصلاً — وحذفُ سؤالٍ بفقراته ضغطةٌ لا
+               تُستدرك، فلا تُتاح إلّا وهو مفتوحٌ يرى ما يحذف. (شرطُ
+               المعلّم عند اعتماد الشكل.) وهذا يسبق البحثَ عن زرّ: الشريطُ
+               ليس زرّاً، فيسقط النقرُ عليه صامتاً لولا هذا. */
+            const fold = e.target.closest('.qe-fold');
+            if (fold && root.contains(fold)) {
+                F.open = fold.dataset.qeSec;
+                F.picking = false;
+                return rerender();
+            }
 
             const b = e.target.closest('button');
             if (!b || !root.contains(b)) return;
 
-            if (b.dataset.qeOpen !== undefined) return openSheet(true);
+            if (b.dataset.qeOpen !== undefined) {
+                F.picking = true;
+                return rerender();
+            }
+            if (b.dataset.qeDone !== undefined) {
+                F.open = null;
+                F.picking = false;
+                return rerender();
+            }
 
             if (b.dataset.qePick !== undefined) {
                 const q = qs[Number(b.dataset.qePick)];
@@ -391,6 +451,8 @@
             }
             if (b.dataset.qeAdd !== undefined) {
                 const at = addOfType(qs, b.dataset.qeAdd, !!o.points);
+                F.open = b.dataset.qeAdd;      /* المُضافُ إليه هو المفتوح */
+                F.picking = false;
                 rerender();
                 return focusItem(at);
             }
