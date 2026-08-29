@@ -5360,6 +5360,42 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     display: block; margin-top: 3px;
     font-size: 12.5px; line-height: 1.75; color: var(--text);
 }
+/* ══ اختيارُ عمود الأسماء من جدولٍ مرفوع ══
+   الجدولُ يُعرض كما هو ويُضغط رأسُ عموده — لا يُخمَّن. ويمرّ أفقيّاً داخل
+   إطاره وحدَه: أعمدةُ إكسل قد تبلغ عشرين، والصفحةُ لا تُمَطّ لها. */
+.sheet-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: var(--space-3); }
+.sheet-tab {
+    padding: 7px 13px; border-radius: 11px; cursor: pointer; font-family: inherit;
+    font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+    background: var(--surface); border: 1.5px solid var(--border);
+}
+.sheet-tab.on {
+    background: linear-gradient(180deg, var(--primary-mid), var(--primary));
+    border-color: var(--primary); color: #fff;
+    box-shadow: 0 4px 11px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.sheet-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+.sheet-tbl { border-collapse: collapse; width: max-content; min-width: 100%; }
+.sheet-tbl th { padding: 0; }
+.sheet-tbl td {
+    border: 1px solid var(--border); padding: 8px 10px;
+    font-size: 12.5px; color: var(--text); white-space: nowrap;
+    max-width: 190px; overflow: hidden; text-overflow: ellipsis;
+}
+.sheet-col {
+    display: block; width: 100%; cursor: pointer; font-family: inherit;
+    padding: 10px; border: 1.5px solid var(--border); border-radius: 0;
+    font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+    background: color-mix(in srgb, var(--beige) 30%, var(--mix-base));
+    white-space: nowrap;
+}
+/* المقترَحُ مميَّزٌ ليُرى، لا مختارٌ مفروض — الضغطُ هو الاختيار. */
+.sheet-col.on {
+    background: linear-gradient(180deg, var(--primary-mid), var(--primary));
+    border-color: var(--primary); color: #fff;
+}
+.sheet-col:active { transform: scale(.98); }
+
 /* العدّادُ يتبع ما يكتبه المعلّم، فيرى أثرَ حذفِ سطرٍ قبل أن يحفظ. */
 .rev-count {
     margin-inline-start: 6px;

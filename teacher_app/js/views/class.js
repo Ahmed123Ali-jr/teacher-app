@@ -1446,11 +1446,12 @@
                         <span class="t">${file ? escapeHtml(file.name)
                                                : 'ارفع ملفاً أو صورةً بأسماء ' + global.Words.students()}</span>
                         <span class="s">${file ? 'اضغط لاختيار ملفٍ آخر'
-                                               : 'صورة أو PDF أو ملف نصّي'}</span>
+                                               : 'إكسل أو CSV أو PDF أو صورة'}</span>
                     </span>
                     <span class="chev" aria-hidden="true">❮</span>
                 </button>
-                <input type="file" id="upload-file" accept=".csv,.txt,.pdf,image/*" hidden>
+                <input type="file" id="upload-file" hidden
+                       accept=".csv,.txt,.xlsx,.xlsm,.xls,.pdf,image/*">
 
                 ${footer('إضافة ' + global.Words.students())}
             `;
@@ -1487,6 +1488,15 @@
                         names = typed;
                     } else {
                         if (!file) throw new Error('اكتب الأسماء أو ارفع ملفاً.');
+                        /* الجدولُ أوّلاً: خلاياه أسماءٌ كاملةٌ بحروفها، فلا
+                           ذكاءَ ولا حصّةَ ولا خروجَ من الجهاز. ولا يُخمَّن
+                           فيه عمودُ الاسم — يُعرض الجدولُ ويختار المعلّم. */
+                        if (global.SheetRead && global.SheetRead.isSheet(file)) {
+                            const r = await global.SheetRead.read(file);
+                            if (!r.ok) throw new Error(r.msg);
+                            paintSheet(r.sheets);
+                            return;
+                        }
                         // Text files (CSV/TXT) are read directly; PDF/images go to AI.
                         const isText = /\.(csv|txt)$/i.test(file.name)
                             || file.type === 'text/csv' || file.type === 'text/plain';
@@ -1555,6 +1565,83 @@
             return reviewed;
         }
 
+        /* ── شاشةُ اختيار العمود ──
+           لا يُخمَّن أيُّ عمودٍ هو الاسم: يُعرض الجدولُ كما هو ويُضغط عمودُه.
+           والاقتراحُ الأوّليّ مساعدةٌ لا قرار — عمودُ الأسماء أعلى الأعمدة
+           **تفرّداً** (الأسماءُ لا تتكرّر، والجنسيّةُ والحالةُ تتكرّران في
+           كلّ صفّ)، وقِيس هذا المميِّز على كشفٍ حقيقيّ فكان ‎0.49‎ فأعلى
+           للأسماء و‎0.12‎ فأدنى لغيرها. ويبقى للمعلّم أن يضغط غيرَه. */
+        function bestColumn(rows) {
+            const n = Math.max(...rows.map((r) => r.length));
+            let best = 0, score = -1;
+            for (let c = 0; c < n; c++) {
+                const v = rows.map((r) => r[c] || '').filter(Boolean);
+                if (v.length < 2) continue;
+                const uniq = new Set(v).size / v.length;
+                const ar   = v.filter((x) => /[ء-ي]/.test(x) && !/[0-9٠-٩]/.test(x)).length / v.length;
+                const two  = v.filter((x) => x.split(' ').length >= 2).length / v.length;
+                const sc = uniq * 2 + ar + two;
+                if (sc > score) { score = sc; best = c; }
+            }
+            return best;
+        }
+
+        function paintSheet(sheets) {
+            let si = 0;
+            draw();
+
+            function draw() {
+                const rows = sheets[si].rows;
+                const cols = Math.max(...rows.map((r) => r.length));
+                const pick = bestColumn(rows);
+                const head = rows[0] || [];
+                const body = rows.slice(0, 5);
+                form.innerHTML = `
+                    <div class="rev-note">
+                        <b>اختر عمود الأسماء</b>
+                        <span>اضغط رأسَ العمود الذي فيه أسماء ${global.Words.students()}.
+                              الجدول ${rows.length} صفّاً — وصفُّ العناوين لا يُحسب.</span>
+                    </div>
+                    ${sheets.length > 1 ? `<div class="sheet-tabs">${sheets.map((s, i) => `
+                        <button type="button" class="sheet-tab ${i === si ? 'on' : ''}" data-sheet="${i}">${escapeHtml(s.name)}</button>
+                    `).join('')}</div>` : ''}
+                    <div class="sheet-wrap">
+                        <table class="sheet-tbl">
+                            <thead><tr>${Array.from({ length: cols }, (_, c) => `
+                                <th><button type="button" class="sheet-col ${c === pick ? 'on' : ''}" data-col="${c}">${
+                                    escapeHtml(head[c] || 'عمود ' + (c + 1))}</button></th>`).join('')}</tr></thead>
+                            <tbody>${body.map((r) => `<tr>${Array.from({ length: cols }, (_, c) =>
+                                `<td>${escapeHtml(r[c] || '')}</td>`).join('')}</tr>`).join('')}</tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
+                        <button type="button" class="btn btn-ghost" data-sheet-back>رجوع</button>
+                    </div>`;
+                form.querySelectorAll('[data-sheet]').forEach((b) => b.addEventListener('click', () => {
+                    si = +b.dataset.sheet; draw();
+                }));
+                form.querySelector('[data-sheet-back]').addEventListener('click', () => paint());
+                form.querySelectorAll('[data-col]').forEach((b) => b.addEventListener('click', () => {
+                    take(rows, +b.dataset.col);
+                }));
+            }
+
+            /* الصفُّ الأوّل عنوانٌ لا اسم إن لم يكن اسماً: كلمةٌ واحدةٌ، أو
+               فيه لفظُ «اسم». ويُقال للمعلّم كم أُخذ، فيراه في المراجعة. */
+            function take(rows, c) {
+                let vals = rows.map((r) => (r[c] || '').trim()).filter(Boolean);
+                const first = vals[0] || '';
+                if (vals.length > 1 && (first.split(' ').length < 2 || /اسم/.test(first))) {
+                    vals = vals.slice(1);
+                }
+                if (!vals.length) {
+                    global.TeacherApp.toast('هذا العمود فارغ.', 'warning');
+                    return;
+                }
+                paintReview(vals, 'sheet');
+            }
+        }
+
         /* ── شاشةُ المراجعة ──
            سطرٌ لكلّ اسمٍ في مربّعِ كتابةٍ واحد، لا خانةٌ لكلّ اسم: على
            الجوّال يُصلَح الحرفُ في مكانه ويُحذف السطرُ بلمسة، وثلاثون خانةً
@@ -1562,6 +1649,7 @@
         /* نصُّ اللافتة يتبع المصدرَ الحقيقيّ: ملفُّ CSV يُقرأ في الجهاز ولا
            يمرّ بالذكاء، فلا يُقال للمعلّم إنّه مرّ به. */
         const SRC_NOTE = {
+            sheet: 'قُرئت من الجدول كما هي — خليّةً خليّة، بلا ذكاء اصطناعيّ.',
             csv: 'قُرئت من الملفّ كما هي — سطراً سطراً.',
             ai:  'قُرئت بالذكاء الاصطناعيّ — وقد يخطئ في الألقاب، '
                + 'والعددُ الصحيحُ لا يعني أنّ كلَّ اسمٍ صحيح.'
