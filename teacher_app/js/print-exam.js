@@ -62,7 +62,10 @@
         page: (a, b) => 'صفحة ' + arNum(a) + ' من ' + arNum(b),
         essayFallback: 'يُصحَّح تقديرياً',
         kingdom: 'المملكة العربية السعودية', ministry: 'وزارة التعليم', school: 'المدرسة',
-        subject: 'المادة', grade: 'الصف', teacherL: 'المعلم', date: 'التاريخ', total: 'الدرجة'
+        subject: 'المادة', grade: 'الصف', teacherL: 'المعلم', date: 'التاريخ', total: 'الدرجة',
+        /* عنوانان افتراضيّان: ما يُطبع حين لا يسمّي المعلّم ورقتَه،
+           وما يُسمّى به الملفُّ المحفوظ. */
+        worksheet: 'ورقة عمل', fileFallback: 'اختبار'
     };
 
     const EN = {
@@ -93,7 +96,8 @@
         page: (a, b) => 'Page ' + a + ' of ' + b,
         essayFallback: 'Marked at the teacher\u2019s discretion',
         kingdom: 'Kingdom of Saudi Arabia', ministry: 'Ministry of Education', school: 'School',
-        subject: 'Subject', grade: 'Class', teacherL: 'Teacher', date: 'Date', total: 'Total'
+        subject: 'Subject', grade: 'Class', teacherL: 'Teacher', date: 'Date', total: 'Total',
+        worksheet: 'Worksheet', fileFallback: 'Exam'
     };
 
     let L = AR;
@@ -699,10 +703,14 @@
         }
     }
 
+    /* اسمُ الملفّ يتبع لغةَ الورقة كذلك: معلّمُ الإنجليزيّة يبحث عن ملفّه
+       بين ملفّاته، فلا يليق أن يكون داخلُه إنجليزيّاً واسمُه عربيّاً.
+       و`L` مضبوطةٌ قبل هذا — تُقرَّر في أوّل `savePdf`. */
     function buildFileName(ctx) {
         const { exam, cls } = ctx;
-        const bits = [exam.title || 'اختبار'];
-        if (cls?.grade) bits.push(cls.grade + (cls.section ? '-' + cls.section : ''));
+        const bits = [exam.title || L.fileFallback];
+        if (cls?.grade) bits.push(tGrade(L, cls.grade)
+            + (cls.section ? '-' + tSection(L, cls.section) : ''));
         bits.push(global.PdfCore.todayISO());
         return bits.join('_');
     }
@@ -727,8 +735,11 @@
            يريده، خرجت نقاطٌ يملؤها بالقلم. ولا سطرَ تاريخٍ أصلاً لورقةٍ
            لم يُطلب لها. */
         const when = String(sheet.settings?.sheet_date || '').trim();
+        /* العنوانُ الافتراضيّ يُقرَّر هنا لا في `savePdf`: هناك يُبنى الاسمُ
+           بعد أن تُضبط اللغة، وهنا قبلَها — فتُسأل المادّةُ مرّةً ثانية. */
+        const W = isEnglish(ctx.cls && ctx.cls.subject) ? EN : AR;
         const exam = {
-            title: sheet.title || 'ورقة عمل',
+            title: sheet.title || W.worksheet,
             settings: { include_name: true, include_grade: false, include_teacher: true,
                         include_instructions: false,
                         include_date: !!(sheet.settings && sheet.settings.sheet_date !== undefined),
