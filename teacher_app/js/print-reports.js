@@ -34,11 +34,20 @@
     const LINE  = '#E4E4E0';
     const BEIGE = '#EFEDE6';
 
+    /* ── لماذا صنفان لا واحد ──
+       `PdfCore` ينقل الكتلَ من مستندنا إلى صفحاتٍ يبنيها هو، ولا يحمل
+       صنفَنا إليها. فما كان محصوراً بـ«rpp» يسقط أثناء الترقيم: يعود
+       الوسمُ إلى هوامشه الافتراضيّة وتُقاس الكتلةُ بغير ارتفاعها، فتُدفع
+       صفحةً كاملةً بلا سبب. فيُضاف صنفُ صفحته ليستوي القياسُ والرسم.
+       والتنسيقُ لا يتسرّب: لكلّ تصديرٍ مسرحُه، وفيه نمطُه وحدَه. */
+    const S  = '.rpp, .pdfcore-page';
+    const SD = (sel) => '.rpp ' + sel + ', .pdfcore-page ' + sel;
+
     const CSS = `
-    .rpp { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+    ${S} { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
            color: ${TEXT}; direction: rtl; }
-    .rpp * { box-sizing: border-box; }
-    .rpp h1, .rpp h3, .rpp p { margin: 0; }
+    ${SD('*')} { box-sizing: border-box; }
+    ${SD('h1')}, ${SD('h3')}, ${SD('p')} { margin: 0; }
 
     .rpp-head { display: flex; align-items: flex-start; gap: 12px;
                 border-bottom: 2px solid ${INK}; padding-bottom: 10px; margin-bottom: 4px; }
@@ -58,7 +67,19 @@
     .rpp-hero .row .n { font-size: 19px; font-weight: 700; }
     .rpp-hero .row .c { font-size: 10.5px; opacity: .82; margin-top: 1px; }
 
-    .rpp-h { font-size: 13px; font-weight: 700; color: ${MUTED}; margin: 20px 2px 8px; }
+    /* الوسمُ مع الصنف عمداً: قاعدةُ الإعادة أعلاه تذكر الوسمَ فتكون أخصَّ
+       من الصنف وحدَه، فكان صفرُها يمحو هامشَ العناوين — تلتصق بما فوقها
+       وما تحتها في الورقة وحدَها، والشاشةُ سليمةٌ إذ لا إعادةَ تزاحمها.
+       (بلاغُ المعلّم ٢٩ أغسطس ٢٠٢٦.)
+
+       والفصلُ عن القسم الذي فوقه حشوٌ في الكتلة لا هامشٌ في العنوان:
+       الهامشُ ينهار خارج كتلته فتُقاس ناقصةً عمّا تُرسم، فيظنّ المرقّمُ
+       أنّها تسع فتفيض، أو يدفعها كاملةً إلى صفحةٍ تالية ويترك بياضاً.
+       والحشوُ لا ينهار فيُقاس كما يُرى.
+       ولا شَرَطاتٍ مائلةً في هذا التعليق: هو داخل قالبٍ نصّيّ. */
+    .rpp-sec { padding-top: 20px; }
+    ${SD('h3.rpp-h')} { font-size: 13px; font-weight: 700; color: ${MUTED};
+                        margin: 0 2px 8px; }
 
     .rpp-card { background: #fff; border: 1.5px solid ${LINE}; border-radius: 16px;
                 padding: 13px 12px; }
@@ -183,7 +204,8 @@
                 </div>
             </div>`);
 
-        const sec = (title, inner) => `<div><h3 class="rpp-h">${title}</h3>${inner}</div>`;
+        const sec = (title, inner) =>
+            `<div class="rpp-sec"><h3 class="rpp-h">${title}</h3>${inner}</div>`;
 
         if (t.attTotal) {
             out.push(sec('تفصيل الحضور', `<div class="rpp-card">${meters(ATT.map((g) => ({
@@ -202,7 +224,7 @@
 
         /* الفصولُ كتلةً كتلة: بطاقةُ فصلٍ لا تُقصّ بين صفحتين. */
         if (data.perClass.length) {
-            out.push(`<div><h3 class="rpp-h">تفصيل لكل فصل</h3></div>`);
+            out.push(`<div class="rpp-sec"><h3 class="rpp-h">تفصيل لكل فصل</h3></div>`);
             data.perClass.forEach((p) => {
                 const c = p.att.present + p.att.absent + p.att.late;
                 const rate = c === 0 ? null : Math.round((p.att.present + p.att.late) / c * 100);
@@ -243,6 +265,11 @@
             doc.innerHTML = buildDoc(ctx);
             stage.el.appendChild(doc);
 
+            /* الاستقرارُ قبل الترقيم لا بعده: الخطُّ العربيُّ يُحمَّل
+               متأخّراً، فالقياسُ قبله يقيس خطَّ الاحتياط — تُقاس الكتلةُ
+               بغير ارتفاعها فتُدفع صفحةً كاملةً بلا سبب، أو تفيض. */
+            await global.PdfCore.settle(stage.el);
+
             const { pages } = global.PdfCore.paginate(doc, stage.el);
             doc.remove();
 
@@ -254,6 +281,7 @@
                 el.appendChild(f);
             });
 
+            /* ومرّةً ثانيةً بعد الترقيم: الصفحاتُ عناصرُ جديدةٌ في المسرح. */
             await global.PdfCore.settle(stage.el);
             const blob = await global.PdfCore.renderPdf(pages);
             const how = await global.PdfCore.deliverPdf(blob,
