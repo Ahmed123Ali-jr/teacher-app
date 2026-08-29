@@ -1,6 +1,20 @@
 /* ==========================================================================
-   views/reminders.js — Manual reminders for the teacher.
-   List by date, filter (upcoming/all/done), add/edit/delete, mark as done.
+   views/reminders.js — تذكيراتُ المعلّم.
+
+   شريحتان لا ثلاث: **القائمة** كلُّ ما لم يُنجَز، و**المنجزة** ما أُنجز.
+   فالتعليمُ ينقل التذكيرَ بينهما ولا يبقى له أثرٌ في القائمة.
+   (اختاره المعلّم — الشكل «ج» من معاينة rem.html، ٢٩ أغسطس ٢٠٢٦.)
+
+   والمواعيدُ من الأقدم إلى الأحدث: المتأخّرُ في رأس القائمة لا في ذيلها.
+   وما فات موعدُه يقولها بالأحمر، والتأخيرُ يبدأ من «أمس» — يومُ الموعد
+   نفسُه ليس تأخيراً.
+
+   ── وما كان قبلَه ──
+   كان الفلترُ الأوّل «القادمة» شرطُه `date >= today`، فتذكيرٌ فات موعدُه
+   يختفي من أوّل ما تُفتح الشاشة — وهو أولى ما يُرى. سقط الشرطُ مع الشريحة.
+
+   ولوحةُ الإضافة/التعديل (`openSheet`) لم تُمسّ: جُدّدت في ٨ أغسطس
+   وتُنادى من الرئيسيّة أيضاً، فنموذجٌ واحدٌ لا اثنان.
    ========================================================================== */
 
 (function (global) {
@@ -13,6 +27,13 @@
         activity: { label: 'نشاط',       icon: '🎯', color: '#0EA5E9' },
         other:    { label: 'أخرى',       icon: '🔔', color: '#64748B' }
     };
+
+    const TRASH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true">'
+        + '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+
+    const arDigits = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
 
     function todayISO() {
         const d = new Date();
@@ -42,8 +63,8 @@
         if (n === 0)  return 'اليوم';
         if (n === 1)  return 'غداً';
         if (n === -1) return 'أمس';
-        if (n > 1  && n <= 7)  return `بعد ${n} أيام`;
-        if (n < -1 && n >= -7) return `قبل ${Math.abs(n)} أيام`;
+        if (n > 1  && n <= 7)  return `بعد ${arDigits(n)} أيام`;
+        if (n < -1 && n >= -7) return `قبل ${arDigits(Math.abs(n))} أيام`;
         return formatDate(iso);
     }
 
@@ -63,90 +84,88 @@
         const teacher = await global.Auth.currentTeacher();
         if (!teacher) { global.location.hash = '#/login'; return; }
 
-        let filter = 'upcoming'; // 'upcoming' | 'all' | 'done'
+        let filter = 'open';        /* 'open' | 'done' */
 
         async function paint() {
-            const all = await loadAll(teacher);
+            const all = await loadAll(teacher);          /* مرتّبةٌ بالتاريخ صعوداً */
             const today = todayISO();
 
-            let items = all;
-            if (filter === 'upcoming') items = all.filter((r) => !r.done && (r.date >= today));
-            if (filter === 'done')     items = all.filter((r) => r.done);
+            const open = all.filter((r) => !r.done);
+            const done = all.filter((r) => r.done);
+            const items = filter === 'done' ? done : open;
 
             const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
             const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
 
             container.innerHTML = `
                 <div class="container">
-                    <div class="section-header" style="margin-top: var(--space-6);">
-                        <button class="btn btn-primary" id="btn-add-reminder">+ إضافة تذكير</button>
+                    ${heroHtml(open, done, today)}
+                    <div class="rm-seg">
+                        <button type="button" class="pseg${filter === 'open' ? ' on' : ''}"
+                                data-filter="open">القائمة ${arDigits(open.length)}</button>
+                        <button type="button" class="pseg${filter === 'done' ? ' on' : ''}"
+                                data-filter="done">المنجزة ${arDigits(done.length)}</button>
                     </div>
-
-                    <div class="filter-bar">
-                        <button class="chip ${filter === 'upcoming' ? 'active' : ''}" data-filter="upcoming">
-                            القادمة (${all.filter((r) => !r.done && r.date >= today).length})
-                        </button>
-                        <button class="chip ${filter === 'all' ? 'active' : ''}" data-filter="all">
-                            الكل (${all.length})
-                        </button>
-                        <button class="chip ${filter === 'done' ? 'active' : ''}" data-filter="done">
-                            المنجزة (${all.filter((r) => r.done).length})
-                        </button>
-                    </div>
-
-                    <div class="reminders-list">
-                        ${items.length === 0 ? emptyHtml() : items.map((r) => itemHtml(r, classById)).join('')}
-                    </div>
+                    ${items.length === 0 ? emptyHtml() : `
+                        <div class="rm-list">${items.map((r) => itemHtml(r, classById, today)).join('')}</div>`}
+                    <button type="button" class="rm-add" id="btn-add-reminder">إضافة تذكير</button>
                 </div>
             `;
 
             bind(all, classById);
         }
 
-        function emptyHtml() {
-            const msgMap = {
-                upcoming: 'لا توجد تذكيرات قادمة. اضغط "+ إضافة تذكير" لتسجّل اختباراً أو واجباً أو أي شيء لا تريد نسيانه.',
-                all:      'لم تُضف أي تذكيرات بعد.',
-                done:     'لم تُنجز أي تذكيرات حتى الآن.'
-            };
+        /* الصدرُ يجيب سؤالَ الدخول: كم عليّ اليوم، وما الذي يليه. */
+        function heroHtml(open, done, today) {
+            const late  = open.filter((r) => r.date < today).length;
+            const now   = open.filter((r) => r.date === today).length;
+            const week  = open.filter((r) => r.date > today && daysUntil(r.date) <= 7).length;
+            const next  = open.find((r) => r.date > today);
             return `
-                <div class="empty-state">
-                    <div class="icon">🔔</div>
-                    <h3>لا يوجد شيء هنا</h3>
-                    <p>${msgMap[filter]}</p>
-                </div>
-            `;
+                <div class="rm-hero">
+                    <div class="k">تذكيرات اليوم</div>
+                    <div class="v">${arDigits(now)}</div>
+                    <div class="s">${next
+                        ? 'والقادم: ' + escapeHtml(next.title) + ' — ' + relativeLabel(next.date)
+                        : 'لا تذكيرات قادمة'}</div>
+                    <div class="row">
+                        <div><div class="n">${arDigits(late)}</div><div class="c">متأخرة</div></div>
+                        <div><div class="n">${arDigits(week)}</div><div class="c">هذا الأسبوع</div></div>
+                        <div><div class="n">${arDigits(done.length)}</div><div class="c">منجزة</div></div>
+                    </div>
+                </div>`;
         }
 
-        function itemHtml(r, classById) {
+        function emptyHtml() {
+            return `<div class="rm-empty">${filter === 'done'
+                ? 'لم تُنجز تذكيراً بعد.'
+                : 'لا تذكيرات. اضغط «إضافة تذكير» لتسجّل ما لا تريد نسيانه.'}</div>`;
+        }
+
+        function itemHtml(r, classById, today) {
             const meta = TYPE_META[r.type] || TYPE_META.other;
             const cls  = r.class_id ? classById[r.class_id] : null;
-            const classLabel = cls ? `${cls.grade} / ${cls.section}` : '';
-            const overdue = !r.done && r.date < todayISO();
-
+            const label = cls
+                ? (global.ClassCreate ? global.ClassCreate.label(cls.grade, cls.section)
+                                      : cls.grade + ' / ' + cls.section)
+                : '';
+            /* التأخيرُ من «أمس»: يومُ الموعد نفسُه ليس تأخيراً. */
+            const late = !r.done && r.date < today;
+            /* وكم تأخّر يبقى في سطر بيانه، فلا تُفقد المدّةُ حين تُكسب الكلمة. */
+            const bits = [meta.label, label, late ? relativeLabel(r.date) : ''].filter(Boolean);
             return `
-                <article class="reminder-item ${r.done ? 'is-done' : ''} ${overdue ? 'is-overdue' : ''}"
-                         data-id="${r.id}" style="--type-color: ${meta.color};">
-                    <label class="reminder-check">
-                        <input type="checkbox" data-action="toggle" ${r.done ? 'checked' : ''}>
-                    </label>
-                    <div class="reminder-icon">${meta.icon}</div>
-                    <div class="reminder-body">
-                        <div class="reminder-title">${escapeHtml(r.title)}</div>
-                        <div class="reminder-meta">
-                            <span class="badge badge-muted">${meta.label}</span>
-                            <span>📅 ${relativeLabel(r.date)}</span>
-                            ${classLabel ? `<span>📚 ${escapeHtml(classLabel)}</span>` : ''}
-                            ${overdue ? `<span class="badge badge-danger">متأخر</span>` : ''}
-                        </div>
-                        ${r.notes ? `<div class="reminder-notes">${escapeHtml(r.notes)}</div>` : ''}
-                    </div>
-                    <div class="reminder-actions">
-                        <button class="btn btn-ghost btn-sm" data-action="edit">✏️</button>
-                        <button class="btn btn-ghost btn-sm" data-action="delete">🗑️</button>
-                    </div>
-                </article>
-            `;
+                <div class="rm-row${r.done ? ' is-done' : ''}" data-id="${escapeAttr(r.id)}">
+                    <button type="button" class="rm-tick" data-action="toggle"
+                            aria-label="${r.done ? 'إلغاء الإنجاز' : 'تمّ'}">✓</button>
+                    <button type="button" class="bd" data-action="edit">
+                        <span class="t">${escapeHtml(r.title)}</span>
+                        <span class="m">${escapeHtml(bits.join(' · '))}</span>
+                    </button>
+                    <span class="when${late ? ' late' : ''}">${
+                        late ? 'متأخرة' : relativeLabel(r.date)}</span>
+                    <button type="button" class="rm-del" data-action="delete"
+                            aria-label="حذف التذكير">${TRASH}</button>
+                </div>`;
         }
 
         function bind(all, classById) {
@@ -157,13 +176,13 @@
                 el.addEventListener('click', () => { filter = el.dataset.filter; paint(); });
             });
 
-            container.querySelectorAll('.reminder-item').forEach((el) => {
-                const id = el.dataset.id;
-                const row = all.find((r) => r.id === id);
+            container.querySelectorAll('.rm-row').forEach((el) => {
+                const row = all.find((r) => r.id === el.dataset.id);
+                if (!row) return;
 
                 el.querySelector('[data-action="toggle"]')
-                  ?.addEventListener('change', async (e) => {
-                      row.done = e.target.checked;
+                  ?.addEventListener('click', async () => {
+                      row.done = !row.done;
                       await global.TeacherDB.put('reminders', row);
                       paint();
                   });
@@ -171,10 +190,11 @@
                 el.querySelector('[data-action="edit"]')
                   ?.addEventListener('click', () => openSheet(teacher, row, paint));
 
+                /* الحذفُ بتأكيدٍ دائماً — بشرطه، وهو حذفٌ لا يُستدرك. */
                 el.querySelector('[data-action="delete"]')
                   ?.addEventListener('click', async () => {
                       if (!global.confirm('حذف هذا التذكير؟')) return;
-                      await global.TeacherDB.remove('reminders', id);
+                      await global.TeacherDB.remove('reminders', row.id);
                       global.TeacherApp.toast('تم حذف التذكير.', 'info');
                       paint();
                   });
