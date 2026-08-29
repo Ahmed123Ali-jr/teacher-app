@@ -422,13 +422,48 @@
             <button type="button" class="start-add-class" data-add-class>+ إضافة فصل</button>`;
     }
 
-    /* يوم بلا حصص / إجازة نهاية الأسبوع */
-    function restCardHtml(kind) {
+    /* أسماءُ الأيّام السبعة بترتيب `getDay()` — ليوم العودة من الإجازة. */
+    const DAY_FULL = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس',
+                      'الجمعة', 'السبت'];
+
+    /**
+     * إجازةُ اليوم من التقويم الرسميّ — أو `null`.
+     * لا يُسأل عن الجمعة والسبت: خارج الشبكة أصلاً ولهما بطاقتُهما.
+     * والتقويمُ يُختار بإدارة المعلّم، ويغلبه اختيارُه اليدويُّ إن بدّله.
+     */
+    async function officialOffToday(teacher, todayIdx) {
+        if (todayIdx === -1 || !global.AcademicCalendar) return null;
+        let override = null;
+        try {
+            override = await global.TeacherDB.Settings.get('academic_calendar');
+        } catch (e) { override = null; }
+        const cal = global.AcademicCalendar.resolve(
+            teacher && teacher.education_dept, override);
+        const info = global.AcademicCalendar.offInfo(cal, new Date());
+        return (info && info.off) ? info : null;
+    }
+
+    /* يوم بلا حصص / إجازة نهاية الأسبوع / إجازة رسميّة في التقويم */
+    function restCardHtml(kind, off) {
         if (kind === 'weekend') {
             return `
                 <div class="home-hero-alt">
                     <div class="ha-t">🌴 إجازة سعيدة</div>
                     <div class="ha-s">نلقاك الأحد بإذن الله</div>
+                </div>`;
+        }
+        /* إجازةٌ رسميّةٌ تقع على يوم دراسة. واسمُها يُكتب كما في التقويم —
+           «اليوم الوطني» ليست «إجازة سعيدة»، والمعلّم يعرف لِمَ يرتاح.
+           ويومُ العودة يُقال إن عرفه التقويم، ويُسكت عنه إن لم يعرفه:
+           إجازةٌ في آخر ما نعرف من العام لا نعرف ما بعدها. */
+        if (kind === 'holiday') {
+            const back = off && off.back
+                ? 'نلقاك ' + DAY_FULL[off.back.getDay()] + ' بإذن الله'
+                : 'إجازة سعيدة';
+            return `
+                <div class="home-hero-alt">
+                    <div class="ha-t">🌴 ${esc((off && off.name) || 'إجازة')}</div>
+                    <div class="ha-s">${back}</div>
                 </div>`;
         }
         return `
@@ -482,6 +517,13 @@
         const periodByN = Object.fromEntries(periods.map((p) => [p.n, p]));
         const jsDay = new Date().getDay();
         const todayIdx = (jsDay >= 0 && jsDay <= 4) ? jsDay : -1;
+
+        /* إجازةٌ رسميّةٌ تقع على أحد أيّام الدراسة الخمسة: التقويمُ يقولها،
+           لا اليومُ من الأسبوع. وكانت الرئيسيّةُ تعرض حصصَ يومٍ معطَّل.
+           ولا يُسأل إلّا عن الخمسة — الجمعةُ والسبتُ لا يحتاجان تقويماً.
+           و`null` من التقويم تعني «لا أعرف هذا اليوم» فيبقى الحالُ كما كان:
+           الفصلُ الثاني لم تصل تواريخُه، ولا يُبنى على صمت. */
+        const calOff = await officialOffToday(teacher, todayIdx);
         const todayRows = todayIdx === -1
             ? []
             : scheduleRows.filter((r) => r.day === todayIdx).sort((a, b) => a.period - b.period);
@@ -501,6 +543,7 @@
         const hasClasses     = classes.length > 0;
         const hasSchedule    = scheduleRows.length > 0;
         const isWeekend      = todayIdx === -1;
+        const isOfficialOff   = !!calOff;
         const hasPeriodsToday = todayRows.length > 0;
 
         let body, bodyMod = '';
@@ -514,6 +557,8 @@
             bodyMod = ' is-start';   /* تنزل المجموعةُ إلى متناول الإبهام */
         } else if (isWeekend) {
             body = remindersCardHtml(remindersToday, classById) + restCardHtml('weekend');
+        } else if (isOfficialOff) {
+            body = remindersCardHtml(remindersToday, classById) + restCardHtml('holiday', calOff);
         } else if (!hasPeriodsToday) {
             body = remindersCardHtml(remindersToday, classById) + restCardHtml('dayoff');
         } else {

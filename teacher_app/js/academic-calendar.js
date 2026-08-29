@@ -272,6 +272,52 @@
         return weekAfter(items, span) || items.filter((x) => x.kind === 'week').pop();
     }
 
+    /* أوّلُ يومِ دوامٍ بعد تاريخٍ ما — يومُ دراسةٍ ليس بإجازة، أو مقطعُ
+       عمل. والعناصرُ مرتّبةٌ زمنيّاً فأوّلُ ما يوافق هو أقربُها. */
+    function nextWorkDay(items, t) {
+        for (const it of items) {
+            if (it.kind === 'week') {
+                for (const d of it.days) if (ts(d.date) > t && !d.hol) return d.date;
+            } else if (it.work && ts(it.from) > t) {
+                return it.from;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * هل هذا اليومُ إجازةٌ في التقويم؟
+     *
+     * ثلاثةُ أجوبةٍ لا جوابان، والثالثُ هو المهمّ:
+     *   `{off:true, name, back}`  — إجازةٌ يعرفها التقويم.
+     *   `{off:false}`             — يومُ دراسةٍ أو دوامٍ يعرفه.
+     *   `null`                    — **لا يعرف هذا اليوم**.
+     *
+     * و`null` ليس «ليس بإجازة»: الفصلُ الثاني لم تصل تواريخُه بعد، وأيّامُ
+     * الصيف خارجَ التقويم كلِّه. فمن سأل يقنع بجوابه ولا يبني على صمتٍ —
+     * وإلّا صار كلُّ يومٍ مجهولٍ يومَ دوام.
+     */
+    function offInfo(cal, date) {
+        const t = ts(date || new Date());
+        const items = buildAll(cal);
+        for (const it of items) {
+            if (it.kind === 'week') {
+                if (t < ts(it.from) || t > ts(it.to)) continue;
+                const hit = it.days.find((d) => ts(d.date) === t);
+                if (!hit) return { off: false };          /* جمعةٌ أو سبتٌ داخل مدى الأسبوع */
+                return hit.hol
+                    ? { off: true, name: hit.hol.name, back: nextWorkDay(items, t) }
+                    : { off: false };
+            }
+            if (t >= ts(it.from) && t <= ts(it.to)) {
+                return it.work
+                    ? { off: false }
+                    : { off: true, name: it.name, back: nextWorkDay(items, t) };
+            }
+        }
+        return null;
+    }
+
     /* ── الإحصاء يُحسب ولا يُكتب بيد ──
        رقمان مكتوبان بجانب جدولٍ يخالفهما أسوأُ من ألّا يكونا: أيُّ إجازةٍ
        تُزاد تنقص يومَ دراسةٍ وتزيد يومَ إجازة، ولو بقيا مكتوبَين لكذّبَهما
@@ -306,7 +352,7 @@
 
     global.AcademicCalendar = {
         CALENDARS, EARLY_DEPTS, DAY_NAMES,
-        defaultKeyFor, resolve, buildTerm, buildAll, state,
+        defaultKeyFor, resolve, buildTerm, buildAll, state, offInfo,
         ordinal, arDigits, hijri, gregorian
     };
 })(window);
