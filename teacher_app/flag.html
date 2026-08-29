@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>معاينة: علم اليوم الوطني</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D32">
+<link rel="stylesheet" href="css/components.css?v=9">
+<link rel="stylesheet" href="css/views.css?v=D284">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=15">
+<link rel="stylesheet" href="css/theme-white.css?v=20">
+<link rel="stylesheet" href="css/theme-dark.css?v=32">
+
+<style>
+    body { margin: 0; background: var(--bg, #F4F5F7); }
+    .pv { max-width: 460px; margin: 0 auto; padding: 16px 14px 40px; }
+    .pv h4 {
+        font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text-muted);
+        margin: 22px 2px 8px;
+    }
+    .pv h4:first-child { margin-top: 4px; }
+    .pv .rule {
+        border: 0; border-top: 1.5px dashed var(--border); margin: 28px 0 0;
+    }
+    .pv .note {
+        font-size: 12.5px; line-height: 1.9; color: var(--text-muted);
+        font-weight: 500; margin: 6px 2px 0;
+    }
+</style>
+</head>
+<body>
+<div class="pv" id="pv"></div>
+
+<script>
+/* البطاقةُ هي بطاقةُ الرئيسيّة نفسُها — نفسُ `home-hero-alt` ونفسُ
+   `ha-t`، وسطرُ الشرح تحتها مخفيٌّ بالمظهر الأبيض كما في التطبيق.
+   فما يُرى هنا هو ما يُرى هناك. */
+const card = (t) => `<div class="home-hero-alt"><div class="ha-t">${t}</div>
+    <div class="ha-s">نلقاك الأحد بإذن الله</div></div>`;
+
+document.getElementById('pv').innerHTML = `
+    <h4>أ) العلم قبل الاسم</h4>
+    ${card('🇸🇦 اليوم الوطني')}
+
+    <h4>ب) العلم بعد الاسم</h4>
+    ${card('اليوم الوطني 🇸🇦')}
+
+    <h4>ج) بلا علم — كما هي الآن</h4>
+    ${card('اليوم الوطني')}
+
+    <hr class="rule">
+    <h4>وبقيّةُ الإجازات لا تتغيّر في الأحوال الثلاثة</h4>
+    ${card('إجازة إضافية')}
+    ${card('إجازة الخريف')}
+    ${card('إجازة سعيدة')}
+    <p class="note">العلمُ لليوم الوطنيّ وحدَه: الاسمُ يُطبع كما هو في
+    التقويم، فيُستثنى هذا الاسمُ باسمه ولا يُعمَّم على كلّ إجازة.</p>
+`;
+</script>
+</body>
+</html>
