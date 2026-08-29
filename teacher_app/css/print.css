@@ -51,9 +51,6 @@
     .grid.grid-4 { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
     .grid.grid-2 { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
-    /* Undo mobile-only dashboard simplification when printing */
-    #view-dashboard .dashboard-section { display: block !important; }
-
     /* Cards shouldn't reshape into the mobile 2×2 layout when printing */
     .stat-card {
         display: flex !important;
@@ -69,32 +66,7 @@
     .stat-card .stat-value { font-size: 20pt !important; justify-self: start !important; }
 
 
-    /* Bar-chart style used on reports page */
-    .stacked-bar {
-        display: flex !important;
-        height: 16pt !important;
-        border: 1px solid #CBD5E1 !important;
-    }
-    .legend-grid {
-        display: grid !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 4pt !important;
-        font-size: 9pt !important;
-    }
-
-    /* Students ranking mini lists — 2 columns instead of stacked */
-    .mini-list { display: flex !important; flex-direction: column !important; gap: 2pt !important; }
-    .mini-row  { padding: 3pt 6pt !important; font-size: 9pt !important; }
-
-    /* Keep each report card (and its heading) together on one page so the
-       heading never gets orphaned at the bottom of a page. */
-    .dashboard-section {
-        page-break-inside: avoid !important;
-        break-inside:      avoid !important;
-    }
-    .dashboard-section > h3,
-    .dashboard-section > .section-title,
-    .section-title,
+    /* عنوانُ البطاقة لا يُيتَّم في قاع الصفحة. */
     .card-title {
         page-break-after: avoid !important;
         break-after:      avoid !important;

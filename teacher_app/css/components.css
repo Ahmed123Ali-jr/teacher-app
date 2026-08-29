@@ -170,7 +170,6 @@
 
 .badge-info    { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--ink-primary); }
 .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-.badge-danger  { background: rgba(239, 68, 68, 0.12);  color: var(--danger);  }
 .badge-muted   { background: var(--surface-alt);       color: var(--text-muted); }
 
 /* ---------- Hero / status panel (phase 1) ---------- */

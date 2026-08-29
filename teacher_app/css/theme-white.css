@@ -201,7 +201,6 @@ body:where(:not(.theme-dark)),
 
    القاعدة: يُحذف ما يشرح الواجهة، ويبقى ما يخبر عن الواقع أو يحذّر. */
 .dz-h, .bell-note, .callout, .callout-warn, .imp-warn, .imp-skip,
-.cls-s, .class-card-subject, .stat-label, .att-stat, .home-hij,
-.reminder-meta, .file-meta {
+.cls-s, .class-card-subject, .stat-label, .att-stat, .home-hij, .file-meta {
     display: revert !important;
 }

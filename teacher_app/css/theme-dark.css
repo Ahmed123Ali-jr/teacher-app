@@ -319,8 +319,6 @@ body.theme-auto.dark-active .ac-span {
 
 /* عناوينُ ملفّ الإنجاز تقرأ الكحليَّ الخام (‎--pf-royal‎) لا الرمزَ العام،
    فلا يبلغها الشقّ. وهي ثلاثةَ عشرَ موضعاً. */
-body.theme-dark #view-portfolio .section-title,
-body.theme-auto.dark-active #view-portfolio .section-title,
 body.theme-dark #view-portfolio h1,
 body.theme-auto.dark-active #view-portfolio h1,
 body.theme-dark #view-portfolio h2,

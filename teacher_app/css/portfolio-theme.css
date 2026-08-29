@@ -84,13 +84,6 @@ body {
     font-family: inherit;
 }
 
-/* Main page title "📁 ملف الإنجاز" — gold underline */
-#view-portfolio .section-title {
-    color: var(--pf-royal);
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: var(--space-2);
-}
-
 /* ==========================================================================
    Teacher header card — royal gradient
    ========================================================================== */

@@ -9,7 +9,6 @@
      Phase D: .class-card · .class-card-add                   → single column on mobile
      Phase D: .portfolio-section-*                            → accordion tighter on mobile
      Phase D: .schedule-table / .schedule-wrapper             → day-by-day stack / better h-scroll
-     Phase D: .reminder-item                                  → tighter on mobile
      Phase D: .file-card · .book-card                         → stack on mobile
      Phase D: .students-toolbar · .students-actions           → full-width controls
      Phase D: .wizard-footer · .wizard-header                 → stack on mobile
@@ -424,11 +423,6 @@ body.drawer-open { overflow: hidden; }
 /* ==========================================================================
    Dashboard
    ========================================================================== */
-.dashboard-section {
-    margin-bottom: var(--space-8);
-    /* Offset for smooth-scroll so the sticky header doesn't hide the title */
-    scroll-margin-top: calc(var(--header-height) + var(--space-3));
-}
 .section-header {
     display: flex;
     align-items: center;
@@ -437,17 +431,11 @@ body.drawer-open { overflow: hidden; }
     gap: var(--space-3);
     flex-wrap: wrap;
 }
-.section-title {
-    margin: 0;
-    font-size: var(--fs-h2);
-    font-weight: var(--fw-bold);
-}
 
 /* رأس صفحة الفصول: العنوان يميناً وزر الإضافة يساراً على سطر واحد.
    ‎.section-header عامّة تلتفّ عند الضيق — وهنا العنوان كلمة واحدة
    فيسع الاثنان، ويكفي أن نسمح للعنوان بالانكماش. */
 .classes-header { flex-wrap: nowrap; }
-.classes-header .section-title { flex: 1; min-width: 0; }
 
 
 /* Stat cards (desktop: vertical / mobile override below) */
@@ -479,10 +467,6 @@ body.drawer-open { overflow: hidden; }
 /* ==========================================================================
    Profile screen (#/profile) — per-field inline edit
    ========================================================================== */
-
-/* Mobile: stack label / value / edit */
-@media (max-width: 640px) {
-}
 
 /* Compact info table used in portfolio read-only personal section */
 .info-table-compact {
@@ -560,9 +544,6 @@ body.drawer-open { overflow: hidden; }
 }
 .cls-edit-btn:active { transform: scale(.98); }
 
-@media (max-width: 768px) {
-}
-
 /* ==========================================================================
    Settings menu (Snapchat-style list)
    ========================================================================== */
@@ -577,12 +558,6 @@ body.drawer-open { overflow: hidden; }
    Icon top-left · Label top-right · Big number bottom-right
    ========================================================================== */
 @media (max-width: 768px) {
-    /* Force 2 columns for the dashboard 4-up stat grid */
-    #view-dashboard .dashboard-section .grid.grid-4 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--card-gap);
-    }
-
     /* Reshape each stat card: icon + label top, value bottom-right */
     #view-dashboard .stat-card {
         display: grid;
@@ -623,9 +598,6 @@ body.drawer-open { overflow: hidden; }
    Hide the classes section (#2) and shortcuts section (#3) — these are now
    dedicated routes (#/classes, #/shortcuts). On desktop keep everything.
    ========================================================================== */
-@media (max-width: 768px) {
-    #view-dashboard .dashboard-section:nth-child(n+2) { display: none; }
-}
 
 /* Class cards */
 /* TODO(phase-d): on mobile (<768px) place cards in a single column,
@@ -737,12 +709,6 @@ body.drawer-open { overflow: hidden; }
 
 
 /* ---------- Reminders ---------- */
-.filter-bar {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-    margin-bottom: var(--space-5);
-}
 .chip {
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-full);
@@ -760,107 +726,6 @@ body.drawer-open { overflow: hidden; }
     background: var(--primary);
     color: var(--text-inverse);
     border-color: var(--primary);
-}
-
-.reminders-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding-bottom: var(--space-8);
-}
-
-/* TODO(phase-d): reduce padding/gap on mobile, ensure action buttons are 44px. */
-.reminder-item {
-    --type-color: var(--primary);
-    display: grid;
-    grid-template-columns: auto auto 1fr auto;
-    gap: var(--space-4);
-    align-items: start;
-    padding: var(--space-4) var(--space-5);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-right: 4px solid var(--type-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow var(--dur-fast) var(--ease);
-}
-.reminder-item:hover { box-shadow: var(--shadow); }
-
-.reminder-item.is-done {
-    opacity: 0.6;
-    background: var(--surface-alt);
-}
-.reminder-item.is-done .reminder-title {
-    text-decoration: line-through;
-    color: var(--text-muted);
-}
-
-.reminder-item.is-overdue {
-    border-right-color: var(--danger);
-    background: rgba(239, 68, 68, 0.04);
-}
-
-.reminder-check {
-    display: flex;
-    align-items: center;
-    padding-top: var(--space-1);
-}
-.reminder-check input[type="checkbox"] {
-    width: 22px; height: 22px;
-    accent-color: var(--success);
-    cursor: pointer;
-}
-
-.reminder-icon {
-    font-size: 28px;
-    line-height: 1;
-    padding-top: var(--space-1);
-}
-
-.reminder-body { min-width: 0; }
-
-.reminder-title {
-    font-weight: var(--fw-bold);
-    font-size: var(--fs-lg);
-    margin-bottom: var(--space-2);
-    word-break: break-word;
-}
-
-.reminder-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    font-size: var(--fs-sm);
-    color: var(--text-muted);
-    align-items: center;
-}
-
-.reminder-notes {
-    margin-top: var(--space-2);
-    font-size: var(--fs-sm);
-    color: var(--text);
-    background: var(--surface-alt);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-sm);
-}
-
-.reminder-actions {
-    display: flex;
-    gap: var(--space-1);
-    align-self: start;
-}
-
-@media (max-width: 640px) {
-    .reminder-item {
-        grid-template-columns: auto 1fr;
-        grid-template-areas:
-            "check body"
-            "icon  actions";
-    }
-    .reminder-check  { grid-area: check; }
-    .reminder-body   { grid-area: body;  }
-    .reminder-icon   { grid-area: icon;  }
-    .reminder-actions{ grid-area: actions; justify-self: end; }
 }
 
 /* ==========================================================================
@@ -3657,65 +3522,8 @@ body.drawer-open { overflow: hidden; }
 
 
 /* ==========================================================================
-   Reports view
+   Reports view — التصميم «ب»، وقواعدُه في ذيل الملفّ مع «rp-».
    ========================================================================== */
-.stacked-bar {
-    display: flex;
-    height: 28px;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background: var(--surface-alt);
-    box-shadow: inset 0 0 0 1px var(--border);
-}
-.sb-seg {
-    transition: width var(--dur-slow) var(--ease);
-    min-width: 0;
-}
-
-.legend-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--space-3);
-}
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--fs-sm);
-}
-.legend-dot {
-    width: 12px; height: 12px;
-    border-radius: var(--radius-full);
-    flex-shrink: 0;
-}
-.legend-item strong {
-    margin-right: auto;
-    color: var(--text);
-}
-
-/* Top / low students mini lists */
-.mini-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-.mini-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: var(--space-3);
-    align-items: center;
-    padding: var(--space-2) var(--space-3);
-    background: var(--surface-alt);
-    border-radius: var(--radius-sm);
-    font-size: var(--fs-sm);
-}
-.mini-name {
-    font-weight: var(--fw-medium);
-    color: var(--text);
-    text-decoration: none;
-}
-.mini-name:hover { color: var(--ink-primary); text-decoration: underline; }
-.mini-rate { font-weight: var(--fw-bold); }
 
 /* ==========================================================================
    Help view
@@ -3890,26 +3698,6 @@ body.drawer-open { overflow: hidden; }
     }
     .file-actions .btn{ min-height: var(--touch-target-min); min-width: var(--touch-target-min); }
 
-    /* ---- Reminders list -------------------------------------------------- */
-    .reminder-item {
-        padding: var(--space-3);
-        gap: var(--space-2) var(--space-3);
-    }
-    .reminder-icon { font-size: 22px; padding-top: 0; }
-    .reminder-title { font-size: var(--fs-body); margin-bottom: var(--space-1); }
-    .reminder-meta { gap: var(--space-2); font-size: var(--fs-xs); }
-    .reminder-actions .btn {
-        min-width: var(--touch-target-min);
-        min-height: var(--touch-target-min);
-    }
-    /* The filter chips should wrap cleanly */
-    .filter-bar { gap: var(--space-1); }
-    .filter-bar .chip {
-        min-height: 36px;
-        padding: var(--space-2) var(--space-3);
-        font-size: var(--fs-xs);
-    }
-
     /* ---- Exams / Worksheets / Homework list cards ----------------------- */
 
     /* ---- Schedule screen ------------------------------------------------ */       /* allow horizontal scroll */
@@ -3922,21 +3710,6 @@ body.drawer-open { overflow: hidden; }
     #view-reports .grid.grid-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .stacked-bar { height: 24px; }
-    .legend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .mini-row {
-        grid-template-columns: 1fr auto;
-        grid-template-areas:
-            "name rate"
-            "meta rate";
-        gap: 2px var(--space-2);
-    }
-    .mini-row .mini-name { grid-area: name; }
-    .mini-row > span:not(.mini-rate):not(.mini-name) {
-        grid-area: meta;
-        font-size: var(--fs-xs);
-    }
-    .mini-row .mini-rate { grid-area: rate; align-self: center; }
 
     /* ---- Generic card title ripple avoid on touch ----------------------- */
     .card-title { font-size: var(--fs-lg); }
