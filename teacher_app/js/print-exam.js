@@ -24,38 +24,98 @@
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const arNum = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
 
-    /* «درجة واحدة» لا «١ درجة»، و«درجتان» لا «٢ درجة» — ورقة الاختبار
-       يقرؤها مشرفٌ والتصريف العربي يختلف بالعدد. */
-    function marks(n) {
-        if (!n) return '';
-        if (n === 1) return 'درجة واحدة';
-        if (n === 2) return 'درجتان';
-        if (n <= 10) return ar(n) + ' درجات';
-        return ar(n) + ' درجة';
-    }
+    /* ══ لغةُ الورقة ══
+       مادّةُ الفصل تقرّر، لا خيارٌ يُنسى: معلّمُ الإنجليزيّة ورقتُه إنجليزيّةٌ
+       كلُّها — عناوينُها وجداولُها وحروفُ خياراتها وأرقامُها واتّجاهُها.
+       والخيارُ الوحيد لغةُ الترويسة، لأنّ عُرفَ المدارس فيها يختلف.
+
+       واللغةُ متغيّرٌ في الوحدة لا وسيطٌ يُمرَّر في اثنتي عشرة دالّة —
+       والطباعةُ لا تتوازى: ورقةٌ واحدةٌ تُبنى في كلّ مرّة. */
+    const AR = {
+        rtl: true,
+        num: arNum,
+        letters: ['أ', 'ب', 'ج', 'د', 'هـ', 'و'],
+        abjad:   ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي', 'ك', 'ل'],
+        /* «درجة واحدة» لا «١ درجة» — ورقةٌ يقرؤها مشرف، والتصريفُ يختلف. */
+        marks: (n) => !n ? '' : n === 1 ? 'درجة واحدة' : n === 2 ? 'درجتان'
+                    : n <= 10 ? arNum(n) + ' درجات' : arNum(n) + ' درجة',
+        ordinals: ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'],
+        qLabel: (i, L) => 'السؤال ' + (L.ordinals[i] || arNum(i + 1)),
+        sections: {
+            mcq:   'اختر الإجابة الصحيحة فيما يأتي:',
+            tf:    'ضع علامة (✓) أمام العبارة الصحيحة و(✗) أمام العبارة الخاطئة:',
+            fill:  'أكمل الفراغ بما يناسبه:',
+            essay: 'أجب عمّا يأتي:',
+            match: 'صل العمود (أ) بما يناسبه من العمود (ب):'
+        },
+        num_h: 'م', stmt: 'العبارة', answer: 'الإجابة',
+        qAndOpts: 'السؤال وخياراته', colA: 'العمود (أ)', colB: 'العمود (ب)',
+        studentName: 'اسم الطالب', seatNo: 'رقم الجلوس', klass: 'الصف', mark: 'الدرجة',
+        dots: '....................................................', dotsShort: '..................',
+        notesLabel: 'التعليمات',
+        instructions: 'اقرأ كل سؤالٍ بعناية ثم أجب في المكان المخصّص، ولا تترك سؤالاً دون إجابة.',
+        keyTitle: 'نموذج الإجابة', forTeacher: 'للمعلّم', cont: 'تابع: ',
+        page: (a, b) => 'صفحة ' + arNum(a) + ' من ' + arNum(b),
+        essayFallback: 'يُصحَّح تقديرياً',
+        kingdom: 'المملكة العربية السعودية', ministry: 'وزارة التعليم', school: 'المدرسة',
+        subject: 'المادة', grade: 'الصف', teacherL: 'المعلم', date: 'التاريخ', total: 'الدرجة'
+    };
+
+    const EN = {
+        rtl: false,
+        num: (n) => String(n),
+        letters: ['A', 'B', 'C', 'D', 'E', 'F'],
+        abjad:   ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'],
+        marks: (n) => !n ? '' : n === 1 ? '1 mark' : n + ' marks',
+        ordinals: [],
+        qLabel: (i) => 'Question ' + (i + 1),
+        sections: {
+            mcq:   'Choose the correct answer:',
+            tf:    'Put (✓) for the correct statement and (✗) for the incorrect one:',
+            fill:  'Complete the following:',
+            essay: 'Answer the following:',
+            match: 'Match column (A) with the suitable item from column (B):'
+        },
+        num_h: 'No.', stmt: 'Statement', answer: 'Answer',
+        qAndOpts: 'Question and choices', colA: 'Column (A)', colB: 'Column (B)',
+        studentName: 'Student Name', seatNo: 'Seat No.', klass: 'Class', mark: 'Mark',
+        dots: '....................................................', dotsShort: '..................',
+        notesLabel: 'Instructions',
+        instructions: 'Read each question carefully and answer in the space provided. '
+                    + 'Do not leave any question unanswered.',
+        keyTitle: 'Answer Key', forTeacher: 'for the teacher', cont: 'cont.: ',
+        page: (a, b) => 'Page ' + a + ' of ' + b,
+        essayFallback: 'Marked at the teacher\u2019s discretion',
+        kingdom: 'Kingdom of Saudi Arabia', ministry: 'Ministry of Education', school: 'School',
+        subject: 'Subject', grade: 'Class', teacherL: 'Teacher', date: 'Date', total: 'Mark'
+    };
+
+    let L = AR;
+    /* «اللغة الإنجليزية» هو الاسمُ في قائمة المواد، والباقي احتياطٌ لمن
+       كتب مادّته بيده. */
+    const isEnglish = (subject) => /إنجليزي|انجليزي|english/i.test(String(subject || ''));
+    const ar = (n) => L.num(n);
+
+    const marks = (n) => L.marks(n);
 
     /* درجةٌ غير مذكورة تعني «واحدة» في الاختبار، أما ورقة العمل فتمرّر
        صفراً صريحاً — فالفرق بين «لم تُذكر» و«لا درجة» فرقٌ حقيقي. */
     const pts = (q) => (q.points == null ? 1 : q.points);
 
-    const ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع'];
-    const LETTERS  = ['أ', 'ب', 'ج', 'د', 'هـ', 'و'];
 
     /* نصوصُ الترويسات مصدرُها محرّرُ الأسئلة، لا نسخةٌ هنا: المحرّرُ يَعِد
        المعلّمَ أن ما يراه على الشاشة هو ما يُطبع، ونسختان من النصّ تنقضان
        الوعدَ بأوّل تعديلٍ في إحداهما. والبديلُ احتياطٌ لو استُدعيت الطباعةُ
        قبل تحميل المحرّر. */
-    const SECTION_TITLE = (global.QuestionEditor && global.QuestionEditor.SECTION_TITLE) || {
-        mcq:   'اختر الإجابة الصحيحة فيما يأتي:',
-        tf:    'ضع علامة (✓) أمام العبارة الصحيحة و(✗) أمام العبارة الخاطئة:',
-        fill:  'أكمل الفراغ بما يناسبه:',
-        essay: 'أجب عمّا يأتي:',
-        match: 'صل العمود (أ) بما يناسبه من العمود (ب):'
-    };
+    /* العربيّةُ مصدرُها محرّرُ الأسئلة لا نسخةٌ هنا — ما يراه المعلّم على
+       الشاشة هو ما يُطبع. والإنجليزيّةُ لا محرّرَ لها، فنصوصُها أعلاه. */
+    const sectionTitles = () => (L === AR
+        ? ((global.QuestionEditor && global.QuestionEditor.SECTION_TITLE) || AR.sections)
+        : L.sections);
     /* أسئلة غير معروفة النوع تُعامل معاملة المقالي: مساحة كتابة. */
-    const titleOf = (t) => SECTION_TITLE[t] || SECTION_TITLE.essay;
+    const titleOf = (t) => { const S = sectionTitles(); return S[t] || S.essay; };
 
     /* ------------------------------------------------------------------
        تنسيق الورقة. مستقلٌّ عن print.css عمداً: هذه الأنماط لا تخصّ إلا
@@ -110,6 +170,12 @@
     .ex-mcq .q { font-weight: 700; }
     .ex-mcq .o { font-size: 14px; }
     .ex-mcq td { overflow-wrap: anywhere; }
+    /* ورقةٌ إنجليزيّة: الاتّجاهُ من اليسار، فتنقلب الجداولُ والترويسةُ معاً
+       بلا قاعدةٍ لكلّ عنصر. والخاناتُ الموسَّطةُ تبقى موسَّطة. */
+    .ex-ltr { direction: ltr; text-align: left; }
+    .ex-ltr .ex-head .side.l { text-align: right; }
+    .ex-ltr .ex-title, .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m,
+    .ex-ltr .ex-key .m, .ex-ltr .ex-mcq .o { text-align: center; }
     .ex-tbl-wrap { margin-bottom: 16px; }
     .ex-lines { margin-bottom: 16px; }
     .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
@@ -121,9 +187,9 @@
 
     /* خانةٌ واحدةٌ لا خانتان: الطالبُ يرسم فيها ✓ أو ✗ كما يقول رأسُ القسم،
        بدل أن يعلّم في إحدى خانتين. والعبارةُ تكسب عرضَ العمود المحذوف. */
-    const TF_HEAD  = '<tr><th class="m">م</th><th>العبارة</th>'
-                   + '<th class="c">الإجابة</th></tr>';
-    const KEY_HEAD = '<tr><th class="m">م</th><th>الإجابة</th></tr>';
+    const TF_HEAD  = () => `<tr><th class="m">${L.num_h}</th><th>${L.stmt}</th>`
+                         + `<th class="c">${L.answer}</th></tr>`;
+    const KEY_HEAD = () => `<tr><th class="m">${L.num_h}</th><th>${L.answer}</th></tr>`;
 
     /* رأسُ الاختيار من متعدد يتبع عددَ الخيارات، وهو أكثرُ ما في القسم لا
        ما في السؤال: رأسٌ واحدٌ يسع الجميع فتبقى صفوفُ القسم جدولاً واحداً.
@@ -134,12 +200,12 @@
        الخمسةُ العرضَ بالتساوي ويصير عمودُ «م» بعرض عمودِ خيار. */
     const MCQ_HEAD = (cols) => '<colgroup><col style="width:40px">'
         + '<col>'.repeat(cols) + '</colgroup>'
-        + `<tr><th class="m">م</th><th colspan="${cols}">السؤال وخياراته</th></tr>`;
+        + `<tr><th class="m">${L.num_h}</th><th colspan="${cols}">${L.qAndOpts}</th></tr>`;
 
     const optCount = (items) => {
         let n = 0;
         items.forEach((q) => { n = Math.max(n, (q.options || []).length); });
-        return Math.min(Math.max(n, 2), LETTERS.length);
+        return Math.min(Math.max(n, 2), L.letters.length);
     };
 
     /* خيارٌ تركه المعلّم فارغاً يبقى خانةً فارغة بحرفها — لا يُطوى العمود،
@@ -149,13 +215,13 @@
         let out = '';
         for (let k = 0; k < cols; k++) {
             const t = escapeHtml(o[k] || '');
-            out += `<td class="o">${LETTERS[k]}) ${t || '&nbsp;'}</td>`;
+            out += `<td class="o">${L.letters[k]}) ${t || '&nbsp;'}</td>`;
         }
         return out;
     };
-    const MATCH_HEAD = '<tr><th class="m">م</th><th>العمود (أ)</th>'
-                     + '<th class="c">الإجابة</th>'
-                     + '<th class="m">م</th><th>العمود (ب)</th></tr>';
+    const MATCH_HEAD = () => `<tr><th class="m">${L.num_h}</th><th>${L.colA}</th>`
+                           + `<th class="c">${L.answer}</th>`
+                           + `<th class="m">${L.num_h}</th><th>${L.colB}</th></tr>`;
 
     /* ------------------------------------------------------------------
        المطابقة: العمود (ب) مخلوطٌ، وإلّا صار الجواب ١-أ ٢-ب بلا تفكير.
@@ -184,10 +250,10 @@
         return out;
     }
     /* حروفُ العمود (ب) على ترتيب أبجد، لا على ترتيب الهجاء: هي ترقيمٌ
-       لا تهجئة. و`LETTERS` أعلاه لخيارات الاختيار من متعدد وحدَها —
-       أربعةٌ لا تكفي عموداً قد يبلغ عشراً. */
-    const ABJAD = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي', 'ك', 'ل'];
-    const bLetter = (k) => ABJAD[k] || ar(k + 1);
+       لا تهجئة. وحروفُ الخيارات أقصرُ منها — أربعةٌ لا تكفي عموداً قد يبلغ
+       عشراً. ويُقرآن من `L` وقتَ النداء لا وقتَ التحميل، فاللغةُ تُضبط عند
+       بدء الطباعة. */
+    const bLetter = (k) => L.abjad[k] || ar(k + 1);
 
     /* موضعُ مقابلِ الفقرة i في العمود المخلوط — أي حرفُها في نموذج الإجابة. */
     const letterFor = (bCol, i) => {
@@ -203,7 +269,7 @@
         const order = [];
         const map = new Map();
         questions.forEach((q) => {
-            const t = SECTION_TITLE[q.type] ? q.type : 'essay';
+            const t = sectionTitles()[q.type] ? q.type : 'essay';
             if (!map.has(t)) { map.set(t, []); order.push(t); }
             map.get(t).push(q);
         });
@@ -223,7 +289,7 @@
             /* ورقة العمل بلا درجات: صفرٌ يعني «لا تطبع درجة» لا «صفر درجة». */
             const total = g.items.reduce((s, q) => s + pts(q), 0);
             blocks.push({ kind: 'sec', sec: secNo, html:
-                `<div class="ex-sec">السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}`
+                `<div class="ex-sec">${L.qLabel(gi, L)}: ${titleOf(g.type)}`
                 + (total ? `<span class="g">(${marks(total)})</span>` : '') + '</div>' });
 
             /* درجة السؤال بجانبه تفيد حين تختلف داخل القسم، أما قسمٌ
@@ -235,7 +301,7 @@
             g.items.forEach((q, i) => {
                 const n = ar(i + 1);
                 if (g.type === 'match') {
-                    blocks.push({ kind: 'row', sec: secNo, head: MATCH_HEAD, tcls: 'ex-tbl', html:
+                    blocks.push({ kind: 'row', sec: secNo, head: MATCH_HEAD(), tcls: 'ex-tbl', html:
                         `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
                         + '<td class="c">&nbsp;</td>'
                         + `<td class="m">${bLetter(i)}</td>`
@@ -243,7 +309,7 @@
                     return;
                 }
                 if (g.type === 'tf') {
-                    blocks.push({ kind: 'row', sec: secNo, head: TF_HEAD, tcls: 'ex-tbl', html:
+                    blocks.push({ kind: 'row', sec: secNo, head: TF_HEAD(), tcls: 'ex-tbl', html:
                         `<tr><td class="m">${n}</td><td>${escapeHtml(q.text)}</td>`
                         + '<td class="c">&nbsp;</td></tr>' });
                     return;
@@ -283,19 +349,19 @@
     function buildKeyBlocks(exam) {
         const groups = groupByType(exam.questions || []);
         const out = [{ kind: 'sec', sec: 0, html:
-            '<div class="ex-sec">نموذج الإجابة<span class="g">للمعلّم</span></div>' }];
+            `<div class="ex-sec">${L.keyTitle}<span class="g">${L.forTeacher}</span></div>` }];
         groups.forEach((g, gi) => {
             const secNo = gi + 1;
             out.push({ kind: 'q', sec: secNo, html:
                 `<div class="ex-q" style="margin-top:10px;"><span class="t" style="font-weight: 700;">`
-                + `السؤال ${ORDINALS[gi] || ar(secNo)}: ${titleOf(g.type)}</span></div>` });
+                + `${L.qLabel(gi, L)}: ${titleOf(g.type)}</span></div>` });
             /* الخلطُ يُعاد بالبذرة نفسِها، فالحرفُ هنا هو الحرفُ هناك. */
             const bCol = g.type === 'match' ? shuffleB(g.items) : null;
             g.items.forEach((q, i) => {
                 const ans = g.type === 'match'
                     ? `${letterFor(bCol, i)}) ${String(q.answer || '')}`
                     : answerText(q);
-                out.push({ kind: 'row', sec: secNo, head: KEY_HEAD, tcls: 'ex-key', html:
+                out.push({ kind: 'row', sec: secNo, head: KEY_HEAD(), tcls: 'ex-key', html:
                     `<tr><td class="m">${ar(i + 1)}</td><td>${escapeHtml(ans)}</td></tr>` });
             });
         });
@@ -305,9 +371,15 @@
     function answerText(q) {
         if (q.type === 'mcq') {
             const i = (q.options || []).indexOf(q.answer);
-            return i >= 0 ? `${LETTERS[i]}) ${q.answer}` : (q.answer || '—');
+            return i >= 0 ? `${L.letters[i]}) ${q.answer}` : (q.answer || '—');
         }
-        if (q.type === 'essay') return q.answer || 'يُصحَّح تقديرياً';
+        if (q.type === 'essay') return q.answer || L.essayFallback;
+        /* «صح/خطأ» يختارهما المعلّم بأزرارٍ عربيّةٍ في المحرّر — وواجهتُه
+           عربيّةٌ على كلّ حال. أمّا الورقةُ الإنجليزيّةُ فتقولها بلغتها. */
+        if (q.type === 'tf' && L === EN) {
+            if (q.answer === 'صح')  return 'True';
+            if (q.answer === 'خطأ') return 'False';
+        }
         return q.answer || '—';
     }
 
@@ -320,24 +392,29 @@
         const s = exam.settings || {};
         const total = (exam.questions || []).reduce((sum, q) => sum + pts(q), 0);
 
+        /* لغةُ الترويسة وحدَها خيارٌ: عُرفُ المدارس فيها يختلف — بعضُها
+           يُبقي الترويسةَ الوزاريّةَ عربيّةً ولو كانت الورقةُ إنجليزيّة.
+           وما عداها يتبع لغةَ المادّة بلا سؤال. */
+        const H = s.header_ar ? AR : L;
+
         const right = [
-            'المملكة العربية السعودية',
-            'وزارة التعليم',
+            H.kingdom,
+            H.ministry,
             escapeHtml(p.educationDept || teacher?.education_dept || ''),
-            escapeHtml(teacher?.school_name || 'المدرسة')
+            escapeHtml(teacher?.school_name || H.school)
         ].filter(Boolean).join('<br>');
 
         const left = [
-            cls?.subject ? `المادة: ${escapeHtml(cls.subject)}` : '',
-            cls?.grade ? `الصف: ${escapeHtml(cls.grade)}${cls.section ? ' / ' + escapeHtml(cls.section) : ''}` : '',
-            s.include_teacher && teacher?.name ? `المعلم: ${escapeHtml(teacher.name)}` : '',
+            cls?.subject ? `${H.subject}: ${escapeHtml(cls.subject)}` : '',
+            cls?.grade ? `${H.grade}: ${escapeHtml(cls.grade)}${cls.section ? ' / ' + escapeHtml(cls.section) : ''}` : '',
+            s.include_teacher && teacher?.name ? `${H.teacherL}: ${escapeHtml(teacher.name)}` : '',
             /* تاريخٌ يكتبه المعلّم، لا تاريخُ اليوم: الاختبارُ يُعدّ قبل
                موعده. وفراغُه نقاطٌ تُملأ بالقلم لا يومُ الطباعة. */
             s.include_date
-                ? `التاريخ: ${String(s.exam_date || '').trim()
+                ? `${H.date}: ${String(s.exam_date || '').trim()
                     ? escapeHtml(String(s.exam_date).trim()) : '................'}`
                 : '',
-            s.include_grade !== false && total ? `الدرجة: ${ar(total)}` : ''
+            s.include_grade !== false && total ? `${H.total}: ${H.num(total)}` : ''
         ].filter(Boolean).join('<br>');
 
         const logo = p.logoDataUrl
@@ -351,18 +428,18 @@
         const withGrade = s.include_grade !== false && total > 0;
         const info = (s.include_name !== false) ? `
             <table class="ex-info"><tr>
-                <td style="width:${withGrade ? 58 : 70}%;">اسم الطالب: ....................................................</td>
-                <td>${withGrade ? 'رقم الجلوس: ..................' : 'الصف: ..................'}</td>
-                ${withGrade ? '<td style="width:15%; text-align:center;">الدرجة<br>&nbsp;</td>' : ''}
+                <td style="width:${withGrade ? 58 : 70}%;">${L.studentName}: ${L.dots}</td>
+                <td>${withGrade ? L.seatNo + ': ' + L.dotsShort : L.klass + ': ' + L.dotsShort}</td>
+                ${withGrade ? `<td style="width:15%; text-align:center;">${L.mark}<br>&nbsp;</td>` : ''}
             </tr></table>` : '';
 
         /* تعليمات المعلم إن كتبها (ورقة العمل)، وإلّا فالنصّ المعتاد. */
         const noteText = ctx.instructions
             || (s.include_instructions
-                ? 'اقرأ كل سؤالٍ بعناية ثم أجب في المكان المخصّص، ولا تترك سؤالاً دون إجابة.'
+                ? L.instructions
                 : '');
         const note = noteText
-            ? `<p class="ex-note"><strong>التعليمات:</strong> ${escapeHtml(noteText)}</p>`
+            ? `<p class="ex-note"><strong>${L.notesLabel}:</strong> ${escapeHtml(noteText)}</p>`
             : '';
 
         /* المعلم قد يُطفئ الترويسة الرسمية (ورقةٌ داخلية، أو ورق مطبوعٌ
@@ -388,7 +465,7 @@
 
     function makePage() {
         const box = document.createElement('div');
-        box.className = 'ex-pg';
+        box.className = 'ex-pg' + (L.rtl ? '' : ' ex-ltr');
         box.style.cssText = [
             `width:${P().W}px`, `height:${P().H}px`, 'box-sizing:border-box',
             `padding:${P().MY}px ${P().MX}px`, 'background:#fff',
@@ -405,7 +482,9 @@
         const ruler = document.createElement('div');
         ruler.style.cssText =
             `position:absolute; left:-30000px; top:0; width:${P().CONTENT_W}px; visibility:hidden;`;
-        ruler.className = 'ex-pg';
+        /* المسطرةُ تحمل صنفَ الاتّجاه نفسَه: قياسُ سطرٍ من اليمين يخالف
+           قياسَه من اليسار، فبلا هذا يُرصّ بمقاسٍ غير مقاسِ ما يُرسم. */
+        ruler.className = 'ex-pg' + (L.rtl ? '' : ' ex-ltr');
         stageEl.appendChild(ruler);
 
         const measure = (html, tcls) => {
@@ -426,7 +505,7 @@
 
         const CONTENT_H = P().CONTENT_H - FOOT_SPACE;
         const hHead   = measure(headHtml);
-        const hCont   = measure('<div class="ex-cont">تابع: السؤال الأول</div>');
+        const hCont   = measure(`<div class="ex-cont">${L.cont}${L.qLabel(0, L)}</div>`);
 
         const pages = [];
         let page = null, used = 0, avail = 0;
@@ -480,7 +559,7 @@
             const prev = pages[i - 1];
             if (i > 0 && head && head.kind !== 'sec' && prev && prev.length
                 && prev[prev.length - 1].sec === head.sec && secName[head.sec]) {
-                body += `<div class="ex-cont">تابع: ${secName[head.sec]}</div>`;
+                body += `<div class="ex-cont">${L.cont}${secName[head.sec]}</div>`;
             }
 
             let k = 0;
@@ -509,7 +588,7 @@
     function secNamesOf(exam) {
         const out = {};
         groupByType(exam.questions || []).forEach((g, gi) => {
-            out[gi + 1] = `السؤال ${ORDINALS[gi] || ar(gi + 1)}`;
+            out[gi + 1] = L.qLabel(gi, L);
         });
         return out;
     }
@@ -522,6 +601,8 @@
         const toast = (m, t, d) => global.TeacherApp && global.TeacherApp.toast
             && global.TeacherApp.toast(m, t, d);
         const { exam } = ctx;
+        /* اللغةُ تُقرَّر هنا لا في مئة موضع: مادّةُ الفصل تقرّرها. */
+        L = isEnglish(ctx.cls && ctx.cls.subject) ? EN : AR;
 
         if (!exam || !(exam.questions || []).length) {
             toast('لا أسئلة في هذا الاختبار.', 'warning');
@@ -545,14 +626,14 @@
                للمعلم لا للطالب، فلا يجوز أن يشارك ورقةَ الأسئلة. */
             let keyPages = [];
             if (opts.includeAnswers) {
-                const keyHead = `<h1 class="ex-title">نموذج الإجابة — ${escapeHtml(exam.title || '')}</h1>`;
+                const keyHead = `<h1 class="ex-title">${L.keyTitle} — ${escapeHtml(exam.title || '')}</h1>`;
                 keyPages = paginate(buildKeyBlocks(exam), stage.el, keyHead, names);
             }
 
             const all = pages.concat(keyPages);
             all.forEach((el, i) => {
                 el.querySelector('[data-foot]').textContent =
-                    `صفحة ${ar(i + 1)} من ${ar(all.length)}`;
+                    L.page(ar(i + 1), ar(all.length));
             });
 
             await global.PdfCore.settle(stage.el);

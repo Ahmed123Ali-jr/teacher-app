@@ -315,6 +315,12 @@
                     ${checkbox('include_grade',        'الدرجة الكلية', settings.include_grade)}
                     ${checkbox('include_instructions', 'تعليمات الاختبار', settings.include_instructions)}
                     ${checkbox('include_answers',      'طباعة نموذج الإجابة (صفحة منفصلة)', settings.include_answers)}
+                    ${/* الورقةُ تتبع مادّةَ الفصل بلا سؤال — والترويسةُ وحدَها
+                          خيار، لأنّ عُرفَ المدارس فيها يختلف. ولا يظهر إلّا
+                          لمن مادّتُه إنجليزيّة، فلا يُربك غيرَه. */
+                      /إنجليزي|انجليزي|english/i.test(String(cls.subject || ''))
+                        ? checkbox('header_ar', 'ترويسة المدرسة بالعربية (الورقة إنجليزية)', settings.header_ar)
+                        : ''}
                 </div>
             </div>
 
