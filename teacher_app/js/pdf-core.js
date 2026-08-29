@@ -553,10 +553,89 @@
     /* أقصى ما يقبله النموذج في الطلب الواحد. ليس اختياراً منّا. */
     const MAX_IMAGE_PAGES = 100;
 
-    async function fileToImagePages(file, maxPages) {
+    /* ══ التقطيع — أكبرُ أثرٍ قيس في دقّة الاستيراد ══
+       النموذجُ يُصغّر أيَّ صورةٍ كبيرة قبل قراءتها. فصفحةُ كشفٍ فيها خمسةٌ
+       وعشرون صفّاً تصله مصغَّرةً مهما رفعنا دقّتَها، فيصير الاسمُ بضعةَ
+       بكسلات. والشريحةُ تأخذ الميزانيّةَ نفسَها لثلث المحتوى.
+
+       قِيس يوم ٢٨ أغسطس ٢٠٢٦ على كشفٍ من ‎25‎ اسماً، جولتان لكلّ صفّ
+       ونتيجتان متطابقتان:
+
+         صفحةٌ كاملة (سقف ‎2000‎)      ‎2‎ من ‎25‎
+         صفحةٌ كاملة (سقف ‎2600‎)      ‎3‎
+         ‎3‎ شرائح بلا تداخل            ‎20‎
+         ‎5‎ شرائح بلا تداخل            ‎19‎   ← الزيادةُ تشقّ صفوفاً
+         ‎3‎ شرائح بتداخل ‎12٪‎          ‎22‎   ← المعتمَد
+         ‎4‎ شرائح بتداخل ‎15٪‎          ‎22‎   ← لا تزيد
+
+       وللمقارنة: تشديدُ تعليمات الخادم أعطى ‎−2‎، ورفعُ السقف ‎+1‎.
+
+       والتداخلُ ليس تجميلاً: القطعُ الحادّ يشقّ صفّاً فيضيع اسمُه، و‎12٪‎
+       تضمن ظهورَه كاملاً في إحدى الشريحتين. */
+    const SLICES     = 3;
+    const OVERLAP    = 0.12;
+    /* ما دون هذا لا يُصغّره النموذج، فتقطيعُه كلفةٌ بلا فائدة. */
+    const SLICE_EDGE = 1600;
+    /* والصورةُ العريضة لا تُقطَّع: التقطيعُ أفقيٌّ، وهو يفيد الصفحةَ
+       الطويلة ذاتَ الصفوف. */
+    const SLICE_RATIO = 1.15;
+
+    function sliceCount(w, h) {
+        if (Math.max(w, h) < SLICE_EDGE) return 1;
+        if (h < w * SLICE_RATIO) return 1;
+        return SLICES;
+    }
+
+    /** يقطّع صورةً محمّلةً إلى شرائحَ أفقيّةٍ متداخلة. */
+    function cutStrips(src, w, h, maxSide) {
+        const n = sliceCount(w, h);
+        const side = maxSide || 2000;
+        const step = h / n;
+        const pad  = n > 1 ? Math.round(step * OVERLAP) : 0;
+        const out  = [];
+        for (let i = 0; i < n; i++) {
+            const y0 = Math.max(0, Math.round(i * step) - pad);
+            const y1 = Math.min(h, Math.round((i + 1) * step) + pad);
+            const sh = y1 - y0;
+            const k  = Math.min(1, side / Math.max(w, sh));
+            const c  = document.createElement('canvas');
+            c.width  = Math.max(1, Math.round(w * k));
+            c.height = Math.max(1, Math.round(sh * k));
+            c.getContext('2d').drawImage(src, 0, y0, w, sh, 0, 0, c.width, c.height);
+            const b64 = c.toDataURL('image/jpeg', 0.85).split(',')[1];
+            c.width = c.height = 0;
+            if (b64) out.push({ base64: b64, mediaType: 'image/jpeg' });
+        }
+        return out;
+    }
+
+    function imageToStrips(dataUrl, maxSide) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                try { resolve(cutStrips(img, img.width, img.height, maxSide)); }
+                catch (e) { resolve(null); }
+            };
+            img.onerror = () => resolve(null);
+            img.src = dataUrl;
+        });
+    }
+
+    /**
+     * @param {boolean} [slice] — يُقطّع الصفحةَ شرائحَ متداخلة. **لكشوف
+     *   الأسماء وحدَها.** والجدولُ الأسبوعيُّ لا يُقطَّع: شبكتُه أيّامٌ في
+     *   صفوفٍ وحصصٌ في أعمدة، والقطعُ الأفقيُّ يشقّ اليومَ عن حصصه.
+     */
+    async function fileToImagePages(file, maxPages, slice) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
             const dataUrl = await blobToDataUrl(file);
+            if (slice) {
+                /* من الأصل لا من المصغَّر: لو صُغّرت أوّلاً لقُطّعت صورةٌ
+                   فقدت تفصيلَها، فلا يعيده التقطيع. */
+                const strips = await imageToStrips(dataUrl);
+                if (strips && strips.length) return strips;
+            }
             const norm = await imageToJpeg(dataUrl);
             if (norm) return [norm];
             const [meta, b64] = dataUrl.split(',');
@@ -618,6 +697,6 @@
         loadScript, preloadPdfEngine, ensurePdfJs, printCssForScreen, ensurePrintRoot,
         sanitizeFileName, todayISO,
         createStage, settle, paginate, renderPdf, deliverPdf, docOptions,
-        blobToDataUrl, fileToImagePages, MAX_IMAGE_PAGES
+        blobToDataUrl, fileToImagePages, MAX_IMAGE_PAGES, sliceCount
     };
 })(window);

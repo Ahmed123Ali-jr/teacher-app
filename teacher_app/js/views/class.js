@@ -1621,7 +1621,9 @@
     }
 
     /* نسخة واحدة في PdfCore — كانت هنا ثم احتاجها استيراد الجدول. */
-    const fileToImagePages = (file, max) => global.PdfCore.fileToImagePages(file, max);
+    /* `true` الأخيرة: تقطيعُ الصفحة شرائحَ متداخلة — أكبرُ أثرٍ قيس في
+       دقّة قراءة الأسماء (‎2‎ ← ‎22‎ من ‎25‎). التفصيلُ في `pdf-core.js`. */
+    const fileToImagePages = (file, max) => global.PdfCore.fileToImagePages(file, max, true);
 
     function parseNameList(raw) {
         return String(raw || '').split(/\r?\n/)
