@@ -224,7 +224,9 @@
         body.closest('#tab-panel')?.classList.add('has-qe-dock');
         body.innerHTML = `
             ${global.QuestionEditor.editorHtml(exam.title, exam.questions, {
-                points: true
+                points: true,
+                /* مادّةٌ إنجليزيّةٌ ← حقولُ الكتابة من اليسار. */
+                ltr: /إنجليزي|انجليزي|english/i.test(String(cls.subject || ''))
             })}
 
             <div class="qe-dock">

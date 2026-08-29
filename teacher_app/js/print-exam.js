@@ -50,7 +50,9 @@
             essay: 'أجب عمّا يأتي:',
             match: 'صل العمود (أ) بما يناسبه من العمود (ب):'
         },
-        num_h: 'م', stmt: 'العبارة', answer: 'الإجابة',
+        num_h: 'م', letterCol: 'م', stmt: 'العبارة', answer: 'الإجابة',
+        qNum: (n) => n + '-',
+        keyHead: (t) => 'نموذج الإجابة — ' + t,
         qAndOpts: 'السؤال وخياراته', colA: 'العمود (أ)', colB: 'العمود (ب)',
         studentName: 'اسم الطالب', seatNo: 'رقم الجلوس', klass: 'الصف', mark: 'الدرجة',
         dots: '....................................................', dotsShort: '..................',
@@ -78,18 +80,20 @@
             essay: 'Answer the following:',
             match: 'Match column (A) with the suitable item from column (B):'
         },
-        num_h: 'No.', stmt: 'Statement', answer: 'Answer',
+        num_h: 'No.', letterCol: 'Letter', stmt: 'Statement', answer: 'Answer',
+        qNum: (n) => n + '.',
+        keyHead: (t) => t,
         qAndOpts: 'Question and choices', colA: 'Column (A)', colB: 'Column (B)',
         studentName: 'Student Name', seatNo: 'Seat No.', klass: 'Class', mark: 'Mark',
         dots: '....................................................', dotsShort: '..................',
         notesLabel: 'Instructions',
         instructions: 'Read each question carefully and answer in the space provided. '
                     + 'Do not leave any question unanswered.',
-        keyTitle: 'Answer Key', forTeacher: 'for the teacher', cont: 'cont.: ',
+        keyTitle: 'Answer Key', forTeacher: 'For the teacher', cont: 'cont.: ',
         page: (a, b) => 'Page ' + a + ' of ' + b,
         essayFallback: 'Marked at the teacher\u2019s discretion',
         kingdom: 'Kingdom of Saudi Arabia', ministry: 'Ministry of Education', school: 'School',
-        subject: 'Subject', grade: 'Class', teacherL: 'Teacher', date: 'Date', total: 'Mark'
+        subject: 'Subject', grade: 'Class', teacherL: 'Teacher', date: 'Date', total: 'Total'
     };
 
     let L = AR;
@@ -173,7 +177,12 @@
     /* ورقةٌ إنجليزيّة: الاتّجاهُ من اليسار، فتنقلب الجداولُ والترويسةُ معاً
        بلا قاعدةٍ لكلّ عنصر. والخاناتُ الموسَّطةُ تبقى موسَّطة. */
     .ex-ltr { direction: ltr; text-align: left; }
-    .ex-ltr .ex-head .side.l { text-align: right; }
+    /* الترويسةُ وحدَها تبقى على ترتيبها العربيّ: «المملكة العربية السعودية»
+       جهةَ اليمين كما في كلّ ورقةٍ رسميّة — بطلبه. والنصُّ داخلها إنجليزيٌّ
+       من اليسار، فالاتّجاهُ يُعاد لكلّ جهةٍ على حدة. */
+    .ex-ltr .ex-head { direction: rtl; }
+    .ex-ltr .ex-head .side   { direction: ltr; text-align: right; }
+    .ex-ltr .ex-head .side.l { direction: ltr; text-align: left; }
     .ex-ltr .ex-title, .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m,
     .ex-ltr .ex-key .m, .ex-ltr .ex-mcq .o { text-align: center; }
     .ex-tbl-wrap { margin-bottom: 16px; }
@@ -219,9 +228,11 @@
         }
         return out;
     };
+    /* العمودُ الرابع حروفٌ لا أرقام — «م» تحتمل الحرف في العربيّة،
+       و«No.» لا تحتمله في الإنجليزيّة. */
     const MATCH_HEAD = () => `<tr><th class="m">${L.num_h}</th><th>${L.colA}</th>`
                            + `<th class="c">${L.answer}</th>`
-                           + `<th class="m">${L.num_h}</th><th>${L.colB}</th></tr>`;
+                           + `<th class="m">${L.letterCol}</th><th>${L.colB}</th></tr>`;
 
     /* ------------------------------------------------------------------
        المطابقة: العمود (ب) مخلوطٌ، وإلّا صار الجواب ١-أ ٢-ب بلا تفكير.
@@ -329,13 +340,13 @@
                     const t = String(q.text || '');
                     const withBlank = /\.{4,}|…|_{3,}/.test(t) ? t : t + ' ...............';
                     blocks.push({ kind: 'q', sec: secNo, html:
-                        `<div class="ex-q" style="margin-bottom:14px;"><span class="n">${n}-</span>`
+                        `<div class="ex-q" style="margin-bottom:14px;"><span class="n">${L.qNum(n)}</span>`
                         + `<span class="t">${escapeHtml(withBlank)}</span></div>` });
                     return;
                 }
                 /* مقالي: سؤالٌ ومساحة كتابة، كتلةً واحدة. */
                 blocks.push({ kind: 'q', sec: secNo, html:
-                    `<div class="ex-q"><span class="n">${n}-</span>`
+                    `<div class="ex-q"><span class="n">${L.qNum(n)}</span>`
                     + `<span class="t">${escapeHtml(q.text).replace(/\n/g, '<br>')}</span>`
                     + (perQ && pts(q) > 0 ? `<span class="m">(${marks(pts(q))})</span>` : '')
                     + '</div>' + lines(opts.answerLines || 4) });
@@ -626,7 +637,9 @@
                للمعلم لا للطالب، فلا يجوز أن يشارك ورقةَ الأسئلة. */
             let keyPages = [];
             if (opts.includeAnswers) {
-                const keyHead = `<h1 class="ex-title">${L.keyTitle} — ${escapeHtml(exam.title || '')}</h1>`;
+                /* العنوانُ لا يكرّر «نموذج الإجابة» مع الشريط تحته: في
+                   الإنجليزيّة يكتفي بعنوان الاختبار. */
+                const keyHead = `<h1 class="ex-title">${escapeHtml(L.keyHead(exam.title || ''))}</h1>`;
                 keyPages = paginate(buildKeyBlocks(exam), stage.el, keyHead, names);
             }
 

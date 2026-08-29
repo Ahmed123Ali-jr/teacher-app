@@ -191,7 +191,9 @@
                 </div>
 
                 ${QE().editorHtml(sh.title, sh.questions, {
-                    points: false, titleLabel: 'عنوان ورقة العمل'
+                    points: false, titleLabel: 'عنوان ورقة العمل',
+                    /* كالاختبار: مادّةٌ إنجليزيّةٌ ← حقولُ الكتابة من اليسار. */
+                    ltr: /إنجليزي|انجليزي|english/i.test(String(cls.subject || ''))
                 })}
 
                 ${extrasHtml(sh)}

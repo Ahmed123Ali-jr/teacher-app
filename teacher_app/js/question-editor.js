@@ -157,7 +157,7 @@
                 ${opts.map((o, k) => `
                     <button type="button" class="qe-lt ${q.answer === o && o !== '' ? 'on' : ''}"
                             data-qe-pick="${i}" data-k="${k}" title="حدّد الإجابة الصحيحة">${LETTERS[k]}</button>
-                    <input class="qe-in" value="${escapeAttr(o)}" data-qe-opt="${i}" data-k="${k}"
+                    <input class="qe-in${LTR ? ' qe-ltr' : ''}"${LTR ? ' dir="ltr"' : ''} value="${escapeAttr(o)}" data-qe-opt="${i}" data-k="${k}"
                            placeholder="الخيار ${LETTERS[k]}">
                 `).join('')}
             </div>`;
@@ -170,7 +170,7 @@
         }
         if (q.type === 'fill') {
             return `<div class="qe-mini one">
-                <input class="qe-in" value="${escapeAttr(q.answer || '')}" data-qe-ans="${i}"
+                <input class="qe-in${LTR ? ' qe-ltr' : ''}"${LTR ? ' dir="ltr"' : ''} value="${escapeAttr(q.answer || '')}" data-qe-ans="${i}"
                        placeholder="الإجابة الصحيحة">
             </div>`;
         }
@@ -189,19 +189,20 @@
        يبقى ظاهراً بعد الكتابة، والنائبُ عنه يختفي بأوّل حرف. */
     function fieldsHtml(q, i) {
         if (q.type !== 'match') {
-            return `<textarea class="qe-ta" rows="2" data-qe-text="${i}"
+            return `<textarea class="qe-ta${LTR ? ' qe-ltr' : ''}" rows="2" data-qe-text="${i}"
+                          ${LTR ? 'dir="ltr"' : ''}
                           placeholder="${escapeAttr(PLACEHOLDER[q.type] || 'اكتب نصّ الفقرة…')}"
                           >${escapeHtml(q.text)}</textarea>`;
         }
         return `
             <div class="qe-pair">
                 <span class="qe-tag">أ</span>
-                <input class="qe-in" data-qe-text="${i}" value="${escapeAttr(q.text)}"
+                <input class="qe-in${LTR ? ' qe-ltr' : ''}"${LTR ? ' dir="ltr"' : ''} data-qe-text="${i}" value="${escapeAttr(q.text)}"
                        placeholder="العمود (أ) — مثلاً: الخشب">
             </div>
             <div class="qe-pair">
                 <span class="qe-tag">ب</span>
-                <input class="qe-in" data-qe-ans="${i}" value="${escapeAttr(q.answer || '')}"
+                <input class="qe-in${LTR ? ' qe-ltr' : ''}"${LTR ? ' dir="ltr"' : ''} data-qe-ans="${i}" value="${escapeAttr(q.answer || '')}"
                        placeholder="ما يقابله في العمود (ب)">
             </div>`;
     }
@@ -284,8 +285,15 @@
      * @param {Array} qs
      * @param {object} [o] { points:bool, actions:(i)=>string, titleLabel:string }
      */
+    /* ── اتّجاهُ حقول الكتابة ──
+       التطبيقُ عربيٌّ فحقولُه من اليمين، ومعلّمُ الإنجليزيّة يكتب سؤالَه
+       الإنجليزيَّ فيلتصق باليمين ويقرؤه بعينٍ معكوسة. فالحقولُ وحدَها
+       تُقلب حين تكون المادّةُ إنجليزيّة — لا الواجهةُ كلُّها. */
+    let LTR = false;
+
     function editorHtml(title, qs, o) {
         o = o || {};
+        LTR = !!o.ltr;
         const groups = groupByType(qs);
         const secs = groups.map((g, gi) => secHtml(g, gi, o)).join('');
         return headHtml(title, qs, groups, o)
