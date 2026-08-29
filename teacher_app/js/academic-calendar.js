@@ -38,6 +38,13 @@
     /* اليوم الوطني يقع داخل أسبوع دراسة، فهو إجازة يومَين لا فاصلاً. */
     const NATIONAL = { name: 'اليوم الوطني',      from: D(2026, 9, 23),  to: D(2026, 9, 24)  };
 
+    /* إجازاتٌ إضافيّةٌ أُقرّت بعد صدور التقويم، يوماً يوماً — أملاها المعلّم
+       ٢٩ أغسطس ٢٠٢٦. وهي داخل أسابيع الدراسة كاليوم الوطنيّ: لا تزيح ما
+       بعدها، فتواريخُ الأسابيع تبقى كما هي ويَنقص عددُ أيّام أسبوعها.
+       وتختلف بين التقويمين، فلكلٍّ قائمتُه. وطُوبق كلُّ يومٍ باسمه قبل
+       إثباته: الثلاثةُ آحادٌ وخميسٌ كما قال. */
+    const extra = (y, m, d) => ({ name: 'إجازة إضافية', from: D(y, m, d), to: D(y, m, d) });
+
     const wk = (y, m, d) => ({ t: 'week', from: D(y, m, d) });
     const exam = (y, m, d) => ({ t: 'week', from: D(y, m, d), exam: true });
     const span = (o) => Object.assign({ t: 'span' }, o);
@@ -47,8 +54,7 @@
             key: 'early',
             label: 'تقويم مكة والمدينة وجدة والطائف',
             year: '١٤٤٨/١٤٤٩هـ',
-            holidays: [NATIONAL],
-            stats: { weeks: 18, days: 88, offDays: 20 },
+            holidays: [NATIONAL, extra(2026, 10, 25)],
             terms: [{
                 n: 1, name: 'الأول',
                 segments: [
@@ -67,8 +73,10 @@
             key: 'standard',
             label: 'تقويم بقيّة المناطق',
             year: '١٤٤٨/١٤٤٩هـ',
-            holidays: [NATIONAL],
-            stats: { weeks: 19, days: 93, offDays: 20 },
+            /* ٢٩ نوفمبر يلي إجازة الخريف مباشرةً فتمتدّ إلى العاشر من أيّامها،
+               و٧ يناير يسبق إجازة منتصف العام فتبدأ قبل موعدها بيوم — وهو
+               آخرُ أيّام أسبوع الاختبارات، فيصير أربعةَ أيّام. */
+            holidays: [NATIONAL, extra(2026, 10, 25), extra(2026, 11, 29), extra(2027, 1, 7)],
             terms: [{
                 n: 1, name: 'الأول',
                 segments: [
@@ -263,6 +271,38 @@
     function nextWeekAfter(items, span) {
         return weekAfter(items, span) || items.filter((x) => x.kind === 'week').pop();
     }
+
+    /* ── الإحصاء يُحسب ولا يُكتب بيد ──
+       رقمان مكتوبان بجانب جدولٍ يخالفهما أسوأُ من ألّا يكونا: أيُّ إجازةٍ
+       تُزاد تنقص يومَ دراسةٍ وتزيد يومَ إجازة، ولو بقيا مكتوبَين لكذّبَهما
+       الجدولُ الذي تحتهما. وقد أعاد الحسابُ ما كان مكتوباً قبل الزيادة
+       حرفاً بحرف — ٨٨ و٩٣ يومَ دراسة، وعشرون يومَ إجازةٍ في التقويمين —
+       فهو يقيس ما كان يُكتب، لا يفتح باباً لرقمٍ جديد. */
+    function computeStats(cal) {
+        let weeks = 0, days = 0;
+        const off = new Set();
+        const mark = (from, to) => {
+            for (const d = dayOnly(from); ts(d) <= ts(to); d.setDate(d.getDate() + 1)) {
+                off.add(d.getTime());
+            }
+        };
+        cal.holidays.forEach((h) => mark(h.from, h.to));
+        cal.terms.forEach((t) => t.segments.forEach((seg) => {
+            if (seg.t === 'span') {
+                /* عودةُ المعلمين عملٌ لا إجازة. */
+                if (!seg.work) mark(seg.from, seg.to);
+                return;
+            }
+            weeks += 1;
+            for (let i = 0; i < DAY_NAMES.length; i += 1) {
+                const d = dayOnly(seg.from);
+                d.setDate(d.getDate() + i);
+                if (!holidayOn(cal, d)) days += 1;
+            }
+        }));
+        return { weeks: weeks, days: days, offDays: off.size };
+    }
+    Object.keys(CALENDARS).forEach((k) => { CALENDARS[k].stats = computeStats(CALENDARS[k]); });
 
     global.AcademicCalendar = {
         CALENDARS, EARLY_DEPTS, DAY_NAMES,
