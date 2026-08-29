@@ -1,12 +1,23 @@
 /* ==========================================================================
-   views/reports.js — Analytics & reports drawn from existing data.
-   Attendance rates, top/low students, content production, per-class breakdown.
+   views/reports.js — التقارير: أرقامٌ مستخرجةٌ ممّا سجّله المعلّم.
+
+   البنيةُ «جوابٌ ثمّ دليلُه»: المعلّم يفتح هذه الشاشة ليسأل سؤالاً
+   واحداً — «كيف حالي؟» — فتُجيبه نسبةُ الحضور كبيرةً في صدر الشاشة، وكلُّ
+   ما تحتها شرحٌ لها. ولا تُصفّ النسبةُ مع «عدد فصولك»: الرقمُ الذي يقول
+   إن كان عندك مشكلةٌ لا يُسوّى بعددٍ لا يقول شيئاً.
+   (اختاره المعلّم — الشكل «ب» من معاينة rep.html، ٢٩ أغسطس ٢٠٢٦.)
+
+   والأشرطةُ تُقاس بالعين لا بالأرقام: أربعُ خاناتِ حضورٍ متجاورةٌ أرقاماً
+   تُقرأ واحدةً واحدة، وأشرطةً تُقرأ دفعةً واحدة.
+
+   وجدولُ الفصول صار بطاقةً لكلّ فصل: سبعةُ أعمدةٍ تفيض على الجوّال
+   فتُمرَّر أفقيّاً، والمعلّمُ لا يمرّر ورقةً ليقرأ صفَّه.
+
+   والتصديرُ في `print-reports.js` — بالتصميم نفسِه على ورق A4.
    ========================================================================== */
 
 (function (global) {
     'use strict';
-
-    const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
 
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, (m) => ({
@@ -28,35 +39,44 @@
 
         container.innerHTML = `
             <div class="container">
-                <div class="section-header" style="margin-top: var(--space-6);">
-                    <button class="btn btn-primary" id="btn-print-reports">🖨️ طباعة التقرير</button>
-                </div>
-                <div class="text-muted" style="padding: var(--space-6); text-align: center;">
-                    ⏳ جارٍ حساب الإحصائيات...
+                <div class="text-muted" style="padding: var(--space-8); text-align: center;">
+                    جارٍ حساب الإحصائيات…
                 </div>
             </div>
         `;
 
         const data = await collectStats(teacher);
 
-        container.querySelector('.container').innerHTML = `
-            <div class="section-header" style="margin-top: var(--space-6);">
-                <button class="btn btn-primary" id="btn-print-reports">🖨️ طباعة التقرير</button>
-            </div>
-
-            ${data.totals.classes === 0 ? emptyView() : `
-                ${overviewSection(data)}
+        container.querySelector('.container').innerHTML = data.totals.classes === 0
+            ? emptyView()
+            : `<div class="rp-v2">
+                ${heroSection(data)}
                 ${attendanceSection(data)}
-                ${performanceSection(data)}
-                ${topRatedSection(data)}
+                ${studentsSections(data)}
                 ${productionSection(data)}
                 ${perClassSection(data)}
-            `}
-        `;
+                <button type="button" class="btn btn-primary rp-export" id="btn-print-reports">
+                    تصدير التقرير PDF
+                </button>
+               </div>`;
 
-        container.querySelector('#btn-print-reports')?.addEventListener('click', () => {
-            global.print();
+        /* التصديرُ عبر PdfCore لا `window.print()`: النداءُ خامدٌ داخل
+           WKWebView، فكان الزرُّ لا يفعل شيئاً على iOS — والهدفُ آبل ستور. */
+        container.querySelector('#btn-print-reports')?.addEventListener('click', async (e) => {
+            const b = e.currentTarget;
+            if (b.disabled) return;
+            b.disabled = true;
+            const was = b.textContent;
+            b.textContent = 'جارٍ التجهيز…';
+            try {
+                await global.PrintReports.savePdf({ teacher, data });
+            } finally {
+                b.disabled = false;
+                b.textContent = was;
+            }
         });
+
+        if (global.PrintReports) global.PrintReports.preloadPdfEngine();
     }
 
     function emptyView() {
@@ -194,252 +214,157 @@
        SECTION RENDERERS
        ========================================================================== */
 
-    function overviewSection(data) {
-        const t = data.totals;
-        return `
-            <div class="dashboard-section">
-                <h3 class="section-title">📌 نظرة عامة</h3>
-                <div class="grid grid-4">
-                    ${statTile('📚', t.classes, 'فصول')}
-                    ${statTile('👥', t.students, 'طلاب')}
-                    ${statTile('📝', t.exams + t.worksheets + t.homework, 'محتوى أُنتج')}
-                    ${statTile('✅', t.attendanceRate == null ? '—' : t.attendanceRate + '%', 'نسبة الحضور العامة', 'var(--success)')}
-                </div>
-            </div>
-        `;
+    /* ── قوائمُ الطلاب تُشتقّ مرّةً واحدة ──
+       العرضُ والطباعةُ يقرآن منها معاً، فلا يختلف المطبوعُ عن الشاشة
+       باشتقاقين متوازيين ينزاح أحدهما يوماً. */
+    function derive(data) {
+        const all = [];
+        data.perClass.forEach((p) => p.studentsWithRate.forEach((s) => {
+            all.push(Object.assign({}, s, { cls: p.cls }));
+        }));
+        const rated = all.filter((s) => s.rate != null);
+        return {
+            top:  rated.filter((s) => s.rate >= 90).sort((a, b) => b.rate - a.rate).slice(0, 5),
+            low:  rated.filter((s) => (s.attended.absent || 0) > 0)
+                       .sort((a, b) => a.rate - b.rate).slice(0, 5),
+            best: all.filter((s) => typeof s.score === 'number')
+                     .sort((a, b) => b.score - a.score).slice(0, 5)
+        };
     }
 
-    function statTile(icon, value, label, color) {
+    const ATT_KINDS = [
+        { k: 'present', l: 'حاضر',   c: '#10B981' },
+        { k: 'late',    l: 'متأخر',  c: '#F59E0B' },
+        { k: 'excused', l: 'مستأذن', c: '#3B82F6' },
+        { k: 'absent',  l: 'غائب',   c: '#EF4444' }
+    ];
+    const PROD_KINDS = [
+        { k: 'exams',       l: 'اختبارات' },   { k: 'worksheets',  l: 'أوراق عمل' },
+        { k: 'homework',    l: 'واجبات' },     { k: 'strategies',  l: 'استراتيجيات' },
+        { k: 'initiatives', l: 'مبادرات' }
+    ];
+
+    const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const pct = (n, of) => (of ? Math.round(n / of * 100) : 0);
+
+    /* «الصف الخامس الابتدائي / أ» يبتلع سطرَ الطالب فيُقصّ اسمُه — والاسمُ
+       هو المقصود. فيُختصر بدالّة التطبيق نفسِها كما تُسمّى الفصولُ في كلّ
+       شاشةٍ أخرى: «الخامس الابتدائي / أ». */
+    const clsName = (c) => escapeHtml(global.ClassCreate
+        ? global.ClassCreate.label(c.grade, c.section)
+        : String(c.grade || '') + ' / ' + String(c.section || ''));
+
+    /* ── الصدر: الجوابُ في نظرة ── */
+    function heroSection(data) {
+        const t = data.totals;
+        const considered = t.attendance.present + t.attendance.late + t.attendance.absent;
         return `
-            <div class="card stat-card">
-                <div class="stat-icon">${icon}</div>
-                <div class="stat-value num" ${color ? `style="color:${color}"` : ''}>${value}</div>
-                <div class="stat-label">${label}</div>
-            </div>
-        `;
+            <div class="rp-hero">
+                <div class="k">نسبة الحضور العامة</div>
+                <div class="v">${t.attendanceRate == null ? '—' : ar(t.attendanceRate) + '%'}</div>
+                <div class="s">${considered
+                    ? 'من ' + ar(considered) + ' حالة حضورٍ مرصودة'
+                    : 'لم يُرصد حضورٌ بعد'}</div>
+                <div class="row">
+                    <div><div class="n">${ar(t.classes)}</div><div class="c">فصول</div></div>
+                    <div><div class="n">${ar(t.students)}</div><div class="c">طلاب</div></div>
+                    <div><div class="n">${ar(t.exams + t.worksheets + t.homework)}</div>
+                         <div class="c">محتوى</div></div>
+                </div>
+            </div>`;
+    }
+
+    /* شريطٌ واحدٌ لكلّ خانة — تُقاس بالعين لا بالأرقام. */
+    function meterRows(items) {
+        const max = Math.max(1, ...items.map((x) => x.v));
+        return `<div class="rp-meters">${items.map((x) => `
+            <div class="rp-meter">
+                <span class="lb">${x.l}</span>
+                <span class="tr"><i style="width:${x.v / max * 100}%;background:${x.c || 'var(--primary)'}"></i></span>
+                <span class="vn">${x.t}</span>
+            </div>`).join('')}</div>`;
     }
 
     function attendanceSection(data) {
         const a = data.totals.attendance;
-        const total = data.totals.attTotal;
-        if (total === 0) return '';
-
-        const rows = [
-            { key: 'present', label: 'حاضر', color: '#10B981', count: a.present },
-            { key: 'late',    label: 'متأخر', color: '#F59E0B', count: a.late },
-            { key: 'excused', label: 'مستأذن', color: '#3B82F6', count: a.excused },
-            { key: 'absent',  label: 'غائب',  color: '#EF4444', count: a.absent }
-        ];
-
+        if (!data.totals.attTotal) return '';
         return `
-            <div class="dashboard-section">
-                <h3 class="section-title">📅 توزيع الحضور</h3>
-                <div class="card">
-                    <div class="stacked-bar">
-                        ${rows.map((r) => `
-                            <div class="sb-seg"
-                                 style="width: ${total ? (r.count / total * 100) : 0}%; background: ${r.color};"
-                                 title="${r.label}: ${r.count}"></div>
-                        `).join('')}
-                    </div>
-                    <div class="legend-grid" style="margin-top: var(--space-4);">
-                        ${rows.map((r) => `
-                            <div class="legend-item">
-                                <span class="legend-dot" style="background: ${r.color};"></span>
-                                <span>${r.label}</span>
-                                <strong class="num">${r.count}</strong>
-                                <span class="text-muted">(${total ? Math.round(r.count / total * 100) : 0}%)</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
+            <h3 class="rp-h">تفصيل الحضور</h3>
+            <div class="rp-card">
+                ${meterRows(ATT_KINDS.map((g) => ({
+                    l: g.l, c: g.c, v: a[g.k],
+                    t: ar(a[g.k]) + ' · ' + ar(pct(a[g.k], data.totals.attTotal)) + '%'
+                })))}
+            </div>`;
     }
 
-    function performanceSection(data) {
-        // Top 5 & lowest 5 students by attendance rate, across all classes
-        const all = [];
-        data.perClass.forEach((p) => {
-            p.studentsWithRate.forEach((s) => {
-                if (s.rate != null) all.push({ ...s, class: p.cls });
-            });
-        });
-        if (all.length === 0) return '';
-
-        // Top = students with rate >= 90% (committed), sorted descending.
-        const top = all
-            .filter((s) => s.rate >= 90)
-            .sort((a, b) => b.rate - a.rate)
-            .slice(0, 5);
-
-        // Low = only students who have at least one real absence, sorted ascending by rate.
-        const low = all
-            .filter((s) => (s.attended?.absent || 0) > 0)
-            .sort((a, b) => a.rate - b.rate)
-            .slice(0, 5);
-
-        return `
-            <div class="dashboard-section">
-                <h3 class="section-title">🏆 الطلاب الأبرز</h3>
-                <div class="grid grid-2">
-                    <div class="card">
-                        <h4 style="color: var(--success); margin-top:0;">🌟 الأعلى التزاماً بالحضور</h4>
-                        ${studentsMini(top, 'success')}
-                    </div>
-                    <div class="card">
-                        <h4 style="color: var(--danger); margin-top:0;">⚠️ أكثر الطلاب تغيّباً</h4>
-                        ${studentsMini(low, 'danger')}
-                    </div>
-                </div>
-            </div>
-        `;
+    function rowsHtml(list, tone, rank) {
+        return `<div class="rp-rows">${list.map((s, i) => {
+            const isLow = tone === 'low';
+            const shown = rank ? Math.round(s.score) : (isLow ? 100 - s.rate : s.rate);
+            const color = rank ? 'var(--primary)' : (isLow ? 'var(--danger)' : 'var(--success)');
+            const meta  = rank ? ''
+                : (isLow ? ar(s.attended.absent || 0) + ' غياب'
+                         : ar((s.attended.present || 0) + (s.attended.late || 0)) + ' حضور');
+            return `
+                <a href="#/student/${s.student.id}" class="rp-row">
+                    ${rank ? `<span class="rk">${['١','٢','٣','٤','٥'][i]}</span>` : ''}
+                    <span class="nm">${escapeHtml(s.student.name)}</span>
+                    <span class="mt">${clsName(s.cls)}${meta ? ' · ' + meta : ''}</span>
+                    <span class="pc" style="color:${color}">${ar(shown)}%</span>
+                </a>`;
+        }).join('')}</div>`;
     }
 
-    function studentsMini(list, tone) {
-        if (list.length === 0) {
-            const msg = tone === 'success'
-                ? 'لا يوجد طلاب بنسبة حضور ٩٠٪ فأكثر بعد.'
-                : 'ممتاز! لا يوجد طلاب متغيّبون.';
-            return `<p class="text-muted">${msg}</p>`;
-        }
-        return `
-            <div class="mini-list">
-                ${list.map((s) => {
-                    const isLow = tone !== 'success';
-                    const pct   = isLow ? (100 - s.rate) : s.rate;
-                    const color = isLow ? 'var(--danger)' : 'var(--success)';
-                    const absCount = (s.attended?.absent || 0);
-                    const sub = isLow
-                        ? `${absCount} غياب`
-                        : `${s.attended?.present + s.attended?.late || 0} حضور`;
-                    return `
-                        <div class="mini-row">
-                            <a href="#/student/${s.student.id}" class="mini-name">${escapeHtml(s.student.name)}</a>
-                            <span class="text-muted" style="font-size: var(--fs-xs);">
-                                ${escapeHtml(s.class.grade)} / ${escapeHtml(s.class.section)} · ${sub}
-                            </span>
-                            <span class="mini-rate num" style="color: ${color};">
-                                ${pct}%
-                            </span>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    }
-
-    function topRatedSection(data) {
-        // Collect students that have at least one numeric evaluation
-        const all = [];
-        data.perClass.forEach((p) => {
-            p.studentsWithRate.forEach((s) => {
-                if (typeof s.score === 'number') all.push({ ...s, class: p.cls });
-            });
-        });
-        if (all.length === 0) return '';
-
-        const top = all.slice().sort((a, b) => b.score - a.score).slice(0, 5);
-
-        return `
-            <div class="dashboard-section">
-                <h3 class="section-title">🌟 الطلاب المتميّزون</h3>
-                <div class="card">
-                    <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                        أعلى ٥ طلاب في متوسّط التقييمات (محسوب كنسبة مئوية موحّدة
-                        بين جميع أنواع الخانات: النجوم، الأرقام، العلامات، المتدرّج).
-                    </p>
-                    <div class="mini-list">
-                        ${top.map((s, i) => `
-                            <div class="mini-row">
-                                <span style="color: ${['#F59E0B','#94A3B8','#B45309','var(--text-muted)','var(--text-muted)'][i]}; font-weight: var(--fw-bold); min-width: 22px;">
-                                    ${['🥇','🥈','🥉','4.','5.'][i]}
-                                </span>
-                                <a href="#/student/${s.student.id}" class="mini-name">${escapeHtml(s.student.name)}</a>
-                                <span class="text-muted" style="font-size: var(--fs-xs);">
-                                    ${escapeHtml(s.class.grade)} / ${escapeHtml(s.class.section)}
-                                </span>
-                                <span class="mini-rate num" style="color: var(--primary);">
-                                    ${Math.round(s.score)}%
-                                </span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
+    function studentsSections(data) {
+        const d = derive(data);
+        let out = '';
+        if (d.top.length) out += `
+            <h3 class="rp-h">الأعلى التزاماً بالحضور</h3>
+            <div class="rp-card">${rowsHtml(d.top, 'top')}</div>`;
+        if (d.low.length) out += `
+            <h3 class="rp-h">أكثر الطلاب تغيّباً</h3>
+            <div class="rp-card">${rowsHtml(d.low, 'low')}</div>`;
+        if (d.best.length) out += `
+            <h3 class="rp-h">المتميّزون في التقييم</h3>
+            <div class="rp-card">${rowsHtml(d.best, 'best', true)}</div>`;
+        return out;
     }
 
     function productionSection(data) {
         const t = data.totals;
-        const items = [
-            { icon: '📝', label: 'اختبارات', value: t.exams },
-            { icon: '📄', label: 'أوراق عمل', value: t.worksheets },
-            { icon: '📚', label: 'واجبات', value: t.homework },
-            { icon: '🎯', label: 'استراتيجيات', value: t.strategies },
-            { icon: '🌟', label: 'مبادرات', value: t.initiatives }
-        ];
+        const items = PROD_KINDS.map((p) => ({ l: p.l, v: t[p.k], t: ar(t[p.k]) }));
+        if (!items.some((x) => x.v)) return '';
         return `
-            <div class="dashboard-section">
-                <h3 class="section-title">🧑‍🏫 إنتاجي</h3>
-                <div class="grid grid-4">
-                    ${items.map((it) => `
-                        <div class="card stat-card">
-                            <div class="stat-icon">${it.icon}</div>
-                            <div class="stat-value num">${it.value}</div>
-                            <div class="stat-label">${it.label}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
+            <h3 class="rp-h">إنتاجي</h3>
+            <div class="rp-card">${meterRows(items)}</div>`;
     }
 
     function perClassSection(data) {
-        if (data.perClass.length === 0) return '';
+        if (!data.perClass.length) return '';
         return `
-            <div class="dashboard-section">
-                <h3 class="section-title">📚 تفصيل لكل فصل</h3>
-                <div class="table-wrapper">
-                    <table class="students-table">
-                        <thead>
-                            <tr>
-                                <th>الفصل</th>
-                                <th>المادة</th>
-                                <th>الطلاب</th>
-                                <th>نسبة الحضور</th>
-                                <th>اختبارات</th>
-                                <th>أوراق</th>
-                                <th>واجبات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.perClass.map((p) => {
-                                const considered = p.att.present + p.att.absent + p.att.late;
-                                const rate = considered === 0 ? '—' :
-                                    Math.round(((p.att.present + p.att.late) / considered) * 100) + '%';
-                                return `
-                                    <tr>
-                                        <td>
-                                            <a href="#/class/${p.cls.id}" class="st-name-link">
-                                                ${STAGE_LABELS[p.cls.stage] || ''} — ${escapeHtml(p.cls.grade)} / ${escapeHtml(p.cls.section)}
-                                            </a>
-                                        </td>
-                                        <td>${escapeHtml(p.cls.subject)}</td>
-                                        <td class="num">${p.students.length}</td>
-                                        <td class="num" style="color: var(--success); font-weight: var(--fw-bold);">${rate}</td>
-                                        <td class="num">${p.examsCount}</td>
-                                        <td class="num">${p.worksheetsCount}</td>
-                                        <td class="num">${p.homeworkCount}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
+            <h3 class="rp-h">تفصيل لكل فصل</h3>
+            <div class="rp-cls">${data.perClass.map((p) => {
+                const considered = p.att.present + p.att.absent + p.att.late;
+                const rate = considered === 0 ? null
+                    : Math.round((p.att.present + p.att.late) / considered * 100);
+                return `
+                    <a href="#/class/${p.cls.id}" class="rp-cls-card">
+                        <div class="top">
+                            <span class="t">${clsName(p.cls)}</span>
+                            <span class="r">${rate == null ? '—' : ar(rate) + '%'}</span>
+                        </div>
+                        <div class="sub">${escapeHtml(p.cls.subject || '')}
+                            · ${ar(p.students.length)} ${p.students.length === 1 ? 'طالب' : 'طالباً'}</div>
+                        <div class="mini"><i style="width:${rate == null ? 0 : rate}%"></i></div>
+                        <div class="facts">
+                            <span>اختبارات <b>${ar(p.examsCount)}</b></span>
+                            <span>أوراق <b>${ar(p.worksheetsCount)}</b></span>
+                            <span>واجبات <b>${ar(p.homeworkCount)}</b></span>
+                        </div>
+                    </a>`;
+            }).join('')}</div>`;
     }
 
-    global.ReportsView = { render };
+    global.ReportsView = { render, collectStats, derive, ATT_KINDS, PROD_KINDS };
 })(window);
