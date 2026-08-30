@@ -202,7 +202,14 @@
        الطباعةَ الحقيقيّة — الصنفُ لا وجودَ له خارج المسرح. */
     .pdfcore-page > div { display: flow-root; }
 
-    .pdfcore-page .cover-page {
+    /* والأربعُ المؤطَّرةُ سواءٌ في العلّة والعلاج: الغلافُ والفهرسُ وبطاقةُ
+       الشاهد وفاصلُ القسم — كلُّها مكتوبةٌ بالنمط نفسِه (حدٌّ خارجيّ ١pt،
+       وحشوٌ ٤مم، وداخلٌ بحدٍّ ٠٫٥pt، وارتفاعٌ أدنى ٢٥٠مم). وهي التي
+       يصنّفها المرقّمُ «framed». */
+    .pdfcore-page .cover-page,
+    .pdfcore-page .toc-page,
+    .pdfcore-page .cert-card,
+    .pdfcore-page .section-divider {
         /* `border-box` ليضمَّ الارتفاعُ الحدَّ والحشوَ: بدونه يزيد سُمكُ
            الحدِّ (١pt = ٠٫٣٥مم لكلّ ضلع) على الارتفاع فتختلّ الفجوتان
            بـ٠٫٦مم — قِيست ١٢ فوق و١١٫٤ تحت. */
@@ -211,7 +218,14 @@
         margin: 12mm auto;
     }
 
-    .pdfcore-page .cover-inner { box-sizing: border-box; min-height: 100%; }
+    /* والداخلُ يملأ ما بين الحدّين، فلا يقصر عن إطاره الخارجيّ. */
+    .pdfcore-page .cover-inner,
+    .pdfcore-page .toc-page-inner,
+    .pdfcore-page .cert-card-inner,
+    .pdfcore-page .section-divider-inner {
+        box-sizing: border-box;
+        min-height: 100%;
+    }
 
     .cover-header {
         text-align: center;
