@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>القراءة المجّانيّة — فحص</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D32">
+<link rel="stylesheet" href="css/components.css?v=10">
+<link rel="stylesheet" href="css/views.css?v=D292">
+<link rel="stylesheet" href="css/theme-white.css?v=22">
+<link rel="stylesheet" href="css/theme-dark.css?v=34">
+
+<style>
+    body { margin: 0; background: var(--bg, #F4F5F7); }
+    .pv { max-width: 900px; margin: 0 auto; padding: 14px 14px 60px; }
+    .pv h1 { font-size: 20px; margin: 0 0 4px; }
+    .pv .lede { font-size: 13px; color: var(--text-muted); margin: 0 0 14px; line-height: 1.9; }
+
+    .drop {
+        display: block; width: 100%; border: 1.5px dashed var(--border-strong);
+        border-radius: 14px; background: var(--surface); padding: 18px 14px;
+        text-align: center; cursor: pointer; font-family: inherit;
+        font-size: 14px; font-weight: var(--fw-bold); color: var(--ink-primary);
+    }
+    .drop small { display: block; font-weight: 500; font-size: 12px;
+                  color: var(--text-muted); margin-top: 5px; }
+
+    .verdict { border-radius: 14px; padding: 13px 14px; margin-top: 14px;
+               font-size: 13.5px; line-height: 1.9; border: 1.5px solid var(--border); }
+    .verdict.good { background: #E9F6EF; border-color: #10B981; color: #0B5138; }
+    .verdict.bad  { background: #FDECEC; border-color: #EF4444; color: #7F1D1D; }
+    .verdict.warn { background: #FEF6E7; border-color: #F59E0B; color: #7C4A03; }
+    .verdict b { font-weight: var(--fw-bold); }
+
+    .tabs { display: flex; gap: 7px; margin: 14px 0 12px; flex-wrap: wrap; }
+    .tabs button {
+        min-height: 40px; padding: 0 14px; border-radius: 11px; cursor: pointer;
+        font-family: inherit; font-size: 13px; font-weight: var(--fw-bold);
+        border: 1.5px solid var(--border); background: var(--surface);
+        color: var(--ink-primary);
+    }
+    .tabs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .card { background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 16px; padding: 13px 12px; margin-bottom: 12px; }
+    .card > h3 { font-size: 14px; margin: 0 0 9px; }
+
+    .scroll { overflow-x: auto; }
+    table.g { border-collapse: collapse; width: 100%; font-size: 12px; }
+    table.g th, table.g td { border: 1px solid var(--border); padding: 6px 7px;
+                             vertical-align: top; white-space: pre-line; }
+    table.g th { background: var(--beige, #EFEDE6); font-weight: var(--fw-bold); }
+    table.g td.hit { background: #E9F6EF; }
+    table.g col.pick + col { background: red; }
+    td.pickcol { background: #E9F6EF; }
+
+    .pglist { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pglist button {
+        min-height: 36px; padding: 0 11px; border-radius: 9px; cursor: pointer;
+        font-family: inherit; font-size: 12.5px; font-weight: var(--fw-bold);
+        border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-primary);
+    }
+    .pglist button.on   { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pglist button.mine { border-color: #10B981; }
+
+    pre.raw { font-size: 11.5px; line-height: 1.8; white-space: pre-wrap;
+              word-break: break-word; margin: 0; max-height: 420px; overflow: auto;
+              color: var(--ink-primary); }
+    .names { columns: 2; column-gap: 18px; font-size: 13px; line-height: 2; margin: 0; padding-inline-start: 20px; }
+    .muted { color: var(--text-muted); font-size: 12.5px; line-height: 1.9; }
+    .kv { display: flex; gap: 10px; font-size: 12.5px; padding: 5px 0;
+          border-bottom: 1px solid var(--border); }
+    .kv:last-child { border-bottom: 0; }
+    .kv b { flex: none; width: 150px; font-weight: var(--fw-bold); }
+</style>
+</head>
+<body>
+
+<div class="pv">
+    <h1>القراءة المجّانيّة — فحص</h1>
+    <p class="lede">
+        اختر جدولَك أو كشفَ طلابك (PDF). كلُّ شيءٍ يجري <b>على جهازك</b>:
+        لا يُرفع الملفُّ ولا يُنادى الذكاء، ولا يُدفع شيء.
+    </p>
+
+    <button type="button" class="drop" id="pick">
+        اختر ملفَ PDF
+        <small>الجدول الأسبوعي أو كشف الأسماء</small>
+    </button>
+    <input type="file" id="file" accept=".pdf,application/pdf" hidden>
+
+    <div id="out"></div>
+</div>
+
+<script src="js/pdf-core.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const $ = (s) => document.querySelector(s);
+    const out = $('#out');
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    /* ══════════════════════════════════════════════════════════════════
+       ١) العربيّةُ كما تخرج من ملفّ PDF
+
+       حرفان يفسدان كلَّ قراءةٍ إن لم يُعالَجا:
+
+       • **الأشكالُ التقديميّة**: كثيرٌ من المولّدات تكتب الحرفَ بشكله
+         الموصول (U+FE70..U+FEFF) لا بحرفه الأصليّ. فـ«محمد» تخرج
+         حروفاً غريبةً تبدو صحيحةً في العين وتخيب في كلّ مقارنة.
+         وNFKC يردّها إلى أصلها — وهي دالّةٌ في المتصفّح لا مكتبة.
+
+       • **الترتيبُ البصريّ**: بعضها يكتب الكلمةَ معكوسةً لأنّ المستندَ
+         يخزّن ما يُرسم لا ما يُقرأ. فتخرج «الأحد» هكذا: «دحلأا».
+         ولا يُخمَّن هذا: يُقاس بكلماتٍ نعرفها (أسماء الأيام)، فإن وُجدت
+         مقلوبةً لا مستقيمةً، قُلب النصُّ كلُّه.
+       ══════════════════════════════════════════════════════════════════ */
+
+    const deshape = (s) => String(s || '').normalize('NFKC').replace(/\u0640/g, '');
+    const revStr  = (s) => Array.from(s).reverse().join('');
+
+    const fold = (s) => deshape(s)
+        .replace(/[\u0623\u0625\u0622\u0671]/g, 'ا')
+        .replace(/\u0649/g, 'ي')
+        .replace(/\u0629/g, 'ه')
+        .replace(/[\u064B-\u0652]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const latin = (s) => String(s || '').replace(/[\u0660-\u0669]/g,
+        (d) => String(d.charCodeAt(0) - 0x0660));
+
+    const DAYS = ['الاحد', 'الاثنين', 'الثلاثاء', 'الاربعاء', 'الخميس'];
+    const dayIndex = (t) => {
+        const f = fold(t);
+        for (let i = 0; i < DAYS.length; i++) if (f.indexOf(DAYS[i]) >= 0) return i;
+        return -1;
+    };
+
+    /* ══════════════════════════════════════════════════════════════════
+       ٢) استخراجُ النصّ بإحداثيّاته
+
+       `getTextContent` لا يعطي النصَّ وحدَه بل مصفوفةَ تحويلٍ لكلّ قطعة.
+       وضربُها في مصفوفة العرض يعطي موضعاً بأصل الصفحة أعلى اليسار —
+       ويصحّح دورانَ الصفحة إن كانت مستديرة.
+       ══════════════════════════════════════════════════════════════════ */
+
+    async function readPage(pdfjs, doc, n) {
+        const page = await doc.getPage(n);
+        const vp = page.getViewport({ scale: 1 });
+        const tc = await page.getTextContent();
+        const items = [];
+        tc.items.forEach((it) => {
+            const raw = String(it.str || '');
+            if (!raw.trim()) return;
+            const t = pdfjs.Util.transform(vp.transform, it.transform);
+            const h = Math.abs(t[3]) || it.height || 10;
+            items.push({
+                raw: raw,
+                x: t[4], y: t[5], w: it.width || 0, h: h,
+                cx: t[4] + (it.width || 0) / 2, cy: t[5] - h / 2
+            });
+        });
+        page.cleanup();
+        return { n: n, items: items, w: vp.width, h: vp.height };
+    }
+
+    /** يقرّر اتّجاهَ النصّ، ويطبّق القرارَ على القطع كلّها.
+     *
+     *  ── ولماذا لا يكفي أن نبحث عن أسماء الأيّام ──
+     *  كانت هذه وحدَها شاهدَه، فأصاب في الجداول وسقط في الكشوف: كشفُ
+     *  الأسماء ليس فيه «الأحد» ولا «الخميس»، فلا شاهدَ يظهر، فيُترك النصُّ
+     *  مقلوباً وتخرج الأسماءُ كلُّها معكوسة — «يريسعلا يلع نب دمحم».
+     *  (قِيس يوم ٣٠ أغسطس ٢٠٢٦: صفرٌ من خمسة وعشرين.)
+     *
+     *  فالميزانُ الآن بنيةُ العربيّة نفسِها، لا مفرداتٌ تُحفظ:
+     *    • **التاءُ المربوطة والألفُ المقصورة** لا تقعان إلّا آخِرَ الكلمة.
+     *      فوقوعُهما أوّلَها دليلُ قلبٍ لا يكاد يخطئ.
+     *    • **«ال» التعريف** أوّلَ الكلمة كثيرةٌ في كلّ نصٍّ عربيّ، وتصير
+     *      «لا» في آخرها إذا قُلب.
+     *  وتبقى أسماءُ الأيّام شاهداً مرجَّحاً بخمسة: إن وُجدت، فهي أقطعُ. */
+    function orient(pages) {
+        let up = 0, down = 0;
+        pages.forEach((p) => p.items.forEach((it) => {
+            const s = deshape(it.raw);
+            if (dayIndex(s) >= 0)          up   += 5;
+            if (dayIndex(revStr(s)) >= 0)  down += 5;
+            s.split(/\s+/).forEach((w0) => {
+                const w = w0.replace(/[ً-ْ]/g, '');
+                if (w.length < 2) return;
+                if (/[ةى]$/.test(w)) up++;
+                if (/^[ةى]/.test(w)) down++;
+                if (/^ال/.test(w))   up++;
+                if (/لا$/.test(w))   down++;
+            });
+        }));
+        /* ولا تُقلب العربيّةُ بلا دليل: القلبُ يُتّخذ إن رجحت شواهدُه. */
+        const flip = down > up;
+        pages.forEach((p) => p.items.forEach((it) => {
+            const s = deshape(it.raw);
+            it.t = flip ? revStr(s) : s;
+        }));
+        return { flip: flip, up: up, down: down };
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ٣) مَن صاحبُ هذه الصفحة؟  — وهذا وحدَه يوفّر ثمانيةَ أعشار الفاتورة
+       ══════════════════════════════════════════════════════════════════ */
+
+    const TITLES = ['جدول المعلم', 'جدول المعلمه', 'جدول حصص المعلم',
+                    'اسم المعلم', 'المعلم', 'المعلمه'];
+
+    function teacherOf(page) {
+        /* السطرُ يُجمع أوّلاً: العنوانُ قد يكون قطعتين — «جدول المعلم»
+           في قطعةٍ والاسمُ في التي تليها. */
+        const lines = toLines(page.items);
+        for (const ln of lines) {
+            const txt = ln.map((i) => i.t).join(' ').replace(/\s+/g, ' ').trim();
+            const f = fold(txt);
+            for (const key of TITLES) {
+                const at = f.indexOf(key);
+                if (at < 0) continue;
+                let name = txt.slice(at + key.length).replace(/^[\s:\-\/\u060C]+/, '').trim();
+                name = name.split(/\s{3,}/)[0].trim();
+                if (name.length >= 3) return { name: name, line: txt };
+            }
+        }
+        return null;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ٤) الأسطرُ والأعمدة — تجميعٌ بالمواضع لا بترتيب القطع
+
+       ترتيبُ القطع في الملفّ ليس ترتيبَ القراءة: مولّدٌ يكتب عموداً
+       عموداً وآخرُ يقفز. فالموضعُ وحدَه يُعوَّل عليه.
+       ══════════════════════════════════════════════════════════════════ */
+
+    function toLines(items) {
+        if (!items.length) return [];
+        const hs = items.map((i) => i.h).sort((a, b) => a - b);
+        const med = hs[Math.floor(hs.length / 2)] || 10;
+        const tol = Math.max(3, med * 0.6);
+        const sorted = items.slice().sort((a, b) => a.cy - b.cy);
+        const lines = [];
+        let cur = [sorted[0]];
+        for (let i = 1; i < sorted.length; i++) {
+            if (Math.abs(sorted[i].cy - cur[cur.length - 1].cy) <= tol) cur.push(sorted[i]);
+            else { lines.push(cur); cur = [sorted[i]]; }
+        }
+        lines.push(cur);
+        /* من اليمين إلى اليسار — فالورقةُ عربيّة. */
+        return lines.map((l) => l.sort((a, b) => b.cx - a.cx));
+    }
+
+    /** عنقدةُ أعدادٍ بفجوةٍ: تعيد مراكزَ العناقيد مرتّبة. */
+    function cluster(vals, gap) {
+        if (!vals.length) return [];
+        const s = vals.slice().sort((a, b) => a - b);
+        const groups = [[s[0]]];
+        for (let i = 1; i < s.length; i++) {
+            if (s[i] - s[i - 1] <= gap) groups[groups.length - 1].push(s[i]);
+            else groups.push([s[i]]);
+        }
+        return groups.map((g) => ({
+            c: g.reduce((a, b) => a + b, 0) / g.length,
+            lo: g[0], hi: g[g.length - 1], n: g.length
+        }));
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ٥) الجدولُ الأسبوعيّ: شبكةٌ تُبنى من مواضع أسماء الأيّام
+       ══════════════════════════════════════════════════════════════════ */
+
+    function buildGrid(page) {
+        const items = page.items;
+        const marks = [];
+        items.forEach((it) => {
+            const d = dayIndex(it.t);
+            if (d >= 0 && fold(it.t).length <= 12) marks.push({ d: d, it: it });
+        });
+        if (marks.length < 3) return { ok: false, why: 'لم أجد أسماءَ الأيّام في هذه الصفحة.' };
+
+        const xs = marks.map((m) => m.it.cx), ys = marks.map((m) => m.it.cy);
+        const spanX = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+        const spanY = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+        const daysAreRows = spanY >= spanX;
+
+        /* الأيّامُ تُوحّد: يومٌ مكتوبٌ مرّتين في العمود نفسِه يُؤخذ أعلاه. */
+        const uniq = {};
+        marks.forEach((m) => {
+            const k = m.d;
+            if (!uniq[k] || (daysAreRows ? m.it.cy < uniq[k].it.cy : m.it.cx > uniq[k].it.cx)) uniq[k] = m;
+        });
+        const days = Object.keys(uniq).map((k) => uniq[k])
+            .sort((a, b) => daysAreRows ? a.it.cy - b.it.cy : b.it.cx - a.it.cx);
+
+        /* حدودُ الصفوف: منتصفُ ما بين كلّ يومٍ وتاليه. */
+        const bandsD = bandsFrom(days.map((m) => daysAreRows ? m.it.cy : m.it.cx),
+                                 daysAreRows, page);
+
+        /* الأعمدة: أرقامُ الحصص. تُلتمس في الشريط الذي يسبق أوّلَ يوم. */
+        const head = items.filter((it) => {
+            const v = latin(it.t).trim();
+            if (!/^\d{1,2}$/.test(v)) return false;
+            const n = +v;
+            if (n < 1 || n > 12) return false;
+            return daysAreRows ? it.cy < bandsD[0].lo : it.cx > bandsD[0].hi;
+        });
+        let bandsP, periods;
+        if (head.length >= 3) {
+            const srt = head.sort((a, b) => daysAreRows ? b.cx - a.cx : a.cy - b.cy);
+            periods = srt.map((it) => +latin(it.t).trim());
+            bandsP = bandsFrom(srt.map((it) => daysAreRows ? it.cx : it.cy), !daysAreRows, page);
+        } else {
+            /* بلا ترويسةٍ صريحة: تُعنقد مواضعُ ما تبقّى. */
+            const rest = items.filter((it) => dayIndex(it.t) < 0);
+            const vals = rest.map((it) => daysAreRows ? it.cx : it.cy);
+            const gap = daysAreRows ? page.w / 22 : page.h / 26;
+            const cl = cluster(vals, gap).filter((g) => g.n >= 2);
+            if (cl.length < 2) return { ok: false, why: 'لم أتبيّن أعمدةَ الحصص.' };
+            const ord = daysAreRows ? cl.slice().reverse() : cl;
+            periods = ord.map((_, i) => i + 1);
+            bandsP = ord.map((g, i) => {
+                const prev = ord[i - 1], next = ord[i + 1];
+                const lo = prev ? (daysAreRows ? (g.hi + prev.lo) / 2 : (prev.hi + g.lo) / 2) : g.lo - gap;
+                const hi = next ? (daysAreRows ? (next.hi + g.lo) / 2 : (g.hi + next.lo) / 2) : g.hi + gap;
+                return daysAreRows ? { lo: Math.min(lo, hi), hi: Math.max(lo, hi) }
+                                   : { lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
+            });
+        }
+
+        const cells = {};
+        items.forEach((it) => {
+            if (dayIndex(it.t) >= 0 && fold(it.t).length <= 12) return;
+            const dv = daysAreRows ? it.cy : it.cx;
+            const pv = daysAreRows ? it.cx : it.cy;
+            const r = bandsD.findIndex((b) => dv >= b.lo && dv <= b.hi);
+            const c = bandsP.findIndex((b) => pv >= b.lo && pv <= b.hi);
+            if (r < 0 || c < 0) return;
+            const k = r + ':' + c;
+            (cells[k] = cells[k] || []).push(it);
+        });
+        Object.keys(cells).forEach((k) => {
+            cells[k] = cells[k]
+                .sort((a, b) => Math.abs(a.cy - b.cy) > 4 ? a.cy - b.cy : b.cx - a.cx)
+                .map((i) => i.t.trim()).join('\n').replace(/\n{2,}/g, '\n').trim();
+        });
+
+        return {
+            ok: true, daysAreRows: daysAreRows,
+            days: days.map((m) => m.it.t.trim()), periods: periods, cells: cells,
+            filled: Object.keys(cells).filter((k) => cells[k]).length
+        };
+    }
+
+    /** يحوّل مراكزَ إلى نطاقاتٍ متلاصقة — **بلا أن تبتلع أطرافُها الورقة**.
+     *
+     *  وكان الطرفان يمتدّان إلى حافّتَي الصفحة، فيبتلع أوّلُ صفٍّ كلَّ ما
+     *  فوقه: اسمَ المدرسة، وعنوانَ «جدول المعلم»، وسطرَ أرقام الحصص —
+     *  فتظهر الترويسةُ كلُّها داخل خانةِ يومِ الأحد، وتُقرأ الأرقامُ
+     *  دروساً. (قِيس على جدولٍ مولَّدٍ يوم ٣٠ أغسطس ٢٠٢٦.)
+     *
+     *  فالطرفُ يُحدّ بنصف المسافة المعتادة بين صفَّين — وهي تُقاس من
+     *  الجدول نفسِه لا تُفترض، إذ تختلف من ورقةٍ إلى ورقة. */
+    function bandsFrom(centers, vertical, page) {
+        const asc = centers.slice().sort((a, b) => a - b);
+        const gaps = [];
+        for (let i = 1; i < asc.length; i++) gaps.push(asc[i] - asc[i - 1]);
+        gaps.sort((a, b) => a - b);
+        const step = gaps.length ? gaps[Math.floor(gaps.length / 2)]
+                                 : (vertical ? page.h : page.w) / 6;
+        const mid = asc.map((c, i) => ({
+            c: c,
+            lo: i === 0 ? c - step / 2 : (asc[i - 1] + c) / 2,
+            hi: i === asc.length - 1 ? c + step / 2 : (c + asc[i + 1]) / 2
+        }));
+        /* تُعاد بترتيب المُدخل لا بالترتيب الصاعد. */
+        return centers.map((c) => mid.find((m) => m.c === c));
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       ٦) كشفُ الأسماء: جدولٌ يُعاد بناؤه، وعمودُ الاسم يُرشَّح لا يُفرَض
+       ══════════════════════════════════════════════════════════════════ */
+
+    function buildTable(page) {
+        const lines = toLines(page.items);
+        if (lines.length < 3) return { ok: false, why: 'لا أسطرَ كافيةً في هذه الصفحة.' };
+        const ws = page.items.map((i) => i.h).sort((a, b) => a - b);
+        const med = ws[Math.floor(ws.length / 2)] || 10;
+        const cl = cluster(page.items.map((i) => i.cx), med * 2.4);
+        if (!cl.length) return { ok: false, why: 'تعذّر تمييزُ الأعمدة.' };
+        /* من اليمين إلى اليسار. */
+        const cols = cl.slice().sort((a, b) => b.c - a.c);
+        const rows = lines.map((ln) => {
+            const r = new Array(cols.length).fill('');
+            ln.forEach((it) => {
+                let best = 0, d = Infinity;
+                cols.forEach((c, i) => {
+                    const dd = Math.abs(it.cx - c.c);
+                    if (dd < d) { d = dd; best = i; }
+                });
+                r[best] = (r[best] ? r[best] + ' ' : '') + it.t.trim();
+            });
+            return r;
+        });
+        return { ok: true, cols: cols.length, rows: rows, pick: bestColumn(rows) };
+    }
+
+    /* المميِّزُ نفسُه المستعمَل في قارئ إكسل: عمودُ الأسماء أعلى الأعمدة
+       تفرّداً، وأكثرُها عربيّةً بلا أرقام، وأكثرُها كلمتين فأكثر. */
+    function bestColumn(rows) {
+        const n = Math.max.apply(null, rows.map((r) => r.length));
+        let best = 0, score = -1;
+        for (let c = 0; c < n; c++) {
+            const v = rows.map((r) => (r[c] || '').trim()).filter(Boolean);
+            if (v.length < 3) continue;
+            const uniq = new Set(v).size / v.length;
+            const arr  = v.filter((x) => /[\u0621-\u064A]/.test(x) && !/[0-9\u0660-\u0669]/.test(x)).length / v.length;
+            const two  = v.filter((x) => x.split(/\s+/).length >= 2).length / v.length;
+            const sc = uniq * 2 + arr + two;
+            if (sc > score) { score = sc; best = c; }
+        }
+        return best;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       العرض
+       ══════════════════════════════════════════════════════════════════ */
+
+    const S = { pages: [], flip: null, tab: 'sched', page: 0, col: null, name: '' };
+
+    $('#pick').addEventListener('click', () => $('#file').click());
+    $('#file').addEventListener('change', async () => {
+        const f = $('#file').files[0];
+        if (!f) return;
+        out.innerHTML = '<div class="verdict">⏳ أقرأ الملفَّ على جهازك…</div>';
+        try { await load(f); } catch (e) {
+            out.innerHTML = '<div class="verdict bad"><b>تعذّرت القراءة:</b> ' + esc(e.message) + '</div>';
+        }
+    });
+
+    async function load(file) {
+        const t0 = performance.now();
+        const pdfjs = await global_PdfCore().ensurePdfJs();
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjs.getDocument(global_PdfCore().docOptions({ data: buf })).promise;
+        const pages = [];
+        for (let i = 1; i <= doc.numPages; i++) pages.push(await readPage(pdfjs, doc, i));
+        S.flip = orient(pages);
+        pages.forEach((p) => { p.who = teacherOf(p); });
+        S.pages = pages;
+        S.page = 0;
+        S.col = null;
+        S.ms = Math.round(performance.now() - t0);
+        S.file = file.name;
+        try { await doc.destroy(); } catch (e) { /* لا شيء */ }
+        draw();
+    }
+    function global_PdfCore() { return window.PdfCore; }
+
+    function draw() {
+        const ps = S.pages;
+        const withText = ps.filter((p) => p.items.length >= 5).length;
+        const total = ps.reduce((n, p) => n + p.items.length, 0);
+
+        let v;
+        if (withText === 0) {
+            v = '<div class="verdict bad"><b>لا طبقةَ نصّ.</b> هذا الملفُّ صورٌ ممسوحة — '
+              + 'لا سبيلَ لقراءته مجّاناً، ويبقى الذكاءُ وحدَه.</div>';
+        } else if (withText < ps.length) {
+            v = '<div class="verdict warn"><b>نصٌّ جزئيّ.</b> ' + ar(withText) + ' من '
+              + ar(ps.length) + ' صفحةً فيها نصّ، والباقي صور.</div>';
+        } else {
+            v = '<div class="verdict good"><b>فيه طبقةُ نصّ كاملة.</b> '
+              + ar(ps.length) + ' صفحةً، ' + ar(total) + ' قطعةَ نصّ، قُرئت في '
+              + ar(S.ms) + ' ملّي ثانية — <b>بلا أيّ كلفة</b>.</div>';
+        }
+
+        const mine = ps.filter((p) => p.who).length;
+        const info = '<div class="card">'
+            + kv('الملف', esc(S.file))
+            + kv('الصفحات', ar(ps.length))
+            + kv('اتّجاه الحروف', S.flip.flip
+                ? 'مقلوب — صُحّح (شواهدُ مستقيمة ' + ar(S.flip.up) + ' · مقلوبة ' + ar(S.flip.down) + ')'
+                : 'مستقيم (شواهدُ مستقيمة ' + ar(S.flip.up) + ' · مقلوبة ' + ar(S.flip.down) + ')')
+            + kv('صفحاتٌ عليها اسمُ معلّم', ar(mine) + ' من ' + ar(ps.length))
+            + '</div>';
+
+        out.innerHTML = v + info
+            + '<div class="tabs">'
+            + tab('sched', 'الجدول')
+            + tab('names', 'كشف الأسماء')
+            + tab('who', 'صفحةُ مَن؟')
+            + tab('raw', 'النصُّ الخام')
+            + '</div>'
+            + '<div class="card"><h3>الصفحة</h3><div class="pglist">'
+            + ps.map((p, i) => '<button type="button" data-pg="' + i + '" class="'
+                + (i === S.page ? 'on ' : '') + (p.who ? 'mine' : '') + '">'
+                + ar(i + 1) + (p.who ? ' ✦' : '') + '</button>').join('')
+            + '</div></div>'
+            + body();
+
+        out.querySelectorAll('[data-tab]').forEach((b) =>
+            b.addEventListener('click', () => { S.tab = b.dataset.tab; S.col = null; draw(); }));
+        out.querySelectorAll('[data-pg]').forEach((b) =>
+            b.addEventListener('click', () => { S.page = +b.dataset.pg; S.col = null; draw(); }));
+        out.querySelectorAll('[data-col]').forEach((b) =>
+            b.addEventListener('click', () => { S.col = +b.dataset.col; draw(); }));
+    }
+
+    const kv = (k, v) => '<div class="kv"><b>' + k + '</b><span>' + v + '</span></div>';
+    const tab = (k, l) => '<button type="button" data-tab="' + k + '" class="'
+        + (S.tab === k ? 'on' : '') + '">' + l + '</button>';
+
+    function body() {
+        const p = S.pages[S.page];
+        if (!p) return '';
+        if (p.items.length < 5) {
+            return '<div class="card"><p class="muted">هذه الصفحة بلا نصّ — صورةٌ ممسوحة.</p></div>';
+        }
+        if (S.tab === 'raw') {
+            return '<div class="card"><h3>النصُّ كما خرج (بعد ردِّ الحروف إلى أصولها)</h3>'
+                 + '<pre class="raw">' + esc(toLines(p.items)
+                     .map((l) => l.map((i) => i.t).join('  ')).join('\n')) + '</pre></div>';
+        }
+        if (S.tab === 'who') {
+            return '<div class="card"><h3>اسمُ المعلّم في كلّ صفحة</h3>'
+                + S.pages.map((q, i) => kv('صفحة ' + ar(i + 1),
+                    q.who ? '<b>' + esc(q.who.name) + '</b>' : '<span class="muted">لم أجد عنواناً</span>')).join('')
+                + '<p class="muted" style="margin-top:10px">هذا ما يجعل الإرسالَ صفحةً واحدةً بدل تسعَ عشرة.</p>'
+                + '</div>';
+        }
+        if (S.tab === 'sched') return schedHtml(p);
+        return namesHtml(p);
+    }
+
+    function schedHtml(p) {
+        const g = buildGrid(p);
+        if (!g.ok) return '<div class="card"><p class="muted">' + esc(g.why) + '</p></div>';
+        const rows = g.days.length, cols = g.periods.length;
+        let h = '<div class="card"><h3>الجدول كما قُرئ — بلا ذكاء</h3>'
+            + '<p class="muted">' + ar(g.filled) + ' خانةً مملوءة من '
+            + ar(rows * cols) + ' · الأيّامُ ' + (g.daysAreRows ? 'صفوف' : 'أعمدة') + '</p>'
+            + '<div class="scroll"><table class="g"><tr><th>اليوم \\ الحصة</th>';
+        g.periods.forEach((n) => { h += '<th>' + ar(n) + '</th>'; });
+        h += '</tr>';
+        g.days.forEach((d, r) => {
+            h += '<tr><th>' + esc(d) + '</th>';
+            for (let c = 0; c < cols; c++) {
+                const v = g.cells[r + ':' + c] || '';
+                h += '<td class="' + (v ? 'hit' : '') + '">' + esc(v) + '</td>';
+            }
+            h += '</tr>';
+        });
+        return h + '</table></div></div>';
+    }
+
+    function namesHtml(p) {
+        const t = buildTable(p);
+        if (!t.ok) return '<div class="card"><p class="muted">' + esc(t.why) + '</p></div>';
+        const pick = S.col == null ? t.pick : S.col;
+        /* \u0639\u0646\u0648\u0627\u0646\u064F \u0627\u0644\u0639\u0645\u0648\u062F \u0644\u064A\u0633 \u0637\u0627\u0644\u0628\u0627\u064B: \u00AB\u0627\u0633\u0645 \u0627\u0644\u0637\u0627\u0644\u0628\u00BB \u0643\u0627\u0646 \u064A\u064F\u0639\u062F\u0651 \u0623\u0648\u0651\u0644\u064E \u0627\u0644\u0623\u0633\u0645\u0627\u0621. */
+        const HEAD = ['\u0627\u0633\u0645', '\u0627\u0644\u0627\u0633\u0645', '\u0627\u0633\u0645 \u0627\u0644\u0637\u0627\u0644\u0628', '\u0627\u0644\u0637\u0627\u0644\u0628', '\u0627\u0633\u0645 \u0627\u0644\u0637\u0627\u0644\u0628\u0647',
+                      '\u0627\u0644\u0637\u0627\u0644\u0628\u0647', '\u0645', '\u0627\u0644\u0631\u0642\u0645', '\u0631\u0642\u0645'];
+        const names = t.rows.map((r) => (r[pick] || '').trim())
+            .filter((s) => s && s.length > 2 && /[\u0621-\u064A]/.test(s)
+                        && !/^\d+$/.test(latin(s))
+                        && HEAD.indexOf(fold(s)) < 0);
+
+        let h = '<div class="card"><h3>الكشفُ كما قُرئ — اضغط عمودَ الأسماء</h3>'
+            + '<p class="muted">' + ar(t.rows.length) + ' سطراً · ' + ar(t.cols)
+            + ' عموداً · العمودُ المرشَّح مظلَّل</p>'
+            + '<div class="scroll"><table class="g"><tr>';
+        for (let c = 0; c < t.cols; c++) {
+            h += '<th><button type="button" data-col="' + c
+               + '" style="all:unset;cursor:pointer;font-weight:700">'
+               + (c === pick ? '● ' : '') + 'عمود ' + ar(c + 1) + '</button></th>';
+        }
+        h += '</tr>';
+        t.rows.slice(0, 12).forEach((r) => {
+            h += '<tr>';
+            for (let c = 0; c < t.cols; c++) {
+                h += '<td class="' + (c === pick ? 'pickcol' : '') + '">' + esc(r[c] || '') + '</td>';
+            }
+            h += '</tr>';
+        });
+        h += '</table></div>';
+        if (t.rows.length > 12) h += '<p class="muted">…وبقيّةُ الأسطر تحت.</p>';
+        h += '</div><div class="card"><h3>الأسماءُ المستخرَجة — ' + ar(names.length) + '</h3>'
+           + '<ol class="names">' + names.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ol></div>';
+        return h;
+    }
+})();
+</script>
+</body>
+</html>
