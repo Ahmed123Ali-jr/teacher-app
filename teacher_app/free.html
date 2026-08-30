@@ -86,7 +86,7 @@
     </p>
 
     <button type="button" class="drop" id="pick">
-        اختر ملفَ PDF
+        ١ · افحص ملفك — اضغط هنا واختر PDF
         <small>الجدول الأسبوعي أو كشف الأسماء</small>
     </button>
     <p class="muted" id="warm" style="margin:8px 2px 0"></p>
@@ -579,7 +579,17 @@
             + kv('الزمن', Object.keys(S.T).map((k) => k + ' ' + ar(S.T[k]) + 'ms').join(' · '))
             + '</div>';
 
-        out.innerHTML = v + info
+        /* ── الزرُّ فوقُ لا خلفَ باب ──
+           كان التقريرُ في بابٍ خامسٍ لا يظهر إلا بعد قراءة الملفّ، فسأل
+           المعلّم «وين زر الفحص». وعنوانُ الصفحة «فحص» ولا زرَّ بهذا
+           الاسم. فصار الزرُّ تحت الحكم مباشرةً — أوّلَ ما تقع عليه العين
+           بعد أن يُقرأ الملفّ. والبابُ يبقى لمن أراد أن يقرأه أوّلاً. */
+        out.innerHTML = v
+            + '<button type="button" class="drop" id="cpTop" '
+            + 'style="margin-top:12px">٢ · 📋 انسخ التقرير وأرسله'
+            + '<small>أرقامُ القياس وأسماءُ المعلّمين وثمانيةُ أسطرٍ من ملفّك — '
+            + 'يُعرض في باب «التقرير» لتقرأه قبل أن ترسله</small></button>'
+            + info
             + '<div class="tabs">'
             + tab('sched', 'الجدول')
             + tab('names', 'كشف الأسماء')
@@ -601,19 +611,36 @@
         out.querySelectorAll('[data-col]').forEach((b) =>
             b.addEventListener('click', () => { S.col = +b.dataset.col; draw(); }));
 
-        const cp = out.querySelector('#cp');
-        if (cp) cp.addEventListener('click', async () => {
-            const txt = out.querySelector('#rep').textContent;
-            try {
-                await navigator.clipboard.writeText(txt);
-                cp.textContent = '✓ نُسخ — الصقه في المحادثة';
-            } catch (e) {
-                /* سفاري يمنع الحافظةَ أحياناً — فيُحدَّد النصُّ ليُنسخ باليد. */
-                const r = document.createRange();
-                r.selectNodeContents(out.querySelector('#rep'));
-                const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-                cp.textContent = 'حُدِّد النصّ — اضغط «نسخ»';
-            }
+        /* زرّان ينسخان الشيءَ نفسه: الظاهرُ فوق، والذي داخل بابِ التقرير.
+           والنصُّ يُبنى من الحالة لا يُقرأ من الشاشة — فالزرُّ الأعلى قد
+           يُضغط وبابُ التقرير لم يُفتح، فلا `#rep` في الصفحة أصلاً. */
+        ['#cpTop', '#cp'].forEach((sel) => {
+            const cp = out.querySelector(sel);
+            if (!cp) return;
+            cp.addEventListener('click', async () => {
+                const txt = report();
+                const done = (t) => {
+                    const s = cp.querySelector('small');
+                    cp.textContent = t;
+                    if (s) cp.appendChild(s);
+                };
+                try {
+                    await navigator.clipboard.writeText(txt);
+                    done('✓ نُسخ — الصقه لي في المحادثة');
+                } catch (e) {
+                    /* سفاري يمنع الحافظةَ أحياناً — فيُفتح البابُ ويُحدَّد
+                       النصُّ ليُنسخ باليد، ولا يُترك المعلّمُ بلا مخرج. */
+                    S.tab = 'rep';
+                    draw();
+                    const pre = out.querySelector('#rep');
+                    if (pre) {
+                        const r = document.createRange();
+                        r.selectNodeContents(pre);
+                        const g = getSelection(); g.removeAllRanges(); g.addRange(r);
+                        pre.scrollIntoView({ block: 'center' });
+                    }
+                }
+            });
         });
     }
 
