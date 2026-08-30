@@ -22,8 +22,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 const ANTHROPIC_URL     = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 
-/* النموذج يُثبَّت هنا: لا يُقبل من العميل، فلا يُطلب نموذجٌ أغلى. */
-const MODEL = 'claude-sonnet-4-5-20250929';
+/* أوبس ٥ — بقرار المعلّم ٣٠ أغسطس ٢٠٢٦.
+   وحجّتُه أنّ الاستيراد مرّةٌ في الفصل الدراسيّ لا عادةٌ يوميّة: معلّمٌ
+   بستّة فصولٍ يستورد نحوَ سبع مرّاتٍ في الفصل. فالدقّةُ أولى من الثمن،
+   والاسمُ الخاطئُ يبقى في السجلّ العامَ كلَّه.
+   ويُثبَّت هنا لا يُقبل من العميل، فلا يُطلب نموذجٌ أغلى. */
+const MODEL = 'claude-opus-5';
 
 /* المخرَج يتّسع للصفحات: كشفٌ من عشرين صفحة لا تسعه أربعة آلاف توكن،
    فيُقصّ الردّ في منتصفه وتضيع أسماء بلا أن يدري أحد. */
@@ -270,11 +274,18 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
             model:       MODEL,
             max_tokens:  maxTokensFor(pages.length),
-            /* صفرٌ لا غير: هذه مهمّةُ نقلٍ حرفيّ لا إنشاء. وقِيس أن الصورة
-               الواحدة كانت تُعطي ١٣٪ مرّةً و١٠٠٪ مرّة — والتذبذب أخطر من
-               النسبة، لأنه يمنع قياسَ أثر أيّ إصلاح، ويجعل معلّمَين
-               يرفعان الجدول نفسه يخرجان بنتيجتين. */
-            temperature: 0,
+            /* ── ولا `temperature` هنا ──
+               كانت صفراً عمداً: هذه مهمّةُ نقلٍ حرفيّ لا إنشاء، وقِيس أن
+               الصورة الواحدة كانت تُعطي ١٣٪ مرّةً و١٠٠٪ مرّة — والتذبذب
+               أخطر من النسبة، لأنه يمنع قياسَ أثر أيّ إصلاح، ويجعل
+               معلّمَين يرفعان الجدول نفسه يخرجان بنتيجتين.
+
+               لكنّ أوبس ٥ **يرفض الحقل أصلاً**:
+                 400 invalid_request_error
+                 `temperature` is deprecated for this model.
+               فكان كلُّ استيرادٍ يموت بـ٥٠٢ صامتة. (قِيس ٣٠ أغسطس ٢٠٢٦
+               بنداءٍ حقيقيّ بعد النشر — ولولا القياسُ لسُلّمت ميّتة.)
+               فحُذف الحقل، والثباتُ الآن على النموذج لا علينا. */
             system,
             tools:       [tool],
             /* الإجبار: لا مخرَج إلا نداءُ هذه الأداة. */
@@ -286,8 +297,13 @@ Deno.serve(async (req) => {
     if (!anthropicRes.ok) {
         const detail = await anthropicRes.text();
         console.error('[proxy] anthropic ' + anthropicRes.status + ': ' + detail.slice(0, 400));
-        /* لا يُعاد جسمُ الخطأ للعميل: قد يحمل تفاصيل الحساب. */
-        return json({ error: 'تعذّر الاتصال بخدمة القراءة.' }, 502);
+        /* لا يُعاد جسمُ الخطأ للعميل: قد يحمل تفاصيل الحساب. ويُعاد **صنفُه**
+           وحدَه — وهو ليس تفصيلاً، وبه عُرف يوم ٣٠ أغسطس أنّ ٥٠٢ الصامتة
+           كانت `temperature` لا النموذج. ولولاه لدار البحثُ في الظلام. */
+        let code = 'upstream_error';
+        try { code = String(JSON.parse(detail)?.error?.type || code).slice(0, 40); }
+        catch (e) { /* نصٌّ ليس JSON — يبقى العامّ */ }
+        return json({ error: 'تعذّر الاتصال بخدمة القراءة.', code }, 502);
     }
 
     // 4) الشكل يُفحص قبل أن يُعاد — الأداة تُلزم، والفحص يتأكّد
@@ -299,13 +315,13 @@ Deno.serve(async (req) => {
     const usage = data.usage ?? null;
 
     if (kind === 'names') {
-        return json({ names: cleanNames(input.names), usage });
+        return json({ names: cleanNames(input.names), usage, model: MODEL });
     }
     const found = Array.isArray(input.teachers_found)
         ? input.teachers_found.slice(0, 40).map((n: unknown) => String(n ?? '').slice(0, MAX_FIELD).trim())
             .filter(Boolean)
         : [];
-    return json({ cells: cleanCells(input.cells), teachers_found: found, usage });
+    return json({ cells: cleanCells(input.cells), teachers_found: found, usage, model: MODEL });
 });
 
 /* ==========================================================================

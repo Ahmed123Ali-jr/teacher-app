@@ -61,7 +61,10 @@
 
         if (body.usage) {
             recordUsage({
-                model: DEFAULT_MODEL,
+                /* اسمُ النموذج من الخادم لا من هنا: النموذجُ يُثبَّت في
+                   البروكسي، وكان العميلُ يسجّل اسمَ سونيت بعد أن صار أوبس —
+                   فيُحسب الثمنُ بخُمسه ولا يدري أحد. (٣٠ أغسطس ٢٠٢٦.) */
+                model: body.model || DEFAULT_MODEL,
                 kind,
                 input_tokens:  Number(body.usage.input_tokens)  || 0,
                 output_tokens: Number(body.usage.output_tokens) || 0
@@ -78,7 +81,11 @@
     const PRICES = {
         'claude-sonnet-4-5-20250929': { input: 3.00,  output: 15.00 },
         'claude-opus-4-5-20250929':   { input: 15.00, output: 75.00 },
-        'claude-haiku-4-5-20251001':  { input: 1.00,  output: 5.00  }
+        'claude-haiku-4-5-20251001':  { input: 1.00,  output: 5.00  },
+        /* ⚠️ أوبس ٥ هو المستعمَل اليوم (البروكسي، ٣٠ أغسطس ٢٠٢٦).
+           والسعرُ أدناه **لم يُتحقَّق منه** — يُراجَع في لوحة أنثروبيك
+           ويُصحَّح هنا. وهذا الجدولُ للتقدير وحدَه، والفاتورةُ الحقّ عندهم. */
+        'claude-opus-5':              { input: 5.00,  output: 25.00 }
     };
     const DEFAULT_PRICE = PRICES[DEFAULT_MODEL];
 
