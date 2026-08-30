@@ -249,18 +249,17 @@
             extras:       portfolio.extras.length
         };
 
-        container.innerHTML = `
-            <div class="container" style="max-width: 980px;">
-                <!-- الإزاحةُ في موضعين لأن الصفَّ ينقلب عموداً على الجوال:
-                     justify-content يحكم الأفقَ على الشاشة العريضة، و
-                     align-self يحكمه في العمود — وقاعدةُ الجوال تثبّت الزرَّ
-                     في البداية (يمينِها) فتُنقض هنا. والصفُّ مشتركٌ مع ستّ
-                     شاشاتٍ أخرى، فلا يُلمس صنفُه. -->
-                <div class="section-header" style="margin-top: var(--space-6); justify-content: flex-end;">
-                    <button class="btn btn-primary" id="btn-print-portfolio"
-                            style="align-self: flex-end;">🖨️ طباعة ملف الإنجاز</button>
-                </div>
+        /* ══ زرُّ الطباعة عائمٌ لا في رأس الصفحة ══
+           كان أعلاها فيختفي بأوّل تمرير، وملفُّ الإنجاز أطولُ شاشةٍ في
+           التطبيق — عشرةُ أقسامٍ وما يُضاف إليها. والطباعةُ غايةُ الشاشة
+           لا فعلٌ جانبيّ. فصار في مكان «إضافة فصل جديد» ومقاسِه بصنفَيه
+           أنفسِهما، فلا يفترقان إن تحرّك مقاسٌ يوماً.
+           (اختاره المعلّم — الشكل «أ» من معاينة pfb.html، ٣٠ أغسطس ٢٠٢٦.)
 
+           والحشوُ السفليُّ على الحاوية شرطٌ لا زينة: بدونه يغطّي العائمُ
+           «إضافة قسم جديد» في ذيل القائمة — وهو أوّلُ ما لاحظه. */
+        container.innerHTML = `
+            <div class="container pf-v2" style="max-width: 980px;">
                 <div class="portfolio-sections" id="portfolio-sections">
                     ${SECTIONS.map((s) => sectionHeader(s, counts, state.openSection === s.key)).join('')}
                     ${(portfolio.custom_sections || []).map((cs) =>
@@ -273,6 +272,11 @@
                         + إضافة قسم جديد
                     </button>
                 </div>
+            </div>
+            <div class="classes-fab">
+                <button type="button" class="start-cta" id="btn-print-portfolio">
+                    طباعة ملف الإنجاز
+                </button>
             </div>
         `;
 

@@ -5661,3 +5661,7 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 .sc-tbl tr:last-child td { border-bottom: 0; }
+
+/* الحاويةُ تترك تحتها مكانَ الزرّ العائم — وإلّا غطّى «إضافة قسم جديد».
+   ٩١px هو حشوُ شاشة الفصول نفسُه، فالزرُّ زرُّها. */
+.pf-v2 { padding-bottom: 91px; }
