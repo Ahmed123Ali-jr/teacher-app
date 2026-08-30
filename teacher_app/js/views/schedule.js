@@ -489,6 +489,8 @@
         /* حالةُ هذه النافذة: تُصفَّر مع كل ملفٍّ جديد. */
         let lastPages = null;
         let pickedName = '';
+        /* الصفحةُ التي عُرف أنّها صفحتُه — من طبقة نصّ الملفّ لا من النموذج. */
+        let picked = null;
 
         const form = document.createElement('div');
         form.innerHTML = `
@@ -511,6 +513,7 @@
         form.querySelector('#sched-file').addEventListener('change', () => {
             pickedName = '';
             lastPages = null;
+            picked = null;
             resultEl.innerHTML = '';
         });
 
@@ -524,6 +527,7 @@
                لأنه ليس في الصورة الجديدة. */
             pickedName = '';
             lastPages = null;
+            picked = null;
             const label = goBtn.textContent;
             goBtn.disabled = true;
             try {
@@ -536,28 +540,28 @@
                    يمنع الحالة التي بُني لها — معلّمٌ جديد يرفع جدوله
                    ليبني به فصوله، فيُقال له «أضف فصولك أولاً». */
 
-                goBtn.textContent = '⏳ جارٍ القراءة…';
-                /* بلا سقفٍ منّا: يُقرأ الملف كلّه حتى سقف النموذج نفسه.
-                   وإن تجاوزه، يُقال صراحةً — فإهمالُ صفحةٍ بصمتٍ يُقرأ
-                   نجاحاً وهو نقص. */
-                const pages = await global.PdfCore.fileToImagePages(file);
-                lastPages = pages;
-                if (pages.skipped > 0) {
-                    global.TeacherApp.toast(
-                        'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
-                        + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
-                        'warning', 7000);
+                /* ══ صفحتُك وحدَها ══
+                   جدولُ المدرسة صفحةٌ لكلّ معلّم. وكان الملفُّ يُرسل كلُّه
+                   مرّتين: مرّةً ليُسأل النموذجُ «أيُّ هؤلاء أنت؟» ومرّةً
+                   ليقرأ صفحتك. وقِيس على فاتورة ٣٠ أغسطس ٢٠٢٦: النداءُ
+                   الأوّل وحدَه ‎٣٠٬١٥٠‎ توكناً ليعود بـ‎٢٤٤‎ — ‎٤٤٪‎ من
+                   الثمن، لمعرفة اسمٍ مكتوبٍ في رأس الورقة.
+
+                   فيُقرأ الاسمُ هنا، على الجهاز، من طبقة نصّ الملفّ —
+                   بلا توكنٍ واحد. راجع `pdf-text.js`.
+                   وإن كان الملفُّ مسحاً ضوئيّاً بلا نصّ، فلا يتغيّر شيء:
+                   يمضي المسارُ القديم كما كان. */
+                goBtn.textContent = '⏳ أقرأ ملفك…';
+                const scan = global.PdfText ? await global.PdfText.scan(file) : null;
+                if (scan && scan.teachers.length > 1) {
+                    const hit = global.PdfText.pickPage(scan.teachers, ctx.teacher && ctx.teacher.name);
+                    if (!hit) return askWho(file, scan);      /* السؤالُ مجّانيّ */
+                    picked = hit;
                 }
-                const cells = await global.AI.extractScheduleFromImage({
-                    pages, classes: ctx.classes, periodCount: ctx.periods.length,
-                    /* لا يُرسل اسمٌ في الرفعة الأولى: الغالب أن المعلّم
-                       يرفع جدوله وحده، فيُقرأ كما هو. وإرسالُ اسم حسابه
-                       كان يُفشل الصورة المفردة حين يختلف عن الاسم المطبوع
-                       في جدوله — يبحث النموذج عمّن لا يجده فيعيدها فارغة.
-                       ولا يُسأل عن الاسم إلا إن حمل الملفُّ عدّة معلّمين. */
-                    teacherName: pickedName || ''
-                });
-                showPreview(cells);
+
+                goBtn.textContent = '⏳ جارٍ القراءة…';
+                await readPages(file, picked ? [picked.n] : null,
+                                picked ? picked.name : (pickedName || ''));
             } catch (err) {
                 console.warn('[schedule] import failed:', err);
                 global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
@@ -567,9 +571,79 @@
             }
         });
 
-        /* الملف الواحد قد يحمل جداول المدرسة كلّها، فيُعاد النداء باسمٍ
-           يختاره المعلّم بدل أن تُدمج صفحات الجميع في جدوله. */
+        /** يرسم الصفحاتِ المطلوبةَ ثمّ يقرؤها. `only` مصفوفةُ أرقامٍ أو
+         *  `null` للملفّ كلِّه. */
+        async function readPages(file, only, name) {
+            /* بلا سقفٍ منّا: يُقرأ الملف كلّه حتى سقف النموذج نفسه.
+               وإن تجاوزه، يُقال صراحةً — فإهمالُ صفحةٍ بصمتٍ يُقرأ
+               نجاحاً وهو نقص. */
+            const pages = await global.PdfCore.fileToImagePages(file, null, false, only);
+            lastPages = pages;
+            if (pages.skipped > 0) {
+                global.TeacherApp.toast(
+                    'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
+                    + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
+                    'warning', 7000);
+            }
+            const cells = await global.AI.extractScheduleFromImage({
+                pages, classes: ctx.classes, periodCount: ctx.periods.length,
+                /* الاسمُ يُرسل حين نعرف صفحتَه — فيُعصم النموذجُ من الخلط.
+                   ولا يُرسل حين نرسل الملفَّ كلَّه بلا معرفة: الغالبُ أن
+                   المعلّم يرفع جدوله وحده، وإرسالُ اسم حسابه كان يُفشل
+                   الصورة المفردة حين يختلف عن الاسم المطبوع — يبحث
+                   النموذج عمّن لا يجده فيعيدها فارغة. */
+                teacherName: name || ''
+            });
+            showPreview(cells);
+        }
 
+        /* ── السؤالُ صار مجّانيّاً ──
+           كان يُسأل النموذجُ عن أسماء المعلّمين بالملفّ كلِّه، ثمّ يُرسل
+           الملفُّ ثانيةً بعد اختياره. والأسماءُ الآن بين أيدينا من طبقة
+           النصّ، فيُسأل المعلّمُ مباشرةً — بلا نداءٍ ولا توكن. */
+        function askWho(file, scan) {
+            resultEl.innerHTML = `
+                <div class="imp-stage">
+                    <div class="imp-stage-t">الملف فيه جداول ${arDigits(scan.teachers.length)} معلّمين — أيّهم أنت؟</div>
+                    <div class="imp-stage-c">
+                        ${scan.teachers.map((t) => `
+                            <button type="button" class="sch-chip" data-pg="${t.n}"
+                                    data-who="${escapeAttr(t.name)}">${escapeHtml(t.name)}</button>
+                        `).join('')}
+                    </div>
+                    <!-- ولا بدّ من مخرج: قد لا يلتقط قارئُ النصّ عنوانَ صفحته
+                         (خطٌّ غريب، أو عنوانٌ بصيغةٍ لم نعرفها)، فلو لم يكن
+                         إلا هذه الأسماء لوقف المعلّمُ أمام قائمةٍ ليس فيها.
+                         فيُقرأ الملفُّ كلُّه كما كان يُقرأ قبل هذا كلِّه. -->
+                    <button type="button" class="btn btn-ghost" data-all
+                            style="margin-top: var(--space-3); width: 100%;">
+                        لستُ فيهم — اقرأ الملفّ كلّه
+                    </button>
+                </div>`;
+            resultEl.querySelector('[data-all]').addEventListener('click', async () => {
+                picked = null;
+                pickedName = '';
+                resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة الملفّ كلّه…</div>';
+                try { await readPages(file, null, ''); }
+                catch (err) {
+                    global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
+                }
+            });
+            resultEl.querySelectorAll('[data-pg]').forEach((el) => {
+                el.addEventListener('click', async () => {
+                    picked = { n: +el.dataset.pg, name: el.dataset.who };
+                    pickedName = picked.name;
+                    resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة جدولك…</div>';
+                    try { await readPages(file, [picked.n], picked.name); }
+                    catch (err) {
+                        global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
+                    }
+                });
+            });
+        }
+
+        /* يبقى هذا للمسح الضوئيّ: ملفٌّ بلا طبقة نصّ لا تُعرف صفحاتُه إلا
+           بالنموذج، فيُسأل عن الأسماء ثمّ يُعاد الملفُّ كلُّه باسمٍ مختار. */
         async function rereadAs(name) {
             pickedName = name;
             resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة جدولك…</div>';

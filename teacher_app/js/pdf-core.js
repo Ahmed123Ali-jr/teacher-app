@@ -634,7 +634,7 @@
      *   الأسماء وحدَها.** والجدولُ الأسبوعيُّ لا يُقطَّع: شبكتُه أيّامٌ في
      *   صفوفٍ وحصصٌ في أعمدة، والقطعُ الأفقيُّ يشقّ اليومَ عن حصصه.
      */
-    async function fileToImagePages(file, maxPages, slice) {
+    async function fileToImagePages(file, maxPages, slice, only) {
         const isPdf = (file.type === 'application/pdf') || /\.pdf$/i.test(file.name);
         if (!isPdf) {
             const dataUrl = await blobToDataUrl(file);
@@ -655,16 +655,32 @@
         const doc = await pdfjs.getDocument(docOptions({ data: buf })).promise;
         /* السقف الافتراضي هو سقف النموذج نفسه: مئة صورةٍ في الطلب الواحد.
            فما دون ذلك ليس قيداً منّا. */
-        const n = Math.min(doc.numPages, maxPages || MAX_IMAGE_PAGES);
+        /* ── صفحاتٌ بعينها لا الملفّ كلُّه ──
+           جدولُ المدرسة صفحةٌ لكلّ معلّم، والمعلّمُ يريد صفحتَه. فإن عُرفت
+           بقراءة طبقة النصّ على الجهاز (`PdfText`) رُسمت وحدَها، ولم يُدفع
+           ثمنُ ثمانِ عشرةَ صفحةً تُرمى.
+           والرقمُ خارج المدى يُهمَل — لا يُرسم فراغٌ ولا يُرمى الملفّ. */
+        const want = Array.isArray(only) && only.length
+            ? only.map(Number).filter((k) => k >= 1 && k <= doc.numPages)
+                  .filter((k, i, a) => a.indexOf(k) === i).sort((a, b) => a - b)
+            : null;
+        const list = want && want.length
+            ? want.slice(0, maxPages || MAX_IMAGE_PAGES)
+            : Array.from({ length: Math.min(doc.numPages, maxPages || MAX_IMAGE_PAGES) },
+                         (_, i) => i + 1);
+        const n = list.length;
         /* والتقطيعُ يضاعف عددَ الصور، فيُخفَّض إن تجاوز السقفَ — ولا يُسقط
            صفحاتٍ من أجله: صفحةٌ ناقصةٌ خسارةُ طلابٍ، وشريحةٌ أقلُّ خسارةُ
            دقّة. */
         const per = slice ? Math.max(1, Math.min(SLICES, Math.floor(MAX_IMAGE_PAGES / n))) : 1;
         const pages = [];
         pages.total   = doc.numPages;
-        pages.skipped = doc.numPages - n;
-        for (let i = 1; i <= n; i++) {
-            const page = await doc.getPage(i);
+        /* ما تُرك عمداً ليس نقصاً يُنبَّه عليه: `skipped` رسالةُ «الملفُّ
+           أطولُ ممّا يُقرأ»، ولا تُقال حين نختار صفحةً بعينها. */
+        pages.skipped = want ? 0 : doc.numPages - n;
+        pages.picked  = want ? want.slice() : null;
+        for (const pno of list) {
+            const page = await doc.getPage(pno);
             const viewport = page.getViewport({ scale: per > 1 ? SLICE_PDF_SCALE : 1.5 });
             const canvas = document.createElement('canvas');
             canvas.width = viewport.width;
