@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>معاينة: قسم الاستراتيجيات في ملف الإنجاز</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D32">
+<link rel="stylesheet" href="css/components.css?v=10">
+<link rel="stylesheet" href="css/views.css?v=D292">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=16">
+<link rel="stylesheet" href="css/theme-white.css?v=22">
+<link rel="stylesheet" href="css/theme-dark.css?v=34">
+
+<style>
+    body { margin: 0; background: var(--bg, #F4F5F7); }
+    .pv { max-width: 480px; margin: 0 auto; padding: 0 14px 40px; }
+    .pv-bar {
+        position: sticky; top: 0; z-index: 40;
+        background: var(--surface); border-bottom: 1.5px solid var(--border);
+        padding: 10px 14px 12px; margin: 0 -14px 14px;
+    }
+    .pv-tabs { display: flex; gap: 7px; }
+    .pv-tabs button {
+        flex: 1 1 0; min-height: 44px; border-radius: 12px; cursor: pointer;
+        font-family: inherit; font-size: 14px; font-weight: var(--fw-bold);
+        border: 1.5px solid var(--border); background: var(--surface);
+        color: var(--ink-primary);
+    }
+    .pv-tabs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pv-say { margin: 9px 2px 0; font-size: 12.5px; line-height: 1.8;
+              font-weight: 500; color: var(--text-muted); }
+    .pv-say b { color: var(--ink-primary); font-weight: var(--fw-bold); }
+    .frame {
+        background: var(--surface); border: 1.5px solid var(--border);
+        border-radius: 18px; padding: 14px 13px;
+    }
+    /* زرُّ «سجّلها من فصلك» — الوحيدُ الجديد. بديلُ «طبّقتها» في المكتبة،
+       يقول أين يُسجَّل بدل أن يفتح باباً ثانياً للتسجيل. */
+    .stg-goto {
+        display: block; width: 100%; min-height: 42px; border-radius: 11px;
+        cursor: pointer; font-family: inherit; font-size: 13px;
+        font-weight: var(--fw-bold); color: var(--ink-primary);
+        background: transparent; border: 1.5px dashed var(--border-strong);
+        margin-top: 10px;
+    }
+</style>
+</head>
+<body>
+
+<div class="pv">
+    <div class="pv-bar">
+        <div class="pv-tabs">
+            <button type="button" data-m="now">الحالي</button>
+            <button type="button" data-m="lib">أ — مثل المبادرات</button>
+        </div>
+        <p class="pv-say" id="say"></p>
+    </div>
+    <div class="frame" id="stage"></div>
+</div>
+
+<script src="js/strategies-catalog.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    /* ما سجّله المعلّمُ فعلاً — كما يصل القسمَ اليوم من صفحات الفصول. */
+    const LOGGED = {
+        cooperative:    { times: 4, classes: ['الخامس / أ', 'السادس / ب'],
+                          dates: ['2026-09-08', '2026-09-22'], evidence: 3 },
+        think_pair:     { times: 2, classes: ['الخامس / أ'],
+                          dates: ['2026-09-14'], evidence: 1 },
+        numbered_heads: { times: 1, classes: ['الرابع / أ'],
+                          dates: ['2026-09-19'], evidence: 0 }
+    };
+    const totalTimes = Object.values(LOGGED).reduce((n, r) => n + r.times, 0);
+    const totalEvid  = Object.values(LOGGED).reduce((n, r) => n + r.evidence, 0);
+    const timesWord = (n) => n === 0 ? 'لم تُطبَّق' : n === 1 ? 'مرة'
+        : n === 2 ? 'مرتان' : n <= 10 ? ar(n) + ' مرات' : ar(n) + ' مرة';
+    const fmt = (iso) => { const p = String(iso).split('-');
+        return p.length === 3 ? ar(+p[2]) + '/' + ar(+p[1]) : iso; };
+
+    /* ══════════ الحاليّ — حصيلةٌ تُقرأ ولا تُتصفَّح ══════════ */
+    function now() {
+        const rows = Object.entries(LOGGED).map(([k, r]) =>
+            Object.assign({ key: k, name: Strategies.get(k).name }, r));
+        return `
+        <p class="pstg-sum">
+            <b>${rows.length}</b> استراتيجية ·
+            <b>${totalTimes}</b> تطبيق ·
+            <b>${totalEvid}</b> شاهد
+        </p>
+        <div class="pstg-list">${rows.map((r) => `
+            <article class="pstg-card">
+                <div class="pstg-head">
+                    <h4>${esc(r.name)}</h4>
+                    <span class="pstg-times">${r.times} مرات</span>
+                </div>
+                <div class="pstg-meta">
+                    <span>🏷️ ${esc(Strategies.families().find((f) =>
+                        f.key === Strategies.get(r.key).family)?.label || '')}</span>
+                    <span>📅 ${r.dates.map(fmt).join(' — ')}</span>
+                    <span>📚 ${esc(r.classes.join('، '))}</span>
+                    <span>📎 ${r.evidence} شاهد</span>
+                </div>
+            </article>`).join('')}</div>
+        <p class="text-muted" style="font-size:12px; margin-top:14px; line-height:1.9">
+            التسجيل يتم من صفحة الفصل ← الاستراتيجيات، وما تسجّله يظهر هنا وفي الطباعة.
+        </p>`;
+    }
+
+    /* ══════════ أ — مكتبةٌ بشكل المبادرات ══════════ */
+    let fam = 'all', openKey = null;
+
+    function lib() {
+        const list = Strategies.ofFamily(fam);
+        const applied = Object.keys(LOGGED).length;
+        return `
+        <div class="stg-head">
+            <div class="stg-sum">
+                <b class="num">${ar(applied)}</b>
+                <!-- بـ«و» لا بنقطةٍ فاصلة: النقطةُ بين رقمين عربيَّين تُقرأ
+                     صفراً — «٧ · ٤» تبدو «٧٠٤». -->
+                <span>من ${ar(Strategies.all().length)} استراتيجية طبّقتها،
+                    بـ${ar(totalTimes)} تطبيقات و${ar(totalEvid)} شواهد</span>
+            </div>
+        </div>
+        <div class="stg-fams">
+            ${Strategies.families().map((f) => `
+                <button type="button" class="stg-fam ${fam === f.key ? 'on' : ''}"
+                        data-fam="${f.key}">${esc(f.label)}</button>`).join('')}
+        </div>
+        <div class="stg-list">${list.map(card).join('')}</div>`;
+    }
+
+    function card(s) {
+        const r = LOGGED[s.key];
+        const n = r ? r.times : 0;
+        const open = openKey === s.key;
+        return `
+        <div class="stg-card ${open ? 'open' : ''}" data-key="${s.key}">
+            <button type="button" class="stg-top" data-toggle>
+                <span class="tx">
+                    <span class="nm">${esc(s.name)}</span>
+                    <span class="sub">${esc(s.brief)}</span>
+                </span>
+                <span class="badge ${n ? 'done' : 'none'}">${timesWord(n)}</span>
+            </button>
+            ${open ? `
+                <ol class="stg-steps">${s.steps.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>
+                ${r ? `<div class="pstg-meta" style="padding:0 12px 4px">
+                    <span>${esc(r.classes.join('، '))}</span>
+                    <span>${r.dates.map(fmt).join(' — ')}</span>
+                    <span>${ar(r.evidence)} شاهد</span>
+                </div>` : ''}
+                <div style="padding:0 12px 12px">
+                    <button type="button" class="stg-goto">سجّلها من فصلك ←</button>
+                </div>` : ''}
+        </div>`;
+    }
+
+    const SAY = {
+        now: '<b>الحالي</b> — حصيلةٌ تُقرأ: ما طبّقتَه فقط، بلا كتالوجٍ ولا تصفّح.',
+        lib: '<b>أ — مثل المبادرات.</b> الكتالوجُ كاملاً بمرشّحاته، والبطاقةُ تُفتح ' +
+             'بخطواتها وما سجّلتَه فيها. والتسجيلُ يبقى في صفحة الفصل — الزرُّ يدلّ عليه.'
+    };
+
+    const stage = document.getElementById('stage');
+    const say = document.getElementById('say');
+    let mode = 'lib';
+
+    function draw() {
+        stage.innerHTML = mode === 'now' ? now() : lib();
+        say.innerHTML = SAY[mode];
+        document.querySelectorAll('.pv-tabs button')
+            .forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
+    }
+    document.querySelectorAll('.pv-tabs button').forEach((b) =>
+        b.addEventListener('click', () => { mode = b.dataset.m; openKey = null; draw(); window.scrollTo({ top: 0 }); }));
+
+    stage.addEventListener('click', (e) => {
+        const f = e.target.closest('[data-fam]');
+        if (f) { fam = f.dataset.fam; openKey = null; return draw(); }
+        const t = e.target.closest('[data-toggle]');
+        if (t) { const k = t.closest('.stg-card').dataset.key;
+                 openKey = openKey === k ? null : k; return draw(); }
+    });
+    draw();
+})();
+</script>
+</body>
+</html>
