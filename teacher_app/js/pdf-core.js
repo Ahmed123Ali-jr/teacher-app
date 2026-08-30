@@ -673,6 +673,28 @@
            صفحاتٍ من أجله: صفحةٌ ناقصةٌ خسارةُ طلابٍ، وشريحةٌ أقلُّ خسارةُ
            دقّة. */
         const per = slice ? Math.max(1, Math.min(SLICES, Math.floor(MAX_IMAGE_PAGES / n))) : 1;
+        /* ── انتظارُ الظهور قبل الرسم ──
+           `page.render` في pdf.js تتقدّم عبر `requestAnimationFrame`،
+           والمتصفّحُ يوقفه في الصفحة الغائبة (لسان تبويبٍ في الخلف، أو
+           تطبيقٌ خرج منه المستخدم). فتقف القراءةُ **إلى الأبد** ولا خطأ
+           يُرمى — ويبقى «جاري استخراج البيانات» معلّقاً.
+
+           وصار هذا أقربَ بعد أن بدأت القراءةُ تلقائياً عند اختيار الملفّ:
+           قد تُصادف لحظةَ عودةِ الصفحة من مُنتقي الملفّات. فيُنتظر ظهورُها
+           بدل أن يُبدأ رسمٌ لا يتقدّم.
+           (قِيس ٣٠ أغسطس ٢٠٢٦: لوحٌ مخفيٌّ أوقف الرسمَ ١٢ ثانيةً فأكثر،
+           ومضى في اللحظة التي أُظهر فيها.) */
+        if (typeof document !== 'undefined' && document.hidden) {
+            await new Promise((resolve) => {
+                const on = () => {
+                    if (document.hidden) return;
+                    document.removeEventListener('visibilitychange', on);
+                    resolve();
+                };
+                document.addEventListener('visibilitychange', on);
+            });
+        }
+
         const pages = [];
         pages.total   = doc.numPages;
         /* ما تُرك عمداً ليس نقصاً يُنبَّه عليه: `skipped` رسالةُ «الملفُّ

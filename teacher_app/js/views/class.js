@@ -1428,6 +1428,11 @@
        — فيدخل الشكلُ الجديد بلا أن يُشعر أنه غريب. (البديل أ، ١٨ أغسطس.) */
     function openAddStudentsModal(cls) {
         let file = null;                 /* الملفُّ المختار — إن اختار */
+        /* المكتوبُ بيده يُحفظ هنا لا في الوسم: الشاشةُ تُعاد رسمَها مراتٍ
+           (اختيارُ ملفّ، ورجوعٌ من المراجعة، وإخفاقُ قراءة)، وكلُّ إعادةٍ
+           تبني `textarea` جديدةً فارغة. وكان يُنقل يدوياً في موضعٍ واحدٍ
+           فقط، فيضيع في البواقي. */
+        let typedText = '';
         const form = document.createElement('div');
         paint();
 
@@ -1455,15 +1460,91 @@
 
                 ${footer('إضافة ' + global.Words.students())}
             `;
+            const ta = form.querySelector('#paste-names');
+            ta.value = typedText;                       /* يُعاد ما كُتب */
+            ta.addEventListener('input', () => { typedText = ta.value; });
+
             const picker = form.querySelector('#upload-file');
             form.querySelector('#stu-up').addEventListener('click', () => picker.click());
+            /* ══ الملفُّ هو الأمر، لا الزرّ ══
+               من رفع كشفَه فقد قال ما يريد، والضغطُ بعده خطوةٌ لا معنى لها.
+               فتبدأ القراءةُ فورَ الاختيار كما في استيراد الجدول.
+               (طلبُه ٣٠ أغسطس ٢٠٢٦.)
+
+               والمكتوبُ لا يُلغى ولا يُقدَّم عليه: هو محفوظٌ في `typedText`
+               ويعود إن رجع. وزرُّ «إضافة الطلاب» يبقى لمن كتب بيده. */
             picker.addEventListener('change', () => {
                 file = picker.files[0] || null;
-                const txt = form.querySelector('#paste-names').value;
                 paint();
-                form.querySelector('#paste-names').value = txt;   /* لا يضيع ما كتب */
+                if (file) readNow();
             });
             bindSubmit();
+        }
+
+        /** شاشةُ انتظارٍ تُرسم قبل العمل، وإلا بدت الشاشةُ واقفةً وهي تعمل. */
+        function paintBusy(msg) {
+            form.innerHTML = '<div class="callout" style="margin: var(--space-4) 0">⏳ '
+                + escapeHtml(msg) + '</div>';
+        }
+
+        /** يقرأ الملفَّ المختار ويمضي به إلى شاشته. */
+        async function readNow() {
+            paintBusy('جاري استخراج البيانات…');
+            await new Promise((r) => setTimeout(r, 0));   /* نفَسٌ للواجهة */
+            try {
+                const got = await readFile();
+                if (!got) return;                         /* مضى إلى شاشة الجدول */
+                if (!got.names.length) throw new Error('لم يتم العثور على أي أسماء.');
+                paintReview(got.names, got.source);
+            } catch (err) {
+                global.TeacherApp.toast(err.message, 'error', 8000);
+                paint();                                  /* يعود بملفّه ومكتوبه */
+            }
+        }
+
+        /** المسارُ المشترك: جدولٌ، أو نصّ، أو ذكاء.
+         *  @returns {Promise<{names:string[],source:string}|null>} و`null`
+         *           تعني أنّ شاشةً أخرى تولّت الأمر (اختيارُ عمود الجدول). */
+        async function readFile() {
+            if (!file) throw new Error('اكتب الأسماء أو ارفع ملفاً.');
+            /* الجدولُ أوّلاً: خلاياه أسماءٌ كاملةٌ بحروفها، فلا ذكاءَ ولا
+               حصّةَ ولا خروجَ من الجهاز. ولا يُخمَّن فيه عمودُ الاسم —
+               يُعرض الجدولُ ويختار المعلّم. */
+            if (global.SheetRead && global.SheetRead.isSheet(file)) {
+                const r = await global.SheetRead.read(file);
+                if (!r.ok) throw new Error(r.msg);
+                paintSheet(r.sheets);
+                return null;
+            }
+            // Text files (CSV/TXT) are read directly; PDF/images go to AI.
+            const isText = /\.(csv|txt)$/i.test(file.name)
+                || file.type === 'text/csv' || file.type === 'text/plain';
+            let names = [];
+            let source = 'ai';
+            if (isText) {
+                names = parseCSV(await file.text());
+                source = 'csv';
+            }
+            /* `!isText` شرطٌ لازم: ملفٌّ نصّيٌّ لم يُخرج أسماءً لا يُعاد
+               إرسالُه صورةً — يُقال للمعلّم إنّه فارغ. */
+            if (!names.length && !isText) {
+                if (!(await global.AI.isAvailable())) {
+                    throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
+                }
+                if (file.size > 20 * 1024 * 1024) {
+                    throw new Error('الملف كبير جداً (أقصى 20MB).');
+                }
+                /* بلا سقفٍ منّا — والكشف الطويل يُقرأ كلّه. */
+                const pages = await fileToImagePages(file);
+                if (pages.skipped > 0) {
+                    global.TeacherApp.toast(
+                        'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
+                        + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
+                        'warning', 7000);
+                }
+                names = await global.AI.extractStudentNamesFromImage({ pages });
+            }
+            return { names: names, source: source };
         }
 
         function footer(primary) { return `
@@ -1479,51 +1560,19 @@
                 btn.disabled = true;
                 const origLabel = btn.textContent;
                 try {
-                    let names = [];
-                    let source = 'ai';         /* من أين جاءت — تقوله لافتةُ المراجعة */
                     /* المكتوبُ يسبق المرفوع: إن كتب شيئاً فهو قصدُه، وإلّا
-                       فالملفُّ — ولا يُسأل أيَّهما أراد. */
+                       فالملفُّ — ولا يُسأل أيَّهما أراد.
+                       والملفُّ يُقرأ فورَ اختياره الآن، فلا يبلغ هذا الزرَّ
+                       إلا من كتب بيده، أو من أخفقت قراءتُه فأراد إعادتها. */
                     const typed = parseNameList(form.querySelector('#paste-names').value);
-                    if (typed.length) {
-                        names = typed;
-                    } else {
-                        if (!file) throw new Error('اكتب الأسماء أو ارفع ملفاً.');
-                        /* الجدولُ أوّلاً: خلاياه أسماءٌ كاملةٌ بحروفها، فلا
-                           ذكاءَ ولا حصّةَ ولا خروجَ من الجهاز. ولا يُخمَّن
-                           فيه عمودُ الاسم — يُعرض الجدولُ ويختار المعلّم. */
-                        if (global.SheetRead && global.SheetRead.isSheet(file)) {
-                            const r = await global.SheetRead.read(file);
-                            if (!r.ok) throw new Error(r.msg);
-                            paintSheet(r.sheets);
-                            return;
-                        }
-                        // Text files (CSV/TXT) are read directly; PDF/images go to AI.
-                        const isText = /\.(csv|txt)$/i.test(file.name)
-                            || file.type === 'text/csv' || file.type === 'text/plain';
-                        if (isText) {
-                            names = parseCSV(await file.text());
-                            source = 'csv';
-                        }
-                        /* `!isText` شرطٌ لازم: ملفٌّ نصّيٌّ لم يُخرج أسماءً
-                           لا يُعاد إرسالُه صورةً — يُقال للمعلّم إنّه فارغ. */
-                        if (!names.length && !isText) {
-                            if (!(await global.AI.isAvailable())) {
-                                throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
-                            }
-                            if (file.size > 20 * 1024 * 1024) {
-                                throw new Error('الملف كبير جداً (أقصى 20MB).');
-                            }
-                            btn.textContent = '⏳ جارٍ القراءة...';
-                            /* بلا سقفٍ منّا — والكشف الطويل يُقرأ كلّه. */
-                            const pages = await fileToImagePages(file);
-                            if (pages.skipped > 0) {
-                                global.TeacherApp.toast(
-                                    'الملف ' + pages.total + ' صفحة، وأقصى ما يُقرأ دفعةً '
-                                    + global.PdfCore.MAX_IMAGE_PAGES + '. قُرئت الأولى منها فقط.',
-                                    'warning', 7000);
-                            }
-                            names = await global.AI.extractStudentNamesFromImage({ pages });
-                        }
+                    let names = typed;
+                    let source = 'ai';         /* من أين جاءت — تقوله لافتةُ المراجعة */
+                    if (!typed.length) {
+                        btn.textContent = '⏳ جارٍ القراءة...';
+                        const got = await readFile();
+                        if (!got) return;                  /* مضى إلى شاشة الجدول */
+                        names = got.names;
+                        source = got.source;
                     }
                     if (names.length === 0) throw new Error('لم يتم العثور على أي أسماء.');
                     /* المكتوبُ بيده لا يُراجَع — رآه وهو يكتبه. وأمّا
