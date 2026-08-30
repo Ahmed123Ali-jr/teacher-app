@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>معاينة: قسم الجداول وتوزيع المنهج</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D32">
+<link rel="stylesheet" href="css/components.css?v=10">
+<link rel="stylesheet" href="css/views.css?v=D290">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=16">
+<link rel="stylesheet" href="css/theme-white.css?v=22">
+<link rel="stylesheet" href="css/theme-dark.css?v=34">
+
+<style>
+    body { margin: 0; background: var(--bg, #F4F5F7); }
+    .pv { max-width: 480px; margin: 0 auto; padding: 0 14px 50px; }
+    .pv-bar {
+        position: sticky; top: 0; z-index: 40;
+        background: var(--surface); border-bottom: 1.5px solid var(--border);
+        padding: 10px 14px 12px; margin: 0 -14px 14px;
+    }
+    .pv-tabs { display: flex; gap: 7px; }
+    .pv-tabs button {
+        flex: 1 1 0; min-height: 44px; border-radius: 12px; cursor: pointer;
+        font-family: inherit; font-size: 14px; font-weight: var(--fw-bold);
+        border: 1.5px solid var(--border); background: var(--surface);
+        color: var(--ink-primary);
+    }
+    .pv-tabs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pv-say { margin: 9px 2px 0; font-size: 12.5px; line-height: 1.8;
+              font-weight: 500; color: var(--text-muted); }
+    .pv-say b { color: var(--ink-primary); font-weight: var(--fw-bold); }
+    .frame {
+        background: var(--surface); border: 1.5px solid var(--border);
+        border-radius: 18px; padding: 14px 13px;
+    }
+
+    /* ══ مشتركاتٌ بين الثلاثة ══ */
+    .sc-h {
+        font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text-muted);
+        margin: 0 2px 9px; display: flex; align-items: baseline; gap: 7px;
+    }
+    .sc-h .n { margin-inline-start: auto; font-size: 11px; }
+    .sc-h + .sc-h, .sc-sep { margin-top: 20px; }
+    .sc-sep { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    .sc-add {
+        display: block; width: 100%; min-height: 44px; border-radius: 12px;
+        cursor: pointer; font-family: inherit; font-size: 13.5px;
+        font-weight: var(--fw-bold); color: var(--ink-primary);
+        background: transparent; border: 1.5px dashed var(--border-strong);
+        margin-top: 10px;
+    }
+
+    /* ملفٌّ مرفوع: اسمُه ونوعُه وحجمُه، وسلّةٌ — بلا إيموجي. */
+    .sc-file {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 2px; border-bottom: 1px solid var(--border);
+    }
+    .sc-file:last-of-type { border-bottom: 0; }
+    .sc-file .bd { flex: 1; min-width: 0; }
+    .sc-file .t {
+        font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .sc-file .m { font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 2px; }
+    .sc-file button {
+        flex: none; border: 0; background: transparent; color: var(--text-muted);
+        padding: 4px; cursor: pointer; line-height: 1; opacity: .75;
+    }
+
+    /* ══════════ «أ» — سطرٌ لكلّ فصل ══════════ */
+    .sca-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 2px; border-bottom: 1px solid var(--border);
+    }
+    .sca-row:last-child { border-bottom: 0; }
+    .sca-row .bd { flex: 1; min-width: 0; }
+    .sca-row .t { font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+    .sca-row .m { font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 2px; }
+    .sca-row .n {
+        font-size: 13px; font-weight: var(--fw-bold); color: var(--primary);
+        flex: none; font-variant-numeric: tabular-nums;
+    }
+
+    /* ══════════ «ب» — بلاطاتُ الإنجاز ══════════ */
+    .scb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .scb-tile {
+        border-radius: 14px; padding: 12px 11px;
+        background: linear-gradient(150deg, #fff 0%,
+            color-mix(in srgb, var(--beige) 42%, var(--mix-base)) 50%, #ECEAE3 100%);
+        border: 1.5px solid color-mix(in srgb, var(--beige) 85%, #000);
+        box-shadow: inset 0 1.5px 0 var(--sheen), 0 3px 8px rgba(16, 24, 40, .09);
+    }
+    .scb-tile .t { font-size: 13px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+    .scb-tile .m { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); margin-top: 3px; }
+    .scb-tile .n {
+        font-size: 17px; font-weight: var(--fw-bold); color: var(--ink-primary);
+        margin-top: 7px; font-variant-numeric: tabular-nums;
+    }
+    .scb-tile .n span { font-size: 10.5px; font-weight: var(--fw-bold); color: var(--text-muted); }
+
+    /* ══════════ «ج» — جدولٌ بثلاثة أعمدة ══════════ */
+    .scc-tbl { width: 100%; border-collapse: collapse; }
+    .scc-tbl th, .scc-tbl td {
+        padding: 9px 6px; border-bottom: 1px solid var(--border); text-align: start;
+    }
+    .scc-tbl th {
+        font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted);
+        border-bottom: 1.5px solid var(--border-strong);
+    }
+    .scc-tbl td { font-size: 13px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+    .scc-tbl td.s { font-weight: 500; color: var(--text-muted); font-size: 12px; }
+    .scc-tbl td.n, .scc-tbl th.n { text-align: center; width: 62px; font-variant-numeric: tabular-nums; }
+    .scc-tbl tr:last-child td { border-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="pv">
+    <div class="pv-bar">
+        <div class="pv-tabs">
+            <button type="button" data-m="now">الحالي</button>
+            <button type="button" data-m="a">أ</button>
+            <button type="button" data-m="b">ب</button>
+            <button type="button" data-m="c">ج</button>
+        </div>
+        <p class="pv-say" id="say"></p>
+    </div>
+    <div class="frame" id="stage"></div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const TRASH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+    const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+    const CLS = [
+        { st: 'ابتدائي', g: 'الخامس الابتدائي', s: 'أ', sub: 'الرياضيات', n: 28 },
+        { st: 'ابتدائي', g: 'السادس الابتدائي', s: 'ب', sub: 'العلوم',    n: 26 },
+        { st: 'ابتدائي', g: 'الرابع الابتدائي', s: 'أ', sub: 'الرياضيات', n: 24 }
+    ];
+    const FILES = [
+        { t: 'توزيع منهج الرياضيات — الفصل الأول', k: 'توزيع منهج', z: '١٫٢ م.ب' },
+        { t: 'الجدول الأسبوعي', k: 'جدول', z: '٤٨٠ ك.ب' }
+    ];
+    const total = CLS.reduce((a, c) => a + c.n, 0);
+
+    const filesBlock = () => `
+        <div class="sc-h">ملفات توزيع المنهج والجدول
+            <span class="n">${ar(FILES.length)}</span></div>
+        ${FILES.map((f) => `
+            <div class="sc-file">
+                <div class="bd"><div class="t">${f.t}</div>
+                    <div class="m">${f.k} · ${f.z}</div></div>
+                <button type="button">${TRASH}</button>
+            </div>`).join('')}
+        <button type="button" class="sc-add">+ إضافة ملف</button>`;
+
+    /* ══════════ الحاليّ ══════════ */
+    function now() {
+        return `
+        <h4 style="margin-top:0">📚 فصولي (تلقائي)</h4>
+        <div class="text-muted" style="font-size:var(--fs-sm); margin-bottom:var(--space-3)">
+            ${CLS.length} فصل · ${total} طالب — تُحدَّث تلقائياً مع كل فصل تُضيفه.
+        </div>
+        <div class="table-wrapper" style="margin-bottom:var(--space-5)">
+            <table class="students-table">
+                <thead><tr><th>#</th><th>المرحلة</th><th>الصف</th><th>الشعبة</th>
+                    <th>المادة</th><th>عدد الطلاب</th></tr></thead>
+                <tbody>${CLS.map((c, i) => `<tr>
+                    <td class="num">${i + 1}</td><td>${c.st}</td><td>${c.g}</td>
+                    <td>${c.s}</td><td>${c.sub}</td><td class="num">${c.n}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>
+        <hr style="margin:var(--space-5) 0; border:0; border-top:1px solid var(--border)">
+        <h4>📎 ملفات توزيع المنهج والجدول الأسبوعي</h4>
+        <p class="text-muted" style="font-size:var(--fs-sm); margin-bottom:var(--space-3)">
+            يمكنك رفع ملفات توزيع المنهج، خطط الدروس، أو صورة الجدول الأسبوعي.
+        </p>
+        <button class="btn btn-primary">+ إضافة ملف</button>
+        <div class="file-list" style="margin-top:var(--space-4)">
+            ${FILES.map((f) => `<div class="file-card">
+                <div class="file-icon">📅</div>
+                <div class="file-body"><div class="file-name">${f.t}</div>
+                    <div class="file-meta"><span class="badge badge-muted">${f.k}</span>
+                        <span>${f.z}</span></div></div>
+                <div class="file-actions">
+                    <button class="btn btn-ghost btn-sm">⬇️</button>
+                    <button class="btn btn-ghost btn-sm">✏️</button>
+                    <button class="btn btn-ghost btn-sm">🗑️</button></div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    /* ══════════ أ — سطرٌ لكلّ فصل ══════════ */
+    function A() {
+        return `
+        <div class="sc-h">فصولي <span class="n">${ar(CLS.length)} فصول · ${ar(total)} طالباً</span></div>
+        ${CLS.map((c) => `
+            <div class="sca-row">
+                <div class="bd"><div class="t">${c.g} / ${c.s}</div>
+                    <div class="m">${c.sub}</div></div>
+                <span class="n">${ar(c.n)}</span>
+            </div>`).join('')}
+        <hr class="sc-sep">
+        ${filesBlock()}`;
+    }
+
+    /* ══════════ ب — بلاطات ══════════ */
+    function B() {
+        return `
+        <div class="sc-h">فصولي <span class="n">${ar(CLS.length)} فصول · ${ar(total)} طالباً</span></div>
+        <div class="scb-grid">${CLS.map((c) => `
+            <div class="scb-tile">
+                <div class="t">${c.g} / ${c.s}</div>
+                <div class="m">${c.sub}</div>
+                <div class="n">${ar(c.n)} <span>طالباً</span></div>
+            </div>`).join('')}</div>
+        <hr class="sc-sep">
+        ${filesBlock()}`;
+    }
+
+    /* ══════════ ج — جدولٌ بثلاثة أعمدة ══════════ */
+    function C_() {
+        return `
+        <div class="sc-h">فصولي <span class="n">${ar(CLS.length)} فصول · ${ar(total)} طالباً</span></div>
+        <table class="scc-tbl">
+            <thead><tr><th>الفصل</th><th>المادة</th><th class="n">الطلاب</th></tr></thead>
+            <tbody>${CLS.map((c) => `<tr>
+                <td>${c.g} / ${c.s}</td><td class="s">${c.sub}</td>
+                <td class="n">${ar(c.n)}</td></tr>`).join('')}</tbody>
+        </table>
+        <hr class="sc-sep">
+        ${filesBlock()}`;
+    }
+
+    const SAY = {
+        now: '<b>الحالي</b> — إيموجي، وسطرا شرحٍ، وجدولٌ بستّة أعمدةٍ يفيض على الجوّال.',
+        a: '<b>أ — سطرٌ لكلّ فصل.</b> الاسمُ ومادّتُه وعددُه. أقصرُها ارتفاعاً.',
+        b: '<b>ب — بلاطات.</b> بيجُ شبكة الإنجاز، فصلان في السطر.',
+        c: '<b>ج — جدولٌ بثلاثة أعمدة.</b> جدولٌ يبقى جدولاً، ويسع الجوّال.'
+    };
+
+    const stage = document.getElementById('stage');
+    const say = document.getElementById('say');
+    let mode = 'a';
+    const R = { now: now, a: A, b: B, c: C_ };
+    function draw() {
+        stage.innerHTML = R[mode]();
+        say.innerHTML = SAY[mode];
+        document.querySelectorAll('.pv-tabs button')
+            .forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
+    }
+    document.querySelectorAll('.pv-tabs button').forEach((b) =>
+        b.addEventListener('click', () => { mode = b.dataset.m; draw(); window.scrollTo({ top: 0 }); }));
+    draw();
+})();
+</script>
+</body>
+</html>
