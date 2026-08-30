@@ -167,6 +167,10 @@
         { t: 'توزيع منهج الرياضيات — الفصل الأول', k: 'توزيع منهج', z: '١٫٢ م.ب' },
         { t: 'الجدول الأسبوعي', k: 'جدول', z: '٤٨٠ ك.ب' }
     ];
+    const PFILES = [
+        { t: 'توزيع منهج الرياضيات — الفصل الأول', k: 'توزيع منهج', date: '١٤٤٨/٠٢/١٠' },
+        { t: 'الجدول الأسبوعي', k: 'جدول', date: '١٤٤٨/٠٢/١٢' }
+    ];
     const total = CLS.reduce((a, c) => a + c.n, 0);
 
     const filesBlock = () => `
@@ -289,12 +293,40 @@
         { st:'ابتدائي', g:'الصف الرابع الابتدائي', s:'أ', sub:'الرياضيات', n:24 }];
     const PTOT = PCLS.reduce((a,c)=>a+c.n,0);
 
+    /* الورقةُ كاملةً كما يبنيها `print-portfolio.js`: صفحةُ الفاصل، ثمّ
+       ترويسةُ القسم وجدولُ الفصول، ثمّ الجدولُ الأسبوعيّ، ثمّ صفحةٌ لكلّ
+       ملفٍّ مرفوع. لا مقتطعاً منها. */
+    const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+    const PER  = [
+        { n:1, s:'٠٧:٠٠', e:'٠٧:٤٥' }, { n:2, s:'٠٧:٥٠', e:'٠٨:٣٥' },
+        { n:3, s:'٠٨:٤٠', e:'٠٩:٢٥' }, { n:4, s:'٠٩:٤٥', e:'١٠:٣٠' },
+        { n:5, s:'١٠:٣٥', e:'١١:٢٠' }, { n:6, s:'١١:٢٥', e:'١٢:١٠' },
+        { n:7, s:'١٢:١٥', e:'١٣:٠٠' }];
+    /* حصصٌ ثابتةٌ لا عشوائيّة — فالمعاينةُ تُعاد فتُرى كما هي. */
+    const SLOTS = { '0-1':0, '0-3':1, '1-2':0, '1-5':2, '2-1':1, '2-4':0,
+                    '3-2':2, '3-6':1, '4-1':0, '4-3':2 };
+
     function paperHtml(kind) {
         const d = (n) => kind === 'now' ? String(n) : AR(n);
-        const head = `
-            <h3 style="margin-top:0;">الفصول التي أدرّسها</h3>
-            <p style="font-size:10pt;color:#555;margin-bottom:4mm;">
-                ${d(PCLS.length)} فصل · ${d(PTOT)} طالب</p>`;
+
+        const divider = `
+            <div class="section-divider"><div class="section-divider-inner">
+                <div class="section-divider-header">— ملف الإنجاز المهني —</div>
+                <div class="section-divider-body">
+                    <div class="section-divider-tag">
+                        <span class="section-divider-line"></span>
+                        <span class="section-divider-tag-text">القسم الرابع</span>
+                        <span class="section-divider-line"></span></div>
+                    <h1 class="section-divider-title">الجداول وتوزيع المنهج</h1>
+                    <div class="section-divider-bottom-line"></div>
+                    <div class="section-divider-page-num">٤ / ١٠</div>
+                </div></div></div>`;
+
+        const heading = `
+            <div class="portfolio-section-heading">
+                <div class="section-number">4</div>
+                <h2>الجداول وتوزيع المنهج</h2></div>`;
+
         const wide = `
             <table class="info-table">
               <thead><tr><th>#</th><th>المرحلة</th><th>الصف</th><th>الشعبة</th>
@@ -309,14 +341,45 @@
                 <td>${c.g.replace(/^الصف /,'')} / ${c.s}</td>
                 <td>${c.sub}</td><td>${d(c.n)}</td></tr>`).join('')}</tbody>
             </table>`;
-        return head + (kind === 'tight' ? tight : wide) + `
-            <h3>ملفات توزيع المنهج والجدول الأسبوعي</h3>
-            <table class="info-table">
-              <thead><tr><th>الملف</th><th>النوع</th><th>التاريخ</th></tr></thead>
-              <tbody><tr><td>توزيع منهج الرياضيات — الفصل الأول</td>
-                  <td>توزيع منهج</td><td>١٤٤٨/٠٢/١٠</td></tr>
-                <tr><td>الجدول الأسبوعي</td><td>جدول</td><td>١٤٤٨/٠٢/١٢</td></tr></tbody>
+
+        const weekly = `
+            <h3 class="weekly-schedule-title">📅 الجدول الأسبوعي</h3>
+            <table class="weekly-schedule">
+              <thead><tr><th class="weekly-period-col">الحصة</th>
+                ${DAYS.map((x)=>`<th>${x}</th>`).join('')}</tr></thead>
+              <tbody>${PER.map((p)=>`<tr>
+                <td class="weekly-period-col">
+                  <div class="weekly-period-n">الحصة ${AR(p.n)}</div>
+                  <div class="weekly-period-time">${p.s} — ${p.e}</div></td>
+                ${DAYS.map((_,di)=>{
+                  const k = SLOTS[di + '-' + p.n];
+                  if (k === undefined) return '<td class="weekly-cell weekly-cell-empty"></td>';
+                  const c = PCLS[k];
+                  return `<td class="weekly-cell">
+                    <div class="weekly-cell-grade">${c.g} / ${c.s}</div>
+                    <div class="weekly-cell-subject">${c.sub}</div></td>`;
+                }).join('')}</tr>`).join('')}</tbody>
             </table>`;
+
+        const fileCards = PFILES.map((f, i) => `
+            <div class="cert-card"><div class="cert-card-inner">
+                <div class="cert-card-header">
+                    <div class="cert-card-counter">ملف رقم ${AR(i+1)} من ${AR(PFILES.length)}</div>
+                    <h2 class="cert-card-title">${f.t}</h2></div>
+                <div class="cert-hero-empty">لا توجد صورة مرفقة</div>
+                <table class="cert-card-meta">
+                    <tr><td class="cert-card-meta-key">النوع</td>
+                        <td class="cert-card-meta-val">${f.k}</td></tr>
+                    <tr><td class="cert-card-meta-key">التاريخ</td>
+                        <td class="cert-card-meta-val">${f.date}</td></tr>
+                </table></div></div>`).join('');
+
+        return divider + heading
+             + `<h3 style="margin-top:0;">الفصول التي أدرّسها</h3>
+                <p style="font-size:10pt;color:#555;margin-bottom:4mm;">
+                    ${d(PCLS.length)} فصل · ${d(PTOT)} طالب</p>`
+             + (kind === 'tight' ? tight : wide)
+             + '<div class="page-break"></div>' + weekly + fileCards;
     }
 
     const PSAY = {
