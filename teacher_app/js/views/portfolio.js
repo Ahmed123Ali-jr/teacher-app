@@ -15,12 +15,25 @@
     }
     function escapeAttr(s) { return escapeHtml(s); }
 
+    /* الأرقامُ عربيّةٌ كسائر أرقام الشاشة، والوحدةُ بحروفها — «480 KB»
+       كانت تُقرأ لاتينيّةً وسط سطرٍ عربيّ. */
+    const arNum = (s) => String(s).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
     function formatSize(bytes) {
         if (!bytes) return '';
         const kb = bytes / 1024;
-        if (kb < 1024) return kb.toFixed(0) + ' KB';
-        return (kb / 1024).toFixed(1) + ' MB';
+        if (kb < 1024) return arNum(kb.toFixed(0)) + ' ك.ب';
+        return arNum((kb / 1024).toFixed(1).replace('.', '٫')) + ' م.ب';
     }
+
+    /* رموزُ الأفعال رسومٌ لا إيموجي: الإيموجي يختلف شكلُه بين الأجهزة،
+       ويُقرأ في قارئ الشاشة كلمةً لا فعلاً. والشارةُ الملوّنةُ حول النوع
+       سقطت معها — النقطةُ تفصل والسطرُ يقصر. */
+    const ICO = (d) => '<svg viewBox="0 0 24 24" width="15" height="15" fill="none"'
+        + ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
+        + ' stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+    const TRASH    = ICO('M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3');
+    const PENCIL   = ICO('M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z');
+    const DOWNLOAD = ICO('M12 4v11m0 0 4-4m-4 4-4-4M5 20h14');
 
     function formatDate(iso) {
         if (!iso) return '';
@@ -568,7 +581,7 @@
                 const it = items[i];
                 const label = btn.textContent;
                 btn.disabled = true;
-                btn.textContent = '⏳';
+                btn.textContent = '…';
                 try {
                     const blob = await global.TeacherDB.PortfolioFiles.ensure(it);
                     if (!blob) return;
@@ -693,7 +706,7 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalLabel = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جارٍ الحفظ...';
+            submitBtn.textContent = 'جارٍ الحفظ…';
 
             try {
                 const name = form.querySelector('#f-name').value.trim();
@@ -1019,7 +1032,7 @@
                 const item = items[i];
                 const label = btn.textContent;
                 btn.disabled = true;
-                btn.textContent = '⏳';
+                btn.textContent = '…';
                 try {
                     const blob = await global.TeacherDB.PortfolioFiles.ensure(item);
                     if (!blob) return;
@@ -1047,19 +1060,23 @@
         const hasFile = global.TeacherDB.PortfolioFiles.has(item);
         return `
             <div class="file-card">
-                <div class="file-icon">${icon}</div>
+                ${icon ? `<div class="file-icon">${icon}</div>` : ''}
                 <div class="file-body">
                     <div class="file-name">${escapeHtml(item.name)}</div>
                     <div class="file-meta">
-                        ${item.type ? `<span class="badge badge-muted">${escapeHtml(item.type)}</span>` : ''}
-                        ${item.date ? `<span>📅 ${formatDate(item.date)}</span>` : ''}
-                        ${hasFile ? `<span>${formatSize(item.size || (item.file && item.file.size) || 0)}</span>` : ''}
+                        ${[item.type ? escapeHtml(item.type) : '',
+                           item.date ? formatDate(item.date) : '',
+                           hasFile ? formatSize(item.size || (item.file && item.file.size) || 0) : '']
+                          .filter(Boolean).join(' · ')}
                     </div>
                 </div>
                 <div class="file-actions">
-                    ${hasFile ? `<button class="btn btn-ghost btn-sm" data-file-download="${i}">⬇️</button>` : ''}
-                    <button class="btn btn-ghost btn-sm" data-file-edit="${i}">✏️</button>
-                    <button class="btn btn-ghost btn-sm" data-file-del="${i}">🗑️</button>
+                    ${hasFile ? `<button class="btn btn-ghost btn-sm" data-file-download="${i}"
+                            aria-label="تنزيل">${DOWNLOAD}</button>` : ''}
+                    <button class="btn btn-ghost btn-sm" data-file-edit="${i}"
+                            aria-label="تعديل">${PENCIL}</button>
+                    <button class="btn btn-ghost btn-sm" data-file-del="${i}"
+                            aria-label="حذف">${TRASH}</button>
                 </div>
             </div>
         `;
@@ -1116,7 +1133,7 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalLabel = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ جارٍ الحفظ...';
+            submitBtn.textContent = 'جارٍ الحفظ…';
 
             try {
                 const name = form.querySelector('#f-name').value.trim();
@@ -1173,58 +1190,47 @@
     /* ---------- Schedules: classes summary + optional file uploads ---------- */
 
     function renderSchedules(body, ctx) {
-        const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
         const classes = ctx.classes || [];
-        const totalStudents = classes.reduce((sum, c) => sum + (c.student_count || 0), 0);
+        const total = classes.reduce((sum, c) => sum + (c.student_count || 0), 0);
+        const ar = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+        const label = (c) => escapeHtml(global.ClassCreate
+            ? global.ClassCreate.label(c.grade, c.section)
+            : (c.grade || '') + ' / ' + (c.section || ''));
 
-        const classesTable = classes.length === 0 ? `
-            <p class="text-muted">لم تُضف فصولاً بعد — أضف فصولك من الشاشة الرئيسية وستظهر هنا تلقائياً.</p>
-        ` : `
-            <div class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
-                ${classes.length} فصل · ${totalStudents} طالب — تُحدَّث تلقائياً مع كل فصل تُضيفه.
-            </div>
-            <div class="table-wrapper" style="margin-bottom: var(--space-5);">
-                <table class="students-table">
-                    <thead>
+        /* ── ثلاثةُ أعمدةٍ لا ستّة ──
+           كانت: # · المرحلة · الصف · الشعبة · المادة · عدد الطلاب — تفيض
+           على الجوّال فتُمرَّر أفقيّاً. والترقيمُ لا يقول شيئاً، والمرحلةُ
+           تكرّر ما في اسم الصفّ، والشعبةُ تُضمّ إليه.
+           (اختاره المعلّم — الشكل «ج» من معاينة sch.html، ٣٠ أغسطس ٢٠٢٦.)
+
+           وبلا إيموجي وبلا سطر شرح: «خلّ كلّ شيء مختصر» بنصّه. */
+        const classesBlock = classes.length === 0
+            ? '<p class="text-muted">لم تُضف فصولاً بعد.</p>'
+            : `
+            <table class="sc-tbl">
+                <thead>
+                    <tr><th>الفصل</th><th>المادة</th><th class="n">الطلاب</th></tr>
+                </thead>
+                <tbody>
+                    ${classes.map((c) => `
                         <tr>
-                            <th>#</th>
-                            <th>المرحلة</th>
-                            <th>الصف</th>
-                            <th>الشعبة</th>
-                            <th>المادة</th>
-                            <th>عدد الطلاب</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${classes.map((c, i) => `
-                            <tr>
-                                <td class="num">${i + 1}</td>
-                                <td>${STAGE_LABELS[c.stage] || ''}</td>
-                                <td>${escapeHtml(c.grade)}</td>
-                                <td>${escapeHtml(c.section)}</td>
-                                <td>${escapeHtml(c.subject)}</td>
-                                <td class="num">${c.student_count || 0}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+                            <td>${label(c)}</td>
+                            <td class="s">${escapeHtml(c.subject || '')}</td>
+                            <td class="n">${ar(c.student_count || 0)}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
 
         body.innerHTML = `
-            <h4 style="margin-top:0;">📚 فصولي (تلقائي)</h4>
-            ${classesTable}
-
-            <hr style="margin: var(--space-5) 0; border:0; border-top: 1px solid var(--border);">
-
-            <h4>📎 ملفات توزيع المنهج والجدول الأسبوعي</h4>
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-3);">
-                يمكنك رفع ملفات توزيع المنهج، خطط الدروس، أو صورة الجدول الأسبوعي.
-            </p>
+            <div class="sc-h">فصولي
+                <span class="n">${ar(classes.length)} فصول · ${ar(total)} طالباً</span></div>
+            ${classesBlock}
+            <hr class="sc-sep">
+            <div class="sc-h">ملفات توزيع المنهج والجدول</div>
             <div id="files-slot"></div>
         `;
 
-        renderFileList(body.querySelector('#files-slot'), ctx, 'schedules', 'ملف', '📅');
+        renderFileList(body.querySelector('#files-slot'), ctx, 'schedules', 'ملف', '');
     }
 
     /* ---------- Auto-populated lists (exams / worksheets / homework) ---------- */
@@ -1262,5 +1268,6 @@
         `;
     }
 
-    global.PortfolioView = { render, savePortfolio, loadPortfolio };
+    /* `renderSchedules` مُصدَّرةٌ ليُقاس القسمُ وحدَه بلا تجهيز الشاشة كلِّها. */
+    global.PortfolioView = { render, savePortfolio, loadPortfolio, renderSchedules };
 })(window);

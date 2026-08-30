@@ -867,31 +867,31 @@
         `).join('');
     }
 
+    /* ثلاثةُ أعمدةٍ لا ستّة، وأرقامٌ عربيّةٌ كتواريخ الورقة نفسِها — كانت
+       لاتينيّةً بجانبها في الجدول الواحد. (اختيار المعلّم ٣٠ أغسطس ٢٠٢٦.)
+       والترقيمُ لا يقول شيئاً، والمرحلةُ تكرّر ما في اسم الصفّ، والشعبةُ
+       تُضمّ إليه. */
     function classesSummaryBlock(classes) {
-        const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
         if (classes.length === 0) return '<p class="text-muted">لا توجد فصول.</p>';
         const total = classes.reduce((s, c) => s + (c.student_count || 0), 0);
+        const label = (c) => global.ClassCreate
+            ? global.ClassCreate.label(c.grade, c.section)
+            : (c.grade || '') + ' / ' + (c.section || '');
         return `
             <h3 style="margin-top:0;">الفصول التي أدرّسها</h3>
             <p style="font-size: 10pt; color: #555; margin-bottom: 4mm;">
-                ${classes.length} فصل · ${total} طالب
+                ${toArabicDigits(classes.length)} فصول · ${toArabicDigits(total)} طالباً
             </p>
             <table class="info-table">
                 <thead>
-                    <tr>
-                        <th>#</th><th>المرحلة</th><th>الصف</th><th>الشعبة</th>
-                        <th>المادة</th><th>عدد الطلاب</th>
-                    </tr>
+                    <tr><th>الفصل</th><th>المادة</th><th>عدد الطلاب</th></tr>
                 </thead>
                 <tbody>
-                    ${classes.map((c, i) => `
+                    ${classes.map((c) => `
                         <tr>
-                            <td>${i + 1}</td>
-                            <td>${STAGE_LABELS[c.stage] || ''}</td>
-                            <td>${escapeHtml(c.grade)}</td>
-                            <td>${escapeHtml(c.section)}</td>
-                            <td>${escapeHtml(c.subject)}</td>
-                            <td>${c.student_count || 0}</td>
+                            <td>${escapeHtml(label(c))}</td>
+                            <td>${escapeHtml(c.subject || '')}</td>
+                            <td>${toArabicDigits(c.student_count || 0)}</td>
                         </tr>
                     `).join('')}
                 </tbody>

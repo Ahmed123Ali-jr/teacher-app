@@ -5626,3 +5626,38 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* لا صنفَ للزرّ هنا: هو `start-cta` داخل `classes-fab` — زرُّ شاشة الفصول
    بعينه. والحشوُ السفليُّ هو حشوُها (91px) ليمرَّ آخرُ سطرٍ من تحته. */
 .rm-v2 { padding-bottom: 91px; }
+
+
+/* ==========================================================================
+   ملفّ الإنجاز — قسمُ الجداول وتوزيع المنهج (portfolio.js/renderSchedules)
+   ========================================================================== */
+
+.sc-h {
+    font-size: 12.5px; font-weight: var(--fw-bold); color: var(--text-muted);
+    margin: 0 2px 9px; display: flex; align-items: baseline; gap: 7px;
+}
+
+.sc-h .n { margin-inline-start: auto; font-size: 11px; }
+
+.sc-sep { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* جدولُ الفصول: ثلاثةُ أعمدةٍ تسع الجوّال — والستّةُ كانت تُمرَّر أفقيّاً. */
+.sc-tbl { width: 100%; border-collapse: collapse; }
+
+.sc-tbl th, .sc-tbl td {
+    padding: 9px 6px; border-bottom: 1px solid var(--border); text-align: start;
+}
+
+.sc-tbl th {
+    font-size: 11px; font-weight: var(--fw-bold); color: var(--text-muted);
+    border-bottom: 1.5px solid var(--border-strong);
+}
+
+.sc-tbl td { font-size: 13px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+.sc-tbl td.s { font-weight: 500; color: var(--text-muted); font-size: 12px; }
+
+.sc-tbl td.n, .sc-tbl th.n {
+    text-align: center; width: 62px; font-variant-numeric: tabular-nums;
+}
+
+.sc-tbl tr:last-child td { border-bottom: 0; }
