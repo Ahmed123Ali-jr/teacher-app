@@ -498,28 +498,38 @@
                 <label class="label" for="sched-file">صورة الجدول أو ملف PDF</label>
                 <input class="input" id="sched-file" type="file" accept="image/*,.pdf">
                 <div class="field-hint">
-                    صوّر جدولك المطبوع أو ارفعه ملفاً. تُقرأ الخانات وتُعرض عليك
-                    قبل الحفظ — لن يتغيّر جدولك حتى تؤكّد.
+                    صوّر جدولك المطبوع أو ارفعه ملفاً — تبدأ القراءة فور اختياره.
+                    وتُعرض عليك الخانات قبل الحفظ، فلن يتغيّر جدولك حتى تؤكّد.
                 </div>
             </div>
             <div id="imp-result"></div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="button" class="btn btn-primary" id="imp-go">قراءة الجدول</button>
+                <button type="button" class="btn btn-primary" id="imp-go" hidden>أعد القراءة</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
 
         const resultEl = form.querySelector('#imp-result');
-        form.querySelector('#sched-file').addEventListener('change', () => {
-            pickedName = '';
-            lastPages = null;
-            picked = null;
-            resultEl.innerHTML = '';
-        });
-
         const goBtn = form.querySelector('#imp-go');
 
-        goBtn.addEventListener('click', async () => {
+        /* ══ الملفُّ هو الأمر، لا الزرّ ══
+           كان المعلّم يختار ملفَّه ثمّ يبحث عن «قراءة الجدول» ليضغطه —
+           خطوةٌ لا معنى لها: من رفع جدولَه فقد قال ما يريد. فالقراءةُ
+           تبدأ فورَ الاختيار، ويظهر «جاري استخراج البيانات» في اللحظة
+           نفسِها. (طلبُه ٣٠ أغسطس ٢٠٢٦.)
+
+           والزرُّ يبقى مخفيّاً، ولا يظهر إلا بعد إخفاقٍ — «أعد القراءة» —
+           فلا يُترك المعلّم بلا سبيلٍ إن انقطع اتّصالٌ في منتصف الطريق. */
+        form.querySelector('#sched-file').addEventListener('change', () => start());
+        goBtn.addEventListener('click', () => start());
+
+        /** يُظهر سطرَ انتظارٍ في مكان النتيجة — يُرى قبل أن يبدأ العمل. */
+        function waiting(msg) {
+            resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ '
+                + escapeHtml(msg) + '</div>';
+        }
+
+        async function start() {
             const file = form.querySelector('#sched-file').files[0];
             /* ملفٌّ جديد يعني بدايةً جديدة: كان اسمُ المعلّم المختار يبقى
                من الرفعة السابقة، فتُقرأ الصورة الثانية باسم معلّمٍ اخترته
@@ -528,10 +538,14 @@
             pickedName = '';
             lastPages = null;
             picked = null;
-            const label = goBtn.textContent;
+            goBtn.hidden = true;
             goBtn.disabled = true;
+            /* قبل كلّ عمل: السطرُ يُرسم أوّلاً ثمّ يُعمل، وإلا بقيت الشاشةُ
+               ساكنةً حتى تنتهي القراءة فتبدو واقفة. */
+            waiting('جاري استخراج البيانات…');
+            await new Promise((r) => setTimeout(r, 0));
             try {
-                if (!file) throw new Error('اختر ملفاً أولاً.');
+                if (!file) { resultEl.innerHTML = ''; return; }
                 if (!(await global.AI.isAvailable())) {
                     throw new Error('انتهت جلستك — سجّل الدخول ثمّ أعد المحاولة.');
                 }
@@ -551,7 +565,6 @@
                    بلا توكنٍ واحد. راجع `pdf-text.js`.
                    وإن كان الملفُّ مسحاً ضوئيّاً بلا نصّ، فلا يتغيّر شيء:
                    يمضي المسارُ القديم كما كان. */
-                goBtn.textContent = '⏳ أقرأ ملفك…';
                 const scan = global.PdfText ? await global.PdfText.scan(file) : null;
                 if (scan && scan.teachers.length > 1) {
                     const hit = global.PdfText.pickPage(scan.teachers, ctx.teacher && ctx.teacher.name);
@@ -559,17 +572,18 @@
                     picked = hit;
                 }
 
-                goBtn.textContent = '⏳ جارٍ القراءة…';
                 await readPages(file, picked ? [picked.n] : null,
                                 picked ? picked.name : (pickedName || ''));
             } catch (err) {
                 console.warn('[schedule] import failed:', err);
+                /* والزرُّ يظهر هنا وحدَه: ما فشل يُعاد، وما نجح لا يحتاجه. */
+                resultEl.innerHTML = '';
+                goBtn.hidden = false;
                 global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
             } finally {
                 goBtn.disabled = false;
-                goBtn.textContent = label;
             }
-        });
+        }
 
         /** يرسم الصفحاتِ المطلوبةَ ثمّ يقرؤها. `only` مصفوفةُ أرقامٍ أو
          *  `null` للملفّ كلِّه. */
@@ -623,7 +637,8 @@
             resultEl.querySelector('[data-all]').addEventListener('click', async () => {
                 picked = null;
                 pickedName = '';
-                resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة الملفّ كلّه…</div>';
+                waiting('جاري استخراج البيانات من الملفّ كلّه…');
+                await new Promise((r) => setTimeout(r, 0));
                 try { await readPages(file, null, ''); }
                 catch (err) {
                     global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
@@ -633,7 +648,8 @@
                 el.addEventListener('click', async () => {
                     picked = { n: +el.dataset.pg, name: el.dataset.who };
                     pickedName = picked.name;
-                    resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة جدولك…</div>';
+                    waiting('جاري استخراج جدولك…');
+                    await new Promise((r) => setTimeout(r, 0));
                     try { await readPages(file, [picked.n], picked.name); }
                     catch (err) {
                         global.TeacherApp.toast(err.message || 'تعذّر قراءة الجدول.', 'error', 6000);
@@ -646,7 +662,7 @@
            بالنموذج، فيُسأل عن الأسماء ثمّ يُعاد الملفُّ كلُّه باسمٍ مختار. */
         async function rereadAs(name) {
             pickedName = name;
-            resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ جارٍ قراءة جدولك…</div>';
+            waiting('جاري استخراج جدولك…');
             try {
                 const cells = await global.AI.extractScheduleFromImage({
                     pages: lastPages, classes: ctx.classes,
