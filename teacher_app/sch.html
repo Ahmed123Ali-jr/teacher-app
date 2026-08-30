@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 <link rel="stylesheet" href="css/theme-white.css?v=22">
 <link rel="stylesheet" href="css/theme-dark.css?v=34">
+<link rel="stylesheet" href="css/print.css?v=D29" media="print">
 
 <style>
     body { margin: 0; background: var(--bg, #F4F5F7); }
@@ -36,6 +37,11 @@
         background: var(--surface); border: 1.5px solid var(--border);
         border-radius: 18px; padding: 14px 13px;
     }
+    /* الورقةُ تُعرض داخل مسرحها — قواعدُ الطباعة محصورةٌ بمعرّفه. */
+    #paper { display: none; overflow: hidden; }
+    body.paper #paper { display: block; }
+    body.paper .frame { display: none; }
+    body.paper .pv { max-width: 100%; }
 
     /* ══ مشتركاتٌ بين الثلاثة ══ */
     .sc-h {
@@ -121,17 +127,28 @@
 
 <div class="pv">
     <div class="pv-bar">
-        <div class="pv-tabs">
+        <div class="pv-tabs" style="margin-bottom:7px">
+            <button type="button" data-w="screen" class="on">الشاشة</button>
+            <button type="button" data-w="paper">الورقة</button>
+        </div>
+        <div class="pv-tabs" id="screen-tabs">
             <button type="button" data-m="now">الحالي</button>
             <button type="button" data-m="a">أ</button>
             <button type="button" data-m="b">ب</button>
             <button type="button" data-m="c">ج</button>
         </div>
+        <div class="pv-tabs" id="paper-tabs" hidden>
+            <button type="button" data-p="now">الحالي</button>
+            <button type="button" data-p="ar">أرقام عربية</button>
+            <button type="button" data-p="tight">+ ثلاثة أعمدة</button>
+        </div>
         <p class="pv-say" id="say"></p>
     </div>
     <div class="frame" id="stage"></div>
+    <div id="paper"></div>
 </div>
 
+<script src="js/pdf-core.js"></script>
 <script>
 (function () {
     'use strict';
@@ -259,8 +276,102 @@
         document.querySelectorAll('.pv-tabs button')
             .forEach((b) => b.classList.toggle('on', b.dataset.m === mode));
     }
-    document.querySelectorAll('.pv-tabs button').forEach((b) =>
+    document.querySelectorAll('#screen-tabs button').forEach((b) =>
         b.addEventListener('click', () => { mode = b.dataset.m; draw(); window.scrollTo({ top: 0 }); }));
+
+    /* ══════════ الورقة ══════════
+       تُبنى بالمحرّك الحقيقيّ (`PdfCore`) وبقواعد `print.css` نفسِها،
+       فما يُرى هنا هو ما يخرج في الملفّ. */
+    const AR = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    const PCLS = [
+        { st:'ابتدائي', g:'الصف الخامس الابتدائي', s:'أ', sub:'الرياضيات', n:28 },
+        { st:'ابتدائي', g:'الصف السادس الابتدائي', s:'ب', sub:'العلوم',    n:26 },
+        { st:'ابتدائي', g:'الصف الرابع الابتدائي', s:'أ', sub:'الرياضيات', n:24 }];
+    const PTOT = PCLS.reduce((a,c)=>a+c.n,0);
+
+    function paperHtml(kind) {
+        const d = (n) => kind === 'now' ? String(n) : AR(n);
+        const head = `
+            <h3 style="margin-top:0;">الفصول التي أدرّسها</h3>
+            <p style="font-size:10pt;color:#555;margin-bottom:4mm;">
+                ${d(PCLS.length)} فصل · ${d(PTOT)} طالب</p>`;
+        const wide = `
+            <table class="info-table">
+              <thead><tr><th>#</th><th>المرحلة</th><th>الصف</th><th>الشعبة</th>
+                <th>المادة</th><th>عدد الطلاب</th></tr></thead>
+              <tbody>${PCLS.map((c,i)=>`<tr><td>${d(i+1)}</td><td>${c.st}</td>
+                <td>${c.g}</td><td>${c.s}</td><td>${c.sub}</td><td>${d(c.n)}</td></tr>`).join('')}</tbody>
+            </table>`;
+        const tight = `
+            <table class="info-table">
+              <thead><tr><th>الفصل</th><th>المادة</th><th>عدد الطلاب</th></tr></thead>
+              <tbody>${PCLS.map((c)=>`<tr>
+                <td>${c.g.replace(/^الصف /,'')} / ${c.s}</td>
+                <td>${c.sub}</td><td>${d(c.n)}</td></tr>`).join('')}</tbody>
+            </table>`;
+        return head + (kind === 'tight' ? tight : wide) + `
+            <h3>ملفات توزيع المنهج والجدول الأسبوعي</h3>
+            <table class="info-table">
+              <thead><tr><th>الملف</th><th>النوع</th><th>التاريخ</th></tr></thead>
+              <tbody><tr><td>توزيع منهج الرياضيات — الفصل الأول</td>
+                  <td>توزيع منهج</td><td>١٤٤٨/٠٢/١٠</td></tr>
+                <tr><td>الجدول الأسبوعي</td><td>جدول</td><td>١٤٤٨/٠٢/١٢</td></tr></tbody>
+            </table>`;
+    }
+
+    const PSAY = {
+        now:   '<b>الورقة — الحالي.</b> ستّةُ أعمدة، وأرقامٌ لاتينيّةٌ بجانب تواريخَ عربيّة.',
+        ar:    '<b>أرقام عربية.</b> الجدولُ كما هو، والأرقامُ تُوافق التواريخَ في ورقتها.',
+        tight: '<b>+ ثلاثة أعمدة.</b> سقط «#» و«المرحلة»، والصفُّ والشعبةُ عمودٌ واحد.'
+    };
+    let pmode = 'now', pstage = null;
+
+    async function drawPaper() {
+        say.innerHTML = PSAY[pmode];
+        document.querySelectorAll('#paper-tabs button')
+            .forEach((b) => b.classList.toggle('on', b.dataset.p === pmode));
+        const host = document.getElementById('paper');
+        host.innerHTML = '<p style="color:#fff;text-align:center;padding:20px">جارٍ الرسم…</p>';
+        if (pstage) pstage.destroy();
+        pstage = await PdfCore.createStage();
+        const doc = document.createElement('div');
+        doc.innerHTML = paperHtml(pmode);
+        pstage.el.appendChild(doc);
+        const { pages } = PdfCore.paginate(doc, pstage.el);
+        doc.remove();
+        await PdfCore.settle(pstage.el);
+        pstage.el.setAttribute('style',
+            'position:static; width:794px; margin:0; background:transparent;');
+        pages.forEach((p) => { p.style.cssText +=
+            ';position:static;margin:0 auto 16px;box-shadow:0 6px 18px rgba(0,0,0,.4)'; });
+        host.innerHTML = '';
+        host.appendChild(pstage.el);
+
+        /* الورقةُ ٧٩٤ بكسلاً وشاشةُ الجوّال أضيق — تُصغَّر لتُرى كاملةً بلا
+           تمريرٍ أفقيّ. والارتفاعُ يُعوَّض وإلّا بقي تحتها فراغُ ما قُلّص. */
+        const k = Math.min(1, (host.clientWidth - 4) / 794);
+        pstage.el.style.transform = 'scale(' + k + ')';
+        /* من أعلى اليمين: الصفحةُ عربيّةٌ، ومركزُ التصغير في الوسط يزيحها
+           عن حدّ الحاوية فتُقصّ. */
+        pstage.el.style.transformOrigin = 'top right';
+        host.style.height = (pstage.el.scrollHeight * k + 20) + 'px';
+    }
+
+    document.querySelectorAll('#paper-tabs button').forEach((b) =>
+        b.addEventListener('click', () => { pmode = b.dataset.p; drawPaper(); }));
+
+    document.querySelectorAll('[data-w]').forEach((b) =>
+        b.addEventListener('click', () => {
+            const paper = b.dataset.w === 'paper';
+            document.body.classList.toggle('paper', paper);
+            document.querySelectorAll('[data-w]').forEach((x) =>
+                x.classList.toggle('on', x === b));
+            document.getElementById('screen-tabs').hidden = paper;
+            document.getElementById('paper-tabs').hidden = !paper;
+            if (paper) drawPaper(); else draw();
+            window.scrollTo({ top: 0 });
+        }));
+
     draw();
 })();
 </script>
