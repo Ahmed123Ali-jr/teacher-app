@@ -89,6 +89,7 @@
         اختر ملفَ PDF
         <small>الجدول الأسبوعي أو كشف الأسماء</small>
     </button>
+    <p class="muted" id="warm" style="margin:8px 2px 0"></p>
     <input type="file" id="file" accept=".pdf,application/pdf" hidden>
 
     <div id="out"></div>
@@ -98,6 +99,11 @@
 <script>
 (function () {
     'use strict';
+
+    /* يُصرَّح هنا لا عند دالّته: `warm()` تُنادى قبلها في ترتيب الملفّ،
+       و`let` لا تُرفع كما تُرفع الدالّة — فكانت الصفحةُ تسقط عند فتحها
+       كلِّها، ولا يعمل زرُّ الاختيار أصلاً. (٣٠ أغسطس ٢٠٢٦.) */
+    let WARM = null;
 
     const $ = (s) => document.querySelector(s);
     const out = $('#out');
@@ -434,6 +440,7 @@
 
     const S = { pages: [], flip: null, tab: 'sched', page: 0, col: null, name: '' };
 
+    warm();
     $('#pick').addEventListener('click', () => $('#file').click());
     $('#file').addEventListener('change', async () => {
         const f = $('#file').files[0];
@@ -444,24 +451,70 @@
         }
     });
 
+    /* ══ تسخينُ المحرّك عند فتح الصفحة، لا عند اختيار الملفّ ══
+       قال المعلّم «يطول وهو يقرا». وقِيس: استخراجُ تسعَ عشرةَ صفحةً
+       **‎٤٦‎ ملّي ثانية**. فليست القراءةُ هي البطيئة.
+
+       بل `pdf.js`: ‎٩٠‎ كيلوبايت للمكتبة و‎٢٩٤‎ للعامل — ‎٣٨٤‎ من الشبكة،
+       **لا تبدأ إلا بعد أن يختار الملفّ**. فيجلس ينتظر تحميلاً يظنّه
+       قراءة. وأثقلُهما — العامل — لا تطلبه المكتبةُ إلا عند أوّل مستند.
+
+       فيُسحبان معاً والصفحةُ تُفتح: المعلّم يفتح الشاشة ثمّ يبحث عن ملفّه
+       في جوّاله، وتلك ثوانٍ تكفي. ولا يُنتظر نجاحُهما: إن أخفق التسخين
+       مضى المسارُ الأوّل كما كان.
+       (قِيس ٣٠ أغسطس ٢٠٢٦.) */
+    function warm() {
+        const say = (t) => { document.getElementById('warm').textContent = t; };
+        say('أُحضّر المحرّك…');
+        WARM = Promise.all([
+            PdfCore.ensurePdfJs(),
+            /* العاملُ يُسحب بنفسه فيسكن مخزنَ المتصفّح، فلا ينتظره أوّلُ
+               مستند. وخطؤه لا يضرّ — تسخينٌ لا شرط. */
+            fetch('vendor/pdf.worker.min.js').catch(() => null)
+        ]).then(() => { say('المحرّك جاهز — اختر ملفك.'); })
+          .catch(() => { say(''); });
+        return WARM;
+    }
+
     async function load(file) {
-        const t0 = performance.now();
-        const pdfjs = await global_PdfCore().ensurePdfJs();
+        const say = (t) => { out.innerHTML = '<div class="verdict">' + t + '</div>'; };
+        const T = {}; let mark = performance.now();
+        const lap = (k) => { const n = performance.now(); T[k] = Math.round(n - mark); mark = n; };
+
+        say('⏳ أُحضّر المحرّك…');
+        try { await WARM; } catch (e) { /* المسارُ الأوّل يكفي */ }
+        const pdfjs = await PdfCore.ensurePdfJs();
+        lap('محرّك');
+
         const buf = await file.arrayBuffer();
-        const doc = await pdfjs.getDocument(global_PdfCore().docOptions({ data: buf })).promise;
+        const doc = await pdfjs.getDocument(PdfCore.docOptions({ data: buf })).promise;
+        lap('فتح الملف');
+
         const pages = [];
-        for (let i = 1; i <= doc.numPages; i++) pages.push(await readPage(pdfjs, doc, i));
+        for (let i = 1; i <= doc.numPages; i++) {
+            pages.push(await readPage(pdfjs, doc, i));
+            if (doc.numPages > 3) {
+                say('⏳ أقرأ الصفحة ' + ar(i) + ' من ' + ar(doc.numPages) + '…');
+                /* نفَسٌ للواجهة: بلا هذا يبقى الشريطُ ساكناً حتى النهاية،
+                   فيبدو المتصفّحُ واقفاً وهو يعمل. */
+                await new Promise((r) => setTimeout(r, 0));
+            }
+        }
+        lap('استخراج النص');
+
         S.flip = orient(pages);
         pages.forEach((p) => { p.who = teacherOf(p); });
+        lap('تحليل');
+
         S.pages = pages;
         S.page = 0;
         S.col = null;
-        S.ms = Math.round(performance.now() - t0);
+        S.T = T;
+        S.ms = T['محرّك'] + T['فتح الملف'] + T['استخراج النص'] + T['تحليل'];
         S.file = file.name;
         try { await doc.destroy(); } catch (e) { /* لا شيء */ }
         draw();
     }
-    function global_PdfCore() { return window.PdfCore; }
 
     function draw() {
         const ps = S.pages;
@@ -489,6 +542,7 @@
                 ? 'مقلوب — صُحّح (شواهدُ مستقيمة ' + ar(S.flip.up) + ' · مقلوبة ' + ar(S.flip.down) + ')'
                 : 'مستقيم (شواهدُ مستقيمة ' + ar(S.flip.up) + ' · مقلوبة ' + ar(S.flip.down) + ')')
             + kv('صفحاتٌ عليها اسمُ معلّم', ar(mine) + ' من ' + ar(ps.length))
+            + kv('الزمن', Object.keys(S.T).map((k) => k + ' ' + ar(S.T[k]) + 'ms').join(' · '))
             + '</div>';
 
         out.innerHTML = v + info
