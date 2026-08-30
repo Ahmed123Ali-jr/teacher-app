@@ -141,12 +141,35 @@
     const latin = (s) => String(s || '').replace(/[\u0660-\u0669]/g,
         (d) => String(d.charCodeAt(0) - 0x0660));
 
-    const DAYS = ['الاحد', 'الاثنين', 'الثلاثاء', 'الاربعاء', 'الخميس'];
+    /* أسماءُ الأيّام تُطابَق بحدودِ كلمة، و«ال» اختياريّة: من الجداول ما
+       يكتب «أحد» و«خميس» مجرّدتين. والحدُّ لازم — بلا «(^|مسافة)» تُطابِق
+       «احد» داخلَ «واحد» و«أحدهم» فيُظنّ اليومُ حيث لا يوم.
+       والطيُّ سبقها: «الإثنين» صارت «الاثنين»، و«ة» صارت «ه». */
+    const DAY_RE = [
+        /(^|[\s:،.\-\/])(ال)?احد($|[\s:،.\-\/])/,
+        /(^|[\s:،.\-\/])(ال)?اثنين($|[\s:،.\-\/])/,
+        /(^|[\s:،.\-\/])(ال)?ثلاثاء($|[\s:،.\-\/])/,
+        /(^|[\s:،.\-\/])(ال)?اربعاء($|[\s:،.\-\/])/,
+        /(^|[\s:،.\-\/])(ال)?خميس($|[\s:،.\-\/])/
+    ];
     const dayIndex = (t) => {
-        const f = fold(t);
-        for (let i = 0; i < DAYS.length; i++) if (f.indexOf(DAYS[i]) >= 0) return i;
+        const f = ' ' + fold(t) + ' ';
+        for (let i = 0; i < DAY_RE.length; i++) if (DAY_RE[i].test(f)) return i;
         return -1;
     };
+
+    /* ورأسُ الأعمدة ليس أرقاماً دائماً: كثيرٌ من الجداول يكتب «الأولى»
+       و«الثانية». يُقرأ العددُ من الكلمة كما يُقرأ من الرقم. */
+    const PWORD = { 'الاولي': 1, 'اولي': 1, 'الاول': 1, 'الثانيه': 2, 'ثانيه': 2,
+                    'الثالثه': 3, 'ثالثه': 3, 'الرابعه': 4, 'رابعه': 4,
+                    'الخامسه': 5, 'خامسه': 5, 'السادسه': 6, 'سادسه': 6,
+                    'السابعه': 7, 'سابعه': 7, 'الثامنه': 8, 'ثامنه': 8 };
+    /** يعيد رقمَ الحصّة من نصِّ الخانة، أو صفراً إن لم تكن رأسَ عمود. */
+    function periodNo(t) {
+        const v = latin(String(t || '')).replace(/الحصه|حصه/g, '').trim();
+        if (/^\d{1,2}$/.test(v)) { const n = +v; return (n >= 1 && n <= 12) ? n : 0; }
+        return PWORD[fold(t).replace(/الحصه |حصه /g, '')] || 0;
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        ٢) استخراجُ النصّ بإحداثيّاته
@@ -311,16 +334,13 @@
 
         /* الأعمدة: أرقامُ الحصص. تُلتمس في الشريط الذي يسبق أوّلَ يوم. */
         const head = items.filter((it) => {
-            const v = latin(it.t).trim();
-            if (!/^\d{1,2}$/.test(v)) return false;
-            const n = +v;
-            if (n < 1 || n > 12) return false;
+            if (!periodNo(it.t)) return false;
             return daysAreRows ? it.cy < bandsD[0].lo : it.cx > bandsD[0].hi;
         });
         let bandsP, periods;
         if (head.length >= 3) {
             const srt = head.sort((a, b) => daysAreRows ? b.cx - a.cx : a.cy - b.cy);
-            periods = srt.map((it) => +latin(it.t).trim());
+            periods = srt.map((it) => periodNo(it.t));
             bandsP = bandsFrom(srt.map((it) => daysAreRows ? it.cx : it.cy), !daysAreRows, page);
         } else {
             /* بلا ترويسةٍ صريحة: تُعنقد مواضعُ ما تبقّى. */
@@ -487,7 +507,21 @@
         lap('محرّك');
 
         const buf = await file.arrayBuffer();
-        const doc = await pdfjs.getDocument(PdfCore.docOptions({ data: buf })).promise;
+        /* ── لا `PdfCore.docOptions` هنا ──
+           تلك مضبوطةٌ لـ**رسم** العربيّة: `disableFontFace` تجعل pdf.js
+           تبني حدودَ كلّ حرفٍ بنفسها، و`useSystemFonts:false` تدفعها إلى
+           **جلب ملفّات خطوطٍ من الشبكة** لكلّ خطٍّ غيرِ مضمَّنٍ في الملفّ.
+           ونحن لا نرسم شيئاً — نقرأ النصَّ وحدَه.
+           وcMap يبقى: بدونه تُقرأ رموزُ الخطوط ذاتِ المعرّفات خطأً.
+           (قِيس: ‎٤٣‎ ← ‎٣٧‎ ملّي ثانية على ملفٍّ بخطٍّ واحدٍ مضمَّن —
+           والفرقُ أكبرُ حيث تكثر الخطوطُ غيرُ المضمَّنة.) */
+        const abs = (p) => new URL(p, location.href).href;
+        const doc = await pdfjs.getDocument({
+            data: buf,
+            cMapUrl: abs('vendor/cmaps/'),
+            cMapPacked: true,
+            standardFontDataUrl: abs('vendor/standard_fonts/')
+        }).promise;
         lap('فتح الملف');
 
         const pages = [];
@@ -551,6 +585,7 @@
             + tab('names', 'كشف الأسماء')
             + tab('who', 'صفحةُ مَن؟')
             + tab('raw', 'النصُّ الخام')
+            + tab('rep', '📋 التقرير')
             + '</div>'
             + '<div class="card"><h3>الصفحة</h3><div class="pglist">'
             + ps.map((p, i) => '<button type="button" data-pg="' + i + '" class="'
@@ -565,6 +600,21 @@
             b.addEventListener('click', () => { S.page = +b.dataset.pg; S.col = null; draw(); }));
         out.querySelectorAll('[data-col]').forEach((b) =>
             b.addEventListener('click', () => { S.col = +b.dataset.col; draw(); }));
+
+        const cp = out.querySelector('#cp');
+        if (cp) cp.addEventListener('click', async () => {
+            const txt = out.querySelector('#rep').textContent;
+            try {
+                await navigator.clipboard.writeText(txt);
+                cp.textContent = '✓ نُسخ — الصقه في المحادثة';
+            } catch (e) {
+                /* سفاري يمنع الحافظةَ أحياناً — فيُحدَّد النصُّ ليُنسخ باليد. */
+                const r = document.createRange();
+                r.selectNodeContents(out.querySelector('#rep'));
+                const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+                cp.textContent = 'حُدِّد النصّ — اضغط «نسخ»';
+            }
+        });
     }
 
     const kv = (k, v) => '<div class="kv"><b>' + k + '</b><span>' + v + '</span></div>';
@@ -589,8 +639,58 @@
                 + '<p class="muted" style="margin-top:10px">هذا ما يجعل الإرسالَ صفحةً واحدةً بدل تسعَ عشرة.</p>'
                 + '</div>';
         }
+        if (S.tab === 'rep')   return repHtml();
         if (S.tab === 'sched') return schedHtml(p);
         return namesHtml(p);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       التقرير — ليقول لي جهازُه ما لا يقوله جهازي
+
+       ملفّي الصناعيُّ يُقرأ في ‎٣٧‎ ملّي ثانية، وملفُّه «يطول». فالفرقُ
+       فيما لا أملكه: خطوطُ ملفّه، وصورُه، وشبكتُه، وجوّالُه. فبدل أن
+       أخمّن، يُجمع القياسُ عنده ويُنسخ في ضغطة.
+       ══════════════════════════════════════════════════════════════════ */
+    function report() {
+        const L = [];
+        L.push('— تقرير free.html —');
+        L.push('الملف: ' + S.file);
+        L.push('زمن(ms): ' + Object.keys(S.T).map((k) => k + '=' + S.T[k]).join(' · '));
+        L.push('صفحات: ' + S.pages.length
+             + ' · قطع نص: ' + S.pages.reduce((n, p) => n + p.items.length, 0)
+             + ' · اتجاه: ' + (S.flip.flip ? 'مقلوب' : 'مستقيم')
+             + ' (' + S.flip.up + '/' + S.flip.down + ')');
+        L.push('قطع كل صفحة: ' + S.pages.map((p) => p.items.length).join(','));
+        L.push('');
+        L.push('المعلّمون:');
+        S.pages.forEach((p, i) => L.push('  ص' + (i + 1) + ': ' + (p.who ? p.who.name : '—')));
+        L.push('');
+        L.push('الشبكة:');
+        S.pages.forEach((p, i) => {
+            if (p.items.length < 5) return L.push('  ص' + (i + 1) + ': بلا نص');
+            const g = buildGrid(p);
+            L.push('  ص' + (i + 1) + ': ' + (g.ok
+                ? 'أيام=' + g.days.length + '[' + g.days.join('|') + ']'
+                  + ' حصص=' + g.periods.join(',')
+                  + ' مملوء=' + g.filled + '/' + (g.days.length * g.periods.length)
+                  + (g.daysAreRows ? ' صفوف' : ' أعمدة')
+                : 'تعذّر — ' + g.why));
+        });
+        const p0 = S.pages[S.page];
+        L.push('');
+        L.push('أول ٨ أسطر من الصفحة ' + (S.page + 1) + ':');
+        toLines(p0.items).slice(0, 8).forEach((ln) =>
+            L.push('  ' + ln.map((i) => i.t).join(' | ').slice(0, 160)));
+        return L.join('\n');
+    }
+
+    function repHtml() {
+        return '<div class="card"><h3>انسخ هذا وأرسله</h3>'
+            + '<p class="muted">فيه أرقامُ القياس وأسماءُ المعلّمين وثمانيةُ أسطرٍ '
+            + 'من ملفّك — <b>اقرأه قبل أن ترسله</b>. ولا يُرسل شيءٌ من هنا: '
+            + 'النسخُ إلى حافظتك أنت.</p>'
+            + '<button type="button" class="drop" id="cp" style="margin:10px 0">📋 انسخ التقرير</button>'
+            + '<pre class="raw" id="rep">' + esc(report()) + '</pre></div>';
     }
 
     function schedHtml(p) {
