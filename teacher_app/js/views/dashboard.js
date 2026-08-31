@@ -513,6 +513,11 @@
             return;
         }
 
+        /* رقمُ الجوّال يُطلب مرّةً بعد أن يبني المعلّم فصلَه الأوّل — لا
+           عند التسجيل. ولا يُنتظر: تذكيرٌ لا يظهر أهونُ من شاشةٍ لا
+           تُرسم. راجع `phone-prompt.js`. */
+        if (global.PhonePrompt) global.PhonePrompt.maybeAsk(teacher);
+
         await StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
         const classById = Object.fromEntries(classes.map((c) => [c.id, c]));
