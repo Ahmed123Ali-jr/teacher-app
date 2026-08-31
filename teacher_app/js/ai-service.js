@@ -8,7 +8,9 @@
 (function (global) {
     'use strict';
 
-    const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
+    /* احتياطٌ لا اختيار: النموذجُ يُثبَّت في البروكسي ويعود مع الاستجابة.
+       وهذا يُستعمل حين لا يعود — فليكن المستعمَلَ فعلاً لا القديم. */
+    const DEFAULT_MODEL = 'claude-opus-5';
 
     /* Edge Function proxy: keeps the shared key on the server. The browser
        calls this URL with the user's Supabase JWT — no Anthropic key ever
@@ -78,14 +80,23 @@
        Prices below are $ per 1M tokens — update if Anthropic changes pricing.
        ========================================================================== */
 
+    /* دولاراتٌ لكلّ مليون توكن — تُراجَع إن غيّرت أنثروبيك أسعارها.
+       وأُثبتت من مرجع الأسعار في ٣٠ أغسطس ٢٠٢٦.
+
+       وفائدةٌ تُقيَّد: **أوبس كلُّه بسعرٍ واحد** — الخامس والرابعُ بفروعه.
+       فالنزولُ إلى أوبس أقدم لا يوفّر شيئاً، ويخسر دقّةً بلا مقابل.
+       والأرخصُ حقّاً سونيت ٥ ثمّ هايكو، وهما نزولٌ في الدقّة لا في الجيل. */
     const PRICES = {
-        'claude-sonnet-4-5-20250929': { input: 3.00,  output: 15.00 },
-        'claude-opus-4-5-20250929':   { input: 15.00, output: 75.00 },
-        'claude-haiku-4-5-20251001':  { input: 1.00,  output: 5.00  },
-        /* ⚠️ أوبس ٥ هو المستعمَل اليوم (البروكسي، ٣٠ أغسطس ٢٠٢٦).
-           والسعرُ أدناه **لم يُتحقَّق منه** — يُراجَع في لوحة أنثروبيك
-           ويُصحَّح هنا. وهذا الجدولُ للتقدير وحدَه، والفاتورةُ الحقّ عندهم. */
-        'claude-opus-5':              { input: 5.00,  output: 25.00 }
+        'claude-opus-5':              { input:  5.00, output: 25.00 },
+        'claude-opus-4-8':            { input:  5.00, output: 25.00 },
+        'claude-opus-4-7':            { input:  5.00, output: 25.00 },
+        'claude-opus-4-6':            { input:  5.00, output: 25.00 },
+        'claude-sonnet-5':            { input:  2.00, output: 10.00 },
+        'claude-sonnet-4-6':          { input:  3.00, output: 15.00 },
+        /* المستعمَلُ قبل ٣٠ أغسطس — يبقى ليُحسب ما سُجّل به. */
+        'claude-sonnet-4-5-20250929': { input:  3.00, output: 15.00 },
+        'claude-haiku-4-5':           { input:  1.00, output:  5.00 },
+        'claude-haiku-4-5-20251001':  { input:  1.00, output:  5.00 }
     };
     const DEFAULT_PRICE = PRICES[DEFAULT_MODEL];
 
