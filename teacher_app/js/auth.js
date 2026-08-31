@@ -169,12 +169,33 @@
 
     /* ---------- public API ---------- */
 
-    /* التسجيل حسابٌ فقط: المدرسة والمواد والجوال تُجمع في شاشة التهيئة
-       مرتّبةً — «عنك» ثم «مدرستك». وكانت المدرسة تُطلب في الشاشتين معاً. */
-    async function register({ name, email, password }) {
+    /** يُنقّي رقمَ الجوّال: أرقامٌ لاتينيّةٌ لا غير، وتُحفظ كما كُتبت بلا
+     *  فراغاتٍ ولا شَرَطات. والعربيّةُ تُحوَّل — المعلّم يكتب «٠٥…» ولوحةُ
+     *  مفاتيحه عربيّة، والبحثُ في القاعدة يقارن نصّاً بنصّ. */
+    function normalizePhone(v) {
+        return String(v == null ? '' : v)
+            .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+            .replace(/[^\d+]/g, '');
+    }
+
+    /** جوّالٌ سعوديٌّ مقبول: ‎05xxxxxxxx‎ أو ‎9665xxxxxxxx‎ أو ‎+9665…‎ */
+    function validPhone(v) {
+        const p = normalizePhone(v);
+        return /^05\d{8}$/.test(p) || /^(\+?966)5\d{8}$/.test(p);
+    }
+
+    /* ══ الجوّالُ يُجمع عند التسجيل، لا في التهيئة وحدَها ══
+       المدرسةُ والموادُّ تبقيان في التهيئة. أمّا الجوّالُ فانتقل إلى هنا
+       لأنّه **مِرساةُ الاستعادة**: من نسي بريدَه لا يملك ما يُعرَف به إلّا
+       رقمُه. وكان اختيارياً في التهيئة — ومن تخطّاه لا سبيل إليه.
+       راجع شاشة `recover` في `views/login.js`. */
+    async function register({ name, email, password, phone }) {
         email = normalizeEmail(email);
         if (!name || !email || !password) {
             throw new Error('يرجى تعبئة جميع الحقول المطلوبة.');
+        }
+        if (!validPhone(phone)) {
+            throw new Error('اكتب رقم جوالك — مثل ٠٥٠٠٠٠٠٠٠٠. به نستعيد بريدك إن نسيته.');
         }
         if (password.length < 6) {
             throw new Error('كلمة المرور يجب أن تكون ٦ أحرف على الأقل.');
@@ -222,7 +243,7 @@
             forgetGuest();
             invalidateTeacher();
             /* الملفُّ موجودٌ منذ كان زائراً — يُحدَّث اسمُه لا يُنشأ. */
-            await ensureProfile(me.id, { full_name: name.trim() });
+            await ensureProfile(me.id, { full_name: name.trim(), phone: normalizePhone(phone) });
             const prof = await fetchProfile(me.id);
             return mapProfile(me, prof);
         }
@@ -249,7 +270,7 @@
         }
         invalidateTeacher();   // معلّمٌ آخر — انظر التعليق في `guestLogin`
 
-        await ensureProfile(user.id, { full_name: name.trim() });
+        await ensureProfile(user.id, { full_name: name.trim(), phone: normalizePhone(phone) });
 
         if (global.TeacherDB && global.TeacherDB.hydrate) {
             global.TeacherDB.resetHydration();
@@ -815,6 +836,7 @@
         register, login, logout, logoutLocal, logoutEverywhere, deleteAccount, purgeStorage, currentTeacher, guestLogin,
         requestPasswordReset, consumeRecoveryLink, setNewPassword,
         beginGuest, guestPending, whenGuestReady, hasSavedGuest, forgetGuest,
-        changePassword, updateProfile, onAuthChange
+        changePassword, updateProfile, onAuthChange,
+        normalizePhone, validPhone
     };
 })(window);

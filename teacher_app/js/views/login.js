@@ -5,6 +5,15 @@
 (function (global) {
     'use strict';
 
+    /* ══ رقمُ واتساب الدعم ══
+       بصيغة الدوليّة بلا «+» ولا فراغات — مثل: 9665xxxxxxxx.
+       وإن تُرك فارغاً، لا يُعرض زرُّ الاستعادة أصلاً: بابٌ لا يفتح على شيء
+       أسوأُ من بابٍ لا يظهر.
+
+       ⚠️ وهو رقمٌ **علنيّ**: يقرؤه كلُّ من فتح شيفرة الصفحة. فليكن رقمَ
+       دعمٍ لا رقماً شخصيّاً. */
+    const SUPPORT_WA = '';
+
 
     function render(container) {
         /* الوضعُ من المسار لا من متغيّرٍ عابر: `#/reset-password` يصمد عبر
@@ -35,7 +44,7 @@
                             <!-- فوق الزرّ لا تحته: المعلّم الذي فشلت كلمتُه
                                  ينظر إلى الخانة التي فشلت، لا إلى أسفل الشاشة. -->
                             <p class="auth-forgot">
-                                <button type="button" id="btn-forgot">نسيت كلمة المرور؟</button>
+                                <button type="button" id="btn-forgot">نسيت كلمة المرور أو البريد؟</button>
                             </p>
 
                             <button type="submit" class="btn btn-primary btn-lg btn-block">
@@ -114,8 +123,67 @@
                             </button>
                         </form>
 
+                        ${SUPPORT_WA ? `
+                        <p class="auth-switch">
+                            نسيتَ بريدك أيضاً؟
+                            <button type="button" id="btn-switch-recover">استعِدْه برقم جوالك</button>
+                        </p>` : ''}
                         <p class="auth-switch">
                             تذكّرتها؟ <button type="button" id="btn-switch-login">رجوع لتسجيل الدخول</button>
+                        </p>
+                    </div>
+                `;
+            }
+
+            /* ══ استعادةُ البريد بالجوّال ══
+               من نسي كلمةَ مروره يُرسَل إليه رابط. ومن نسي **بريدَه** لا
+               يملك ما يُرسَل إليه شيء — فلا بابَ له في التطبيق كلِّه.
+
+               فالبابُ رقمُه: يكتبه، فتُفتح واتساب برسالةٍ جاهزةٍ إلى الدعم،
+               ويُعاد إليه بريده بيدٍ بشريّة.
+
+               ولا يسأل التطبيقُ القاعدةَ عن الرقم، ولا يقول «موجود» أو
+               «غير موجود»: ذاك بابُ عَدٍّ — يُجرَّب فيه ألفُ رقمٍ لتُعرف
+               حساباتُ الناس. والتحقّقُ يجري عند الدعم لا هنا. */
+            if (mode === 'recover') {
+                return `
+                    <div class="auth-card">
+                        <div class="auth-logo">📱</div>
+                        <h2 class="auth-title">نسيت بريدك؟</h2>
+                        <p class="auth-subtitle">
+                            اكتب رقم جوالك الذي سجّلتَ به، وتُفتح واتساب برسالةٍ جاهزة.
+                            نتحقّق منك ونُعيد إليك بريدك.
+                        </p>
+
+                        <form id="form-recover" novalidate>
+                            <div class="field">
+                                <label class="label" for="rc-name">اسمك الكامل</label>
+                                <input class="input" id="rc-name" type="text"
+                                       autocomplete="name" placeholder="محمد بن عبدالله">
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="rc-phone">رقم الجوال *</label>
+                                <input class="input" id="rc-phone" type="tel" required
+                                       autocomplete="tel" inputmode="tel" maxlength="20"
+                                       placeholder="05xxxxxxxx">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                استعادة عبر واتساب
+                            </button>
+                        </form>
+
+                        <!-- شرطُ التحقّق يُقال للمعلّم صراحةً: من أرسل من رقمٍ
+                             غير رقمه لن يُجاب، فلا يُتعب نفسه ولا يظنّ الخللَ
+                             فينا. وهو نفسُه ما يحمي حسابَه من غيره. -->
+                        <p class="auth-note">
+                            أرسِلْ من الجوال نفسِه المسجَّل في حسابك — لا نُجيب رسالةً
+                            تأتي من رقمٍ آخر.
+                        </p>
+
+                        <p class="auth-switch">
+                            <button type="button" id="btn-switch-login">رجوع لتسجيل الدخول</button>
                         </p>
                     </div>
                 `;
@@ -169,6 +237,18 @@
                                    autocomplete="email" placeholder="name@example.com">
                         </div>
 
+                        <!-- الجوّالُ مِرساةُ الاستعادة: من نسي بريدَه لا يملك ما
+                             يُعرَف به إلّا رقمَه. ولذلك هو مطلوبٌ لا اختياريّ —
+                             وكان اختيارياً في شاشة التهيئة، ومن تخطّاه لا سبيل
+                             إليه إن ضاع بريده. (طلبُ المستخدم ٣٠ أغسطس ٢٠٢٦.) -->
+                        <div class="field">
+                            <label class="label" for="reg-phone">رقم الجوال *</label>
+                            <input class="input" id="reg-phone" type="tel" required
+                                   autocomplete="tel" inputmode="tel" maxlength="20"
+                                   placeholder="05xxxxxxxx">
+                            <div class="field-hint">به نستعيد بريدك إن نسيته.</div>
+                        </div>
+
                         <div class="field">
                             <label class="label" for="reg-password">كلمة المرور *</label>
                             <input class="input" id="reg-password" type="password" required
@@ -212,6 +292,12 @@
 
             const switchLog = container.querySelector('#btn-switch-login');
             if (switchLog) switchLog.addEventListener('click', () => { mode = 'login'; paint(); });
+
+            const switchRec = container.querySelector('#btn-switch-recover');
+            if (switchRec) switchRec.addEventListener('click', () => { mode = 'recover'; paint(); });
+
+            const recForm = container.querySelector('#form-recover');
+            if (recForm) recForm.addEventListener('submit', onRecover);
 
             const loginForm = container.querySelector('#form-login');
             if (loginForm) loginForm.addEventListener('submit', onLogin);
@@ -405,6 +491,7 @@
                 await global.Auth.register({
                     name:     container.querySelector('#reg-name').value,
                     email:    container.querySelector('#reg-email').value,
+                    phone:    container.querySelector('#reg-phone').value,
                     password: container.querySelector('#reg-password').value
                 });
                 global.TeacherApp.toast('تم إنشاء حسابك بنجاح. أهلاً بك!', 'success');
@@ -414,6 +501,39 @@
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        /* ── فتحُ واتساب برسالةٍ جاهزة ──
+           `wa.me` رابطٌ رسميّ: يفتح التطبيقَ إن كان مثبَّتاً، وصفحةَ الويب
+           إن لم يكن. ولا يُرسل شيئاً بنفسه — المعلّمُ يضغط «إرسال» بيده،
+           وهذا هو المقصود: رسالتُه من رقمه، وذاك ما نتحقّق به. */
+        async function onRecover(e) {
+            e.preventDefault();
+            const nameEl  = container.querySelector('#rc-name');
+            const phoneEl = container.querySelector('#rc-phone');
+            const A = global.Auth;
+            const phone = A.normalizePhone(phoneEl.value);
+
+            if (!A.validPhone(phone)) {
+                return global.TeacherApp.toast(
+                    'اكتب رقم جوالك كما سجّلتَ به — مثل ٠٥٠٠٠٠٠٠٠٠.', 'error', 5000);
+            }
+            if (!SUPPORT_WA) {
+                return global.TeacherApp.toast(
+                    'خدمةُ الاستعادة غير مفعّلة بعد. راسلنا من صفحة المساعدة.', 'error', 6000);
+            }
+
+            /* الرسالةُ تحمل ما يكفي للبحث والتحقّق، ولا تحمل سرّاً: لا بريدَ
+               ولا كلمةَ مرور — وهي تمرّ بواتساب وبعين المعلّم قبل الإرسال. */
+            const name = (nameEl && nameEl.value.trim()) || '';
+            const text =
+                'استعادة البريد الإلكتروني — تطبيق فصول\n\n' +
+                'الاسم: ' + (name || '(لم يُكتب)') + '\n' +
+                'رقم الجوال المسجَّل: ' + phone + '\n\n' +
+                'نسيتُ بريدي الإلكتروني ولا أستطيع الدخول.';
+
+            global.open('https://wa.me/' + SUPPORT_WA + '?text=' + encodeURIComponent(text),
+                        '_blank', 'noopener');
         }
 
         paint();
