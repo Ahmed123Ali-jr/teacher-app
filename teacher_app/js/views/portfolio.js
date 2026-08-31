@@ -550,7 +550,7 @@
             () => openCustomSectionForm(ctx.portfolio, ctx.refresh, sec));
 
         body.querySelector('#cs-delete').addEventListener('click', async () => {
-            if (!global.confirm(`حذف قسم "${sec.name}" وكل ملفاته؟`)) return;
+            if (!(await global.TeacherApp.confirm({ title: `حذف قسم "${sec.name}"؟`, message: 'وكل ملفاته معه.', ok: 'حذف', danger: true }))) return;
             const idx = ctx.portfolio.custom_sections.findIndex((s) => s.id === sec.id);
             if (idx > -1) ctx.portfolio.custom_sections.splice(idx, 1);
             await savePortfolio(ctx.portfolio);
@@ -570,7 +570,7 @@
         body.querySelectorAll('[data-file-del]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDel);
-                if (!global.confirm('حذف هذا الملف؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الملف؟', ok: 'حذف', danger: true }))) return;
                 const [gone] = items.splice(i, 1);
                 await savePortfolio(ctx.portfolio);
                 await dropFiles([gone && gone.storage_path]);
@@ -1021,7 +1021,7 @@
         body.querySelectorAll('[data-file-del]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fileDel);
-                if (!global.confirm('حذف هذا الملف؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الملف؟', ok: 'حذف', danger: true }))) return;
                 const [gone] = ctx.portfolio[field].splice(i, 1);
                 await savePortfolio(ctx.portfolio);
                 await dropFiles([gone && gone.storage_path]);

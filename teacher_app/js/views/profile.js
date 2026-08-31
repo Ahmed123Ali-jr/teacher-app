@@ -273,7 +273,7 @@
 
         const removeBtn = container.querySelector('#btn-remove-photo');
         if (removeBtn) removeBtn.addEventListener('click', async () => {
-            if (!global.confirm('حذف الصورة الشخصية؟')) return;
+            if (!(await global.TeacherApp.confirm({ title: 'حذف الصورة الشخصية؟', ok: 'حذف', danger: true }))) return;
             teacher.photo = null;
             teacher.photo_url = null;
             teacher.updated_at = new Date().toISOString();

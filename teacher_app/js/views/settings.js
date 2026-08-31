@@ -236,13 +236,13 @@
                هذا الجهاز وحده** — فإن ضاع الجهازُ ضاعت. ولذلك يُذكَّر
                بالربط، لا بالخوف من الخروج. */
             if (teacher && teacher.is_guest) {
-                if (!global.confirm(
-                    'أنت تجرّب كزائر. بياناتك تنتظرك على هذا الجهاز —'
-                    + ' تعود إليها بالضغط على «الدخول كزائر» مرّةً أخرى.'
-                    + '\n\nلكنّها على هذا الجهاز وحده: لو ضاع أو مُسحت بياناتُ'
-                    + ' المتصفّح ذهبت معه. اربط حسابك ببريدك من الإعدادات لتنتقل معك.'
-                    + '\n\nأتريد الخروج؟')) return;
-            } else if (!global.confirm('تسجيل الخروج من حسابك؟')) return;
+                if (!(await global.TeacherApp.confirm({
+                    title: 'تسجيل الخروج؟',
+                    message: 'بياناتك على هذا الجهاز وحده — تعود إليها بـ«الدخول '
+                           + 'كزائر». واربط حسابك ببريدك لتنتقل معك.',
+                    ok: 'خروج'
+                }))) return;
+            } else if (!(await global.TeacherApp.confirm({ title: 'تسجيل الخروج؟', ok: 'خروج' }))) return;
             await global.Auth.logout();
             global.location.hash = '#/login';
         });
@@ -252,10 +252,11 @@
            يضيّعه إلى الأبد. و`Auth.logoutEverywhere` ترفضه كذلك من داخلها
            فلا يُعتمد على إخفاء الزرّ وحده. */
         container.querySelector('#btn-logout-all')?.addEventListener('click', async () => {
-            if (!global.confirm(
-                'تسجيل الخروج من كل الأجهزة؟'
-                + '\n\nتُغلق جلستك على كل جهاز دخلت منه — بما فيه هذا الجهاز.'
-                + ' بياناتك لا تُمسّ، وتعود إليها بتسجيل الدخول من جديد.')) return;
+            if (!(await global.TeacherApp.confirm({
+                title: 'الخروج من كل الأجهزة؟',
+                message: 'تُغلق جلستك في كل جهاز — بما فيه هذا. وبياناتك لا تُمسّ.',
+                ok: 'خروج'
+            }))) return;
             const btn = container.querySelector('#btn-logout-all');
             if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الإغلاق…'; }
             try {
@@ -749,8 +750,8 @@
                 await refreshPrintCache();
             }, () => render(container));
         });
-        container.querySelector('#btn-remove-logo')?.addEventListener('click', () => {
-            if (!global.confirm('حذف الشعار؟')) return;
+        container.querySelector('#btn-remove-logo')?.addEventListener('click', async () => {
+            if (!(await global.TeacherApp.confirm({ title: 'حذف الشعار؟', ok: 'حذف', danger: true }))) return;
             showLogo(container, null);
             global.TeacherApp.toast('تم الحذف.', 'info', 1200);
             bgSave(async () => {
@@ -996,7 +997,7 @@
         importFile?.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            if (!global.confirm('استيراد النسخة سيستبدل البيانات الحالية. متابعة؟')) return;
+            if (!(await global.TeacherApp.confirm({ title: 'استيراد النسخة؟', message: 'ستحل محل بياناتك الحالية.', ok: 'استيراد', danger: true }))) return;
             try {
                 const text = await file.text();
                 const dump = JSON.parse(text);
@@ -1308,8 +1309,8 @@
         });
 
         container.querySelector('#btn-wipe')?.addEventListener('click', async () => {
-            if (!global.confirm('مسح جميع بياناتك؟ حسابك يبقى.')) return;
-            if (!global.confirm('تأكيد أخير — لا يمكن التراجع.')) return;
+            if (!(await global.TeacherApp.confirm({ title: 'مسح جميع بياناتك؟', message: 'حسابك يبقى.', ok: 'مسح', danger: true }))) return;
+            if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'لا يمكن التراجع.', ok: 'امسح', danger: true }))) return;
             const btn = container.querySelector('#btn-wipe');
             if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ المسح…'; }
             try {
@@ -1345,8 +1346,8 @@
 
         del?.addEventListener('click', async () => {
             if (!ack.checked) return;
-            if (!global.confirm('حذف حسابك نهائياً؟ لن تستطيع الدخول بعدها.')) return;
-            if (!global.confirm('تأكيد أخير — سيُحذف الحساب وكل بياناته من الخوادم.')) return;
+            if (!(await global.TeacherApp.confirm({ title: 'حذف حسابك نهائياً؟', message: 'لن تستطيع الدخول بعدها.', ok: 'حذف', danger: true }))) return;
+            if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'سيُحذف الحساب وكل بياناته من الخوادم.', ok: 'احذف حسابي', danger: true }))) return;
             del.disabled = true;
             del.textContent = '⏳ جارٍ الحذف…';
             try {

@@ -455,8 +455,8 @@
 
         container.querySelector('#btn-times')?.addEventListener('click', () => openTimesEditor(ctx, container));
 
-        container.querySelector('#btn-clear-all')?.addEventListener('click', () => {
-            if (!global.confirm('مسح الجدول كاملاً؟')) return;
+        container.querySelector('#btn-clear-all')?.addEventListener('click', async () => {
+            if (!(await global.TeacherApp.confirm({ title: 'مسح الجدول كاملاً؟', ok: 'مسح', danger: true }))) return;
             const doomed = ctx.schedule.slice();
             ctx.schedule = [];
             paintView(container, ctx);
@@ -1336,7 +1336,7 @@
             }
 
             if (t.closest('[data-del]')) {
-                if (!global.confirm('إزالة هذه الحصة من الجدول؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'إزالة هذه الحصة؟', ok: 'إزالة', danger: true }))) return;
                 const idx = ctx.schedule.findIndex((r) => r.day === day && r.period === period);
                 if (idx >= 0) ctx.schedule.splice(idx, 1);
                 global.Modal.close();

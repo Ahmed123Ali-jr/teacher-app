@@ -143,14 +143,78 @@
             main.insertBefore(el, main.firstChild);
         },
 
+        /* ══ تأكيدٌ بلغة التطبيق، لا بنافذة المتصفّح ══
+           كان في التطبيق ‎٣١‎ نداءً لـ`window.confirm` — ونافذتُه تكتب اسمَ
+           النطاق فوقها («ahmed123ali-jr.github.io يقول…») وتُترجم أزرارَها
+           بلغة النظام، فتبدو غريبةً عن كلّ ما حولها. **وهي غيرُ موثوقةٍ
+           على سفاري iOS** (مذكورٌ في `views/class.js` منذ زمن). والهدفُ
+           آبل ستور.
+
+           فواحدةٌ هنا تخدمها كلَّها، بـ`Modal` نفسِها وأزرارِ التطبيق
+           نفسِها. وتُعيد وعداً — والإلغاءُ `false` مهما جاء: زرُّ الإلغاء،
+           أو الخلفيّة، أو ESC.
+
+           @param {{title:string, message?:string, ok?:string,
+                    danger?:boolean}} opts
+           @returns {Promise<boolean>} */
+        confirm(opts) {
+            const o = opts || {};
+            return new Promise((resolve) => {
+                /* حارسٌ يمنع جوابين: الضغطُ على «تأكيد» يُغلق النافذة،
+                   وإغلاقُها يُطلق `onClose` — فلولاه لعاد `false` بعد
+                   `true` ولذهب التأكيد. */
+                let done = false;
+                const finish = (v) => { if (done) return; done = true; resolve(v); };
+
+                const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (m) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+                const body = document.createElement('div');
+                body.innerHTML =
+                    (o.message ? '<p class="cfm-msg">' + esc(o.message) + '</p>' : '')
+                    + '<div class="modal-footer" style="margin: var(--space-6) '
+                    + 'calc(var(--space-6) * -1) calc(var(--space-6) * -1);">'
+                    + '<button type="button" data-ok class="btn '
+                    + (o.danger ? 'btn-danger' : 'btn-primary') + '">'
+                    + esc(o.ok || 'تأكيد') + '</button>'
+                    + '<button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>'
+                    + '</div>';
+
+                body.querySelector('[data-ok]').addEventListener('click', () => {
+                    finish(true);
+                    global.Modal.close();
+                });
+
+                /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح لا شأنَ لها هنا،
+                   والتركيزُ على «تأكيد» يجعل ضغطةَ Enter حذفاً بلا قصد. */
+                global.Modal.open({
+                    title: o.title || 'تأكيد',
+                    body: body,
+                    autofocus: false,
+                    onClose: () => finish(false)
+                });
+            });
+        },
+
         toast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toast-container');
             if (!container) { console.log('[toast]', type, message); return; }
 
+            const MARK = { success: '✓', error: '✕', warning: '!', info: 'i' };
             const el = document.createElement('div');
             el.className = 'toast toast-' + type;
             el.setAttribute('role', type === 'error' ? 'alert' : 'status');
-            el.textContent = message;
+            /* علامةٌ ثمّ نصّ — لا شريطٌ على الحافّة. العينُ تعرف الحالةَ
+               قبل أن تقرأ، والشكلُ شكلُ بطاقات التطبيق. */
+            const dot = document.createElement('span');
+            dot.className = 'toast-mark';
+            dot.setAttribute('aria-hidden', 'true');
+            dot.textContent = MARK[type] || MARK.info;
+            const tx = document.createElement('span');
+            tx.className = 'toast-tx';
+            tx.textContent = message;
+            el.appendChild(dot);
+            el.appendChild(tx);
             container.appendChild(el);
 
             global.setTimeout(() => {

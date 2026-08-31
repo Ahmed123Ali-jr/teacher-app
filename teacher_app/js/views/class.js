@@ -1365,8 +1365,8 @@
             });
 
             form.querySelectorAll('[data-remove]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    if (!global.confirm('حذف هذه الخانة؟ البيانات المسجلة فيها ستبقى لكن لن تظهر.')) return;
+                btn.addEventListener('click', async () => {
+                    if (!(await global.TeacherApp.confirm({ title: 'حذف هذه الخانة؟', message: 'الدرجات المسجّلة تبقى، لكنها لن تظهر.', ok: 'حذف', danger: true }))) return;
                     columns.splice(Number(btn.dataset.remove), 1);
                     paintList();
                 });
@@ -1858,10 +1858,12 @@
 
     async function deleteClass(cls, onDone) {
         const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
-        const msg = students.length > 0
-            ? `سيتم حذف الفصل و${global.Words.count(students.length)} وجميع سجلاتهم. متأكد؟`
-            : 'حذف الفصل؟';
-        if (!global.confirm(msg)) return;
+        const note = students.length > 0
+            ? global.Words.count(students.length) + ' وجميع سجلاتهم معه.'
+            : null;
+        if (!(await global.TeacherApp.confirm({
+            title: 'حذف الفصل؟', message: note, ok: 'حذف', danger: true
+        }))) return;
 
         /* حذفةٌ واحدة، لا حلقةٌ على الطلاب.
            كان يمرّ على كلِّ طالبٍ فيحذف حضورَه ومشاركتَه ثمّ يحذفه، ثمّ

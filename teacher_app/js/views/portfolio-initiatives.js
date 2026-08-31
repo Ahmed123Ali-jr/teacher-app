@@ -425,7 +425,7 @@
         body.addEventListener('click', async (e) => {
             const d = e.target.closest('[data-del]');
             if (!d) return;
-            if (!global.confirm('حذف هذا الشاهد؟')) return;
+            if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الشاهد؟', ok: 'حذف', danger: true }))) return;
             const row = rows.find((r) => r.id === d.dataset.del);
             global.Modal.close();
             global.TeacherApp.toast('تم الحذف.', 'info', 1200);

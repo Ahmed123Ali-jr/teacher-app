@@ -136,7 +136,7 @@
         panel.querySelectorAll('[data-f-del]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const i = Number(btn.dataset.fDel);
-                if (!global.confirm('حذف هذا الملف؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الملف؟', ok: 'حذف', danger: true }))) return;
                 /* الصفُّ والملفُّ معاً — وإلّا بقي الملفُّ يتيماً يشغل
                    مساحةَ الجهاز بلا شيءٍ يشير إليه. */
                 const gone = cls.curriculum_files[i];

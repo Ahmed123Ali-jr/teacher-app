@@ -64,7 +64,7 @@
 
         panel.querySelectorAll('[data-hw-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                if (!global.confirm('حذف هذا الواجب؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الواجب؟', ok: 'حذف', danger: true }))) return;
                 await global.TeacherDB.remove('assignments', btn.dataset.hwDelete);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);

@@ -200,7 +200,7 @@
                 /* الحذفُ بتأكيدٍ دائماً — بشرطه، وهو حذفٌ لا يُستدرك. */
                 el.querySelector('[data-action="delete"]')
                   ?.addEventListener('click', async () => {
-                      if (!global.confirm('حذف هذا التذكير؟')) return;
+                      if (!(await global.TeacherApp.confirm({ title: 'حذف هذا التذكير؟', ok: 'حذف', danger: true }))) return;
                       await global.TeacherDB.remove('reminders', row.id);
                       global.TeacherApp.toast('تم حذف التذكير.', 'info');
                       paint();

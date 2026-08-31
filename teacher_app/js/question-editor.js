@@ -403,7 +403,7 @@
 
         const F = foldState(qs);
 
-        const onClick = (e) => {
+        const onClick = async (e) => {
             /* الشريطُ المطويُّ يُفتح بالضغط أيّاً كان موضعُ الإصبع منه.
                ولا سلّةَ حذفٍ فيه أصلاً — وحذفُ سؤالٍ بفقراته ضغطةٌ لا
                تُستدرك، فلا تُتاح إلّا وهو مفتوحٌ يرى ما يحذف. (شرطُ
@@ -439,14 +439,14 @@
                 return rerender();
             }
             if (b.dataset.qeDel !== undefined) {
-                if (!global.confirm('حذف هذه الفقرة؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذه الفقرة؟', ok: 'حذف', danger: true }))) return;
                 qs.splice(Number(b.dataset.qeDel), 1);
                 return rerender();
             }
             if (b.dataset.qeSecDel !== undefined) {
                 const t = b.dataset.qeSecDel;
                 const n = qs.filter((q) => kindOf(q) === t).length;
-                if (!global.confirm(`حذف هذا السؤال و${pWord(n)} فيه؟`)) return;
+                if (!(await global.TeacherApp.confirm({ title: `حذف هذا السؤال و${pWord(n)} فيه؟`, ok: 'حذف', danger: true }))) return;
                 for (let i = qs.length - 1; i >= 0; i -= 1) {
                     if (kindOf(qs[i]) === t) qs.splice(i, 1);
                 }

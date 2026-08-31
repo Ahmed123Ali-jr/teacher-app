@@ -112,7 +112,7 @@
         `;
 
         container.querySelector('#btn-delete-student')?.addEventListener('click', async () => {
-            if (!global.confirm(`حذف الطالب "${student.name}" مع كل بياناته؟`)) return;
+            if (!(await global.TeacherApp.confirm({ title: `حذف ${student.name}؟`, message: 'مع كل بياناته.', ok: 'حذف', danger: true }))) return;
             await deleteStudent(studentId);
             await updateClassCount(cls.id);
             global.TeacherApp.toast('تم الحذف.', 'info');

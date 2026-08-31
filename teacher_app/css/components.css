@@ -190,23 +190,60 @@
     pointer-events: none;
 }
 
+/* ── شكلُ بطاقات التطبيق، لا شريطٌ على الحافّة ──
+   كان الإشعارُ حافّةً ملوّنةً بعرض ‎٤‎ بكسل وإطاراً بواحد — وحدَه في
+   التطبيق بهذا الشكل، وبقيّةُ البطاقات إطارُها ‎١٫٥‎ وزواياها ‎١٤‎.
+   فصار مثلَها، والحالةُ تُقال بعلامةٍ في أوّله لا بخطٍّ في طرفه:
+   العينُ تعرفها قبل أن تقرأ. (طلبُ المستخدم ٣٠ أغسطس ٢٠٢٦.) */
 .toast {
-    min-width: 280px;
-    max-width: 480px;
-    padding: var(--space-4) var(--space-5);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 240px;
+    max-width: 440px;
+    padding: 12px 14px;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-right: 4px solid var(--primary);
-    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
     box-shadow: var(--shadow-md);
-    font-size: var(--fs-sm);
     pointer-events: auto;
     animation: toast-in var(--dur-base) var(--ease);
 }
 
-.toast-success { border-right-color: var(--success); }
-.toast-warning { border-right-color: var(--warning); }
-.toast-error   { border-right-color: var(--danger);  }
+.toast-tx {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    line-height: 1.7;
+    color: var(--ink-primary);
+}
+
+/* العلامةُ دائرةٌ صغيرةٌ مصمتة — تُقرأ في لمحةٍ ولا تزاحم النصّ. */
+.toast-mark {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    color: #fff;
+    background: var(--primary);
+}
+
+.toast-success .toast-mark { background: var(--success); }
+.toast-warning .toast-mark { background: var(--warning); }
+.toast-error   .toast-mark { background: var(--danger);  }
+
+/* نصُّ التأكيد: سطرٌ واحدٌ يكفي، ولا يُشرح ما يقوله العنوان. */
+.cfm-msg {
+    margin: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.9;
+    color: var(--text-muted);
+}
 
 @keyframes toast-in {
     from { opacity: 0; transform: translateY(-12px); }

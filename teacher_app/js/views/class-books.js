@@ -87,7 +87,7 @@
         panel.querySelectorAll('[data-book-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.bookDelete;
-                if (!global.confirm('حذف هذا الكتاب؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الكتاب؟', ok: 'حذف', danger: true }))) return;
                 // Remove the local PDF blob too (best-effort).
                 try { await global.TeacherDB.BookFiles.remove(id); }
                 catch (e) { console.warn('[books] local file cleanup failed:', e.message); }

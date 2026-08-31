@@ -88,7 +88,7 @@
         panel.querySelectorAll('[data-exam-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.examDelete;
-                if (!global.confirm('حذف هذا الاختبار؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذا الاختبار؟', ok: 'حذف', danger: true }))) return;
                 await global.TeacherDB.remove('exams', id);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);

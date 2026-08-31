@@ -80,7 +80,7 @@
         });
         panel.querySelectorAll('[data-ws-delete]').forEach((btn) => {
             btn.addEventListener('click', async () => {
-                if (!global.confirm('حذف هذه الورقة؟')) return;
+                if (!(await global.TeacherApp.confirm({ title: 'حذف هذه الورقة؟', ok: 'حذف', danger: true }))) return;
                 await global.TeacherDB.remove('worksheets', btn.dataset.wsDelete);
                 global.TeacherApp.toast('تم الحذف.', 'info');
                 await render(panel, cls);
@@ -218,7 +218,11 @@
 
         panel.querySelector('#back-list').addEventListener('click', async () => {
             if (sh.questions.length && !sh.id
-                && !global.confirm('سيتم فقدان الأسئلة غير المحفوظة. متابعة؟')) return;
+                && !(await global.TeacherApp.confirm({
+                    title: 'الخروج بلا حفظ؟',
+                    message: 'ستُفقد الأسئلة التي كتبتها.',
+                    ok: 'اخرج', danger: true
+                }))) return;
             delete state[cls.id];
             await render(panel, cls);
         });

@@ -450,7 +450,11 @@
                    (بلاغُ المعلّم ٢٩ أغسطس ٢٠٢٦.)
                    فصار يُقال له ما جرى، ولا يمضي إلّا بإقراره. */
                 if (err && err.code === 'guest-session-lost') {
-                    if (!global.confirm(err.message + '\n\nهل تريد إنشاء حساب زائر جديد؟')) return;
+                    if (!(await global.TeacherApp.confirm({
+                        title: 'حساب زائر جديد؟',
+                        message: err.message,
+                        ok: 'ابدأ من جديد'
+                    }))) return;
                     if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
                     try {
                         await global.Auth.beginGuest({ allowNew: true });
