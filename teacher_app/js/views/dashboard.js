@@ -517,6 +517,9 @@
            عند التسجيل. ولا يُنتظر: تذكيرٌ لا يظهر أهونُ من شاشةٍ لا
            تُرسم. راجع `phone-prompt.js`. */
         if (global.PhonePrompt) global.PhonePrompt.maybeAsk(teacher);
+        /* والزائرُ يُعرض عليه أن يحفظ حسابه — الشاشتان لا تتزاحمان:
+           تلك تتخطّى الزائر، وهذه لا تُعرض على غيره. */
+        if (global.SaveAccount) global.SaveAccount.maybeAsk(teacher);
 
         await StageColors.normalizeAll(teacher.id);
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
