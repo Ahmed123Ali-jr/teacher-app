@@ -277,13 +277,17 @@
 }
 
 .modal {
+    /* نصفُ القطر متغيّرٌ واحد: الشريطُ السفليُّ يقرؤه فيستوي معه.
+       وكان لكلٍّ رقمُه — للمربّع ‎٣٤‎ وللشريط ‎٣٤‎ ثمّ صُفّر المربّعُ على
+       الجوّال وحدَه، فبقي الشريطُ مقوّساً في مربّعٍ قائم الزوايا. */
+    --modal-r: var(--radius-xl);
     position: relative;
     width: 100%;
     max-width: 520px;
     max-height: 90vh;
     overflow: auto;
     background: var(--surface);
-    border-radius: var(--radius-xl);
+    border-radius: var(--modal-r);
     box-shadow: var(--shadow-lg);
     animation: modal-in var(--dur-base) var(--ease);
 }
@@ -321,8 +325,8 @@
     padding: var(--space-4) var(--space-6);
     border-top: 1px solid var(--border);
     background: var(--surface-alt);
-    border-bottom-left-radius: var(--radius-xl);
-    border-bottom-right-radius: var(--radius-xl);
+    border-bottom-left-radius: var(--modal-r);
+    border-bottom-right-radius: var(--modal-r);
 }
 
 @keyframes fade-in {
