@@ -222,19 +222,29 @@ Deno.serve(async (req) => {
        والحجزُ يمضي وإن فشل النداءُ بعده: لا مسارَ إرجاع. فمسارُ الإرجاع
        بابٌ ثانٍ يُطرق، والأربعون ضِعفا ما يحتاجه أثقلُ معلّم — فالسعةُ
        تكفي، والبساطةُ أسلم. */
-    const { data: quotaRows, error: quotaErr } = await supabase.rpc('claim_ai_quota');
+    const { data: quotaRows, error: quotaErr } = await supabase.rpc('claim_ai_quota', {
+        /* عددُ الصور كما فحصها هذا الملفّ — لا كما يقوله الجسم. */
+        p_pages: pages.length,
+    });
     if (quotaErr) {
         console.error('[proxy] quota rpc failed: ' + quotaErr.message);
         return json({ error: 'تعذّر التحقّق من حصّتك. أعد المحاولة.' }, 500);
     }
     const quota = Array.isArray(quotaRows) ? quotaRows[0] : quotaRows;
     if (!quota || quota.allowed !== true) {
-        const cap = quota?.quota_limit ?? 40;
+        /* يُقال له أيُّ الحدَّين بلغ: «أربعون مرّة» غيرُ «مئةٌ وعشرون صفحة»،
+           ومن قيل له الخطأ ظنّ العطلَ في التطبيق. */
+        const byPages = quota?.reason === 'pages';
+        const cap = byPages ? (quota?.pages_limit ?? 120) : (quota?.quota_limit ?? 40);
         return json({
-            error: 'بلغتَ حدَّ الاستيراد لهذا الشهر (' + cap + ' عمليّة). '
-                 + 'يتجدّد أوّل الشهر القادم — وحتى ذلك الحين أدخل الأسماء والجدول يدوياً.',
+            error: byPages
+                ? 'بلغتَ حدَّ الصفحات لهذا الشهر (' + cap + ' صفحة). يتجدّد أوّل '
+                  + 'الشهر القادم — وحتى ذلك الحين أدخل الأسماء والجدول يدوياً.'
+                : 'بلغتَ حدَّ الاستيراد لهذا الشهر (' + cap + ' عمليّة). يتجدّد أوّل '
+                  + 'الشهر القادم — وحتى ذلك الحين أدخل الأسماء والجدول يدوياً.',
             code:  'quota_exceeded',
-            used:  quota?.used ?? cap,
+            reason: quota?.reason ?? 'operations',
+            used:  byPages ? (quota?.pages ?? cap) : (quota?.used ?? cap),
             limit: cap,
         }, 429);
     }
