@@ -449,6 +449,12 @@
                    وحسابُه القديمُ يبقى في القاعدة يتيماً لا يصله أحد.
                    (بلاغُ المعلّم ٢٩ أغسطس ٢٠٢٦.)
                    فصار يُقال له ما جرى، ولا يمضي إلّا بإقراره. */
+                /* الشبكةُ غابت لا الحساب: يُقال ولا يُعرض إنشاءُ بديل —
+                   والبديلُ يقتل القديم. */
+                if (err && err.code === 'offline') {
+                    global.TeacherApp.toast(err.message, 'warning', 7000);
+                    return;
+                }
                 if (err && err.code === 'guest-session-lost') {
                     if (!(await global.TeacherApp.confirm({
                         title: 'حساب زائر جديد؟',

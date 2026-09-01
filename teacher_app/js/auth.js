@@ -416,8 +416,10 @@
     /** أصاحبُ الجلسة الحاليّةِ زائرٌ مجهول؟ — سؤالٌ محلّيٌّ لا يمسّ الشبكة. */
     async function isAnonymousNow() {
         try {
-            const { data } = await sb.auth.getSession();
-            return !!(data && data.session && data.session.user && data.session.user.is_anonymous);
+            /* المحفوظةُ تُقرأ هنا أيضاً: لو ظُنّ الزائرُ غيرَ زائرٍ لأنّ
+               الشبكةَ غابت، لخرج خروجاً كاملاً — وذاك يقتل حسابه. */
+            const { session } = await readSession();
+            return !!(session && session.user && session.user.is_anonymous);
         } catch (e) { return false; }
     }
 
@@ -660,13 +662,72 @@
 
     function invalidateTeacher() { _teacherCache = null; _teacherCacheAt = 0; }
 
+    /* ══════════════════════════════════════════════════════════════════
+       الجلسةُ لا تموت لأنّ الشبكةَ غابت
+
+       `getSession` تُعيد الجلسةَ من التخزين، فإن انتهت صلاحيّةُ رمزها
+       (ساعةٌ واحدة) جدّدته من الخادم. **وإن سقط التجديد سقوطَ شبكةٍ
+       أعادت `null` — كأنّ المعلّم خرج.** فالموجّهُ يطرده إلى شاشة الدخول،
+       ويضغط «الدخول كزائر» فتقول له: «انتهت جلسةُ حسابك ولا سبيل إليه».
+
+       **وحسابُه لم يمسّه شيء.** الرمزُ ما زال في جهازه، والحسابُ قائمٌ في
+       الخادم بكلّ فصوله. قِيس يوم ٣٠ أغسطس ٢٠٢٦ (رمزٌ منتهٍ + شبكةٌ
+       مقطوعة): `getSession` تُعيد NULL و`Failed to fetch`، والرمزُ
+       **باقٍ في التخزين**، و`currentTeacher` تُعيد `null`.
+
+       فالقاعدةُ هنا: **تُصدَّق الجلسةُ الميّتةُ إن رفضها الخادم، لا إن
+       عجزنا عن سؤاله.** ومع سقوط الشبكة تُقرأ الجلسةُ من التخزين ويمضي
+       المعلّم على مخبئه — والكتابةُ تنتظر في الصندوق الصادر.
+       ══════════════════════════════════════════════════════════════════ */
+
+    /** أسقوطُ شبكةٍ هذا أم رفضٌ من الخادم؟ الفرقُ هو الفرقُ بين
+     *  «اعمل بلا اتصال» و«حسابك انتهى». */
+    function isNetErr(e) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+        const m = String((e && e.message) || '').toLowerCase();
+        return /failed to fetch|networkerror|load failed|network request failed|fetch failed|connection|timeout|offline/.test(m);
+    }
+
+    /** الجلسةُ المخزَّنةُ في الجهاز كما كتبها العميل، أو `null`. */
+    function storedSession() {
+        try {
+            const raw = global.localStorage.getItem('teacher-app-auth');
+            if (!raw) return null;
+            const o = JSON.parse(raw);
+            const sess = o && (o.currentSession || o.session || o);
+            return (sess && sess.user && sess.user.id) ? sess : null;
+        } catch (e) { return null; }
+    }
+
+    /**
+     * الجلسةُ من الخادم، وإلّا من الجهاز حين تسقط الشبكةُ لا الجلسة.
+     * @returns {Promise<{session:object|null, stale:boolean}>}
+     *          و`stale` تعني: هذه من الجهاز، لم يؤكّدها الخادمُ الآن.
+     */
+    async function readSession() {
+        let res = null;
+        try { res = await sb.auth.getSession(); }
+        catch (e) { res = { error: e }; }
+
+        const live = res && res.data && res.data.session;
+        if (live) return { session: live, stale: false };
+
+        /* رفضٌ صريحٌ من الخادم: الجلسةُ ماتت فعلاً. */
+        if (res && res.error && !isNetErr(res.error)) return { session: null, stale: false };
+        /* لا خطأَ ولا جلسة: لم يدخل أحدٌ أصلاً. */
+        if (!res || !res.error) return { session: null, stale: false };
+
+        const kept = storedSession();
+        return kept ? { session: kept, stale: true } : { session: null, stale: false };
+    }
+
     async function currentTeacher() {
         const now = Date.now();
         if (_teacherCache && (now - _teacherCacheAt) < TEACHER_TTL) return _teacherCache;
         // getSession() reads from localStorage (no network) → instant.
         // getUser() would hit /auth/v1/user every time, which slows navigation.
-        const { data } = await sb.auth.getSession();
-        const user = data && data.session ? data.session.user : null;
+        const { session } = await readSession();
+        const user = session ? session.user : null;
         if (!user) { invalidateTeacher(); return null; }
         /* زائرٌ طوى جلستَه: حيٌّ عند الخادم، خارجٌ عند الشاشات. */
         if (user.is_anonymous && flag.has(GUEST_PAUSE)) { invalidateTeacher(); return null; }
@@ -708,8 +769,8 @@
            الجلسةُ لم تُغلق أصلاً — رُفع عنها الطيُّ فحسب. */
         resumeGuest();
         try {
-            const { data: cur } = await sb.auth.getSession();
-            const live = cur && cur.session ? cur.session.user : null;
+            const { session: cur } = await readSession();
+            const live = cur ? cur.user : null;
             if (live && live.is_anonymous) {
                 markGuest();
                 invalidateTeacher();
@@ -728,6 +789,17 @@
            لا بريدَ له ولا كلمةَ مرور. فيُرفع الخبرُ إلى الشاشة، ولا يمضي
            إلّا بطلبٍ صريحٍ منها (`allowNew`). */
         if (hasSavedGuest() && !(opts && opts.allowNew)) {
+            /* ── وقبل أن نقول «ضاع» نسأل: أغائبةٌ الشبكةُ أم الجلسة؟ ──
+               رمزُ الجهاز ما زال في مكانه وإنّما عجزنا عن تجديده. فيُقال
+               «لا اتصال» ويُترك الحسابُ كما هو — ولا يُعرض عليه أن يُنشئ
+               بديلاً يقتل القديم. (بلاغُ المعلّم ٣٠ أغسطس ٢٠٢٦.) */
+            if (storedSession() || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+                const off = new Error(
+                    'لا اتصال بالشبكة الآن — حسابك على هذا الجهاز كما هو. '
+                  + 'أعد المحاولة حين تعود الشبكة.');
+                off.code = 'offline';
+                throw off;
+            }
             const err = new Error(
                 'انتهت جلسةُ حساب الزائر على هذا الجهاز، ولا سبيل إلى استعادتها — '
               + 'الجلسةُ كانت مفتاحَه الوحيد. وإن أنشأتَ حساباً جديداً فلن تعود '
