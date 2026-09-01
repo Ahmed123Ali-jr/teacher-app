@@ -45,10 +45,25 @@
 
     <!-- الوضع الداكن — يأتي بعد الأبيض ليغلبه على من اختاره. -->
     <link rel="stylesheet" href="css/theme-dark.css?v=34">
+    <!-- الثوبُ الهادئ: كلُّ قواعده تحت body.theme-calm فلا يمسّ أحداً حتى
+         يُرفع المفتاح. يُرفع بـ?calm=1 ويُخفض بـ?calm=0. (معاينةٌ ١ سبتمبر ٢٠٢٦.) -->
+    <link rel="stylesheet" href="css/theme-calm.css?v=3">
 
     <link rel="stylesheet" href="css/print.css?v=D29" media="print">
 </head>
 <body>
+<script>
+/* بوّابةُ الثوب الهادئ — تُقرأ قبل أوّل رسمٍ لئلّا يومض القديمُ ثمّ يتبدّل.
+   ?calm=1 يرفعه ويُبقي المفتاحَ ظاهراً، و?calm=0 يخفضه. ومن لم يفتح الرابطَ
+   قطّ لا يرى شيئاً من هذا. */
+(function () {
+    try {
+        var q = /[?&]calm=([01])/.exec(location.search);
+        if (q) { localStorage.setItem('calm', q[1]); localStorage.setItem('calm_ui', '1'); }
+        if (localStorage.getItem('calm') === '1') document.body.classList.add('theme-calm');
+    } catch (e) {}
+})();
+</script>
     <!-- Instant splash: pure inline HTML/CSS so it paints before any file
          loads (kills the mobile white screen). Removed by the router after
          the first view renders; 15s failsafe fades it if boot ever hangs. -->
@@ -218,6 +233,28 @@
 
     <!-- Toasts -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
+        <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الهادئ</span>
+    </button>
+    <script>
+    (function () {
+        try {
+            if (localStorage.getItem('calm_ui') !== '1') return;
+            var b = document.getElementById('calm-switch');
+            var paint = function () {
+                var on = document.body.classList.contains('theme-calm');
+                document.getElementById('calm-label').textContent = on ? 'الثوب الهادئ' : 'الثوب الحالي';
+            };
+            b.hidden = false;
+            b.addEventListener('click', function () {
+                var on = document.body.classList.toggle('theme-calm');
+                localStorage.setItem('calm', on ? '1' : '0');
+                paint();
+            });
+            paint();
+        } catch (e) {}
+    })();
+    </script>
 
     <!-- Scripts: order matters -->
     <!-- Supabase 2.112.2 مثبّتاً محلياً: تحميله من CDN يعني أن التطبيق

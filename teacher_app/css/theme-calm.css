@@ -1,0 +1,173 @@
+/* ==========================================================================
+   theme-calm.css — الثوبُ الهادئ: نظامُ آبل مطبَّقاً على أزرار التطبيق
+   ==========================================================================
+   طلبُ المستخدم (١ سبتمبر ٢٠٢٦): ألوانٌ وشفافيّةٌ وأشكالُ أزرارٍ على طريقة
+   آبل في آخر تحديثاتها، مريحةٌ للعين، هادئة، متوازنةٌ بين الرسميّ وغيرِه،
+   غيرُ مشتّتة — وتفاعليّةٌ على الشاشات كلِّها كأنّه يستخدم التطبيق.
+
+   فلم تُبنَ شاشاتٌ مقلَّدة: هذا الملفُّ يُلبس **التطبيقَ الحقيقيَّ** الثوبَ
+   الجديد. كلُّ قاعدةٍ فيه محصورةٌ بـ`body.theme-calm`، فلا تمسّ أحداً
+   حتى يُرفع المفتاح — ويُرفع بـ`?calm=1` ويُخفض بـ`?calm=0`.
+
+   ── ثلاثُ قواعدَ من إرشادات آبل، لا من الذوق ──
+
+   ١) **فعلٌ واحدٌ ممتلئٌ في الشاشة.** «حفظ» و«إضافة فصل جديد» و«ارفع
+      جدولك» تبقى ممتلئةً — بكحليٍّ أخفَّ (‎#15606F‎، الأبيضُ عليه ‎٧٫٢:١‎
+      محسوبةً لا مقدَّرة). آبل تُبقي زرّاً بارزاً واحداً (borderedProminent)
+      لأنّ العينَ تحتاج نقطةً واحدةً تسقط عليها.
+
+   ٢) **وما عداه ماءٌ.** الأفعالُ الثانويةُ والحالاتُ المختارة: أرضيّةٌ
+      بترولٌ ‎١٢٪‎ وحرفٌ بتروليّ — وهو أسلوبُها في الزرّ المحاط (bordered)
+      والحبّةِ المختارة. والحبّاتُ كبسوليّة: الكبسولةُ شكلُها الافتراضيُّ
+      للضوابط الصغيرة في iOS 26.
+
+   ٣) **الزجاجُ للحاوية، وما بداخلها يُملأ.** الشريطُ السفليُّ زجاجٌ أصلاً
+      (‎٧٨٪‎ بياضٍ + ضبابٍ ٣٠ + إشباعٍ ٢٠٠٪‎ — قريبٌ من regularMaterial).
+      فالخانةُ النشطةُ بيضاءُ ممتلئةٌ بظلٍّ رفيع، لا زجاجٌ فوق زجاج —
+      وهذا نصُّ إرشادها: لا تُركّب لوحين شفّافين.
+
+   ── ولماذا لا زجاجَ على الأزرار ──
+   آبل نفسُها اضطُرّت بعد iOS 26 إلى وضعٍ «ملوّن» يرفع العتامةَ، لأنّ
+   الزجاجَ الصافي أسقط القراءةَ تحت ‎٤٫٥:١‎ في شاشاتٍ كثيرة. وشاشاتُ هذا
+   التطبيق بيضاء — والزجاجُ فوق الأبيض لا شيءَ يشفّ عنه فيختفي (قِيس في
+   المعاينة). فالثوبُ يستهدف وضعَها المقروء لا وضعَها الجميل.
+
+   ── ما تُرك عمداً ──
+   • أزرارُ الحضور (`.att-btn`): بلون حالتها الممتلئ — بقرار المعلّم
+     (٢٧ أغسطس): الأخضرُ والأحمرُ يُقرآن بطرَف العين وهو يمرّ على ثلاثين.
+   • أسطحُ الأبطال والتدرّجات (`--primary-mid` وأخواتها): عليها حرفٌ ذهبيٌّ
+     وأبيضُ شفّافٌ محروسٌ بسقفِ سطوعٍ في `portfolio-theme.css`. لا تُمسّ.
+   • شاشةُ الدخول: أرضيّتُها هُويّةٌ لا زرّ.
+   ========================================================================== */
+
+body.theme-calm {
+    --calm-p:       #15606F;                 /* الفعلُ الممتلئ — ٧٫٢:١ مع الأبيض */
+    --calm-p-deep:  #104E5B;                 /* عند الضغط */
+    --calm-tint:    rgba(21, 96, 111, .12);  /* ماءُ الحالات والثانويّ */
+    --calm-tint-2:  rgba(21, 96, 111, .18);  /* عند اللمس */
+    --calm-pill:    rgba(255, 255, 255, .95);/* الخانةُ داخل الزجاج */
+    /* الحبرُ البتروليُّ (عناوين، روابط، أيقوناتٌ ملوّنة) يخفّ درجةً معه —
+       فلا يبقى الزرُّ أفتحَ من عنوانه. ‎٧٫٢:١‎ على الأبيض، ‎٦٫٣:١‎ على البيج. */
+    --ink-primary:  #15606F;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ١) الفعلُ الواحدُ الممتلئ — أخفُّ لوناً وأهدأُ ظلّاً
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-calm .btn-primary {
+    background: var(--calm-p);
+    border-color: var(--calm-p);
+    box-shadow: 0 2px 6px rgba(21, 96, 111, .22);
+}
+body.theme-calm .btn-primary:hover:not(:disabled),
+body.theme-calm .btn-primary:active { background: var(--calm-p-deep); border-color: var(--calm-p-deep); }
+
+body.theme-calm .start-cta {
+    background: var(--calm-p);
+    box-shadow: 0 6px 16px rgba(21, 96, 111, .24), inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+body.theme-calm .start-cta:active { background: var(--calm-p-deep); }
+
+/* بطاقةُ «سجلّ متابعة الطلاب» في الفصل: هي الفعلُ البارزُ الوحيدُ في
+   شاشتها، فتأخذ الكحليَّ الأخفَّ نفسَه — لا كتلةً أغمقَ من زرّ الحفظ.
+   (وفي الوضع الداكن يبقى حكمُ theme-dark: سطحٌ لا كحليّ.) */
+body.theme-calm:not(.theme-dark):not(.dark-active) .hub-featured {
+    background: var(--calm-p);
+    box-shadow: 0 6px 16px rgba(21, 96, 111, .22);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٢) الثانويُّ والحالات — ماءٌ بحرفٍ بتروليّ
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-calm .chip.active,
+body.theme-calm .tab.active,
+body.theme-calm .tf-chip.on,
+body.theme-calm .hint-go,
+body.theme-calm .br-jump-row .go,
+body.theme-calm .sch-chip.on,
+body.theme-calm .fchip.on,
+body.theme-calm .subp-chip,
+body.theme-calm .subp-other-go,
+body.theme-calm .sheet-tab.on,
+body.theme-calm .stg-btn.main,
+body.theme-calm .sched-edit-btn.on,
+body.theme-calm .mvs-tab.on {
+    background: var(--calm-tint);
+    border-color: transparent;
+    color: var(--calm-p);
+    box-shadow: none;
+    text-shadow: none;
+}
+body.theme-calm .chip.active:active,
+body.theme-calm .tf-chip.on:active,
+body.theme-calm .sch-chip.on:active,
+body.theme-calm .fchip.on:active,
+body.theme-calm .stg-btn.main:active,
+body.theme-calm .subp-other-go:active { background: var(--calm-tint-2); }
+
+/* عمودُ الحصص في الجدول: ماءٌ لا كتلةٌ داكنةٌ تشدّ العينَ عن الخانات. */
+body.theme-calm .sched-table td.sched-per {
+    background: var(--calm-tint);
+    color: var(--calm-p);
+}
+body.theme-calm .sched-table td.sched-per small { color: var(--calm-p); opacity: .8; }
+
+/* «+ إضافة الطلاب» في رأس السجلّ: بلون الفصل نفسِه لكن ماءً — تبقى
+   هُويّةُ الفصل ولا يبقى الثقل. */
+body.theme-calm .reg-add {
+    background: color-mix(in srgb, var(--cls-color) 14%, #fff);
+    border-color: transparent;
+    color: var(--cls-color);
+    box-shadow: none;
+}
+body.theme-calm .reg-add:hover {
+    background: color-mix(in srgb, var(--cls-color) 20%, #fff);
+    border-color: transparent;
+    color: var(--cls-color);
+}
+
+/* الحبّاتُ كبسوليّة — شكلُ آبل الافتراضيُّ للضوابط الصغيرة. */
+body.theme-calm .chip,
+body.theme-calm .tf-chip,
+body.theme-calm .fchip,
+body.theme-calm .sch-chip,
+body.theme-calm .subp-chip,
+body.theme-calm .sheet-tab,
+body.theme-calm .pseg { border-radius: 999px; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ٣) الشريطُ السفليّ — الخانةُ بيضاءُ داخل الزجاج
+   ══════════════════════════════════════════════════════════════════════ */
+body.theme-calm .bottom-nav .bn-item.is-active { color: var(--calm-p); }
+body.theme-calm .bottom-nav .bn-item.is-active::before {
+    background: var(--calm-pill);
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .16), inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   مفتاحُ المعاينة — لا يظهر إلا لمن فتح ?calm=1 مرّةً
+   ══════════════════════════════════════════════════════════════════════ */
+#calm-switch {
+    /* تحت الرأس لا فوق الشريط: أسفلُ الشاشة مزدحمٌ بالأزرار العائمة
+       (قِيس: غطّى «إضافة فصل» في الرئيسيّة)، وأعلى اليسار خالٍ في كلّ شاشة. */
+    position: fixed;
+    left: 10px;
+    top: calc(var(--safe-top, 0px) + 58px);
+    z-index: 1200;
+    display: flex; align-items: center; gap: 7px;
+    height: 36px; padding: 0 12px 0 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .6);
+    background: rgba(255, 255, 255, .82);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: 0 6px 18px rgba(16, 24, 40, .16);
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    color: #15606F; cursor: pointer;
+}
+#calm-switch[hidden] { display: none !important; }
+#calm-switch .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #B8BDBD;
+}
+body.theme-calm #calm-switch .dot { background: #15606F; }
