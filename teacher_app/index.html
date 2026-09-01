@@ -47,7 +47,7 @@
     <link rel="stylesheet" href="css/theme-dark.css?v=34">
     <!-- الثوبُ الهادئ: كلُّ قواعده تحت body.theme-calm فلا يمسّ أحداً حتى
          يُرفع المفتاح. يُرفع بـ?calm=1 ويُخفض بـ?calm=0. (معاينةٌ ١ سبتمبر ٢٠٢٦.) -->
-    <link rel="stylesheet" href="css/theme-calm.css?v=3">
+    <link rel="stylesheet" href="css/theme-calm.css?v=6">
 
     <link rel="stylesheet" href="css/print.css?v=D29" media="print">
 </head>
@@ -233,8 +233,10 @@
 
     <!-- Toasts -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <!-- الإيموجي ← رسومٌ خطّيّة، تحت body.theme-calm فقط (معاينة ٢ سبتمبر ٢٠٢٦) -->
+    <script src="js/calm-icons.js?v=1"></script>
     <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
-        <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الهادئ</span>
+        <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الزجاجي</span>
     </button>
     <script>
     (function () {
@@ -243,7 +245,7 @@
             var b = document.getElementById('calm-switch');
             var paint = function () {
                 var on = document.body.classList.contains('theme-calm');
-                document.getElementById('calm-label').textContent = on ? 'الثوب الهادئ' : 'الثوب الحالي';
+                document.getElementById('calm-label').textContent = on ? 'الثوب الزجاجي' : 'الثوب الحالي';
             };
             b.hidden = false;
             b.addEventListener('click', function () {
