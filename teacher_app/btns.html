@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>كلُّ ما يلبس البترول</title>
+<title>معاينة: البترول والماء</title>
 
 <link rel="stylesheet" href="css/fonts.css?v=2">
 <link rel="stylesheet" href="css/main.css?v=D32">
@@ -14,93 +14,199 @@
 
 <style>
     body { margin: 0; background: var(--bg, #F4F5F7); }
-    .pv { max-width: 470px; margin: 0 auto; padding: 16px 14px 60px; }
-    .pv h1 { font-size: 19px; margin: 0 0 4px; }
-    .pv .lede { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.9; }
+    .pv { max-width: 470px; margin: 0 auto; padding: 0 14px 60px; }
+    .pv h1 { font-size: 19px; margin: 14px 0 4px; }
+    .pv .lede { font-size: 12.5px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.85; }
 
-    .grp { margin: 0 0 26px; }
+    .ctl {
+        position: sticky; top: 0; z-index: 50;
+        background: var(--surface); border: 1.5px solid var(--border);
+        border-radius: 16px; padding: 11px 12px; margin: 0 0 18px;
+        box-shadow: 0 6px 18px rgba(16,24,40,.08);
+    }
+    .ctl-t { font-size: 12px; font-weight: var(--fw-bold); color: var(--text-muted); margin-bottom: 7px; }
+    .picks { display: flex; gap: 6px; }
+    .picks button {
+        flex: 1; min-height: 42px; border-radius: 11px; cursor: pointer;
+        font-family: inherit; font-size: 13px; font-weight: var(--fw-bold);
+        border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-primary);
+    }
+    .picks button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .sw {
+        display: flex; align-items: center; gap: 9px; margin-top: 11px;
+        padding-top: 10px; border-top: 1px solid var(--border);
+        font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+        cursor: pointer;
+    }
+    .sw input { width: 20px; height: 20px; accent-color: var(--primary); }
+    .sw small { display: block; font-weight: 500; color: var(--text-muted); font-size: 11.5px; margin-top: 1px; }
+    .say { font-size: 12px; color: var(--text-muted); line-height: 1.85; margin: 9px 2px 0; }
+
+    .grp { margin: 0 0 24px; }
     .grp-h {
-        font-size: 14px; font-weight: var(--fw-bold); color: var(--ink-primary);
-        border-bottom: 1.5px solid var(--border); padding-bottom: 6px; margin-bottom: 12px;
+        font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
+        border-bottom: 1.5px solid var(--border); padding-bottom: 6px; margin-bottom: 11px;
     }
-    .grp-h .n { color: var(--text-muted); font-weight: var(--fw-medium); font-size: 12px; }
-
-    .row {
-        display: flex; align-items: center; gap: 12px;
-        padding: 11px 0; border-bottom: 1px solid var(--border);
-    }
+    .grp-h .n { color: var(--text-muted); font-weight: 500; font-size: 11.5px; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 10px 0;
+           border-bottom: 1px solid var(--border); }
     .row:last-child { border-bottom: 0; }
     .row .demo { flex: none; }
     .row .meta { flex: 1; min-width: 0; }
-    .row .nm { font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary); }
-    .row .wh { font-size: 11.5px; color: var(--text-muted); line-height: 1.7; margin-top: 1px; }
-
-    /* عناصرُ تحتاج سياقاً لتُرسم كما هي */
+    .row .nm { font-size: 12px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+    .row .wh { font-size: 11px; color: var(--text-muted); line-height: 1.65; margin-top: 1px; }
     .demo .sched-table { width: auto; }
     .demo .classes-fab { position: static; inset: auto; padding: 0; }
+    .under { border-radius: 24px; padding: 9px;
+             background: linear-gradient(135deg, #EDEAE2 0%, #DDE7EA 55%, #CFDDE2 100%); }
+    .bar { position: static; display: flex; inset-inline: auto; bottom: auto; z-index: auto; margin: 0; }
 </style>
 </head>
 <body>
 <div class="pv">
-    <h1>كلُّ ما يلبس البترول</h1>
-    <p class="lede">
-        واحدٌ وعشرون موضعاً — كلٌّ منها بصنفه الحقيقيّ ومقاسه الحقيقيّ،
-        لا صورةً له. وتحت كلٍّ مكانُه في التطبيق.
-    </p>
+    <h1>البترول والماء</h1>
+    <p class="lede">اختر معالجةً فيتغيّر كلُّ شيءٍ أمامك في اللحظة.</p>
+
+    <div class="ctl">
+        <div class="ctl-t">المعالجة</div>
+        <div class="picks" id="picks"></div>
+        <label class="sw">
+            <input type="checkbox" id="acts">
+            <span>طبّقها على أزرار الفعل أيضاً
+                <small>إضافة فصل · إضافة طالب · رفع الجدول · حفظ</small></span>
+        </label>
+        <p class="say" id="say"></p>
+    </div>
+
     <div id="out"></div>
 </div>
 
 <script>
 (function () {
     'use strict';
+
+    /* ماءٌ مبنيٌّ من بترول التطبيق ‎#0A3F4A‎ — لا أزرقَ غريبٍ عنه. */
+    const V = {
+        cur: null,
+        'أ': { bg: 'rgba(10,63,74,.10)', ink: '#0A3F4A', sh: 'none' },
+        'ب': { bg: 'rgba(10,63,74,.08)', ink: '#0A3F4A', sh: 'inset 0 0 0 1.5px rgba(10,63,74,.22)' },
+        'ج': { bg: 'rgba(10,63,74,.18)', ink: '#0A3F4A', sh: 'none' },
+        'د': { bg: 'linear-gradient(150deg, rgba(56,152,170,.20) 0%, rgba(10,63,74,.13) 100%)',
+               ink: '#0A3F4A', sh: 'none' }
+    };
+    const SAY = {
+        cur: 'الحالُ اليوم: بتروليٌّ مصمتٌ بحروفٍ بيضاء.',
+        'أ': 'ماءٌ خفيفٌ صافٍ — أخفُّ ما يكون، بلا حافّةٍ ولا ظلّ.',
+        'ب': 'الظلُّ نفسُه وحولَه خيطٌ يحدّده — فيُعرف طرفُ الخانة.',
+        'ج': 'درجتان أعمق — يُرى من بعيدٍ وما زال شفّافاً.',
+        'د': 'ميلٌ إلى الزرقة لا إلى الرماد — أقربُ إلى «لون الماء».'
+    };
+
+    /* حالاتٌ تقول «هذه المختارة» */
+    const STATE = ['.chip.active', '.tab.active', '.tf-chip.on', '.att-btn.active',
+                   '.hint-go', '.br-jump-row .go', '.sch-chip.on', '.fchip.on',
+                   '.subp-chip', '.subp-other-go', '.sheet-tab.on', '.stg-btn.main',
+                   '.sched-edit-btn.on', '.mvs-tab.on', '.sched-table td.sched-per'];
+    /* أفعالٌ تقول «اضغطني» */
+    const ACTION = ['.btn-primary', '.start-cta', '.reg-add'];
+
     const G = [
-        ['الزرُّ الأساسيّ — مصمت', [
-            ['<button class="btn btn-primary">حفظ</button>', '.btn-primary',
-             'كلُّ نافذةٍ ونموذج: حفظ · تأكيد · إضافة'],
-            ['<div class="classes-fab"><button class="start-cta">إضافة فصل جديد</button></div>',
-             '.start-cta', 'الزرُّ العائم: الفصول · ملفّ الإنجاز · التذكيرات']
+        ['أزرارُ الإضافة — التي سألتَ عنها', [
+            ['<div class="classes-fab"><button class="start-cta">+ إضافة فصل جديد</button></div>',
+             '.start-cta', 'شاشةُ الفصول'],
+            ['<button class="btn reg-add">+ إضافة الطلاب</button>', '.reg-add', 'رأسُ سجلّ الطلاب'],
+            ['<div class="classes-fab"><button class="start-cta">+ إضافة الطلاب</button></div>',
+             '.start-cta', 'سجلٌّ فارغ'],
+            ['<div class="classes-fab"><a href="javascript:void 0" class="start-cta">+ ارفع جدولك الأسبوعي</a></div>',
+             '.start-cta', 'الرئيسيّة'],
+            ['<button class="start-add-class">+ إضافة فصل</button>', '.start-add-class',
+             'الرئيسيّة — بيجٌ لا بترول، للمقارنة']
+        ]],
+        ['الزرُّ الأساسيّ', [
+            ['<button class="btn btn-primary">حفظ</button>', '.btn-primary', 'كلُّ نافذةٍ ونموذج']
+        ]],
+        ['الشريطُ السفليّ', [
+            ['<div class="under"><nav class="bottom-nav bar" id="nv">'
+             + [['🏠','الرئيسية'],['👥','الفصول'],['📅','الجدول'],['📁','إنجاز'],['⚙️','الإعدادات']]
+                 .map((it,k)=>'<a href="javascript:void 0" class="bn-item'+(k===2?' is-active':'')
+                     +'"><span class="bn-icon">'+it[0]+'</span><span class="bn-label">'+it[1]+'</span></a>').join('')
+             + '</nav></div>', '.bn-item.is-active', 'اضغط أيَّ خانةٍ لتنتقل']
         ]],
         ['حبّاتٌ مختارة — مصمتة', [
-            ['<span class="chip active">مختارة</span>', '.chip.active', 'مرشّحاتٌ في شاشاتٍ عدّة'],
+            ['<span class="chip active">مختارة</span>', '.chip.active', 'مرشّحات'],
             ['<span class="tab active">تبويب</span>', '.tab.active', 'تبويباتُ الفصل'],
-            ['<span class="tf-chip on">الفصل الأول</span>', '.tf-chip.on', 'اختيارُ الفصل الدراسيّ'],
+            ['<span class="tf-chip on">الفصل الأول</span>', '.tf-chip.on', 'الفصل الدراسيّ'],
             ['<button class="att-btn active">حاضر</button>', '.att-btn.active', 'أزرارُ الحضور'],
-            ['<button class="hint-go">ابدأ</button>', '.hint-go', 'زرُّ التلميحات'],
-            ['<span class="br-jump-row"><button class="go">اذهب</button></span>', '.br-jump-row .go', 'القفزُ في قارئ الكتب']
+            ['<button class="hint-go">ابدأ</button>', '.hint-go', 'التلميحات'],
+            ['<span class="br-jump-row"><button class="go">اذهب</button></span>', '.br-jump-row .go', 'قارئ الكتب']
         ]],
         ['حبّاتٌ متدرّجة', [
-            ['<span class="sch-chip on">أ</span>', '.sch-chip.on', 'اختيارُ الشعبة في الجدول'],
-            ['<span class="fchip on">ابتدائي</span>', '.fchip.on', 'مرشّحُ المرحلة'],
+            ['<span class="sch-chip on">أ</span>', '.sch-chip.on', 'الشُّعَب'],
+            ['<span class="fchip on">ابتدائي</span>', '.fchip.on', 'المرحلة'],
             ['<span class="subp-chip">الرياضيات</span>', '.subp-chip', 'منتقي المواد'],
-            ['<button class="subp-other-go">تم</button>', '.subp-other-go', 'منتقي المواد — مادّةٌ أخرى'],
-            ['<span class="sheet-tab on">ورقة ١</span>', '.sheet-tab.on', 'تبويباتُ ملفّ إكسل'],
-            ['<button class="stg-btn main">طبّقتها</button>', '.stg-btn.main', 'بطاقةُ الاستراتيجيّة']
+            ['<button class="subp-other-go">تم</button>', '.subp-other-go', 'مادّةٌ أخرى'],
+            ['<span class="sheet-tab on">ورقة ١</span>', '.sheet-tab.on', 'تبويباتُ إكسل'],
+            ['<button class="stg-btn main">طبّقتها</button>', '.stg-btn.main', 'الاستراتيجيّة']
         ]],
         ['أشرطةٌ وتبويبات', [
             ['<button class="sched-edit-btn on">✎ تعديل</button>', '.sched-edit-btn.on', 'شريطُ الجدول'],
             ['<span class="mvs-tab on">الرؤية</span>', '.mvs-tab.on', 'الرسالة والرؤية'],
             ['<table class="sched-table"><tr><td class="sched-per">١<br><small>07:00</small></td></tr></table>',
-             '.sched-table td.sched-per', 'عمودُ الحصص في الجدول']
+             'td.sched-per', 'عمودُ الحصص']
         ]],
-        ['ماءٌ خفيفٌ — موجودٌ عندك أصلاً', [
-            ['<span class="pseg on">القائمة</span>', '.pseg.on', 'الشرائح: التذكيرات · التقارير — ‎٧٪‎'],
-            ['<span class="col-chip active">درجة</span>', '.col-chip.active', 'خاناتُ التقييم — ‎٨٪‎'],
+        ['ماءٌ خفيفٌ — عندك أصلاً', [
+            ['<span class="pseg on">القائمة</span>', '.pseg.on', 'الشرائح — ‎٧٪‎'],
+            ['<span class="col-chip active">درجة</span>', '.col-chip.active', 'خانات التقييم — ‎٨٪‎'],
             ['<span class="pf-chip">شهادة</span>', '.pf-chip', 'ملفّ الإنجاز — ‎١٠٪‎']
         ]]
     ];
 
-    document.getElementById('out').innerHTML = G.map(([title, rows]) => `
+    document.getElementById('out').innerHTML = G.map(([t, rows]) => `
         <div class="grp">
-            <div class="grp-h">${title} <span class="n">— ${rows.length}</span></div>
-            ${rows.map(([html, cls, where]) => `
-                <div class="row">
-                    <div class="demo">${html}</div>
-                    <div class="meta">
-                        <div class="nm">${cls}</div>
-                        <div class="wh">${where}</div>
-                    </div>
-                </div>`).join('')}
+            <div class="grp-h">${t} <span class="n">— ${rows.length}</span></div>
+            ${rows.map(([h, c, w]) => `<div class="row"><div class="demo">${h}</div>
+                <div class="meta"><div class="nm">${c}</div><div class="wh">${w}</div></div></div>`).join('')}
         </div>`).join('');
+
+    const style = document.createElement('style');
+    document.head.appendChild(style);
+    let pick = 'cur';
+
+    function paint() {
+        const v = V[pick];
+        const withActs = document.getElementById('acts').checked;
+        document.getElementById('say').textContent = SAY[pick];
+        if (!v) { style.textContent = ''; return; }
+        const put = (sel) => sel + '{background:' + v.bg + ' !important;color:' + v.ink
+            + ' !important;border-color:transparent !important;box-shadow:' + v.sh + ' !important;}';
+        let css = put(STATE.join(','));
+        /* الشريطُ يتلوّن بطبقةٍ خلفه لا بأرضيّته — فله سطرُه. */
+        css += '.bottom-nav .bn-item.is-active{color:' + v.ink + ' !important;}';
+        css += '.bottom-nav .bn-item.is-active::before{background:' + v.bg
+             + ' !important;box-shadow:' + v.sh + ' !important;}';
+        if (withActs) css += put(ACTION.join(','));
+        style.textContent = css;
+    }
+
+    document.getElementById('picks').innerHTML =
+        ['cur', 'أ', 'ب', 'ج', 'د'].map((k) =>
+            `<button data-k="${k}">${k === 'cur' ? 'الحالي' : k}</button>`).join('');
+    document.getElementById('picks').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-k]'); if (!b) return;
+        pick = b.dataset.k;
+        document.querySelectorAll('#picks button').forEach((x) => x.classList.toggle('on', x === b));
+        paint();
+    });
+    document.getElementById('acts').addEventListener('change', paint);
+    document.querySelector('#picks button').classList.add('on');
+
+    /* الشريطُ يعمل كما في التطبيق */
+    document.getElementById('nv').addEventListener('click', (e) => {
+        const a = e.target.closest('.bn-item'); if (!a) return;
+        a.parentElement.querySelectorAll('.bn-item').forEach((x) => x.classList.remove('is-active'));
+        a.classList.add('is-active');
+    });
+    paint();
 })();
 </script>
 </body>
