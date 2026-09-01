@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>كلُّ ما يلبس البترول</title>
+
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D32">
+<link rel="stylesheet" href="css/components.css?v=13">
+<link rel="stylesheet" href="css/views.css?v=D295">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=16">
+<link rel="stylesheet" href="css/theme-white.css?v=22">
+
+<style>
+    body { margin: 0; background: var(--bg, #F4F5F7); }
+    .pv { max-width: 470px; margin: 0 auto; padding: 16px 14px 60px; }
+    .pv h1 { font-size: 19px; margin: 0 0 4px; }
+    .pv .lede { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.9; }
+
+    .grp { margin: 0 0 26px; }
+    .grp-h {
+        font-size: 14px; font-weight: var(--fw-bold); color: var(--ink-primary);
+        border-bottom: 1.5px solid var(--border); padding-bottom: 6px; margin-bottom: 12px;
+    }
+    .grp-h .n { color: var(--text-muted); font-weight: var(--fw-medium); font-size: 12px; }
+
+    .row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 11px 0; border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: 0; }
+    .row .demo { flex: none; }
+    .row .meta { flex: 1; min-width: 0; }
+    .row .nm { font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+    .row .wh { font-size: 11.5px; color: var(--text-muted); line-height: 1.7; margin-top: 1px; }
+
+    /* عناصرُ تحتاج سياقاً لتُرسم كما هي */
+    .demo .sched-table { width: auto; }
+    .demo .classes-fab { position: static; inset: auto; padding: 0; }
+</style>
+</head>
+<body>
+<div class="pv">
+    <h1>كلُّ ما يلبس البترول</h1>
+    <p class="lede">
+        واحدٌ وعشرون موضعاً — كلٌّ منها بصنفه الحقيقيّ ومقاسه الحقيقيّ،
+        لا صورةً له. وتحت كلٍّ مكانُه في التطبيق.
+    </p>
+    <div id="out"></div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const G = [
+        ['الزرُّ الأساسيّ — مصمت', [
+            ['<button class="btn btn-primary">حفظ</button>', '.btn-primary',
+             'كلُّ نافذةٍ ونموذج: حفظ · تأكيد · إضافة'],
+            ['<div class="classes-fab"><button class="start-cta">إضافة فصل جديد</button></div>',
+             '.start-cta', 'الزرُّ العائم: الفصول · ملفّ الإنجاز · التذكيرات']
+        ]],
+        ['حبّاتٌ مختارة — مصمتة', [
+            ['<span class="chip active">مختارة</span>', '.chip.active', 'مرشّحاتٌ في شاشاتٍ عدّة'],
+            ['<span class="tab active">تبويب</span>', '.tab.active', 'تبويباتُ الفصل'],
+            ['<span class="tf-chip on">الفصل الأول</span>', '.tf-chip.on', 'اختيارُ الفصل الدراسيّ'],
+            ['<button class="att-btn active">حاضر</button>', '.att-btn.active', 'أزرارُ الحضور'],
+            ['<button class="hint-go">ابدأ</button>', '.hint-go', 'زرُّ التلميحات'],
+            ['<span class="br-jump-row"><button class="go">اذهب</button></span>', '.br-jump-row .go', 'القفزُ في قارئ الكتب']
+        ]],
+        ['حبّاتٌ متدرّجة', [
+            ['<span class="sch-chip on">أ</span>', '.sch-chip.on', 'اختيارُ الشعبة في الجدول'],
+            ['<span class="fchip on">ابتدائي</span>', '.fchip.on', 'مرشّحُ المرحلة'],
+            ['<span class="subp-chip">الرياضيات</span>', '.subp-chip', 'منتقي المواد'],
+            ['<button class="subp-other-go">تم</button>', '.subp-other-go', 'منتقي المواد — مادّةٌ أخرى'],
+            ['<span class="sheet-tab on">ورقة ١</span>', '.sheet-tab.on', 'تبويباتُ ملفّ إكسل'],
+            ['<button class="stg-btn main">طبّقتها</button>', '.stg-btn.main', 'بطاقةُ الاستراتيجيّة']
+        ]],
+        ['أشرطةٌ وتبويبات', [
+            ['<button class="sched-edit-btn on">✎ تعديل</button>', '.sched-edit-btn.on', 'شريطُ الجدول'],
+            ['<span class="mvs-tab on">الرؤية</span>', '.mvs-tab.on', 'الرسالة والرؤية'],
+            ['<table class="sched-table"><tr><td class="sched-per">١<br><small>07:00</small></td></tr></table>',
+             '.sched-table td.sched-per', 'عمودُ الحصص في الجدول']
+        ]],
+        ['ماءٌ خفيفٌ — موجودٌ عندك أصلاً', [
+            ['<span class="pseg on">القائمة</span>', '.pseg.on', 'الشرائح: التذكيرات · التقارير — ‎٧٪‎'],
+            ['<span class="col-chip active">درجة</span>', '.col-chip.active', 'خاناتُ التقييم — ‎٨٪‎'],
+            ['<span class="pf-chip">شهادة</span>', '.pf-chip', 'ملفّ الإنجاز — ‎١٠٪‎']
+        ]]
+    ];
+
+    document.getElementById('out').innerHTML = G.map(([title, rows]) => `
+        <div class="grp">
+            <div class="grp-h">${title} <span class="n">— ${rows.length}</span></div>
+            ${rows.map(([html, cls, where]) => `
+                <div class="row">
+                    <div class="demo">${html}</div>
+                    <div class="meta">
+                        <div class="nm">${cls}</div>
+                        <div class="wh">${where}</div>
+                    </div>
+                </div>`).join('')}
+        </div>`).join('');
+})();
+</script>
+</body>
+</html>
