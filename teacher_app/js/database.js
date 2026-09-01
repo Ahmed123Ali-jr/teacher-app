@@ -44,10 +44,14 @@
     /* ---------- IndexedDB cache layer ---------- */
 
     const CACHE_DB_NAME    = 'teacher_app_cache';
-    const CACHE_DB_VERSION = 5;   // bumped: added `portfolio_blobs` store
+    const CACHE_DB_VERSION = 6;   // bumped: added `outbox` store
 
     /** Cache store schema: keyPath + indexes for fast filtering. */
     const CACHE_STORES = [
+        /* الصندوقُ الصادر: كتاباتٌ لم تصل الخادمَ بعد. مفتاحُه رقمٌ متصاعد
+           ليُعاد تشغيلُها **بترتيب وقوعها** — طالبٌ يُضاف ثمّ يُعدَّل لا
+           يجوز أن يُعدَّل قبل أن يُضاف. */
+        { name: 'outbox',        keyPath: 'seq' },
         { name: 'teachers',      keyPath: 'id' },
         { name: 'classes',       keyPath: 'id',          indexes: [['teacher_id']] },
         { name: 'students',      keyPath: 'id',          indexes: [['class_id'], ['teacher_id']] },
@@ -644,6 +648,11 @@
     function hydrate() {
         if (_hydratePromise) return _hydratePromise;
         const t0 = performance.now();
+
+        /* ما كُتب بلا شبكةٍ في جلسةٍ سابقة يُرسل الآن. ولا يُنتظر: الترطيبُ
+           لا يتأخّر من أجله، والفشلُ يعيد المحاولةَ عند أوّل كتابةٍ ناجحة
+           أو عند حدث `online`. */
+        setTimeout(() => { drainOutbox(); }, 0);
 
         /* الوعودُ تُحجز **قبل أيّ انتظار**: لو حُجزت بعد `await currentUid()`
            لوجدت شاشةٌ سبقتنا مخزنَها بلا وعدٍ فقرأته فارغاً وظنّته فارغاً.
@@ -1319,10 +1328,218 @@
         for (const id of ids) await Cache.remove(storeName, id);
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       الصندوقُ الصادر — الكتابةُ بلا شبكة
+
+       التطبيقُ يعمل بلا إنترنت في القراءة: المخبأُ يُرطَّب عند الدخول
+       فتُقرأ الفصولُ والطلابُ والجدولُ من الجهاز. **أمّا الكتابةُ فكانت
+       تذهب إلى الخادم مباشرةً** — فمعلّمٌ يرصد الحضورَ في فصلٍ بلا تغطية
+       يخسر ما رصده، ويراه أمامَه في الشاشة لأنّها تُرسم من الذاكرة.
+       (قيدُ المستخدم: «أبي التطبيق يشتغل بدون إنترنت عادي»، ٣٠ أغسطس.)
+
+       ── كيف يعمل ──
+       الكتابةُ تُجرَّب على الخادم أوّلاً كما كانت. فإن سقطت **سقوطَ شبكةٍ
+       لا سقوطَ رفض**: تُكتب في المخبأ، ويُحفظ النداءُ في الصندوق، ويُعاد
+       تشغيلُه حين تعود الشبكة.
+
+       ── ثلاثةُ قراراتٍ تُقرأ قبل تعديل هذا ──
+
+       ١) **يُحفظ نداؤك كما كتبتَه** (`op`, `store`, `arg`)، لا الصفُّ بعد
+          تحويله. فالإعادةُ تمرّ بالمسار نفسِه: التحويلاتُ (`teachersOut`،
+          إسنادُ المالك، الفصلُ الدراسيّ) تجري مرّةً واحدةً في مكانها، ولا
+          تُنسخ هنا فتتباعد الشيفرتان بعد تعديلٍ يُنسى.
+
+       ٢) **المعرّفُ يُولَّد على الجهاز** حين لا يكون. مفاتيحُ الجداول
+          `uuid` بقيمةٍ افتراضيّةٍ من الخادم — فبلا معرّفٍ لا يمكن ربطُ
+          الصفّ المحلّيّ بالذي سيُنشأ، ولا يمكن أن تكون الإعادةُ آمنة.
+          وبالمعرّف تصير الإعادةُ `upsert` لا `insert`: تُعاد مئةَ مرّةٍ
+          فلا تُنشئ إلّا صفّاً واحداً.
+
+       ٣) **ما فيه ملفٌّ لا يُصفّ**: `portfolio` و`books` يرفعان إلى مخزن
+          الملفّات، وذاك رفعٌ لا يُعاد تشغيلُه بسطرٍ في طابور. تبقى على
+          حالها — تفشل وتُقال.
+       ══════════════════════════════════════════════════════════════════ */
+
+    /* ما يُصفّ: كلُّ ما هو صفوفٌ خالصة. وما استُثني ففيه ملفّ. */
+    const OUTBOX_SKIP = ['portfolio', 'books', 'book_files', 'portfolio_blobs'];
+
+    let _seq = 0;
+    /** رقمٌ متصاعدٌ لا يتكرّر ولو كُتب ألفٌ في المللي ثانية الواحدة. */
+    function nextSeq() {
+        const now = Date.now() * 1000;
+        _seq = now > _seq ? now : _seq + 1;
+        return _seq;
+    }
+
+    /** أسقوطُ شبكةٍ هذا أم رفضٌ من الخادم؟
+     *  والفرقُ جوهريّ: الشبكةُ تُعاد، والرفضُ يُقال للمعلّم — وصفٌّ
+     *  يخالف قيداً يُعاد إلى الأبد لو خُلطا. */
+    function isNetworkError(e) {
+        /* بلا اتّصالٍ أصلاً: الطلبُ لم يبلغ الخادم، فأيُّ خطأٍ خطأُ شبكة. */
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+        const m = String((e && e.message) || '').toLowerCase();
+        return /failed to fetch|networkerror|load failed|network request failed|fetch failed|connection|timeout|offline/.test(m);
+    }
+
+    /** يكتب الصفَّ في المخبأ كما كان سيُكتب لو نجح الخادم. */
+    async function mirror(op, storeName, arg) {
+        if (op === 'remove') { await Cache.remove(storeName, arg); return arg; }
+
+        if (storeName === 'settings') {
+            await Cache.put('settings', { key: arg.key, value: arg.value });
+            return arg.key;
+        }
+        if (storeName === 'teachers') {
+            const uid = await currentUid();
+            const id = arg.id || uid;
+            const old = (await Cache.get('teachers', id)) || {};
+            await Cache.put('teachers', Object.assign({}, old, arg, { id }));
+            return id;
+        }
+        const row = Object.assign({}, arg);
+        if (TEACHER_OWNED[storeName] && !row.teacher_id) {
+            const uid = await currentUid();
+            if (uid) row.teacher_id = uid;
+        }
+        if (TERM_SCOPED[storeName] && row.term == null) row.term = await currentTerm();
+        if (row.id == null) {
+            row.id = (global.crypto && global.crypto.randomUUID)
+                ? global.crypto.randomUUID()
+                : 'off-' + nextSeq() + '-' + Math.random().toString(16).slice(2, 10);
+        }
+        await Cache.put(storeName, row);
+        return row.id;
+    }
+
+    async function enqueue(op, storeName, arg, id) {
+        const rec = { seq: nextSeq(), op, store: storeName, arg, id, at: new Date().toISOString() };
+        await cacheTx('outbox', 'readwrite', (st) => reqAsPromise(st.put(rec)));
+        notifyOutbox();
+        return rec;
+    }
+
+    async function outboxAll() {
+        const rows = (await cacheTx('outbox', 'readonly', (st) => reqAsPromise(st.getAll()))) || [];
+        return rows.sort((a, b) => a.seq - b.seq);
+    }
+
+    async function outboxPending() {
+        try { return (await outboxAll()).length; } catch (e) { return 0; }
+    }
+
+    function notifyOutbox() {
+        try {
+            outboxPending().then((n) => {
+                global.dispatchEvent(new CustomEvent('teacherdb:outbox', { detail: { pending: n } }));
+            });
+        } catch (e) { /* إشعارٌ لا يوقف كتابة */ }
+    }
+
+    let _draining = false;
+    /**
+     * يُفرغ الصندوق بالترتيب. **يقف عند أوّل سقوطِ شبكة** — فما بعده قد
+     * يعتمد على ما قبله، وتخطّيه يقلب الترتيب.
+     * @returns {Promise<{sent:number, dropped:number, left:number}>}
+     */
+    async function drainOutbox() {
+        if (_draining) return { sent: 0, dropped: 0, left: await outboxPending() };
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            return { sent: 0, dropped: 0, left: await outboxPending() };
+        }
+        _draining = true;
+        let sent = 0, dropped = 0;
+        try {
+            const rows = await outboxAll();
+            for (const r of rows) {
+                try {
+                    if (r.op === 'remove')          await remove(r.store, r.arg);
+                    else if (r.op === 'add')        await add(r.store, r.arg);
+                    else if (r.op === 'bulkPut')    await bulkPut(r.store, r.arg);
+                    else if (r.op === 'bulkRemove') await bulkRemove(r.store, r.arg);
+                    else                            await put(r.store, r.arg);
+                    await cacheTx('outbox', 'readwrite', (st) => reqAsPromise(st.delete(r.seq)));
+                    sent++;
+                } catch (e) {
+                    if (isNetworkError(e)) break;      /* الشبكةُ ما زالت غائبة */
+                    /* رفضٌ من الخادم: يُسقَط ولا يُعاد إلى الأبد. ويُقال —
+                       فسكوتُه يعني بياناتٍ ظنّها المعلّم محفوظة. */
+                    console.warn('[outbox] رُفض ولن يُعاد:', r.store, r.op, e && e.message);
+                    await cacheTx('outbox', 'readwrite', (st) => reqAsPromise(st.delete(r.seq)));
+                    dropped++;
+                }
+            }
+        } catch (e) {
+            console.warn('[outbox] تعذّر التفريغ:', e && e.message);
+        } finally {
+            _draining = false;
+        }
+        notifyOutbox();
+        return { sent, dropped, left: await outboxPending() };
+    }
+
+    /** يلفّ كتابةً: تُجرَّب، وإن سقطت سقوطَ شبكةٍ صُفَّت. */
+    function guarded(op, fn) {
+        return async function (storeName, arg) {
+            try {
+                const out = await fn(storeName, arg);
+                /* نجحت كتابةٌ: الشبكةُ حاضرةٌ، فما تأخّر يُرسل الآن. */
+                outboxPending().then((n) => { if (n) drainOutbox(); }).catch(() => {});
+                return out;
+            } catch (e) {
+                if (!isNetworkError(e) || OUTBOX_SKIP.indexOf(storeName) >= 0) throw e;
+                const id = await mirror(op, storeName, arg);
+                /* المعرَّفُ المولَّد يُثبَّت في النداء المحفوظ، وإلّا وُلِّد
+                   غيرُه عند الإعادة فصار صفّان لشيءٍ واحد. */
+                const kept = (op === 'remove' || !arg || typeof arg !== 'object')
+                    ? arg : Object.assign({}, arg, { id: id });
+                await enqueue(op, storeName, kept, id);
+                return id;
+            }
+        };
+    }
+
+    const addGuarded    = guarded('add', add);
+    const putGuarded    = guarded('put', put);
+    const removeGuarded = guarded('remove', remove);
+
+    /* ── والدفعاتُ كذلك، وهي أولى بها ──
+       «تحضير الجميع» و«مسح حضور اليوم» يكتبان صفوفَ الفصل كلَّها دفعةً
+       (`class.js`). وهما أكثرُ ما يُضغط في فصلٍ بلا تغطية — فلو بقيا خارج
+       الصندوق لسقط أهمُّ ما بُني له. */
+    function guardedBulk(op, fn) {
+        return async function (storeName, rows) {
+            try {
+                const out = await fn(storeName, rows);
+                outboxPending().then((n) => { if (n) drainOutbox(); }).catch(() => {});
+                return out;
+            } catch (e) {
+                if (!isNetworkError(e) || OUTBOX_SKIP.indexOf(storeName) >= 0) throw e;
+                const list = rows || [];
+                const ids = [];
+                for (const r of list) ids.push(await mirror(op === 'bulkRemove' ? 'remove' : 'put', storeName, r));
+                /* الصفوفُ تُحفظ بمعرّفاتها المولَّدة — فإعادةُ التشغيل
+                   `upsert` لا `insert`، ولو أُعيدت مرّتين لم تتضاعف. */
+                const kept = op === 'bulkRemove'
+                    ? ids
+                    : list.map((r, i) => Object.assign({}, r, { id: ids[i] }));
+                await enqueue(op, storeName, kept, ids);
+                return ids;
+            }
+        };
+    }
+    const bulkPutGuarded    = guardedBulk('bulkPut', bulkPut);
+    const bulkRemoveGuarded = guardedBulk('bulkRemove', bulkRemove);
+
+    /* تعود الشبكةُ فيُفرَّغ الصندوق بلا أن يطلب أحد. */
+    try {
+        global.addEventListener('online', () => { drainOutbox(); });
+    } catch (e) { /* بيئةٌ بلا نافذة */ }
+
     global.TeacherDB = {
         open,
-        add, put, putLocal, get, getAll, getAllByIndex, remove, clear, count,
-        bulkPut, bulkRemove,
+        add: addGuarded, put: putGuarded, putLocal,
+        get, getAll, getAllByIndex, remove: removeGuarded, clear, count,
+        bulkPut: bulkPutGuarded, bulkRemove: bulkRemoveGuarded,
         destroy, exportAll, importAll,
         Settings,
         BookFiles,
@@ -1352,6 +1569,8 @@
         /* أسماءُ المخازن التي تحمل ملفاتٍ لا نسخةَ لها على الخادم. */
         LOCAL_ONLY: ['book_files'],
         /** سببُ تعطّل المخزن المحلّي، أو `null` إن كان سليماً. */
-        cacheDown: () => _cacheDown
+        cacheDown: () => _cacheDown,
+        /** الصندوقُ الصادر: كتاباتٌ تنتظر عودةَ الشبكة. */
+        Outbox: { pending: outboxPending, drain: drainOutbox, all: outboxAll }
     };
 })(window);
