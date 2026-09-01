@@ -27,7 +27,7 @@
     .ctl-t { font-size: 12px; font-weight: var(--fw-bold); color: var(--text-muted); margin-bottom: 7px; }
     .picks { display: flex; gap: 6px; }
     .picks button {
-        flex: 1; min-height: 42px; border-radius: 11px; cursor: pointer;
+        flex: 1; min-height: 42px; padding: 0 2px; border-radius: 11px; cursor: pointer;
         font-family: inherit; font-size: 13px; font-weight: var(--fw-bold);
         border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-primary);
     }
@@ -126,14 +126,22 @@
         'ب': { bg: 'rgba(10,63,74,.08)', ink: '#0A3F4A', sh: 'inset 0 0 0 1.5px rgba(10,63,74,.22)' },
         'ج': { bg: 'rgba(10,63,74,.18)', ink: '#0A3F4A', sh: 'none' },
         'د': { bg: 'linear-gradient(150deg, rgba(56,152,170,.20) 0%, rgba(10,63,74,.13) 100%)',
-               ink: '#0A3F4A', sh: 'none' }
+               ink: '#0A3F4A', sh: 'none' },
+        /* هـ — رأيي: الحالاتُ ماءٌ هادئ، والأفعالُ ماءٌ **بحافّةٍ صريحة**.
+           فالحافّةُ تقول «هذا زرّ» حين يذهب الامتلاء، فلا يلتبس «حفظ»
+           بـ«إلغاء» ولا يُقرأ معطَّلاً في الشمس. */
+        'هـ': { bg: 'rgba(10,63,74,.08)', ink: '#0A3F4A', sh: 'none',
+                actBg: 'rgba(10,63,74,.10)',
+                actSh: 'inset 0 0 0 1.6px #0A3F4A' }
     };
     const SAY = {
         cur: 'الحالُ اليوم: بتروليٌّ مصمتٌ بحروفٍ بيضاء.',
         'أ': 'ماءٌ خفيفٌ صافٍ — أخفُّ ما يكون، بلا حافّةٍ ولا ظلّ.',
         'ب': 'الظلُّ نفسُه وحولَه خيطٌ يحدّده — فيُعرف طرفُ الخانة.',
         'ج': 'درجتان أعمق — يُرى من بعيدٍ وما زال شفّافاً.',
-        'د': 'ميلٌ إلى الزرقة لا إلى الرماد — أقربُ إلى «لون الماء».'
+        'د': 'ميلٌ إلى الزرقة لا إلى الرماد — أقربُ إلى «لون الماء».',
+        'هـ': 'رأيي: الحالاتُ ماءٌ هادئ، والأفعالُ ماءٌ بحافّةٍ بتروليّة — '
+            + 'تبقى هادئةً ولا تلتبس بغير الأزرار.'
     };
 
     /* حالاتٌ تقول «هذه المختارة» */
@@ -218,12 +226,16 @@
         css += '.bottom-nav .bn-item.is-active{color:' + v.ink + ' !important;}';
         css += '.bottom-nav .bn-item.is-active::before{background:' + v.bg
              + ' !important;box-shadow:' + v.sh + ' !important;}';
-        if (withActs) css += put(ACTION.join(','));
+        if (withActs) {
+            css += ACTION.join(',') + '{background:' + (v.actBg || v.bg)
+                 + ' !important;color:' + v.ink + ' !important;border-color:transparent !important;'
+                 + 'box-shadow:' + (v.actSh || v.sh) + ' !important;}';
+        }
         style.textContent = css;
     }
 
     document.getElementById('picks').innerHTML =
-        ['cur', 'أ', 'ب', 'ج', 'د'].map((k) =>
+        ['cur', 'أ', 'ب', 'ج', 'د', 'هـ'].map((k) =>
             `<button data-k="${k}">${k === 'cur' ? 'الحالي' : k}</button>`).join('');
     document.getElementById('picks').addEventListener('click', (e) => {
         const b = e.target.closest('[data-k]'); if (!b) return;
