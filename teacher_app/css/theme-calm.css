@@ -20,16 +20,24 @@
    ========================================================================== */
 
 body.theme-calm {
-    --ink:        #111111;
-    --glass:      rgba(255, 255, 255, .55);
-    --glass-2:    rgba(255, 255, 255, .72);   /* عند اللمس / الأبرز */
-    --glass-line: rgba(0, 0, 0, .10);
-    --glass-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 6px 18px rgba(16, 24, 40, .08),
-                    inset 0 1px 0 rgba(255, 255, 255, .85);
+    /* (٢ سبتمبر، الطلبُ الثالث): «حيويّة، ثري دي ناعم، والخطوطُ والرسومُ
+       رصاصيٌّ خفيف لا أسودُ غامق». فالحبرُ درجتان: النصُّ رصاصيٌّ متوسّط
+       (‎٦٫٩:١‎ على الأبيض — لا يُخفَّف أكثر وإلّا سقطت القراءة)، والرسومُ
+       أخفُّ درجةً (‎٤٫٦:١‎). */
+    --ink:        #4E5560;
+    --ink-icon:   #767E89;
+    --glass:      linear-gradient(180deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.58) 100%);
+    --glass-2:    linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.72) 100%);
+    --glass-line: rgba(0, 0, 0, .07);
+    /* العمقُ الناعم: لمعةٌ علويّةٌ بيضاء، وخطٌّ سفليٌّ داخليٌّ رماديّ،
+       وظلّان — قريبٌ ملتصق وبعيدٌ منتشر — كما تُرفع الأزرارُ في iOS 26. */
+    --glass-shadow: inset 0 1px 0 rgba(255,255,255,.95),
+                    inset 0 -1px 0 rgba(0,0,0,.05),
+                    0 1px 2px rgba(16,24,40,.06),
+                    0 8px 20px rgba(16,24,40,.10);
+    --glass-shadow-press: inset 0 2px 4px rgba(0,0,0,.08), 0 1px 2px rgba(16,24,40,.05);
     --ink-primary: var(--ink);
-    /* `--primary` نفسُه لا يُمسّ: أرضيّةُ شاشة الدخول تُشتقّ منه (جُرّب
-       فاسودّت الشاشة). ما يرسم منه يُعالَج سطحاً سطحاً أدناه. */
-    /* غسلةٌ رماديّةٌ باردة خلف الصفحة ليشفّ الزجاجُ عن شيء */
+    /* `--primary` نفسُه لا يُمسّ: أرضيّةُ شاشة الدخول تُشتقّ منه. */
     --bg: #F1F3F6;
     background:
         radial-gradient(900px 500px at 85% -10%, rgba(200, 210, 222, .55), transparent 60%),
@@ -75,6 +83,24 @@ body.theme-calm .start-cta:active,
 body.theme-calm .hub-featured:active,
 body.theme-calm .chip.active:active,
 body.theme-calm .reg-add:hover { background: var(--glass-2) !important; color: var(--ink) !important; }
+body.theme-calm .btn-primary:active,
+body.theme-calm .start-cta:active,
+body.theme-calm .hub-featured:active,
+body.theme-calm .hub-tile:active,
+body.theme-calm .chip.active:active,
+body.theme-calm .col-chip:active {
+    box-shadow: var(--glass-shadow-press) !important;
+    transform: translateY(1px);
+}
+/* البلاطاتُ والبطاقاتُ الثانويّة ترتفع قليلاً هي الأخرى — عمقٌ واحدٌ للكلّ */
+body.theme-calm .hub-tile,
+body.theme-calm .cls-row,
+body.theme-calm .btn:not(.btn-primary):not(.btn-ghost):not(.att-btn) {
+    background: var(--glass) !important;
+    border: 1px solid var(--glass-line) !important;
+    box-shadow: var(--glass-shadow) !important;
+    color: var(--ink) !important;
+}
 
 /* ما بداخل الزجاج كان أبيضَ على بترول — يصير أسود */
 body.theme-calm .hub-featured *,
@@ -86,12 +112,13 @@ body.theme-calm .hub-featured-sub { opacity: .7; }
 
 /* الشريطُ السفليّ: الخانةُ النشطة زجاجٌ فوق الزجاج بخطٍّ أسود رفيع
    لتُرى، والحرفُ أسود. */
-body.theme-calm .bottom-nav .bn-item { color: #444; }
+body.theme-calm .bottom-nav .bn-item { color: #8A919B; }
 body.theme-calm .bottom-nav .bn-item.is-active { color: var(--ink); }
+body.theme-calm .bottom-nav .bn-item.is-active svg.ci { stroke: var(--ink); }
 body.theme-calm .bottom-nav .bn-item.is-active::before {
     background: var(--glass-2);
     border: 1px solid var(--glass-line);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .06), inset 0 1px 0 rgba(255, 255, 255, .9);
+    box-shadow: var(--glass-shadow);
 }
 
 /* الجدول: عمودُ الحصص ورؤوسُ الأيام زجاجٌ بحرفٍ أسود */
@@ -140,8 +167,11 @@ body.theme-calm svg.ci {
     width: 1.05em; height: 1.05em;
     vertical-align: -0.18em;
     fill: none !important;
-    stroke: var(--ink);
-    stroke-width: 1.75;
+    stroke: var(--ink-icon);
+    stroke-width: 1.6;
+    /* نقشٌ ناعم: ظلٌّ أبيض من فوق وظلٌّ رماديٌّ رقيق من تحت — يرفع الخطَّ
+       عن السطح دون أن يملأه. */
+    filter: drop-shadow(0 -1px 0 rgba(255,255,255,.9)) drop-shadow(0 1.5px 1.5px rgba(16,24,40,.22));
     stroke-linecap: round;
     stroke-linejoin: round;
     display: inline-block;
@@ -169,8 +199,8 @@ body.theme-calm .btn-danger svg.ci, body.theme-calm .text-danger svg.ci { stroke
     backdrop-filter: blur(16px) saturate(160%);
     box-shadow: 0 6px 18px rgba(16, 24, 40, .14);
     font-family: inherit; font-size: 12px; font-weight: 700;
-    color: #111; cursor: pointer;
+    color: #4E5560; cursor: pointer;
 }
 #calm-switch[hidden] { display: none !important; }
 #calm-switch .dot { width: 9px; height: 9px; border-radius: 50%; background: #B8BDBD; }
-body.theme-calm #calm-switch .dot { background: #111; }
+body.theme-calm #calm-switch .dot { background: #767E89; }
