@@ -59,23 +59,57 @@
     .demo .classes-fab { position: static; inset: auto; padding: 0; }
     .under { border-radius: 24px; padding: 9px;
              background: linear-gradient(135deg, #EDEAE2 0%, #DDE7EA 55%, #CFDDE2 100%); }
+    .mock { background: linear-gradient(160deg,#EEF1F0 0%,#E4EBEC 100%);
+            border-radius: 20px; padding: 13px; }
+    .mock-card { background: #fff; border: 1.5px solid var(--border);
+                 border-radius: 16px; padding: 14px 13px; }
+    .mock-h { font-size: 15px; font-weight: var(--fw-bold); color: var(--ink-primary);
+              margin-bottom: 11px; }
     .bar { position: static; display: flex; inset-inline: auto; bottom: auto; z-index: auto; margin: 0; }
 </style>
 </head>
 <body>
 <div class="pv">
     <h1>البترول والماء</h1>
-    <p class="lede">اختر معالجةً فيتغيّر كلُّ شيءٍ أمامك في اللحظة.</p>
+    <p class="lede">تفتح على <b>الماء الخفيف</b> والأفعالُ معه. اختر معالجةً فيتغيّر كلُّ شيءٍ في اللحظة — و«الحالي» للمقارنة.</p>
 
     <div class="ctl">
         <div class="ctl-t">المعالجة</div>
         <div class="picks" id="picks"></div>
         <label class="sw">
-            <input type="checkbox" id="acts">
+            <input type="checkbox" id="acts" checked>
             <span>طبّقها على أزرار الفعل أيضاً
                 <small>إضافة فصل · إضافة طالب · رفع الجدول · حفظ</small></span>
         </label>
         <p class="say" id="say"></p>
+    </div>
+
+    <div class="grp">
+        <div class="grp-h">شاشةٌ كما يراها المعلّم <span class="n">— احكم هنا لا في القائمة</span></div>
+        <div class="mock">
+            <div class="mock-card">
+                <div class="mock-h">إضافة فصل</div>
+                <div class="field" style="margin-bottom:12px">
+                    <label class="label">الصف</label>
+                    <input class="input" value="الصف الخامس الابتدائي" readonly>
+                </div>
+                <div style="display:flex;gap:7px;margin-bottom:14px">
+                    <span class="chip active">ابتدائي</span>
+                    <span class="chip">متوسط</span>
+                    <span class="chip">ثانوي</span>
+                </div>
+                <div style="display:flex;gap:9px">
+                    <button class="btn btn-primary">حفظ</button>
+                    <button class="btn btn-ghost">إلغاء</button>
+                </div>
+            </div>
+            <div class="classes-fab" style="position:static;padding:0;margin-top:13px">
+                <button class="start-cta">+ إضافة فصل جديد</button>
+            </div>
+            <div class="under" style="margin-top:13px">
+                <nav class="bottom-nav bar" id="nv2"></nav>
+            </div>
+        </div>
     </div>
 
     <div id="out"></div>
@@ -170,7 +204,7 @@
 
     const style = document.createElement('style');
     document.head.appendChild(style);
-    let pick = 'cur';
+    let pick = 'أ';
 
     function paint() {
         const v = V[pick];
@@ -198,9 +232,21 @@
         paint();
     });
     document.getElementById('acts').addEventListener('change', paint);
-    document.querySelector('#picks button').classList.add('on');
+    [...document.querySelectorAll('#picks button')]
+        .find((b) => b.dataset.k === pick).classList.add('on');
 
-    /* الشريطُ يعمل كما في التطبيق */
+    /* شريطُ الشاشة يُبنى بالمَتن نفسِه — نسخةٌ واحدةٌ للاثنين. */
+    const NAV = [['🏠','الرئيسية'],['👥','الفصول'],['📅','الجدول'],['📁','إنجاز'],['⚙️','الإعدادات']];
+    document.getElementById('nv2').innerHTML = NAV.map((it, k) =>
+        '<a href="javascript:void 0" class="bn-item' + (k === 2 ? ' is-active' : '')
+        + '"><span class="bn-icon">' + it[0] + '</span><span class="bn-label">'
+        + it[1] + '</span></a>').join('');
+    const navTap = (e) => {
+        const a = e.target.closest('.bn-item'); if (!a) return;
+        a.parentElement.querySelectorAll('.bn-item').forEach((x) => x.classList.remove('is-active'));
+        a.classList.add('is-active');
+    };
+    document.getElementById('nv2').addEventListener('click', navTap);
     document.getElementById('nv').addEventListener('click', (e) => {
         const a = e.target.closest('.bn-item'); if (!a) return;
         a.parentElement.querySelectorAll('.bn-item').forEach((x) => x.classList.remove('is-active'));
