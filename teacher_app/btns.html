@@ -30,6 +30,16 @@
         border:1.5px solid var(--border); background:var(--surface); color:var(--ink-primary); }
     .picks button.on { background:var(--primary); border-color:var(--primary); color:#fff; }
 
+    .tone { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .tone-t { display:flex; justify-content:space-between; align-items:baseline;
+              font-size:12px; font-weight:var(--fw-bold); color:var(--ink-primary); margin-bottom:7px; }
+    .tone-t span { font-size:11px; font-weight:500; color:var(--text-muted); }
+    .tone-r { display:flex; gap:6px; }
+    .tone-r button { flex:1; height:38px; border-radius:10px; cursor:pointer;
+        border:2px solid transparent; font-family:inherit; font-size:11px;
+        font-weight:var(--fw-bold); color:#fff; }
+    .tone-r button.on { border-color:#111; }
+
     .grp { margin: 0 0 22px; }
     .grp-h { font-size:13.5px; font-weight:var(--fw-bold); color:var(--ink-primary);
              border-bottom:1.5px solid var(--border); padding-bottom:6px; margin-bottom:11px; }
@@ -60,6 +70,11 @@
         <div class="picks">
             <button id="b-new" class="on">رأيي</button>
             <button id="b-cur">الحالي</button>
+        </div>
+        <div class="tone">
+            <div class="tone-t">درجةُ الكحليّ في الزرّ الممتلئ
+                <span id="tv">#15606F · ٧٫٢:١</span></div>
+            <div class="tone-r" id="tones"></div>
         </div>
     </div>
 
@@ -140,17 +155,42 @@
     const style = document.createElement('style');
     document.head.appendChild(style);
 
-    const CSS = SOFT.join(',') + '{background:rgba(10,63,74,.12) !important;color:#0A3F4A !important;'
+    /* درجاتُ الكحليّ — ونسبةُ الحرف الأبيض عليها محسوبةٌ لا مقدَّرة.
+       ولا يُنزَل تحت ‎٤٫٥:١‎: هناك يسقط الحرفُ عن حدّ آبل والوِب معاً. */
+    const TONES = [
+        { h: '#0A3F4A', t: 'الحالي', r: '١١٫٥' },
+        { h: '#104E5B', t: 'أخفّ',   r: '٩٫٣'  },
+        { h: '#15606F', t: 'أخفّ+',  r: '٧٫٢'  },
+        { h: '#1A6B7C', t: 'أخفّ++', r: '٦٫١'  },
+        { h: '#21808F', t: 'الحدّ',  r: '٤٫٦'  }
+    ];
+    let tone = '#15606F';
+
+    const buildCss = () => SOFT.join(',') + '{background:rgba(10,63,74,.12) !important;color:#0A3F4A !important;'
         + 'border-color:transparent !important;box-shadow:none !important;}'
         /* الفعلُ البارزُ يبقى كما هو — يُذكر صراحةً لئلّا يُظنّ منسيّاً. */
-        + PROMINENT.join(',') + '{background:#0A3F4A !important;color:#fff !important;}'
+        + PROMINENT.join(',') + '{background:' + tone + ' !important;color:#fff !important;}'
         /* داخلَ الزجاج: امتلاءٌ أبيضُ بظلٍّ رفيع، لا زجاجٌ ثانٍ. */
         + '.bottom-nav .bn-item.is-active{color:#0A3F4A !important;}'
         + '.bottom-nav .bn-item.is-active::before{background:rgba(255,255,255,.95) !important;'
         + 'box-shadow:0 1px 3px rgba(16,24,40,.16) !important;}';
 
     let on = true;
-    const paint = () => { style.textContent = on ? CSS : ''; };
+    const paint = () => { style.textContent = on ? buildCss() : ''; };
+
+    const TR = document.getElementById('tones');
+    TR.innerHTML = TONES.map((t) =>
+        '<button data-h="' + t.h + '" style="background:' + t.h + '">' + t.t + '</button>').join('');
+    TR.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-h]'); if (!b) return;
+        tone = b.dataset.h;
+        const m = TONES.find((t) => t.h === tone);
+        document.getElementById('tv').textContent = tone + ' · ' + m.r + ':١';
+        [...TR.children].forEach((x) => x.classList.toggle('on', x === b));
+        if (!on) { document.getElementById('b-new').click(); }
+        paint();
+    });
+    [...TR.children].find((b) => b.dataset.h === tone).classList.add('on');
     document.getElementById('b-new').addEventListener('click', function () {
         on = true; this.classList.add('on'); document.getElementById('b-cur').classList.remove('on'); paint(); });
     document.getElementById('b-cur').addEventListener('click', function () {
