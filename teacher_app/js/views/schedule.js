@@ -494,14 +494,23 @@
 
         const form = document.createElement('div');
         form.innerHTML = `
-            <div class="field">
-                <label class="label" for="sched-file">صورة الجدول أو ملف PDF</label>
-                <input class="input" id="sched-file" type="file" accept="image/*,.pdf">
-                <div class="field-hint">
-                    صوّر جدولك المطبوع أو ارفعه ملفاً — تبدأ القراءة فور اختياره.
-                    وتُعرض عليك الخانات قبل الحفظ، فلن يتغيّر جدولك حتى تؤكّد.
-                </div>
-            </div>
+            <!-- زرُّ الرفع نفسُه المستعمَل في كشف الطلاب (stu-up)، لا حقلُ
+                 المتصفّح الخام: كان رماديّاً بخطٍّ لاتينيٍّ ونصٍّ من النظام
+                 («لم يتمّ اختيار أيّ ملفّ») — غريباً عن كلّ ما حوله.
+
+                 والشرحُ في داخله لا في field-hint: المظهرُ الأبيض يُخفي
+                 كلَّ field-hint بـ!important، فما كُتب فيها لا يُرى أصلاً.
+                 (كُشف بالمعاينة ٣٠ أغسطس ٢٠٢٦.)
+                 ولا شَرَطاتٍ مائلةً هنا — التعليقُ داخل قالبٍ نصّيّ. -->
+            <button type="button" class="stu-up" id="sched-up">
+                <span class="ic">📄</span>
+                <span class="tx">
+                    <span class="t">صورة الجدول أو ملف PDF</span>
+                    <span class="s">تبدأ القراءة فور اختياره</span>
+                </span>
+                <span class="chev" aria-hidden="true">❮</span>
+            </button>
+            <input type="file" id="sched-file" hidden accept="image/*,.pdf">
             <div id="imp-result"></div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
                 <button type="button" class="btn btn-primary" id="imp-go" hidden>أعد القراءة</button>
@@ -520,8 +529,19 @@
 
            والزرُّ يبقى مخفيّاً، ولا يظهر إلا بعد إخفاقٍ — «أعد القراءة» —
            فلا يُترك المعلّم بلا سبيلٍ إن انقطع اتّصالٌ في منتصف الطريق. */
-        form.querySelector('#sched-file').addEventListener('change', () => start());
+        const upBtn = form.querySelector('#sched-up');
+        upBtn.addEventListener('click', () => form.querySelector('#sched-file').click());
+        form.querySelector('#sched-file').addEventListener('change', () => { showPicked(); start(); });
         goBtn.addEventListener('click', () => start());
+
+        /** يكتب اسمَ الملفّ في الزرّ — فيرى المعلّم ما اختاره. */
+        function showPicked() {
+            const f = form.querySelector('#sched-file').files[0];
+            if (!f) return;
+            upBtn.querySelector('.ic').textContent = '✓';
+            upBtn.querySelector('.t').textContent  = f.name;
+            upBtn.querySelector('.s').textContent  = 'اضغط لاختيار ملفٍ آخر';
+        }
 
         /** يُظهر سطرَ انتظارٍ في مكان النتيجة — يُرى قبل أن يبدأ العمل. */
         function waiting(msg) {

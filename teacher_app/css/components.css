@@ -177,6 +177,12 @@
     padding: var(--space-8);
 }
 
+/* `[hidden]` وحدَها لا تكفي زرّاً: قاعدةُ المتصفّح `[hidden]{display:none}`
+   عامّةٌ، و`.btn{display:flex}` أخصُّ منها فتغلبها — فيبقى الزرُّ ظاهراً
+   وقد وُضع ليختفي. (كُشف بالمعاينة ٣٠ أغسطس ٢٠٢٦: «أعد القراءة» يظهر
+   في كلّ مرّة وهو للإخفاق وحدَه.) */
+.btn[hidden] { display: none !important; }
+
 /* ---------- Toasts ---------- */
 .toast-container {
     position: fixed;
