@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>معاينة: بترولٌ شفّاف</title>
+<title>معاينة: الأبيضُ الزجاجيّ — طريقةُ آبل</title>
 
 <link rel="stylesheet" href="css/fonts.css?v=2">
 <link rel="stylesheet" href="css/main.css?v=D32">
@@ -18,197 +18,165 @@
     .pv h1 { font-size: 19px; margin: 14px 0 4px; }
     .pv .lede { font-size: 12.5px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.85; }
 
-    .ctl { position: sticky; top: 0; z-index: 50;
-           background: var(--surface); border: 1.5px solid var(--border);
-           border-radius: 16px; padding: 12px; margin: 0 0 18px;
-           box-shadow: 0 6px 18px rgba(16,24,40,.08); }
-    .ctl-t { display: flex; align-items: baseline; justify-content: space-between;
-             font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
-             margin-bottom: 9px; }
-    .ctl-t .v { font-size: 17px; color: var(--primary); }
+    .ctl { position: sticky; top: 0; z-index: 50; background: var(--surface);
+           border: 1.5px solid var(--border); border-radius: 16px; padding: 12px;
+           margin: 0 0 16px; box-shadow: 0 6px 18px rgba(16,24,40,.08); }
+    .ctl-t { display:flex; justify-content:space-between; align-items:baseline;
+             font-size: 12.5px; font-weight: var(--fw-bold); color: var(--ink-primary); margin-bottom: 8px; }
     .ctl-t .ver { font-size: 11px; font-weight: 500; color: var(--text-muted); }
-    input[type=range] { width: 100%; accent-color: #0A3F4A; height: 30px; }
-    .ends { display: flex; justify-content: space-between;
-            font-size: 11px; color: var(--text-muted); margin-top: -4px; }
-    .cmp { display: flex; gap: 7px; margin-top: 11px; padding-top: 10px;
-           border-top: 1px solid var(--border); }
-    .cmp button { flex: 1; min-height: 40px; border-radius: 11px; cursor: pointer;
-        font-family: inherit; font-size: 13px; font-weight: var(--fw-bold);
+    .picks { display: flex; gap: 6px; }
+    .picks button { flex: 1; min-height: 44px; border-radius: 11px; cursor: pointer;
+        font-family: inherit; font-size: 12.5px; font-weight: var(--fw-bold); padding: 0 2px;
         border: 1.5px solid var(--border); background: var(--surface); color: var(--ink-primary); }
-    .cmp button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .picks button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .say { font-size: 12px; color: var(--text-muted); line-height: 1.85; margin: 9px 2px 0; }
 
-    .grp { margin: 0 0 24px; }
+    .grp { margin: 0 0 22px; }
     .grp-h { font-size: 13.5px; font-weight: var(--fw-bold); color: var(--ink-primary);
              border-bottom: 1.5px solid var(--border); padding-bottom: 6px; margin-bottom: 11px; }
     .grp-h .n { color: var(--text-muted); font-weight: 500; font-size: 11.5px; }
-    .row { display: flex; align-items: center; gap: 12px; padding: 10px 0;
-           border-bottom: 1px solid var(--border); }
-    .row:last-child { border-bottom: 0; }
-    .row .demo { flex: none; }
-    .row .meta { flex: 1; min-width: 0; }
-    .row .nm { font-size: 12px; font-weight: var(--fw-bold); color: var(--ink-primary); }
-    .row .wh { font-size: 11px; color: var(--text-muted); line-height: 1.65; margin-top: 1px; }
-    .demo .sched-table { width: auto; }
+
     .mock { background: linear-gradient(160deg,#EEF1F0 0%,#E4EBEC 100%);
             border-radius: 20px; padding: 13px; }
     .mock-card { background: #fff; border: 1.5px solid var(--border);
                  border-radius: 16px; padding: 14px 13px; }
-    .mock-h { font-size: 15px; font-weight: var(--fw-bold); color: var(--ink-primary);
-              margin-bottom: 11px; }
+    .mock-h { font-size: 15px; font-weight: var(--fw-bold); color: var(--ink-primary); margin-bottom: 11px; }
+    /* أرضيّةٌ ذاتُ محتوى — الزجاجُ لا يُقرأ زجاجاً إلا فوق شيء */
+    .photo { border-radius: 20px; padding: 16px 13px;
+             background:
+               radial-gradient(circle at 22% 28%, #F2C14E 0 60px, transparent 61px),
+               radial-gradient(circle at 74% 18%, #5B8E7D 0 78px, transparent 79px),
+               radial-gradient(circle at 55% 82%, #BC4B51 0 66px, transparent 67px),
+               linear-gradient(150deg, #10424E 0%, #1E6B7A 55%, #8FB8C4 100%); }
+    .photo .lbl { color: #fff; font-size: 11.5px; font-weight: var(--fw-bold);
+                  opacity: .92; margin-bottom: 9px; }
     .under { border-radius: 24px; padding: 9px;
              background: linear-gradient(135deg, #EDEAE2 0%, #DDE7EA 55%, #CFDDE2 100%); }
-    .bar { position: static; display: flex; inset-inline: auto; bottom: auto;
-           z-index: auto; margin: 0; }
+    .bar { position: static; display: flex; inset-inline: auto; bottom: auto; z-index: auto; margin: 0; }
+    .note { font-size: 11.5px; color: var(--text-muted); line-height: 1.8; margin: 8px 2px 0; }
 </style>
 </head>
 <body>
 <div class="pv">
-    <h1>بترولٌ شفّاف</h1>
-    <p class="lede">
-        التصميمُ كما هو — لا حوافَّ ولا تغييرَ شكل. البترولُ وحدَه يصير
-        شفّافاً. حرّك المِقبض حتى ترضى.
-    </p>
+    <h1>الأبيضُ الزجاجيّ — طريقةُ آبل</h1>
+    <p class="lede">بحثتُ في إرشادات آبل. اختر معالجةً، وانظر الشاشتين: بيضاءَ وفوق محتوى.</p>
 
     <div class="ctl">
-        <div class="ctl-t">
-            <span>شفافيّة البترول <span class="v" id="pct">٨٪</span></span>
-            <span class="ver">مِقبض · ١ سبتمبر</span>
-        </div>
-        <input type="range" id="rng" min="3" max="30" step="1" value="8">
-        <div class="ends"><span>أشفُّ</span><span>أوضح</span></div>
-        <div class="cmp">
-            <button id="b-soft" class="on">شفّاف</button>
-            <button id="b-cur">الحالي — للمقارنة</button>
-        </div>
+        <div class="ctl-t"><span>المعالجة</span><span class="ver">زجاج · ١ سبتمبر</span></div>
+        <div class="picks" id="picks"></div>
+        <p class="say" id="say"></p>
     </div>
 
     <div class="grp">
-        <div class="grp-h">شاشةٌ كما يراها المعلّم <span class="n">— احكم هنا</span></div>
-        <div class="mock">
-            <div class="mock-card">
-                <div class="mock-h">إضافة فصل</div>
-                <div class="field" style="margin-bottom:12px">
-                    <label class="label">الصف</label>
-                    <input class="input" value="الصف الخامس الابتدائي" readonly>
-                </div>
-                <div style="display:flex;gap:7px;margin-bottom:14px">
-                    <span class="chip active">ابتدائي</span>
-                    <span class="chip">متوسط</span>
-                    <span class="chip">ثانوي</span>
-                </div>
-                <div style="display:flex;gap:9px">
-                    <button class="btn btn-primary">حفظ</button>
-                    <button class="btn btn-ghost">إلغاء</button>
-                </div>
-            </div>
-            <div class="classes-fab" style="position:static;padding:0;margin-top:13px">
-                <button class="start-cta">+ إضافة فصل جديد</button>
-            </div>
-            <div class="under" style="margin-top:13px">
-                <nav class="bottom-nav bar" id="nv2"></nav>
-            </div>
-        </div>
+        <div class="grp-h">شاشةٌ بيضاء <span class="n">— أكثرُ شاشات تطبيقك</span></div>
+        <div class="mock" id="m1"></div>
     </div>
 
-    <div id="out"></div>
+    <div class="grp">
+        <div class="grp-h">فوق محتوى <span class="n">— حيث يعيش زجاجُ آبل</span></div>
+        <div class="photo" id="m2"><div class="lbl">صورةٌ أو محتوى خلف العنصر</div></div>
+        <p class="note" id="note"></p>
+    </div>
 </div>
 
 <script>
 (function () {
     'use strict';
-    const AR = (n) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
-
-    const STATE = ['.chip.active', '.tab.active', '.tf-chip.on', '.att-btn.active',
-                   '.hint-go', '.br-jump-row .go', '.sch-chip.on', '.fchip.on',
-                   '.subp-chip', '.subp-other-go', '.sheet-tab.on', '.stg-btn.main',
-                   '.sched-edit-btn.on', '.mvs-tab.on', '.sched-table td.sched-per'];
-    const ACTION = ['.btn-primary', '.start-cta', '.reg-add'];
-
     const NAV = [['🏠','الرئيسية'],['👥','الفصول'],['📅','الجدول'],['📁','إنجاز'],['⚙️','الإعدادات']];
-    const navHtml = (act) => NAV.map((it, k) =>
-        '<a href="javascript:void 0" class="bn-item' + (k === act ? ' is-active' : '')
-        + '"><span class="bn-icon">' + it[0] + '</span><span class="bn-label">'
-        + it[1] + '</span></a>').join('');
+    const navHtml = () => NAV.map((it,k)=>'<a href="javascript:void 0" class="bn-item'
+        + (k===2?' is-active':'') + '"><span class="bn-icon">'+it[0]
+        + '</span><span class="bn-label">'+it[1]+'</span></a>').join('');
 
-    const G = [
-        ['أزرارُ الإضافة', [
-            ['<div class="classes-fab" style="position:static;padding:0"><button class="start-cta">+ إضافة فصل جديد</button></div>', '.start-cta', 'شاشةُ الفصول'],
-            ['<button class="btn reg-add">+ إضافة الطلاب</button>', '.reg-add', 'رأسُ سجلّ الطلاب'],
-            ['<div class="classes-fab" style="position:static;padding:0"><a href="javascript:void 0" class="start-cta">+ ارفع جدولك الأسبوعي</a></div>', '.start-cta', 'الرئيسيّة']
-        ]],
-        ['الزرُّ الأساسيّ', [
-            ['<button class="btn btn-primary">حفظ</button>', '.btn-primary', 'كلُّ نافذةٍ ونموذج']
-        ]],
-        ['الشريطُ السفليّ', [
-            ['<div class="under"><nav class="bottom-nav bar" id="nv">' + navHtml(2) + '</nav></div>',
-             '.bn-item.is-active', 'اضغط أيَّ خانة']
-        ]],
-        ['حبّاتٌ مختارة', [
-            ['<span class="chip active">مختارة</span>', '.chip.active', 'مرشّحات'],
-            ['<span class="tab active">تبويب</span>', '.tab.active', 'تبويباتُ الفصل'],
-            ['<span class="tf-chip on">الفصل الأول</span>', '.tf-chip.on', 'الفصل الدراسيّ'],
-            ['<button class="att-btn active">حاضر</button>', '.att-btn.active', 'أزرارُ الحضور'],
-            ['<button class="hint-go">ابدأ</button>', '.hint-go', 'التلميحات'],
-            ['<span class="br-jump-row"><button class="go">اذهب</button></span>', '.br-jump-row .go', 'قارئ الكتب']
-        ]],
-        ['حبّاتٌ متدرّجة', [
-            ['<span class="sch-chip on">أ</span>', '.sch-chip.on', 'الشُّعَب'],
-            ['<span class="fchip on">ابتدائي</span>', '.fchip.on', 'المرحلة'],
-            ['<span class="subp-chip">الرياضيات</span>', '.subp-chip', 'منتقي المواد'],
-            ['<button class="subp-other-go">تم</button>', '.subp-other-go', 'مادّةٌ أخرى'],
-            ['<span class="sheet-tab on">ورقة ١</span>', '.sheet-tab.on', 'تبويباتُ إكسل'],
-            ['<button class="stg-btn main">طبّقتها</button>', '.stg-btn.main', 'الاستراتيجيّة']
-        ]],
-        ['أشرطةٌ وتبويبات', [
-            ['<button class="sched-edit-btn on">✎ تعديل</button>', '.sched-edit-btn.on', 'شريطُ الجدول'],
-            ['<span class="mvs-tab on">الرؤية</span>', '.mvs-tab.on', 'الرسالة والرؤية'],
-            ['<table class="sched-table"><tr><td class="sched-per">١<br><small>07:00</small></td></tr></table>', 'td.sched-per', 'عمودُ الحصص']
-        ]]
-    ];
+    const screen = (id) => `
+        <div class="mock-card">
+            <div class="mock-h">إضافة فصل</div>
+            <div style="display:flex;gap:7px;margin-bottom:13px">
+                <span class="chip active">ابتدائي</span><span class="chip">متوسط</span><span class="chip">ثانوي</span>
+            </div>
+            <div style="display:flex;gap:9px">
+                <button class="btn btn-primary">حفظ</button>
+                <button class="btn btn-ghost">إلغاء</button>
+            </div>
+        </div>
+        <div class="classes-fab" style="position:static;padding:0;margin-top:12px">
+            <button class="start-cta">+ إضافة فصل جديد</button>
+        </div>
+        <div class="under" style="margin-top:12px">
+            <nav class="bottom-nav bar">${navHtml()}</nav>
+        </div>`;
 
-    document.getElementById('out').innerHTML = G.map(([t, rows]) => `
-        <div class="grp"><div class="grp-h">${t} <span class="n">— ${rows.length}</span></div>
-        ${rows.map(([h, c, w]) => `<div class="row"><div class="demo">${h}</div>
-          <div class="meta"><div class="nm">${c}</div><div class="wh">${w}</div></div></div>`).join('')}
-        </div>`).join('');
-    document.getElementById('nv2').innerHTML = navHtml(2);
+    document.getElementById('m1').innerHTML = screen();
+    document.getElementById('m2').insertAdjacentHTML('beforeend',
+        '<div style="display:flex;gap:9px;margin-bottom:12px">'
+        + '<button class="btn btn-primary">حفظ</button>'
+        + '<button class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.5)">إلغاء</button></div>'
+        + '<div class="classes-fab" style="position:static;padding:0"><button class="start-cta">+ إضافة فصل جديد</button></div>'
+        + '<div style="margin-top:12px"><nav class="bottom-nav bar">' + navHtml() + '</nav></div>');
+
+    const SEL = ['.btn-primary', '.start-cta', '.reg-add', '.chip.active', '.tab.active',
+                 '.tf-chip.on', '.att-btn.active', '.sch-chip.on', '.fchip.on', '.subp-chip',
+                 '.sheet-tab.on', '.stg-btn.main', '.sched-edit-btn.on', '.mvs-tab.on',
+                 '.sched-table td.sched-per'].join(',');
+
+    const V = {
+        cur: { t: 'الحالي', say: 'بتروليٌّ مصمتٌ بحروفٍ بيضاء — الحالُ اليوم.', css: null,
+               note: 'الأزرارُ تُرى في الحالتين، لأنّ اللونَ مصمت.' },
+        clear: { t: 'زجاجٌ صافٍ', say: 'أبيضُ آبل الصافي: ‎٥٥٪‎ بياضٍ وضبابٌ خلفه، بلا حافّة.',
+            css: 'background:rgba(255,255,255,.55) !important;-webkit-backdrop-filter:blur(20px) saturate(180%) !important;'
+               + 'backdrop-filter:blur(20px) saturate(180%) !important;color:#0A3F4A !important;'
+               + 'border-color:transparent !important;box-shadow:none !important;',
+            note: '⚠️ انظر الشاشةَ البيضاء: الزرُّ يكاد يختفي — أبيضُ فوق أبيضَ لا شيءَ يشفّ عنه. وفوق المحتوى يظهر.' },
+        edge: { t: 'زجاجٌ بحافّة', say: 'الزجاجُ نفسُه، ومعه خيطٌ أبيضُ لامعٌ وظلٌّ — كأشرطة آبل العائمة.',
+            css: 'background:rgba(255,255,255,.62) !important;-webkit-backdrop-filter:blur(24px) saturate(190%) !important;'
+               + 'backdrop-filter:blur(24px) saturate(190%) !important;color:#0A3F4A !important;'
+               + 'border:1px solid rgba(255,255,255,.7) !important;'
+               + 'box-shadow:0 4px 14px rgba(16,24,40,.14), inset 0 1px 0 rgba(255,255,255,.85) !important;',
+            note: 'الحافّةُ والظلُّ هما ما يجعلانه يُرى على الأبيض — وهما في كلّ زجاجٍ عند آبل، ليسا زينة.' },
+        apple: { t: 'قاعدةُ آبل', say: 'الزجاجُ للحاوية، والأزرارُ بداخلها **ممتلئة**. وعلى البطاقات: لونٌ خفيفٌ لا زجاج.',
+            css: null, apple: true,
+            note: 'إرشادُ آبل صريح: لا تُركّب زجاجاً على زجاج — الأزرارُ داخل الزجاج تُملأ. وشريطُك السفليُّ زجاجٌ أصلاً.' }
+    };
 
     const style = document.createElement('style');
     document.head.appendChild(style);
-    let soft = true;
+    let pick = 'clear';
 
     function paint() {
-        const a = +document.getElementById('rng').value;
-        document.getElementById('pct').textContent = AR(a) + '٪';
-        if (!soft) { style.textContent = ''; return; }
-        /* لا حافّةَ ولا ظلّ: التصميمُ كما هو، واللونُ وحدَه يشفّ. */
-        const bg = 'rgba(10,63,74,.' + (a < 10 ? '0' + a : a) + ')';
-        const put = (sel) => sel + '{background:' + bg + ' !important;color:#0A3F4A !important;'
-            + 'border-color:transparent !important;box-shadow:none !important;}';
-        style.textContent = put(STATE.concat(ACTION).join(','))
+        const v = V[pick];
+        document.getElementById('say').innerHTML = v.say.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+        document.getElementById('note').textContent = v.note;
+        if (v.apple) {
+            /* الحاويةُ زجاج (الشريط كما هو)، وما بداخلها يُملأ بلونٍ خفيفٍ ثابت. */
+            style.textContent =
+                SEL + '{background:rgba(10,63,74,.10) !important;color:#0A3F4A !important;'
+                + 'border-color:transparent !important;box-shadow:none !important;'
+                + 'backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}'
+                + '.bottom-nav .bn-item.is-active{color:#0A3F4A !important;}'
+                + '.bottom-nav .bn-item.is-active::before{background:rgba(255,255,255,.92) !important;'
+                + 'box-shadow:0 2px 6px rgba(16,24,40,.12) !important;}';
+            return;
+        }
+        if (!v.css) { style.textContent = ''; return; }
+        style.textContent = SEL + '{' + v.css + '}'
             + '.bottom-nav .bn-item.is-active{color:#0A3F4A !important;}'
-            + '.bottom-nav .bn-item.is-active::before{background:' + bg
-            + ' !important;box-shadow:none !important;}';
+            + '.bottom-nav .bn-item.is-active::before{' + v.css + '}';
     }
 
-    document.getElementById('rng').addEventListener('input', () => {
-        if (!soft) { soft = true; flip(); }
+    const P = document.getElementById('picks');
+    P.innerHTML = Object.keys(V).map((k) => '<button data-k="'+k+'">'+V[k].t+'</button>').join('');
+    P.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-k]'); if (!b) return;
+        pick = b.dataset.k;
+        [...P.children].forEach((x) => x.classList.toggle('on', x === b));
         paint();
     });
-    function flip() {
-        document.getElementById('b-soft').classList.toggle('on', soft);
-        document.getElementById('b-cur').classList.toggle('on', !soft);
-    }
-    document.getElementById('b-soft').addEventListener('click', () => { soft = true;  flip(); paint(); });
-    document.getElementById('b-cur') .addEventListener('click', () => { soft = false; flip(); paint(); });
+    [...P.children].find((b) => b.dataset.k === pick).classList.add('on');
 
-    document.getElementById('out').addEventListener('click', navTap);
-    document.getElementById('nv2').addEventListener('click', navTap);
-    function navTap(e) {
+    document.addEventListener('click', (e) => {
         const a = e.target.closest('.bn-item'); if (!a) return;
         a.parentElement.querySelectorAll('.bn-item').forEach((x) => x.classList.remove('is-active'));
         a.classList.add('is-active');
-    }
+    });
     paint();
 })();
 </script>
