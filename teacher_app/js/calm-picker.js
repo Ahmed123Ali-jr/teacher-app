@@ -1,38 +1,37 @@
 /* ==========================================================================
-   calm-picker.js — شريطُ ألوانٍ مرقّمٌ أسفلَ الشاشة يبدّل لونَ الأزرار الرئيسيّة
+   calm-picker.js — لوحةُ ألوانٍ منطويةٌ تبدّل لونَ التطبيق فوراً
    ==========================================================================
-   طلبُ المستخدم (٢ سبتمبر ٢٠٢٦): «قائمةٌ كبيرةٌ من الألوان تحت الشاشة، أضغطها
-   فتتعدّل ألوانُ الأزرار، وأختار المناسبَ بالرقم».
+   طلبُ المستخدم (٢ سبتمبر ٢٠٢٦، الطلبُ التاسع): «الأبيضُ بكلّ درجاته والأسودُ
+   والأزرقُ والأصفرُ والأخضرُ والأحمرُ بجميع درجاتها ولو كانت ألفَ لون، ومعها
+   خيارا الإشباع والإضاءة — ولا تغطّي المعاينة».
 
-   أداةُ معاينةٍ لا شاشةُ معلّم: تظهر فقط مع مفتاح ?calm=1، وتحفظ اختيارَه
-   في localStorage['calm_pri'] ليبقى وهو يتنقّل بين الشاشات. اللونُ الواحد
-   يُشتقّ منه التدرّجُ كلُّه في CSS (color-mix) — فتغييرُ رمزٍ واحدٍ
-   `--pri` يعيد رسمَ كلّ زرٍّ رئيسيّ.
+   فاللوحةُ **منطويةٌ في زرٍّ واحد** صغيرٍ عند أسفل اليسار؛ تُفتح لتختار
+   ثمّ تُطوى بزرّ «إخفاء» — والتطبيقُ كلُّه ظاهرٌ وأنت تُقارن.
 
-   كلُّ الألوان داكنةٌ بما يكفي ليقرأ الأبيضُ عليها ‎≥ ٤٫٥:١‎ (قِيست عند
-   الاختيار). الأسماءُ للتعرّف لا للحسم — الحسمُ بالرقم.
+   الدرجات تُولَّد لا تُكتب: لكلّ عائلةٍ صبغةٌ ثابتة، وتُمشّى على الإضاءة
+   من ٤ إلى ٩٦ بخطوة ٢، وعلى ثلاث درجاتٍ من الإشباع (خافت/متوسّط/مشبع) —
+   ‎١٤١‎ درجةً للعائلة، ‎٧٠٥‎ للملوّنة الخمس + ‎٩٤‎ للأبيض والأسود (رماديّاتٌ
+   محايدةٌ من ٠ إلى ١٠٠). كلُّ درجةٍ لها رقمٌ ثابت يُختار به.
+
+   والمنزلقان يعدّلان الدرجةَ المختارة نفسَها (الصبغةُ تبقى)، فيرى الرقمَ
+   ثمّ يضبطه بيده. وحرفُ الزرّ يُقلب آليّاً: أبيضُ على الغامق، وداكنٌ على
+   الفاتح — فلا تسقط القراءةُ مهما فتّح.
+
+   يُحفظ الاختيارُ في localStorage['calm_pri2'] = {hue, sat, light, n}.
    ========================================================================== */
 (function (global) {
     'use strict';
 
-    /* (الطلبُ السابع) درجاتٌ متسلسلةٌ لكلّ لونٍ أساسيّ بدل ألوانٍ متفرّقة:
-       كلُّ مجموعةٍ صبغةٌ واحدة (hue) تُمشّى على السطوع من الغامق إلى الأفتح.
-       وتُحذف آليّاً كلُّ درجةٍ لا يقرأ الأبيضُ عليها ‎٤٫٥:١‎ — فالرقمُ الذي
-       يراه صالحٌ لزرٍّ بحرفٍ أبيض. */
-    const GROUPS = [
-        ['كحلي',    222, 42, [10, 13, 16, 19, 22, 25, 28, 31, 34, 37]],
-        ['أزرق',    212, 68, [16, 20, 24, 28, 32, 36, 40, 44]],
-        ['نيلي',    240, 45, [18, 22, 26, 30, 34, 38, 42, 46]],
-        ['بنفسجي',  270, 42, [18, 22, 26, 30, 34, 38, 42]],
-        ['بترولي',  192, 62, [12, 15, 18, 21, 24, 27, 30, 33]],
-        ['فيروزي',  178, 55, [14, 17, 20, 23, 26, 29, 32]],
-        ['أخضر',    150, 45, [14, 17, 20, 23, 26, 29, 32, 35]],
-        ['زيتوني',   85, 35, [16, 19, 22, 25, 28, 31]],
-        ['خمري',    350, 55, [18, 22, 26, 30, 34, 38, 42]],
-        ['بني',      25, 50, [18, 22, 26, 30, 34, 38]],
-        ['ذهبي',     40, 70, [18, 21, 24, 27, 30]],
-        ['رصاصي',   215, 12, [10, 14, 18, 22, 26, 30, 34, 38, 42]]
+    const FAMILIES = [
+        ['أبيض',  null, 'light'],
+        ['أسود',  null, 'dark'],
+        ['أزرق',  215],
+        ['أصفر',  45],
+        ['أخضر',  140],
+        ['أحمر',  355]
     ];
+    const SATS = [22, 55, 88];                       /* خافت، متوسّط، مشبع */
+    const LIGHTS = []; for (let l = 4; l <= 96; l += 2) LIGHTS.push(l);
 
     function hslToHex(h, s, l) {
         s /= 100; l /= 100;
@@ -46,93 +45,114 @@
             .map((v) => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
         return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
     }
-    const COLORS = [];      /* [hex, label, groupName, isFirstOfGroup] */
-    GROUPS.forEach((g) => {
-        let first = true;
-        g[3].forEach((l, i) => {
-            const hex = hslToHex(g[1], g[2], l);
-            if (1.05 / (lum(hex) + 0.05) < 4.5) return;
-            COLORS.push([hex, g[0] + ' ' + (i + 1), g[0], first]);
-            first = false;
-        });
+
+    /* الدرجات كلُّها مرقّمةً — SHADES[n-1] = {n, fam, h, s, l} */
+    const SHADES = [];
+    FAMILIES.forEach((f, fi) => {
+        if (f[1] === null) {
+            const range = f[2] === 'light' ? LIGHTS.filter((l) => l >= 50) : LIGHTS.filter((l) => l < 50);
+            range.forEach((l) => SHADES.push({ n: SHADES.length + 1, fam: fi, h: 0, s: 0, l }));
+        } else {
+            SATS.forEach((s) => LIGHTS.forEach((l) => SHADES.push({ n: SHADES.length + 1, fam: fi, h: f[1], s, l })));
+        }
     });
 
-    const KEY = 'calm_pri';
+    const KEY = 'calm_pri2';
+    const state = { h: 40, s: 28, l: 20, n: 0, fam: 3, open: false };
 
-    /* (الطلبُ الثامن، ٢ سبتمبر) «شوف اللونَ كاملاً لكن خلّه ما فيه حياة،
-       رسميّ»: اللونُ المختار يُطفأ قبل التطبيق — الصبغةُ نفسُها، والإشباعُ
-       يُخفَّض إلى ٤٠٪ ممّا كان، والسطوعُ يُرفع درجتين كي لا يسودّ. */
-    const FORMAL = 0.40;
-    function hexToHsl(hex) {
-        const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
-        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
-        if (mx === mn) return [0, 0, l * 100];
-        const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
-        let h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-        return [h * 60, s * 100, l * 100];
-    }
-    function formal(hex) {
-        const [h, s, l] = hexToHsl(hex);
-        return hslToHex(h, s * FORMAL, Math.min(l + 2, 60));
+    function paint() {
+        const hex = hslToHex(state.h, state.s, state.l);
+        const dark = (1.05 / (lum(hex) + 0.05)) >= 3.2;      /* أبيضُ يقرأ؟ وإلّا حرفٌ داكن */
+        const root = document.documentElement.style;
+        root.setProperty('--pri', hex);
+        root.setProperty('--pri-ink', dark ? '#FFFFFF' : '#1F2933');
+        root.setProperty('--pri-ink-shadow', dark ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.5)');
+        const lab = document.getElementById('cp-label');
+        if (lab) lab.textContent = (state.n ? 'رقم ' + state.n + ' · ' : '') + FAMILIES[state.fam][0]
+            + ' · إشباع ' + state.s + '٪ · إضاءة ' + state.l + '٪ · ' + hex;
+        const pill = document.getElementById('cp-pill-n');
+        if (pill) pill.textContent = state.n ? String(state.n) : '·';
+        const dot = document.getElementById('cp-pill-dot');
+        if (dot) dot.style.background = hex;
+        document.querySelectorAll('#cp-shades .sw').forEach((b) => b.classList.toggle('on', +b.dataset.n === state.n));
+        const ss = document.getElementById('cp-sat'), ls = document.getElementById('cp-light');
+        if (ss && +ss.value !== state.s) ss.value = state.s;
+        if (ls && +ls.value !== state.l) ls.value = state.l;
+        try { localStorage.setItem(KEY, JSON.stringify({ h: state.h, s: state.s, l: state.l, n: state.n, fam: state.fam })); } catch (e) { /* لا يوقف */ }
     }
 
-    function apply(hex) {
-        document.documentElement.style.setProperty('--pri', formal(hex));
-        document.documentElement.style.setProperty('--pri-vivid', hex);
-        document.querySelectorAll('#calm-pri .sw').forEach((b) => {
-            b.classList.toggle('on', b.dataset.hex === hex);
+    function pick(sh) {
+        state.h = sh.h; state.s = sh.s; state.l = sh.l; state.n = sh.n; state.fam = sh.fam;
+        paint();
+    }
+
+    function renderShades() {
+        const row = document.getElementById('cp-shades');
+        row.innerHTML = '';
+        SHADES.filter((sh) => sh.fam === state.fam).forEach((sh) => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'sw'; b.dataset.n = sh.n;
+            const hex = hslToHex(sh.h, sh.s, sh.l);
+            b.style.background = hex;
+            b.style.color = (1.05 / (lum(hex) + 0.05)) >= 3.2 ? '#fff' : '#1F2933';
+            b.textContent = String(sh.n);
+            b.addEventListener('click', () => pick(sh));
+            row.appendChild(b);
         });
-        const lab = document.getElementById('calm-pri-label');
-        if (lab) {
-            const i = COLORS.findIndex((c) => c[0] === hex);
-            lab.textContent = i >= 0 ? ('رقم ' + (i + 1) + ' — ' + COLORS[i][1] + ' ' + hex + ' ← مُطفأ ' + formal(hex)) : hex;
-        }
+        document.querySelectorAll('#cp-fams .fm').forEach((b) => b.classList.toggle('on', +b.dataset.fam === state.fam));
+        paint();
+        const on = row.querySelector('.sw.on');
+        if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
     }
 
     function build() {
-        if (document.getElementById('calm-pri')) return;
-        const bar = document.createElement('div');
-        bar.id = 'calm-pri';
-        bar.innerHTML = '<div class="row"></div><div id="calm-pri-label"></div>';
-        const row = bar.querySelector('.row');
-        COLORS.forEach((c, i) => {
-            if (c[3]) {
-                const t = document.createElement('span');
-                t.className = 'grp';
-                t.textContent = c[2];
-                row.appendChild(t);
-            }
+        if (document.getElementById('calm-cp')) return;
+        const el = document.createElement('div');
+        el.id = 'calm-cp';
+        el.innerHTML =
+            '<button type="button" id="cp-pill" aria-label="الألوان">' +
+                '<span id="cp-pill-dot"></span><span id="cp-pill-n">·</span><span>الألوان</span></button>' +
+            '<div id="cp-panel" hidden>' +
+                '<div id="cp-fams"></div>' +
+                '<div id="cp-shades"></div>' +
+                '<label class="sl"><span>الإشباع</span><input id="cp-sat" type="range" min="0" max="100" step="1"></label>' +
+                '<label class="sl"><span>الإضاءة</span><input id="cp-light" type="range" min="2" max="98" step="1"></label>' +
+                '<div id="cp-foot"><span id="cp-label"></span><button type="button" id="cp-hide">إخفاء</button></div>' +
+            '</div>';
+        document.body.appendChild(el);
+
+        const fams = el.querySelector('#cp-fams');
+        FAMILIES.forEach((f, i) => {
             const b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'sw';
-            b.dataset.hex = c[0];
-            b.style.background = c[0];
-            b.title = c[1];
-            b.textContent = String(i + 1);
-            b.addEventListener('click', () => {
-                try { localStorage.setItem(KEY, c[0]); } catch (e) { /* لا يوقف */ }
-                apply(c[0]);
-            });
-            row.appendChild(b);
+            b.type = 'button'; b.className = 'fm'; b.dataset.fam = i; b.textContent = f[0];
+            b.addEventListener('click', () => { state.fam = i; renderShades(); });
+            fams.appendChild(b);
         });
-        document.body.appendChild(bar);
+        el.querySelector('#cp-sat').addEventListener('input', (e) => { state.s = +e.target.value; state.n = 0; paint(); });
+        el.querySelector('#cp-light').addEventListener('input', (e) => { state.l = +e.target.value; state.n = 0; paint(); });
+        const toggle = (open) => {
+            state.open = open;
+            el.querySelector('#cp-panel').hidden = !open;
+            document.body.classList.toggle('cp-open', open);
+        };
+        el.querySelector('#cp-pill').addEventListener('click', () => toggle(!state.open));
+        el.querySelector('#cp-hide').addEventListener('click', () => toggle(false));
+
         let saved = null;
-        try { saved = localStorage.getItem(KEY); } catch (e) { /* لا يوقف */ }
-        /* الافتراضيّ رقم ٧٦ (ذهبي ١) — اختارَه في ٢ سبتمبر */
-        apply(saved || (COLORS[75] ? COLORS[75][0] : COLORS[0][0]));
+        try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { /* لا يوقف */ }
+        if (saved && typeof saved.l === 'number') Object.assign(state, saved);
+        renderShades();
     }
 
     function sync() {
-        const show = document.body.classList.contains('theme-calm');
         let ui = null;
         try { ui = localStorage.getItem('calm_ui'); } catch (e) { /* لا يوقف */ }
         if (ui !== '1') return;
+        const show = document.body.classList.contains('theme-calm');
         if (show) build();
-        const bar = document.getElementById('calm-pri');
-        if (bar) bar.hidden = !show;
-        document.body.classList.toggle('has-calm-pri', show);
+        const el = document.getElementById('calm-cp');
+        if (el) el.hidden = !show;
     }
-
     function start() {
         sync();
         new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
