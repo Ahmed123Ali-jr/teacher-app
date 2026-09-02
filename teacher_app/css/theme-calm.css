@@ -126,13 +126,13 @@ body.theme-calm .sched-table td.sched-per small { color: var(--ink); opacity: .6
 /* جانبُ بطاقة الفصل (الإسفينُ) وشريطُ «سجل متابعة الطلاب»: لونٌ واحدٌ
    مجسَّم — مشتقٌّ من لون الفصل، فاتحٌ فوق وأعمقُ تحت، بلمعةٍ وظلّ. */
 body.theme-calm .chs-side::after {
-    background: linear-gradient(170deg, var(--tint-top) 0%, var(--tint-bot) 100%) !important;
+    background: linear-gradient(170deg, var(--tint-top) 0%, var(--pri) 55%, var(--tint-bot) 100%) !important;
 }
 body.theme-calm .chs-side::before {
-    background: color-mix(in srgb, var(--cls-color, #15606F) 14%, #fff) !important;
+    background: color-mix(in srgb, var(--pri) 22%, #fff) !important;
 }
 body.theme-calm .chs-side,
-body.theme-calm .chs-side * { color: var(--tint-ink) !important; text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+body.theme-calm .chs-side * { color: var(--tint-ink) !important; text-shadow: 0 1px 0 var(--pri-ink-shadow, rgba(0,0,0,.25)); }
 /* (الطلبُ السابع) اللونُ المختارُ من الشريط يحكم بطاقةَ الفصل وشريطَ
    المتابعة أيضاً — فيرى الرقمَ الواحدَ على الزرّ وداخل الفصل معاً.
    `!important` لأنّ لونَ الفصل يأتي inline من الشاشة. */
@@ -141,25 +141,31 @@ body.theme-calm .hub-featured,
 body.theme-calm .reg-hero {
     --cls-color: var(--pri) !important;
     /* المشتقّات تُعرَّف هنا لا على body: المتغيّرُ يُحلّ حيث يُعرَّف،
-       وعلى body لا يوجد --cls-color فكان يسقط إلى البديل الثابت (قِيس). */
-    --tint-top:  color-mix(in srgb, var(--pri) 26%, #fff);
-    --tint-bot:  color-mix(in srgb, var(--pri) 48%, #fff);
-    --tint-line: color-mix(in srgb, var(--pri) 55%, #fff);
+       وعلى body لا يوجد --cls-color فكان يسقط إلى البديل الثابت (قِيس).
+       (الطلبُ الثاني عشر، ٢ سبتمبر): كانت مخفَّفةً بالأبيض فاختلفت عن
+       الأزرار والرئيسيّة — صارت اللونَ كاملاً بالوصفة نفسِها. */
+    --tint-top:  color-mix(in srgb, var(--pri) 80%, #fff);
+    --tint-bot:  color-mix(in srgb, var(--pri) 84%, #000);
+    --tint-line: color-mix(in srgb, var(--pri) 72%, #000);
+    --tint-ink:  var(--pri-ink, #fff);
 }
 body.theme-calm .class-hero-split {
     box-shadow: var(--glass-shadow) !important;
     border: 1px solid var(--glass-line) !important;
 }
 body.theme-calm .hub-featured {
-    background: linear-gradient(170deg, var(--tint-top) 0%, var(--tint-bot) 100%) !important;
+    background: linear-gradient(180deg, var(--tint-top) 0%, var(--pri) 55%, var(--tint-bot) 100%) !important;
     border: 1px solid var(--tint-line) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.75),
-                inset 0 -2px 0 rgba(0,0,0,.06),
-                0 2px 3px rgba(16,24,40,.08),
-                0 10px 24px color-mix(in srgb, var(--cls-color, #15606F) 22%, transparent) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28),
+                inset 0 -1px 0 rgba(0,0,0,.18),
+                0 2px 3px rgba(20,30,60,.20),
+                0 10px 22px color-mix(in srgb, var(--pri) 30%, transparent) !important;
 }
 body.theme-calm .hub-featured,
-body.theme-calm .hub-featured * { color: var(--tint-ink) !important; text-shadow: 0 1px 0 rgba(255,255,255,.45); }
+body.theme-calm .hub-featured * { color: var(--tint-ink) !important; text-shadow: 0 1px 0 var(--pri-ink-shadow, rgba(0,0,0,.25)); }
+/* زرُّ «طباعة» في رأس السجلّ أبيضُ الأرضيّة — حرفُه يعود ملوّناً لا أبيض
+   (قِيس: اختفى أبيضَ على أبيض). */
+body.theme-calm .reg-hero .reg-hero-print:not(.reg-hero-days) { color: var(--pri-text, var(--pri)) !important; text-shadow: none; }
 body.theme-calm .hub-featured-chev { border-color: var(--tint-ink); }
 
 /* الحبّاتُ كبسوليّة */
