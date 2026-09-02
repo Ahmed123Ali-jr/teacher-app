@@ -40,6 +40,14 @@
         const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
         return '#' + [f(0), f(8), f(4)].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
     }
+    function hexToHsl(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+        if (mx === mn) return [0, 0, l * 100];
+        const d = mx - mn, sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+        let h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        return [h * 60, sat * 100, l * 100];
+    }
     function lum(hex) {
         const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
             .map((v) => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
@@ -74,7 +82,8 @@
         while (tl > 4 && (1.05 / (lum(tHex) + 0.05)) < 4.5) { tl -= 2; tHex = hslToHex(state.h, state.s, tl); }
         root.setProperty('--pri-text', tHex);
         const lab = document.getElementById('cp-label');
-        if (lab) lab.textContent = (state.n ? 'رقم ' + state.n + ' · ' : '') + FAMILIES[state.fam][0]
+        const isDefault = hex === hslToHex(190, 76, 16);
+        if (lab) lab.textContent = (isDefault ? 'الافتراضي (بترولي التطبيق) · ' : (state.n ? 'رقم ' + state.n + ' · ' : '')) + FAMILIES[state.fam][0]
             + ' · إشباع ' + state.s + '٪ · إضاءة ' + state.l + '٪ · ' + hex;
         const pill = document.getElementById('cp-pill-n');
         if (pill) pill.textContent = state.n ? String(state.n) : '·';
@@ -123,7 +132,9 @@
                 '<div id="cp-shades"></div>' +
                 '<label class="sl"><span>الإشباع</span><input id="cp-sat" type="range" min="0" max="100" step="1"></label>' +
                 '<label class="sl"><span>الإضاءة</span><input id="cp-light" type="range" min="2" max="98" step="1"></label>' +
-                '<div id="cp-foot"><span id="cp-label"></span><button type="button" id="cp-hide">إخفاء</button></div>' +
+                '<div id="cp-foot"><span id="cp-label"></span>' +
+                    '<button type="button" id="cp-default">الافتراضي</button>' +
+                    '<button type="button" id="cp-hide">إخفاء</button></div>' +
             '</div>';
         document.body.appendChild(el);
 
@@ -142,6 +153,13 @@
             document.body.classList.toggle('cp-open', open);
         };
         el.querySelector('#cp-hide').addEventListener('click', () => toggle(false));
+        /* «الافتراضي» = لونُ التطبيق المنشور: البتروليّ ‎#0A3F4A‎ (--pf-royal)
+           بصبغته وإشباعه وإضاءته كما هي — لا رقمَ له في الشريط. */
+        el.querySelector('#cp-default').addEventListener('click', () => {
+            const [h, sat, l] = hexToHsl('#0A3F4A');
+            state.h = Math.round(h); state.s = Math.round(sat); state.l = Math.round(l); state.n = 0; state.fam = 2;
+            renderShades();
+        });
 
         /* (الطلبُ العاشر) الزرُّ عائمٌ يُسحب: إن غطّى شيئاً حرّكه. السحبُ
            بالمؤشّر (لمسٌ وفأرة)، والنقرةُ التي لم تتحرّك ٦ نقاط تفتح
