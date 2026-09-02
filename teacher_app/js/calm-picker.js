@@ -135,8 +135,55 @@
             el.querySelector('#cp-panel').hidden = !open;
             document.body.classList.toggle('cp-open', open);
         };
-        el.querySelector('#cp-pill').addEventListener('click', () => toggle(!state.open));
         el.querySelector('#cp-hide').addEventListener('click', () => toggle(false));
+
+        /* (الطلبُ العاشر) الزرُّ عائمٌ يُسحب: إن غطّى شيئاً حرّكه. السحبُ
+           بالمؤشّر (لمسٌ وفأرة)، والنقرةُ التي لم تتحرّك ٦ نقاط تفتح
+           اللوحة. الموضعُ يُحفظ في calm_cp_pos، ويُقصّ داخل الشاشة. */
+        const pill = el.querySelector('#cp-pill');
+        const POS = 'calm_cp_pos';
+        function place(x, y) {
+            const w = el.offsetWidth || 120, h = pill.offsetHeight || 36;
+            x = Math.max(4, Math.min(x, global.innerWidth - w - 4));
+            y = Math.max(4, Math.min(y, global.innerHeight - h - 4));
+            el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.bottom = 'auto';
+            /* اللوحةُ فوق الزرّ إن كان في النصف السفليّ، وتحته إن كان في العلويّ */
+            el.classList.toggle('panel-below', y < global.innerHeight / 2);
+            /* واللوحةُ تُقصّ أفقيّاً داخل الشاشة مهما كان موضعُ الزرّ */
+            const panel = el.querySelector('#cp-panel');
+            const pw = Math.min(global.innerWidth * 0.92, 420);
+            const px = Math.max(4, Math.min(x, global.innerWidth - pw - 4));
+            panel.style.left = (px - x) + 'px';
+            return [x, y];
+        }
+        let drag = null;
+        pill.addEventListener('pointerdown', (e) => {
+            const r = el.getBoundingClientRect();
+            drag = { sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top, moved: false };
+            pill.setPointerCapture(e.pointerId);
+        });
+        pill.addEventListener('pointermove', (e) => {
+            if (!drag) return;
+            const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+            if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+            drag.moved = true;
+            place(drag.ox + dx, drag.oy + dy);
+        });
+        pill.addEventListener('pointerup', (e) => {
+            if (!drag) return;
+            if (drag.moved) {
+                const r = el.getBoundingClientRect();
+                try { localStorage.setItem(POS, JSON.stringify([r.left, r.top])); } catch (err) { /* لا يوقف */ }
+            } else {
+                toggle(!state.open);
+            }
+            drag = null;
+        });
+        pill.addEventListener('pointercancel', () => { drag = null; });
+        let pos = null;
+        try { pos = JSON.parse(localStorage.getItem(POS) || 'null'); } catch (e) { /* لا يوقف */ }
+        if (pos && pos.length === 2) place(pos[0], pos[1]);
+        global.addEventListener('resize', () => { const r = el.getBoundingClientRect(); if (el.style.top) place(r.left, r.top); });
 
         let saved = null;
         try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { /* لا يوقف */ }
