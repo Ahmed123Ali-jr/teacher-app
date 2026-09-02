@@ -57,21 +57,15 @@ body.theme-calm {
 /* ══════════════════════════════════════════════════════════════════════
    الزجاجُ — وصفةٌ واحدةٌ لكلّ ما كان بترولاً
    ══════════════════════════════════════════════════════════════════════ */
-body.theme-calm .btn-primary,
-body.theme-calm .start-cta,
 body.theme-calm .hub-featured,
 body.theme-calm .chip.active,
 body.theme-calm .col-chip.active,
 body.theme-calm .tab.active,
 body.theme-calm .tf-chip.on,
-body.theme-calm .hint-go,
-body.theme-calm .br-jump-row .go,
 body.theme-calm .sch-chip.on,
 body.theme-calm .fchip.on,
 body.theme-calm .subp-chip,
-body.theme-calm .subp-other-go,
 body.theme-calm .sheet-tab.on,
-body.theme-calm .stg-btn.main,
 body.theme-calm .sched-edit-btn.on,
 body.theme-calm .mvs-tab.on,
 body.theme-calm .reg-add,
@@ -86,14 +80,9 @@ body.theme-calm .hub-tile-icon {
     -webkit-backdrop-filter: blur(18px) saturate(160%);
     backdrop-filter: blur(18px) saturate(160%);
 }
-body.theme-calm .btn-primary:hover:not(:disabled),
-body.theme-calm .btn-primary:active,
-body.theme-calm .start-cta:active,
 body.theme-calm .hub-featured:active,
 body.theme-calm .chip.active:active,
 body.theme-calm .reg-add:hover { background: var(--glass-2) !important; color: var(--ink) !important; }
-body.theme-calm .btn-primary:active,
-body.theme-calm .start-cta:active,
 body.theme-calm .hub-featured:active,
 body.theme-calm .hub-tile:active,
 body.theme-calm .chip.active:active,
@@ -113,8 +102,6 @@ body.theme-calm .btn:not(.btn-primary):not(.btn-ghost):not(.att-btn) {
 
 /* ما بداخل الزجاج كان أبيضَ على بترول — يصير أسود */
 body.theme-calm .hub-featured *,
-body.theme-calm .start-cta *,
-body.theme-calm .btn-primary *,
 body.theme-calm .home-av * { color: var(--ink) !important; }
 body.theme-calm .hub-featured-sub { opacity: .7; }
 
@@ -184,6 +171,50 @@ body.theme-calm .page-title,
 body.theme-calm a:not(.btn):not(.bn-item):not(.hub-tile):not(.hub-featured):not(.text-danger) {
     color: var(--ink);
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   الفعلُ الرئيسيّ — «رائعٌ شبهُ رسميّ» (الطلبُ الخامس، ٢ سبتمبر ٢٠٢٦)
+   ══════════════════════════════════════════════════════════════════════
+   المرجعُ بعد البحث: أزرارُ Stripe الرئيسيّة كحليٌّ عميق (‎#0A2540‎) لا
+   أزرقُ صارخ، وLinear بنفسجيٌّ كحليٌّ هادئ، وApple في iOS 26 تُبقي زرّاً
+   بارزاً واحداً (glassProminent) ملوّناً بعتامةٍ كاملة فوق الزجاج، وMaterial 3
+   تُلوّن ظلَّ الزرّ بلونه (tonal elevation) لا برماديّ.
+   فالخلاصة: **كحليٌّ نيليٌّ عميق** — رسميٌّ كالبنوك، وفيه دفءُ النيلة —
+   بتدرّجٍ من فاتحٍ فوق إلى أعمقَ تحت، ولمعةٍ علويّة، وظلٍّ بلونه.
+   الأبيضُ عليه ‎١١:١‎ محسوبةً على الوسط ‎#2C3B63‎. */
+body.theme-calm .btn-primary,
+body.theme-calm .start-cta,
+body.theme-calm .hint-go,
+body.theme-calm .br-jump-row .go,
+body.theme-calm .subp-other-go,
+body.theme-calm .stg-btn.main {
+    background: linear-gradient(180deg, #3E5080 0%, #2C3B63 55%, #23304F 100%) !important;
+    border: 1px solid #1C2743 !important;
+    color: #fff !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,.25) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28),
+                inset 0 -1px 0 rgba(0,0,0,.18),
+                0 2px 3px rgba(20,30,60,.20),
+                0 10px 22px rgba(44,59,99,.30) !important;
+}
+body.theme-calm .btn-primary *,
+body.theme-calm .start-cta * { color: #fff !important; }
+body.theme-calm .btn-primary svg.ci,
+body.theme-calm .start-cta svg.ci { stroke: #fff; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
+body.theme-calm .btn-primary:hover:not(:disabled),
+body.theme-calm .start-cta:hover {
+    background: linear-gradient(180deg, #46598C 0%, #32436F 55%, #27365A 100%) !important;
+}
+body.theme-calm .btn-primary:active,
+body.theme-calm .start-cta:active,
+body.theme-calm .subp-other-go:active,
+body.theme-calm .stg-btn.main:active {
+    background: linear-gradient(180deg, #23304F 0%, #2C3B63 100%) !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,.30), 0 1px 2px rgba(20,30,60,.15) !important;
+    transform: translateY(1px);
+}
+body.theme-calm .btn-primary:disabled { opacity: .55; }
 
 /* ══════════════════════════════════════════════════════════════════════
    الأيقوناتُ الخطّيّة — حدودٌ سوداء بلا تعبئة
