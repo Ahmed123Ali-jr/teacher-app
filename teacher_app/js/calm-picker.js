@@ -67,6 +67,12 @@
         root.setProperty('--pri', hex);
         root.setProperty('--pri-ink', dark ? '#FFFFFF' : '#1F2933');
         root.setProperty('--pri-ink-shadow', dark ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.5)');
+        /* حبرُ النصوص الملوّنة على الأبيض (العناوين، الخانةُ النشطة، الحبّات،
+           الأيقونات): اللونُ نفسُه إن كان غامقاً، وإلّا يُغمَّق حتى يُقرأ
+           على الأبيض ‎٤٫٥:١‎ — فاللونُ الفاتح يبقى على الأزرار ولا يذوب حرفُه. */
+        let tl = state.l, tHex = hex;
+        while (tl > 4 && (1.05 / (lum(tHex) + 0.05)) < 4.5) { tl -= 2; tHex = hslToHex(state.h, state.s, tl); }
+        root.setProperty('--pri-text', tHex);
         const lab = document.getElementById('cp-label');
         if (lab) lab.textContent = (state.n ? 'رقم ' + state.n + ' · ' : '') + FAMILIES[state.fam][0]
             + ' · إشباع ' + state.s + '٪ · إضاءة ' + state.l + '٪ · ' + hex;
