@@ -976,7 +976,7 @@
 
     /** أقربُ عائلةٍ إلى صبغةٍ ما — ليُفتح على عائلة لونه لا على الأولى. */
     function nearestFamily(h, s) {
-        if (s < 8) return COLOR_FAMILIES.length - 1;          /* أسود/رصاصي */
+        if (s < 8) return COLOR_FAMILIES.findIndex((f) => f.s === 0);   /* الرماديّات */
         let best = 0, bestD = 1e9;
         COLOR_FAMILIES.forEach((f, i) => {
             if (f.s < 8) return;
@@ -1058,9 +1058,11 @@
         }
         function save() {
             clearTimeout(saveTimer);
-            saveTimer = setTimeout(() => {
-                bgSave(() => TC.choose(hex()));
-            }, 250);
+            /* القيمةُ تُحتجز عند الجدولة: `colorState` حالةُ وحدةٍ تُعاد
+               بناؤها إن فتح المعلّمُ الشاشةَ ثانيةً، فقراءتُها بعد ربع
+               ثانيةٍ قد تُرجع لوناً آخر. */
+            const v = hex();
+            saveTimer = setTimeout(() => { bgSave(() => TC.choose(v)); }, 250);
         }
 
         function drawFams() {
@@ -1072,12 +1074,14 @@
         }
 
         function drawShades() {
-            const f = COLOR_FAMILIES[colorState.fam];
-            const max = TC.maxLightness(colorState.h, colorState.s);
-            /* سبعُ درجاتٍ موزّعةٌ على المدى المقروء كلِّه. */
+            const max = Math.floor(TC.maxLightness(colorState.h, colorState.s));
+            const min = TC.MIN_L;
+            /* سبعُ درجاتٍ موزّعةٌ على المدى المقروء كلِّه. والطرفان محسوبان
+               لا مختاران: `min` لئلّا يذوب اللونُ في أرضيّة الوضع الداكن،
+               و`max` مقصوصٌ لا مدوَّر — التدويرُ كان يتجاوز حدَّ ‎٧:١‎. */
             const list = [];
             for (let i = 0; i < 7; i++) {
-                list.push(Math.round(6 + (max - 6) * (i / 6)));
+                list.push(Math.round(min + (max - min) * (i / 6)));
             }
             /* الحلقةُ على أقربِ درجةٍ وحدَها: الخطواتُ قد تتقارب فيقع اثنتان
                داخل هامشٍ واحدٍ فتظهر حلقتان. */
@@ -1091,9 +1095,10 @@
                                 data-l="${l}" style="background:${c}"
                                 aria-label="درجة ${l}"></button>`;
             }).join('');
-            /* المنزلقُ يقف عند الحدّ المقروء لا عند مئة. */
-            lightEl.max = String(Math.round(max));
-            lightEl.value = String(Math.min(colorState.l, Math.round(max)));
+            /* المنزلقُ يقف عند الحدّين المقروءين لا عند صفرٍ ومئة. */
+            lightEl.min = String(min);
+            lightEl.max = String(max);
+            lightEl.value = String(Math.max(min, Math.min(colorState.l, max)));
             satEl.value = String(colorState.s);
         }
 
@@ -1107,8 +1112,8 @@
             colorState.fam = Number(b.dataset.fam);
             colorState.h = f.h;
             colorState.s = f.s;
-            const max = TC.maxLightness(f.h, f.s);
-            colorState.l = Math.min(colorState.l, Math.round(max));
+            const max = Math.floor(TC.maxLightness(f.h, f.s));
+            colorState.l = Math.max(TC.MIN_L, Math.min(colorState.l, max));
             redraw();
             save();
         });
@@ -1602,6 +1607,11 @@
             'dark-active',
             document.body.classList.contains('theme-auto') && _darkMq && _darkMq.matches
         );
+        /* واللونُ يُعاد طلاؤه بعد القلب: `--ink-primary` المحقونُ سطريّاً
+           يُحسب لحظةَ الطلاء ويغلب قاعدةَ المظهر، فلو قلب الجهازُ نفسُه
+           إلى الداكن عند المغرب بقي الحبرُ الفاتحُ على أرضيّةٍ داكنة —
+           وعكسُه أسوأ. والدالّةُ رخيصةٌ وآمنةُ التكرار. */
+        if (global.ThemeColor) global.ThemeColor.applyStored();
     }
     function applyTheme(theme) {
         const body = document.body;
@@ -1625,10 +1635,11 @@
         syncAuto();
     }
     async function applyStoredPrefs() {
-        try {
-            applyTheme(await getPref('theme', 'light'));
-            await refreshPrintCache();
-        } catch { /* ignore */ }
+        try { applyTheme(await getPref('theme', 'light')); } catch { /* المظهر */ }
+        /* في كتلةٍ مستقلّة: كانت مع المظهر في كتلةٍ واحدة، فأيُّ رميةٍ في
+           قراءة التفضيل تُسقط `PrintPrefs` — فتخرج الطباعةُ وملفّاتُ PDF
+           بلا عامٍ دراسيٍّ ولا مدير ولا شعار، بلا رسالةِ خطأ. */
+        try { await refreshPrintCache(); } catch { /* الطباعة */ }
         /* اللونُ في كتلةٍ مستقلّة: لو رُمي فيها استثناءٌ داخل الكتلة الأولى
            لسقطت `refreshPrintCache` معه، فتخرج الطباعةُ وملفّاتُ PDF بلا
            عامٍ دراسيٍّ ولا مدير ولا شعار — بلا رسالةِ خطأ. */

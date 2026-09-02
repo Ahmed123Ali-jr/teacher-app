@@ -1253,7 +1253,14 @@
            إعدادٍ بلا إنترنت ترمي وتضيع — ولا تبلغ الصندوقَ الصادر. و`mirror`
            تعرف مخزنَ `settings` أصلاً، وليس في `OUTBOX_SKIP`. (قِيس ٢ سبتمبر
            ٢٠٢٦ عند بناء «ألوان التطبيق»: اللونُ يُطلى ثمّ يسقط حفظُه صامتاً.) */
-        async set(key, value) { return putGuarded('settings', { key, value }); },
+        async set(key, value) {
+            /* والملفُّ يبقى خارجَ الصندوق: شعارُ المدرسة يُحفظ Blobاً، ولو
+               صُفّ لأُرسل لاحقاً إلى عمود jsonb فيصير `{}` — نجاحٌ كاذبٌ
+               يمحو الشعار. فيبقى كما كان: يرمي بلا إنترنت ويُقال للمعلّم. */
+            const isFile = (typeof Blob !== 'undefined' && value instanceof Blob);
+            return isFile ? put('settings', { key, value })
+                          : putGuarded('settings', { key, value });
+        },
         /** محلّيٌّ فوريّ — للتهيئة وحدها، ويُتبع بكتابةٍ حقيقيةٍ في الخلفية. */
         async setLocal(key, value) { return Cache.put('settings', { key, value }); },
         async unset(key) { return removeGuarded('settings', key); }

@@ -171,7 +171,8 @@
         /* الفعلُ البارزُ يبقى كما هو — يُذكر صراحةً لئلّا يُظنّ منسيّاً. */
         + PROMINENT.join(',') + '{background:' + tone + ' !important;color:#fff !important;}'
         /* داخلَ الزجاج: امتلاءٌ أبيضُ بظلٍّ رفيع، لا زجاجٌ ثانٍ. */
-        + '.bottom-nav .bn-item.is-active{color:#0A3F4A !important;}'
+        + '.bn-icon{font-size:19px;line-height:1}   /* الصفحةُ تكتب إيموجي، وviews.css أسقط المقاس بعد تحويل الشريط إلى رسوم */
+            .bottom-nav .bn-item.is-active{color:#0A3F4A !important;}'
         + '.bottom-nav .bn-item.is-active::before{background:rgba(255,255,255,.95) !important;'
         + 'box-shadow:0 1px 3px rgba(16,24,40,.16) !important;}';
 

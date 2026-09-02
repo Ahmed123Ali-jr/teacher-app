@@ -400,6 +400,9 @@
             try {
                 await global.Auth.setNewPassword(pw);
                 global.TeacherApp.toast('حُفظت كلمتك الجديدة. أهلاً بعودتك!', 'success', 4000);
+                /* اللونُ يُطلى عند الدخول لا عند الإقلاع وحدَه: من دخل داخل الجلسة
+                   نفسِها كان يرى الافتراضيَّ حتّى يُعيد فتحَ التطبيق. */
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 btn.disabled = false;
@@ -431,6 +434,7 @@
                     global.TeacherApp.toast(err.message || 'تعذّر الدخول كزائر.', 'error', 5000);
                     global.location.hash = '#/login';
                 });
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 global.location.hash = '#/setup';
                 return;
             }
@@ -440,6 +444,9 @@
             if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
             try {
                 await global.Auth.beginGuest();
+                /* اللونُ يُطلى عند الدخول لا عند الإقلاع وحدَه: من دخل داخل الجلسة
+                   نفسِها كان يرى الافتراضيَّ حتّى يُعيد فتحَ التطبيق. */
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 rest();
@@ -464,7 +471,8 @@
                     if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
                     try {
                         await global.Auth.beginGuest({ allowNew: true });
-                        global.location.hash = '#/setup';
+                        if (global.ThemeColor) global.ThemeColor.applyStored();
+                global.location.hash = '#/setup';
                     } catch (e2) {
                         rest();
                         global.TeacherApp.toast(e2.message || 'تعذّر الدخول كزائر.', 'error', 5000);
@@ -485,6 +493,9 @@
                     password: container.querySelector('#login-password').value
                 });
                 global.TeacherApp.toast('أهلاً بعودتك!', 'success');
+                /* اللونُ يُطلى عند الدخول لا عند الإقلاع وحدَه: من دخل داخل الجلسة
+                   نفسِها كان يرى الافتراضيَّ حتّى يُعيد فتحَ التطبيق. */
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 global.TeacherApp.toast(err.message, 'error');
@@ -514,6 +525,9 @@
                     password: container.querySelector('#reg-password').value
                 });
                 global.TeacherApp.toast('تم إنشاء حسابك بنجاح. أهلاً بك!', 'success');
+                /* اللونُ يُطلى عند الدخول لا عند الإقلاع وحدَه: من دخل داخل الجلسة
+                   نفسِها كان يرى الافتراضيَّ حتّى يُعيد فتحَ التطبيق. */
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 global.location.hash = '#/dashboard';
             } catch (err) {
                 global.TeacherApp.toast(err.message, 'error');

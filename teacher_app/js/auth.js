@@ -370,6 +370,11 @@
            لحسابه. */
         const guest = await isAnonymousNow();
         invalidateTeacher();
+        /* اللونُ يعود إلى الافتراضيّ هنا لا عند زرٍّ بعينه: للخروج ثلاثةُ
+           أبوابٍ (الترويسة، والدرج، والإعدادات)، فلو عُلِّق التصفيرُ بأحدها
+           دخل المعلّمُ الثاني على لون الأوّل. والمرآةُ تبقى موسومةً بصاحبها
+           فيجدها إن عاد — والمحوُ مكانُه حذفُ الحساب وحدَه. */
+        if (global.ThemeColor) { try { global.ThemeColor.reset(); } catch (e) { /* لا يوقف الخروج */ } }
         if (global.TeacherDB) {
             try { await global.TeacherDB.clearLocalCache(global.TeacherDB.LOCAL_ONLY); }
             catch (e) { console.warn('[Auth] تعذّر مسح المخبأ:', e && e.message); }

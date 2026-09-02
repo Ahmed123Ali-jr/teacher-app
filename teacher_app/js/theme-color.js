@@ -112,15 +112,28 @@
         return hslToHex(h, clamp(s + d[1], 0, 100), clamp(l + d[0], 0, 100));
     }
 
-    /** الحدُّ الأعلى للإضاءة عند صبغةٍ وإشباع: أفتحُ أساسٍ يبقى الأبيضُ فوق
-     *  درجته الفاتحة عند ‎٧:١‎ — وهي درجةُ البترولي المنشور نفسِها. */
+    /**
+     * الحدُّ الأعلى للإضاءة عند صبغةٍ وإشباع — قيدان لا قيدٌ واحد:
+     * ١) الأبيضُ فوق الدرجة الفاتحة عند ‎٧:١‎ (درجةُ البترولي نفسُها).
+     * ٢) **والذهبيُّ ‎#C9A961‎ فوق اللون نفسِه عند ‎٤٫٥:١‎** — الذهبيُّ حبرٌ
+     *    على أسطح الهُويّة في سبعة مواضع ولا يتبع اللونَ المختار، فحراسةُ
+     *    الأبيض وحدَه تُسقطه (قِيس: ينزل إلى ‎٤٫٣‎ وكان ‎٥٫١٢‎ بالبترولي).
+     * والخطوةُ صحيحةٌ لا نصفيّة: المُخرَجُ يُستعمل حدّاً للمنزلق ولطرف
+     * السُّلَّم، وتدويرُ نصفٍ كان يتجاوز الحدَّ المقيس.
+     */
     function maxLightness(h, s) {
         let best = 4;
-        for (let l = 4; l <= 60; l += 0.5) {
-            if (ratio('#FFFFFF', step(h, s, l, 'light')) >= 7) best = l; else break;
+        for (let l = 4; l <= 60; l += 1) {
+            const ok = ratio('#FFFFFF', step(h, s, l, 'light')) >= 7
+                    && ratio('#C9A961', hslToHex(h, s, l)) >= 4.5;
+            if (ok) best = l; else break;
         }
         return best;
     }
+
+    /** الحدُّ الأدنى: لا ينزل اللونُ حتّى يذوب في أرضيّة الوضع الداكن
+     *  (‎#0D1117‎). البتروليُّ المنشور عندها ‎1.64:1‎ — وهو المرجع. */
+    const MIN_L = 10;
 
     /** يُغمَّق اللونُ حتى يبلغ التباينَ المطلوبَ على أرضيّةٍ ثابتة. */
     function darkenUntil(h, s, l, bed, need) {
@@ -135,14 +148,21 @@
      * @param {string} hex  اللونُ الأساسيّ (‎#RRGGBB‎).
      * @returns {object}    خريطةُ رمزٍ ← قيمة.
      */
-    function scale(hex) {
+    function scale(hex, dark) {
         const p = hexToHsl(hex);
         const h = p[0], s = p[1], l = p[2];
+        /* الوضعُ الداكن يرفع الدرجةَ الفاتحة أكثرَ بكثير: ‎#0A3F4A‎ ← ‎#1C8DA6‎
+           أي ‎+٢١٫٥‎ إضاءةً لا ‎+٩٫٢‎ — لأنّها هناك حلقةُ تركيزٍ وحدٌّ على
+           أرضيّةٍ سوداء لا سطحٌ يُملأ. وحقنُ درجة الفاتح فوقها كان يُسقط
+           التباينَ من ‎4.88‎ إلى نحو ‎2.4‎ على ‎#0D1117‎ (قِيس). */
+        const light = dark
+            ? hslToHex(h, clamp(s - 5, 0, 100), clamp(l + 21.5, 0, 100))
+            : step(h, s, l, 'light');
         return {
             '--pf-royal':       hex,
-            '--pf-royal-light': step(h, s, l, 'light'),
+            '--pf-royal-light': light,
             '--primary':        hex,
-            '--primary-light':  step(h, s, l, 'light'),
+            '--primary-light':  light,
             '--primary-dark':   hex,
             '--primary-mid':    step(h, s, l, 'mid'),
             '--primary-lift':   step(h, s, l, 'lift'),
@@ -160,6 +180,9 @@
        التطبيق
        ══════════════════════════════════════════════════════════════════ */
 
+    /** ‎#RRGGBB‎ وإلّا فلا. القيمةُ المعطوبةُ تُنتج NaN تسري في الحساب كلِّه. */
+    function isHex(v) { return typeof v === 'string' && /^#[0-9A-Fa-f]{6}$/.test(v); }
+
     function isDark() {
         const c = document.body ? document.body.classList : null;
         return !!c && (c.contains('theme-dark') || c.contains('dark-active'));
@@ -173,15 +196,16 @@
         const body = document.body;
         if (!body) return;
         const st = body.style;
-        if (!hex || hex.toUpperCase() === DEFAULT) {
+        if (!isHex(hex) || hex.toUpperCase() === DEFAULT) {
             VARS.forEach((v) => st.removeProperty(v));
             setMeta(DEFAULT);
             return;
         }
-        const vars = scale(hex);
+        const dark = isDark();
+        const vars = scale(hex, dark);
         Object.keys(vars).forEach((k) => st.setProperty(k, vars[k]));
         /* الحبرُ في الداكن أبيضُ مكسورٌ لا يتبع اللون (theme-dark.css:75). */
-        if (isDark()) st.setProperty('--ink-primary', '#E8ECF3');
+        if (dark) st.setProperty('--ink-primary', '#E8ECF3');
         setMeta(hex);
     }
 
@@ -210,7 +234,7 @@
     function readMirror() {
         try {
             const o = JSON.parse(global.localStorage.getItem(MIRROR) || 'null');
-            if (!o || !o.hex) return null;
+            if (!o || !isHex(o.hex)) return null;
             const uid = storedUid();
             /* لونُ معلّمٍ آخر لا يُلبَس. وبلا جلسةٍ لا لون. */
             return (uid && o.uid === uid) ? o.hex : null;
@@ -263,7 +287,7 @@
                 if (n) return;
             }
             const v = await global.TeacherDB.Settings.get(PREF);
-            if (typeof v !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(v)) return;
+            if (!isHex(v)) return;
             const up = v.toUpperCase();
             if (up === (readMirror() || DEFAULT)) return;
             paint(up);
@@ -285,6 +309,7 @@
         ratio: ratio,
         scale: scale,
         maxLightness: maxLightness,
+        MIN_L: MIN_L,
         paint: paint,
         applyStored: applyStored,
         choose: choose,

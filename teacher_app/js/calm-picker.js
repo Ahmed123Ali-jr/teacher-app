@@ -71,7 +71,10 @@
     function paint() {
         const hex = hslToHex(state.h, state.s, state.l);
         const dark = (1.05 / (lum(hex) + 0.05)) >= 3.2;      /* أبيضُ يقرأ؟ وإلّا حرفٌ داكن */
-        const root = document.documentElement.style;
+        /* على `body` لا على `html`: `--pri` صار معلَناً على `body.theme-calm`،
+           والرمزُ المعلَنُ على العنصر يغلب الموروثَ من أبيه — فكتابةُ `html`
+           تقف عند `body` فلا تصل شيئاً. (قِيس ٢ سبتمبر ٢٠٢٦.) */
+        const root = document.body.style;
         root.setProperty('--pri', hex);
         root.setProperty('--pri-ink', dark ? '#FFFFFF' : '#1F2933');
         root.setProperty('--pri-ink-shadow', dark ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.5)');

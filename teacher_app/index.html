@@ -90,14 +90,6 @@
 
         var m = document.querySelector('meta[name="theme-color"]');
         if (m) m.setAttribute('content', o.hex);
-
-        /* شاشةُ البدء مرسومةٌ بالحروف قبل أيّ ملفّ CSS، فلا يبلغها رمز. */
-        var g1 = document.getElementById('splash-c1');
-        var g2 = document.getElementById('splash-c2');
-        var tx = document.getElementById('splash-tx');
-        if (g1) g1.setAttribute('stop-color', o.vars['--primary-mid'] || o.hex);
-        if (g2) g2.setAttribute('stop-color', o.hex);
-        if (tx) tx.style.color = o.hex;
     } catch (e) {}
 })();
 </script>
@@ -126,6 +118,20 @@
         <style>@keyframes splash-spin { to { transform: rotate(360deg); } }</style>
     </div>
     <script>
+        /* شاشةُ البدء مرسومةٌ بالحروف قبل أيّ ملفّ CSS، فلا يبلغها رمز —
+           فتُلوَّن هنا لا في السكربت الأعلى: ذاك يسبق وجودَ هذه العناصر. */
+        (function () {
+            try {
+                var o = JSON.parse(localStorage.getItem('teacher_app_color') || 'null');
+                if (!o || !o.hex || !o.vars) return;
+                var g1 = document.getElementById('splash-c1');
+                var g2 = document.getElementById('splash-c2');
+                var tx = document.getElementById('splash-tx');
+                if (g1) g1.setAttribute('stop-color', o.vars['--primary-mid'] || o.hex);
+                if (g2) g2.setAttribute('stop-color', o.hex);
+                if (tx) tx.style.color = o.hex;
+            } catch (e) {}
+        })();
         setTimeout(function () {
             var s = document.getElementById('splash');
             if (s) { s.style.opacity = '0'; setTimeout(function () { s.remove(); }, 300); }
@@ -273,7 +279,7 @@
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
     <!-- الإيموجي ← رسومٌ خطّيّة، تحت body.theme-calm فقط (معاينة ٢ سبتمبر ٢٠٢٦) -->
     <script src="js/calm-icons.js?v=2"></script>
-    <script src="js/calm-picker.js?v=8"></script>
+    <script src="js/calm-picker.js?v=9"></script>
     <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
         <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الزجاجي</span>
     </button>
@@ -303,9 +309,9 @@
          النسخة المغلَّفة. الاتصال بالخادم يظلّ يحتاج شبكة بالطبع. -->
     <script src="vendor/supabase.js?v=1"></script>
     <script src="js/supabase-client.js?v=S3"></script>
-    <script src="js/database.js?v=S33"></script>
+    <script src="js/database.js?v=S34"></script>
     <!-- لونُ التطبيق: الحسابُ والحقنُ والمرآة. يسبق الإعداداتِ وapp.js. -->
-    <script src="js/theme-color.js?v=1"></script>
+    <script src="js/theme-color.js?v=2"></script>
     <script src="js/period-times.js?v=1"></script>
     <script src="js/words.js?v=2"></script>
     <script src="js/subjects.js?v=2"></script>
@@ -318,7 +324,7 @@
     <script src="js/initiatives-catalog.js?v=1"></script>
     <script src="js/mission-catalog.js?v=1"></script>
     <script src="js/bell.js?v=3"></script>
-    <script src="js/auth.js?v=S35"></script>
+    <script src="js/auth.js?v=S36"></script>
     <script src="js/ai-service.js?v=D16"></script>
     <script src="js/question-editor.js?v=12"></script>
     <script src="js/image-compress.js?v=1"></script>
@@ -335,14 +341,14 @@
     <script src="js/components/bottom-nav.js?v=C12"></script>
     <script src="js/components/dept-picker.js?v=3"></script>
     <script src="js/components/subject-picker.js?v=2"></script>
-    <script src="js/views/login.js?v=26"></script>
+    <script src="js/views/login.js?v=27"></script>
     <script src="js/views/setup.js?v=13"></script>
     <script src="js/views/dashboard.js?v=C55"></script>
     <script src="js/views/classes.js?v=S24"></script>
     <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C7"></script>
     <script src="js/views/profile.js?v=D25"></script>
     <script src="js/views/reminders.js?v=S9"></script>
-    <script src="js/views/settings.js?v=D55"></script>
+    <script src="js/views/settings.js?v=D56"></script>
     <script type="text/lazy-view" data-view="class-books" data-src="js/views/class-books.js?v=S22"></script>
     <script type="text/lazy-view" data-view="class-curriculum" data-src="js/views/class-curriculum.js?v=D13"></script>
     <script type="text/lazy-view" data-view="class-exams" data-src="js/views/class-exams.js?v=S21"></script>
