@@ -183,20 +183,26 @@ body.theme-calm a:not(.btn):not(.bn-item):not(.hub-tile):not(.hub-featured):not(
    فالخلاصة: **كحليٌّ نيليٌّ عميق** — رسميٌّ كالبنوك، وفيه دفءُ النيلة —
    بتدرّجٍ من فاتحٍ فوق إلى أعمقَ تحت، ولمعةٍ علويّة، وظلٍّ بلونه.
    الأبيضُ عليه ‎١١:١‎ محسوبةً على الوسط ‎#2C3B63‎. */
+/* اللونُ الواحد `--pri` يختاره شريطُ calm-picker.js؛ والتدرّجُ والحدُّ
+   والظلُّ كلُّها تُشتقّ منه هنا — فرقمٌ واحدٌ يغيّر كلَّ زرٍّ رئيسيّ. */
+:root { --pri: #2C3B63; }
 body.theme-calm .btn-primary,
 body.theme-calm .start-cta,
 body.theme-calm .hint-go,
 body.theme-calm .br-jump-row .go,
 body.theme-calm .subp-other-go,
 body.theme-calm .stg-btn.main {
-    background: linear-gradient(180deg, #3E5080 0%, #2C3B63 55%, #23304F 100%) !important;
-    border: 1px solid #1C2743 !important;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--pri) 78%, #fff) 0%,
+        var(--pri) 55%,
+        color-mix(in srgb, var(--pri) 84%, #000) 100%) !important;
+    border: 1px solid color-mix(in srgb, var(--pri) 72%, #000) !important;
     color: #fff !important;
     text-shadow: 0 1px 0 rgba(0,0,0,.25) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.28),
                 inset 0 -1px 0 rgba(0,0,0,.18),
                 0 2px 3px rgba(20,30,60,.20),
-                0 10px 22px rgba(44,59,99,.30) !important;
+                0 10px 22px color-mix(in srgb, var(--pri) 30%, transparent) !important;
 }
 body.theme-calm .btn-primary *,
 body.theme-calm .start-cta * { color: #fff !important; }
@@ -204,17 +210,51 @@ body.theme-calm .btn-primary svg.ci,
 body.theme-calm .start-cta svg.ci { stroke: #fff; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
 body.theme-calm .btn-primary:hover:not(:disabled),
 body.theme-calm .start-cta:hover {
-    background: linear-gradient(180deg, #46598C 0%, #32436F 55%, #27365A 100%) !important;
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--pri) 70%, #fff) 0%,
+        color-mix(in srgb, var(--pri) 92%, #fff) 55%,
+        color-mix(in srgb, var(--pri) 90%, #000) 100%) !important;
 }
 body.theme-calm .btn-primary:active,
 body.theme-calm .start-cta:active,
 body.theme-calm .subp-other-go:active,
 body.theme-calm .stg-btn.main:active {
-    background: linear-gradient(180deg, #23304F 0%, #2C3B63 100%) !important;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--pri) 84%, #000) 0%, var(--pri) 100%) !important;
     box-shadow: inset 0 2px 5px rgba(0,0,0,.30), 0 1px 2px rgba(20,30,60,.15) !important;
     transform: translateY(1px);
 }
 body.theme-calm .btn-primary:disabled { opacity: .55; }
+
+/* شريطُ الألوان — أداةُ معاينة فوق الشريط السفليّ */
+#calm-pri {
+    position: fixed; left: 0; right: 0;
+    bottom: calc(var(--safe-bottom, 0px) + var(--bottom-nav-height, 64px) + 6px);
+    z-index: 1190;
+    padding: 6px 8px 4px;
+    background: rgba(255,255,255,.86);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    border-top: 1px solid var(--glass-line, #C7CBD1);
+    border-bottom: 1px solid var(--glass-line, #C7CBD1);
+}
+#calm-pri[hidden] { display: none !important; }
+#calm-pri .row {
+    display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 6px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+#calm-pri .row::-webkit-scrollbar { display: none; }
+#calm-pri .sw {
+    flex: none; width: 44px; height: 44px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.9);
+    box-shadow: 0 2px 6px rgba(16,24,40,.25), inset 0 1px 0 rgba(255,255,255,.35);
+    color: #fff; font: 700 14px/1 inherit; font-family: inherit;
+    text-shadow: 0 1px 1px rgba(0,0,0,.45); cursor: pointer;
+}
+#calm-pri .sw.on { outline: 3px solid #111; outline-offset: 2px; }
+#calm-pri-label { font-size: 12px; font-weight: 700; color: #4E5560; text-align: center; padding-bottom: 2px; }
+/* والمحتوى يُرفع كي لا يختفي آخرُه خلف الشريط */
+body.has-calm-pri .view, body.has-calm-pri main { padding-bottom: 110px; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    الأيقوناتُ الخطّيّة — حدودٌ سوداء بلا تعبئة
