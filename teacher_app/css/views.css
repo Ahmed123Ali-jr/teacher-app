@@ -285,15 +285,24 @@ body.drawer-open { overflow: hidden; }
 }
 
 .bottom-nav .bn-icon {
-    /* ‎19‎ لا ‎20‎ — درجةٌ واحدةٌ أصغر، بقراره. وجُرّب ‎17‎ و‎16‎ و‎15‎ فردّها
-       كلَّها. ولا يُنزَل تحت ‎15‎ إن عاد الأمر: يذوب هناك تفصيلُ 📅 و⚙️
-       الداخليّ — رقمُ اليوم وأسنانُ الترس — فتصيران لطختين.
-       وارتفاعُ الشريط ومساحةُ اللمس لا تتبعان هذا الرقم — فالزرُّ لا يصغر
-       بصغر رمزه، والقياسُ من `--bottom-nav-height` و`min-height`. */
-    font-size: 19px;
+    /* صار المحتوى رسماً خطّيّاً لا حرفَ إيموجي (٢ سبتمبر ٢٠٢٦)، فسقط
+       `font-size` — لم يعد يقيس شيئاً. والمقاسُ على الوسم نفسِه وفي
+       القاعدة أدناه معاً: ‎22px‎، وهي الدرجةُ التي عُوير عليها الشريط.
+       وارتفاعُ الشريط ومساحةُ اللمس لا يتبعانها: القياسُ من
+       `--bottom-nav-height` و`min-height` (‎48px‎)، والمحتوى عندها ‎45px‎.
+       و`line-height: 1` باقيةٌ: الغلافُ يرث ‎1.2‎ من `.bn-item` فيزيد
+       ارتفاعَه بلا سبب. */
     line-height: 1;
     margin-bottom: 2px;
     transition: transform var(--dur-fast) var(--ease);
+}
+/* `display: block` تُلغي فجوةَ خطّ الأساس تحت الرسم — سابقتُها في
+   `.doc-ib svg` أعلاه. ولا لونَ هنا: `currentColor` على الوسم يرث حبرَ
+   الخانة في الحالات الثلاث. */
+.bottom-nav .bn-icon svg {
+    width: 22px;
+    height: 22px;
+    display: block;
 }
 .bottom-nav .bn-item.is-active .bn-icon { transform: scale(1.05); }
 
@@ -5695,3 +5704,65 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 /* الحاويةُ تترك تحتها مكانَ الزرّ العائم — وإلّا غطّى «إضافة قسم جديد».
    ٩١px هو حشوُ شاشة الفصول نفسُه، فالزرُّ زرُّها. */
 .pf-v2 { padding-bottom: 91px; }
+
+/* ==========================================================================
+   شاشةُ ألوان التطبيق (الإعدادات ← ألوان التطبيق)
+   ==========================================================================
+   المنزلقُ (`input[type=range]`) أوّلُ منزلقٍ في شاشات الإعدادات، فتنسيقُه
+   هنا لا في `components.css`: لا يستعمله غيرُها.
+   ========================================================================== */
+/* صفٌّ واحدٌ يُسحب لا صفّان يلتفّان: الدرجاتُ سُلَّمٌ متدرّج، وكسرُه إلى
+   سطرين يقطع تسلسلَه. */
+.cl-shades {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+.cl-shades::-webkit-scrollbar { display: none; }
+.cl-sw {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28);
+    cursor: pointer;
+    padding: 0;
+}
+.cl-sw.on {
+    outline: 3px solid var(--ink-primary);
+    outline-offset: 2px;
+}
+.cl-bul {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-inline-end: 6px;
+    vertical-align: -1px;
+    border: 1px solid rgba(0, 0, 0, .12);
+}
+.cl-range {
+    width: 100%;
+    accent-color: var(--primary);
+}
+.cl-prev {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: var(--space-4);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--text-muted);
+}
+.cl-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28);
+}
+.cl-tx { font-variant-numeric: tabular-nums; letter-spacing: .5px; }

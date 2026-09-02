@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="فصول — سجل الطلاب والاختبارات وملف الإنجاز">
-    <meta name="theme-color" content="#1E40AF">
+    <!-- لونُ الهُويّة. كان ‎#1E40AF‎ — أزرقُ ملكيٌّ لا وجودَ له في التطبيق
+         منذ اعتُمد البترولي. ويُحدَّث وقتَ التشغيل إن بدّل المعلّمُ لونَه. -->
+    <meta name="theme-color" content="#0A3F4A">
 
     <!-- Always re-fetch index.html so new ?v= cache-busts on JS/CSS take effect immediately. -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -36,7 +38,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D32">
     <link rel="stylesheet" href="css/components.css?v=13">
-    <link rel="stylesheet" href="css/views.css?v=D295">
+    <link rel="stylesheet" href="css/views.css?v=D297">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -47,7 +49,7 @@
     <link rel="stylesheet" href="css/theme-dark.css?v=34">
     <!-- الثوبُ الهادئ: كلُّ قواعده تحت body.theme-calm فلا يمسّ أحداً حتى
          يُرفع المفتاح. يُرفع بـ?calm=1 ويُخفض بـ?calm=0. (معاينةٌ ١ سبتمبر ٢٠٢٦.) -->
-    <link rel="stylesheet" href="css/theme-calm.css?v=22">
+    <link rel="stylesheet" href="css/theme-calm.css?v=23">
 
     <link rel="stylesheet" href="css/print.css?v=D29" media="print">
 </head>
@@ -63,17 +65,53 @@
         if (localStorage.getItem('calm') === '1') document.body.classList.add('theme-calm');
     } catch (e) {}
 })();
+
+/* لونُ التطبيق الذي اختاره المعلّم — يُطلى قبل أوّل رسمٍ لئلّا يومض
+   البتروليُّ ثمّ يتبدّل. ولا حسابَ هنا: `js/theme-color.js` يكتب القيمَ
+   المحسوبةَ في المرآة عند الاختيار، وهذا يطليها كما هي.
+   والمرآةُ موسومةٌ بمعرّف المعلّم: جهازٌ واحدٌ قد يمرّ عليه حسابان، فلا
+   يُلبَس لونُ غيرِه. وكلُّه في try/catch — لونٌ لا يوقف إقلاعاً. */
+(function () {
+    try {
+        var raw = localStorage.getItem('teacher_app_color');
+        if (!raw) return;
+        var o = JSON.parse(raw);
+        if (!o || !o.vars || !o.hex) return;
+
+        var sraw = localStorage.getItem('teacher-app-auth');
+        if (!sraw) return;
+        var a = JSON.parse(sraw);
+        var sess = a && (a.currentSession || a.session || a);
+        var uid = sess && sess.user && sess.user.id;
+        if (!uid || o.uid !== uid) return;
+
+        var st = document.body.style;
+        for (var k in o.vars) st.setProperty(k, o.vars[k]);
+
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', o.hex);
+
+        /* شاشةُ البدء مرسومةٌ بالحروف قبل أيّ ملفّ CSS، فلا يبلغها رمز. */
+        var g1 = document.getElementById('splash-c1');
+        var g2 = document.getElementById('splash-c2');
+        var tx = document.getElementById('splash-tx');
+        if (g1) g1.setAttribute('stop-color', o.vars['--primary-mid'] || o.hex);
+        if (g2) g2.setAttribute('stop-color', o.hex);
+        if (tx) tx.style.color = o.hex;
+    } catch (e) {}
+})();
 </script>
     <!-- Instant splash: pure inline HTML/CSS so it paints before any file
          loads (kills the mobile white screen). Removed by the router after
          the first view renders; 15s failsafe fades it if boot ever hangs. -->
     <div id="splash" style="position:fixed; inset:0; z-index:9998; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:#FFFFFF; font-family:'IBM Plex Sans Arabic',system-ui,sans-serif; transition:opacity 250ms ease;">
-        <!-- شعار التطبيق: قبعة تخرج بالأزرق الملكي والذهبي (SVG داخلي = يظهر فوراً) -->
+        <!-- شعار التطبيق: قبعة تخرج بلون الهُويّة والذهبي (SVG داخلي = يظهر فوراً).
+             وألوانُه تتبع لونَ المعلّم — يكتبها السكربتُ المبكّر أعلاه. -->
         <svg width="104" height="104" viewBox="0 0 96 96" aria-label="شعار فصول">
             <defs>
                 <linearGradient id="splash-bg" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#1A3A6E"/>
-                    <stop offset="1" stop-color="#0F2C5C"/>
+                    <stop id="splash-c1" offset="0" stop-color="#105260"/>
+                    <stop id="splash-c2" offset="1" stop-color="#0A3F4A"/>
                 </linearGradient>
             </defs>
             <circle cx="48" cy="48" r="45" fill="url(#splash-bg)"/>
@@ -83,7 +121,7 @@
             <path d="M75 43 v11.5" stroke="#C9A961" stroke-width="2.6" stroke-linecap="round"/>
             <circle cx="75" cy="58" r="3.2" fill="#C9A961"/>
         </svg>
-        <div style="font-size:21px; font-weight:700; color:#0F2C5C;">فصول</div>
+        <div id="splash-tx" style="font-size:21px; font-weight:700; color:#0A3F4A;">فصول</div>
         <div style="width:26px; height:26px; border:3px solid #E2E8F0; border-top-color:#C9A961; border-radius:50%; animation:splash-spin .8s linear infinite;"></div>
         <style>@keyframes splash-spin { to { transform: rotate(360deg); } }</style>
     </div>
@@ -234,7 +272,7 @@
     <!-- Toasts -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
     <!-- الإيموجي ← رسومٌ خطّيّة، تحت body.theme-calm فقط (معاينة ٢ سبتمبر ٢٠٢٦) -->
-    <script src="js/calm-icons.js?v=1"></script>
+    <script src="js/calm-icons.js?v=2"></script>
     <script src="js/calm-picker.js?v=8"></script>
     <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
         <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الزجاجي</span>
@@ -265,7 +303,9 @@
          النسخة المغلَّفة. الاتصال بالخادم يظلّ يحتاج شبكة بالطبع. -->
     <script src="vendor/supabase.js?v=1"></script>
     <script src="js/supabase-client.js?v=S3"></script>
-    <script src="js/database.js?v=S32"></script>
+    <script src="js/database.js?v=S33"></script>
+    <!-- لونُ التطبيق: الحسابُ والحقنُ والمرآة. يسبق الإعداداتِ وapp.js. -->
+    <script src="js/theme-color.js?v=1"></script>
     <script src="js/period-times.js?v=1"></script>
     <script src="js/words.js?v=2"></script>
     <script src="js/subjects.js?v=2"></script>
@@ -292,7 +332,7 @@
     <script src="js/print-students.js?v=D19"></script>
     <script src="js/components/modal.js?v=6"></script>
     <script src="js/components/drawer.js?v=C3"></script>
-    <script src="js/components/bottom-nav.js?v=C10"></script>
+    <script src="js/components/bottom-nav.js?v=C12"></script>
     <script src="js/components/dept-picker.js?v=3"></script>
     <script src="js/components/subject-picker.js?v=2"></script>
     <script src="js/views/login.js?v=26"></script>
@@ -302,7 +342,7 @@
     <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C7"></script>
     <script src="js/views/profile.js?v=D25"></script>
     <script src="js/views/reminders.js?v=S9"></script>
-    <script src="js/views/settings.js?v=D52"></script>
+    <script src="js/views/settings.js?v=D55"></script>
     <script type="text/lazy-view" data-view="class-books" data-src="js/views/class-books.js?v=S22"></script>
     <script type="text/lazy-view" data-view="class-curriculum" data-src="js/views/class-curriculum.js?v=D13"></script>
     <script type="text/lazy-view" data-view="class-exams" data-src="js/views/class-exams.js?v=S21"></script>
@@ -323,7 +363,7 @@
     <script src="js/guest-notice.js?v=1"></script>
     <script src="js/phone-prompt.js?v=1"></script>
     <script src="js/save-account.js?v=1"></script>
-    <script src="js/app.js?v=S16"></script>
+    <script src="js/app.js?v=S17"></script>
 
     <!-- Service Worker: enables offline + auto-update banner on every deploy. -->
     <script>
@@ -339,13 +379,13 @@
                الشريطُ ويصعب أن تُرى اللافتةُ أو يُضغط زرُّها. */
             'position:fixed','bottom:calc(84px + env(safe-area-inset-bottom))',
             'inset-inline-end:16px','z-index:9999',
-                'background:#0A3F4A','color:#fff','padding:10px 14px',
+                'background:var(--primary,#0A3F4A)','color:#fff','padding:10px 14px',
                 'border-radius:10px','font-family:IBM Plex Sans Arabic,system-ui,sans-serif',
                 'box-shadow:0 6px 20px rgba(0,0,0,.18)','font-size:14px',
                 'display:flex','gap:10px','align-items:center'
             ].join(';');
             bar.innerHTML = '<span>تحديث جديد متاح</span>'
-                + '<button id="sw-update-btn" style="background:#fff;color:#0A3F4A;'
+                + '<button id="sw-update-btn" style="background:#fff;color:var(--primary,#0A3F4A);'
                 + 'border:none;border-radius:6px;padding:6px 10px;font-weight:700;'
                 + 'cursor:pointer">تحديث</button>';
             document.body.appendChild(bar);

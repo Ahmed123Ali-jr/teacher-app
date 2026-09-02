@@ -162,6 +162,11 @@
     });
 
     function start() {
+        /* المراقبُ لا يُسجَّل إلّا لمن فتح المعاينةَ مرّةً. كان يُسجَّل للجميع
+           بلا شرط — والبوّابةُ داخلَ ردِّ النداء لا قبلَه — فكان كلُّ تبدّلِ
+           صنفٍ في أيّ عنصرٍ يستدعي `restore()` ومعها `document.body.normalize()`
+           على المستند كلِّه. (قِيس ٢ سبتمبر ٢٠٢٦.) */
+        try { if (global.localStorage.getItem('calm_ui') !== '1') return; } catch (e) { return; }
         mo.observe(document.body, { childList: true, subtree: true, characterData: true,
                                     attributes: true, attributeFilter: ['class'] });
         schedule();

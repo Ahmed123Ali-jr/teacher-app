@@ -118,6 +118,10 @@
             const logoutBtn = document.getElementById('btn-logout');
             if (logoutBtn) logoutBtn.addEventListener('click', async () => {
                 await global.Auth.logout();
+                /* تعود شاشةُ الدخول إلى اللون الافتراضيّ. والمرآةُ تبقى
+                   موسومةً بصاحبها — خروجُ الزائر طيٌّ لا خروج، وله أن يعود
+                   بلونه؛ والمحوُ مكانُه حذفُ الحساب وحدَه. */
+                if (global.ThemeColor) global.ThemeColor.reset();
                 this.toast('تم تسجيل الخروج.', 'info');
                 global.location.hash = '#/login';
             });

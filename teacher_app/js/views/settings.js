@@ -51,6 +51,7 @@
             title: 'التطبيق',
             items: [
                 { page: 'appearance',    label: 'المظهر',          sub: 'الوضع الفاتح والداكن' },
+                { page: 'colors',       label: 'ألوان التطبيق',   sub: 'اختر لونك ودرجته' },
                 { page: 'bell',          label: 'منبّه الحصص',      sub: 'جرس المدرسة وتنبيه حصتك' },
                 { page: 'backup',        label: 'النسخ الاحتياطي', sub: 'تصدير واستيراد بياناتك' },
                 { page: 'invite',        label: 'دعوة معلم',       sub: 'شارك التطبيق مع زميلك' }
@@ -150,6 +151,7 @@
             principal_name:   await getPref('principal_name',   ''),
             school_logo:      await getPref('school_logo',      null),
             theme:            await getPref('theme',            'light'),
+            app_color:        await getPref('app_color',        null),
             last_backup:      await getPref('last_backup',      null),
             education_dept:   await getPref('education_dept',   ''),
             school_gender:    await getPref('school_gender',    '')
@@ -317,6 +319,8 @@
                 body = await termBody(teacher); bindFn = bindTerm; break;
             case 'appearance':
                 body = appearanceBody(prefs); bindFn = bindAppearance; break;
+            case 'colors':
+                body = colorsBody(); bindFn = bindColors; break;
             case 'bell':
                 body = bellBody(await global.Bell.loadPrefs());
                 bindFn = bindBell;
@@ -931,6 +935,223 @@
         });
     }
 
+    /* ==========================================================================
+       ألوان التطبيق — يختار المعلّمُ لونَه فيُطلى التطبيقُ كلُّه
+       ==========================================================================
+       طلبُ المعلّم (٢ سبتمبر ٢٠٢٦): لونٌ أساسيٌّ للتطبيق يستطيع تعديلَه على
+       راحته. والحسابُ كلُّه في `js/theme-color.js` — هذه الشاشةُ واجهتُه.
+
+       ── ولماذا لا تُعرض الدرجاتُ الفاتحة ──
+       في التطبيق ثمانون إعلانَ حبرٍ أبيضَ أو ذهبيٍّ مكتوباً صريحاً فوق أسطحٍ
+       تقرأ لونَ الهُويّة. فلونٌ فاتحٌ يمحوها كلَّها بلا صوت. والحدُّ هنا
+       مقيسٌ لا مقدَّر: أفتحُ درجةٍ يمرّ عليها حبرٌ أبيض لا تنزل عن ‎٧:١‎ —
+       وهي درجةُ البترولي المنشور نفسِها. فما يُعرض عليه لا يقلّ قراءةً
+       عمّا يراه اليوم، ومنزلقُ الإضاءة يقف عند الحدّ نفسِه لا يتجاوزه.
+
+       ── والحفظُ عند `change` لا عند `input` ──
+       كلُّ كتابةٍ ناجحة تُطلق فحصَ الصندوق الصادر وتفريغَه (`database.js`).
+       فالحفظُ مع كلّ بكسلٍ من المنزلق يُغرق الشبكةَ والصندوقَ معاً. والطلاءُ
+       يمضي مع السحب، والحفظُ عند رفع الإصبع. */
+    const COLOR_FAMILIES = [
+        { label: 'بترولي', h: 190, s: 76 },
+        { label: 'كحلي',   h: 220, s: 45 },
+        { label: 'أزرق',   h: 210, s: 68 },
+        { label: 'نيلي',   h: 245, s: 45 },
+        { label: 'بنفسجي', h: 275, s: 42 },
+        { label: 'خمري',   h: 345, s: 55 },
+        { label: 'أحمر',   h: 2,   s: 60 },
+        { label: 'بني',    h: 25,  s: 50 },
+        { label: 'ذهبي',   h: 42,  s: 70 },
+        { label: 'زيتوني', h: 85,  s: 40 },
+        { label: 'أخضر',   h: 150, s: 45 },
+        { label: 'فيروزي', h: 175, s: 55 },
+        { label: 'رصاصي',  h: 215, s: 14 },
+        { label: 'أسود',   h: 0,   s: 0 }
+    ];
+
+    /* حالةُ الشاشة — تعيش ما دامت مفتوحة. */
+    let colorState = null;
+
+    function colorTC() { return global.ThemeColor; }
+
+    /** أقربُ عائلةٍ إلى صبغةٍ ما — ليُفتح على عائلة لونه لا على الأولى. */
+    function nearestFamily(h, s) {
+        if (s < 8) return COLOR_FAMILIES.length - 1;          /* أسود/رصاصي */
+        let best = 0, bestD = 1e9;
+        COLOR_FAMILIES.forEach((f, i) => {
+            if (f.s < 8) return;
+            /* مسافةٌ دائريّة: الصبغةُ عجلةٌ، فبين ‎٣٥٠‎ و‎١٠‎ عشرون لا ثلاثُمئة. */
+            const d = Math.abs(((f.h - h + 540) % 360) - 180);
+            if (d < bestD) { bestD = d; best = i; }
+        });
+        return best;
+    }
+
+    function colorsBody() {
+        const TC = colorTC();
+        const cur = TC ? TC.current() : '#0A3F4A';
+        const p = TC ? TC.hexToHsl(cur) : [190, 76, 16];
+        colorState = { h: Math.round(p[0]), s: Math.round(p[1]), l: Math.round(p[2]),
+                       /* اللونُ الأصليُّ يُحفظ كما هو: التدويرُ إلى صحيحٍ
+                          يزيحه درجةً (‎#0A3F4A‎ ← ‎#0A3D48‎)، فمجرّدُ فتح
+                          الشاشة كان يبدّل لونَ التطبيق. */
+                       hex: cur,
+                       fam: nearestFamily(p[0], p[1]) };
+        return `
+            <div class="field">
+                <label class="label">اللون</label>
+                <div class="fchips" id="cl-fams"></div>
+            </div>
+            <div class="field">
+                <label class="label">الدرجة</label>
+                <div class="cl-shades" id="cl-shades"></div>
+            </div>
+            <div class="field">
+                <label class="label" for="cl-sat">الإشباع</label>
+                <input class="cl-range" id="cl-sat" type="range" min="0" max="100" step="1">
+            </div>
+            <div class="field">
+                <label class="label" for="cl-light">الإضاءة</label>
+                <input class="cl-range" id="cl-light" type="range" min="4" max="40" step="1">
+            </div>
+            <div class="cl-prev" id="cl-prev">
+                <span class="cl-dot" id="cl-dot"></span>
+                <span class="cl-tx" id="cl-tx"></span>
+            </div>
+            <button type="button" class="fchip" id="cl-default" style="width:100%; margin-top:var(--space-3)">
+                العودة إلى اللون الافتراضي
+            </button>
+            <p class="text-muted" style="font-size:var(--fs-xs); line-height:1.9; margin-top:var(--space-4)">
+                اللونُ يُطبَّق على الأزرار وبطاقات الفصول وسجلّ المتابعة والجدول
+                والشريط السفليّ. والدرجاتُ المعروضةُ كلُّها مقروءةٌ بالكتابة
+                البيضاء فوقها — كالبترولي تماماً.
+            </p>
+        `;
+    }
+
+    function bindColors(container) {
+        const TC = colorTC();
+        if (!TC) return;
+
+        const famsEl   = container.querySelector('#cl-fams');
+        const shadesEl = container.querySelector('#cl-shades');
+        const satEl    = container.querySelector('#cl-sat');
+        const lightEl  = container.querySelector('#cl-light');
+        const dotEl    = container.querySelector('#cl-dot');
+        const txEl     = container.querySelector('#cl-tx');
+
+        let saveTimer = null;
+        const hex = () => colorState.hex;
+        /* أيُّ لمسةٍ تُعيد الحساب؛ وقبلها يبقى اللونُ الأصليُّ حرفاً بحرف. */
+        function recompute() {
+            colorState.hex = TC.hslToHex(colorState.h, colorState.s, colorState.l);
+        }
+        function readout() {
+            dotEl.style.background = hex();
+            txEl.textContent = hex();
+        }
+        /* الطلاءُ فوريّ، والحفظُ يتأخّر — انظر تعليقَ الشاشة أعلاه. */
+        function paintOnly() {
+            recompute();
+            TC.paint(hex());
+            readout();
+        }
+        function save() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                bgSave(() => TC.choose(hex()));
+            }, 250);
+        }
+
+        function drawFams() {
+            famsEl.innerHTML = COLOR_FAMILIES.map((f, i) => `
+                <button type="button" class="fchip ${i === colorState.fam ? 'on' : ''}"
+                        data-fam="${i}">
+                    <span class="cl-bul" style="background:${TC.hslToHex(f.h, f.s, 18)}"></span>${f.label}
+                </button>`).join('');
+        }
+
+        function drawShades() {
+            const f = COLOR_FAMILIES[colorState.fam];
+            const max = TC.maxLightness(colorState.h, colorState.s);
+            /* سبعُ درجاتٍ موزّعةٌ على المدى المقروء كلِّه. */
+            const list = [];
+            for (let i = 0; i < 7; i++) {
+                list.push(Math.round(6 + (max - 6) * (i / 6)));
+            }
+            /* الحلقةُ على أقربِ درجةٍ وحدَها: الخطواتُ قد تتقارب فيقع اثنتان
+               داخل هامشٍ واحدٍ فتظهر حلقتان. */
+            let near = 0;
+            list.forEach((l, i) => {
+                if (Math.abs(l - colorState.l) < Math.abs(list[near] - colorState.l)) near = i;
+            });
+            shadesEl.innerHTML = list.map((l, i) => {
+                const c = TC.hslToHex(colorState.h, colorState.s, l);
+                return `<button type="button" class="cl-sw ${i === near ? 'on' : ''}"
+                                data-l="${l}" style="background:${c}"
+                                aria-label="درجة ${l}"></button>`;
+            }).join('');
+            /* المنزلقُ يقف عند الحدّ المقروء لا عند مئة. */
+            lightEl.max = String(Math.round(max));
+            lightEl.value = String(Math.min(colorState.l, Math.round(max)));
+            satEl.value = String(colorState.s);
+        }
+
+        function redraw() { drawFams(); drawShades(); paintOnly(); }
+        function redrawQuiet() { drawFams(); drawShades(); readout(); }
+
+        famsEl.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-fam]');
+            if (!b) return;
+            const f = COLOR_FAMILIES[Number(b.dataset.fam)];
+            colorState.fam = Number(b.dataset.fam);
+            colorState.h = f.h;
+            colorState.s = f.s;
+            const max = TC.maxLightness(f.h, f.s);
+            colorState.l = Math.min(colorState.l, Math.round(max));
+            redraw();
+            save();
+        });
+
+        shadesEl.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-l]');
+            if (!b) return;
+            colorState.l = Number(b.dataset.l);
+            drawShades();
+            paintOnly();
+            save();
+        });
+
+        satEl.addEventListener('input', () => {
+            colorState.s = Number(satEl.value);
+            const max = TC.maxLightness(colorState.h, colorState.s);
+            if (colorState.l > max) colorState.l = Math.round(max);
+            paintOnly();
+        });
+        satEl.addEventListener('change', () => { drawShades(); save(); });
+
+        lightEl.addEventListener('input', () => {
+            colorState.l = Number(lightEl.value);
+            paintOnly();
+        });
+        lightEl.addEventListener('change', () => { drawShades(); save(); });
+
+        container.querySelector('#cl-default').addEventListener('click', () => {
+            const p = TC.hexToHsl(TC.DEFAULT);
+            colorState = { h: Math.round(p[0]), s: Math.round(p[1]), l: Math.round(p[2]),
+                           hex: TC.DEFAULT, fam: nearestFamily(p[0], p[1]) };
+            TC.paint(TC.DEFAULT);
+            redrawQuiet();
+            /* الافتراضيُّ يُكتب كما يُكتب غيرُه: `paint` يزيل الحقنَ عنده
+               فتحكم قيمُ CSS الأصليّة حرفاً بحرف. */
+            bgSave(() => TC.choose(TC.DEFAULT));
+            global.TeacherApp.toast('عاد اللون الافتراضي.', 'success', 1500);
+        });
+
+        /* أوّلُ رسمٍ لا يطلي: فتحُ الشاشة ليس اختياراً. */
+        redrawQuiet();
+    }
+
     function themeChip(value, icon, label, current) {
         const active = (current || 'light') === value;
         return `<button type="button" class="chip ${active ? 'active' : ''}" data-theme="${value}"
@@ -941,6 +1162,9 @@
             btn.addEventListener('click', () => {
                 /* الوضع يتبدّل في اللحظة نفسها؛ حفظ التفضيل يمضي في الخلفية. */
                 applyTheme(btn.dataset.theme);
+                /* الحبرُ في الداكن أبيضُ مكسورٌ لا يتبع اللون، فيُعاد الطلاءُ
+                   بعد كلّ تبديلِ مظهرٍ ليُحسب من جديد. */
+                if (global.ThemeColor) global.ThemeColor.applyStored();
                 container.querySelectorAll('[data-theme]').forEach((b) => b.classList.toggle('active', b === btn));
                 global.TeacherApp.toast('تم تغيير الوضع.', 'success', 1200);
                 bgSave(() => setPref('theme', btn.dataset.theme));
@@ -1405,6 +1629,17 @@
             applyTheme(await getPref('theme', 'light'));
             await refreshPrintCache();
         } catch { /* ignore */ }
+        /* اللونُ في كتلةٍ مستقلّة: لو رُمي فيها استثناءٌ داخل الكتلة الأولى
+           لسقطت `refreshPrintCache` معه، فتخرج الطباعةُ وملفّاتُ PDF بلا
+           عامٍ دراسيٍّ ولا مدير ولا شعار — بلا رسالةِ خطأ. */
+        try {
+            if (global.ThemeColor) {
+                global.ThemeColor.applyStored();
+                /* التصحيحُ من القاعدة لا يُنتظر: المرآةُ في الجهاز كافيةٌ
+                   للرسم، وهذه لمن دخل من جهازٍ ثانٍ. */
+                global.ThemeColor.syncFromDb();
+            }
+        } catch (e) { /* اللونُ لا يوقف الإقلاع */ }
     }
 
     async function refreshPrintCache() {

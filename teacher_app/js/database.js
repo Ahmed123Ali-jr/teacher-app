@@ -1249,10 +1249,14 @@
             const row = await get('settings', key);
             return row ? row.value : undefined;
         },
-        async set(key, value) { return put('settings', { key, value }); },
+        /* محروستان لا خامّتان: كانتا تناديان `put`/`remove` مباشرةً، فكتابةُ
+           إعدادٍ بلا إنترنت ترمي وتضيع — ولا تبلغ الصندوقَ الصادر. و`mirror`
+           تعرف مخزنَ `settings` أصلاً، وليس في `OUTBOX_SKIP`. (قِيس ٢ سبتمبر
+           ٢٠٢٦ عند بناء «ألوان التطبيق»: اللونُ يُطلى ثمّ يسقط حفظُه صامتاً.) */
+        async set(key, value) { return putGuarded('settings', { key, value }); },
         /** محلّيٌّ فوريّ — للتهيئة وحدها، ويُتبع بكتابةٍ حقيقيةٍ في الخلفية. */
         async setLocal(key, value) { return Cache.put('settings', { key, value }); },
-        async unset(key) { return remove('settings', key); }
+        async unset(key) { return removeGuarded('settings', key); }
     };
 
     function open() { return openCache(); }
