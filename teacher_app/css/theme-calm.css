@@ -34,9 +34,6 @@ body.theme-calm {
     /* اللونُ المجسَّم لبطاقة الفصل وشريط «سجل المتابعة»: لونُ الفصل نفسُه
        مخفَّفاً بالأبيض، من فاتحٍ فوق إلى أعمقَ تحت — فيبقى لكلّ فصل هُويّتُه
        ويذهب ثقلُ البترول المصمت. والحرفُ عليه رصاصيٌّ داكن (‎≥ ٥:١‎). */
-    --tint-top:  color-mix(in srgb, var(--cls-color, #15606F) 26%, #fff);
-    --tint-bot:  color-mix(in srgb, var(--cls-color, #15606F) 48%, #fff);
-    --tint-line: color-mix(in srgb, var(--cls-color, #15606F) 55%, #fff);
     --tint-ink:  #2B3139;
     /* العمقُ الناعم: لمعةٌ علويّةٌ بيضاء، وخطٌّ سفليٌّ داخليٌّ رماديّ،
        وظلّان — قريبٌ ملتصق وبعيدٌ منتشر — كما تُرفع الأزرارُ في iOS 26. */
@@ -136,6 +133,19 @@ body.theme-calm .chs-side::before {
 }
 body.theme-calm .chs-side,
 body.theme-calm .chs-side * { color: var(--tint-ink) !important; text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+/* (الطلبُ السابع) اللونُ المختارُ من الشريط يحكم بطاقةَ الفصل وشريطَ
+   المتابعة أيضاً — فيرى الرقمَ الواحدَ على الزرّ وداخل الفصل معاً.
+   `!important` لأنّ لونَ الفصل يأتي inline من الشاشة. */
+body.theme-calm .class-hero-split,
+body.theme-calm .hub-featured,
+body.theme-calm .reg-hero {
+    --cls-color: var(--pri) !important;
+    /* المشتقّات تُعرَّف هنا لا على body: المتغيّرُ يُحلّ حيث يُعرَّف،
+       وعلى body لا يوجد --cls-color فكان يسقط إلى البديل الثابت (قِيس). */
+    --tint-top:  color-mix(in srgb, var(--pri) 26%, #fff);
+    --tint-bot:  color-mix(in srgb, var(--pri) 48%, #fff);
+    --tint-line: color-mix(in srgb, var(--pri) 55%, #fff);
+}
 body.theme-calm .class-hero-split {
     box-shadow: var(--glass-shadow) !important;
     border: 1px solid var(--glass-line) !important;
@@ -251,6 +261,11 @@ body.theme-calm .btn-primary:disabled { opacity: .55; }
     text-shadow: 0 1px 1px rgba(0,0,0,.45); cursor: pointer;
 }
 #calm-pri .sw.on { outline: 3px solid #111; outline-offset: 2px; }
+#calm-pri .grp {
+    flex: none; align-self: center; writing-mode: vertical-rl; transform: rotate(180deg);
+    font-size: 11px; font-weight: 700; color: #4E5560; padding: 2px 0; margin-inline: 4px 2px;
+    border-inline-start: 2px solid #C7CBD1;
+}
 #calm-pri-label { font-size: 12px; font-weight: 700; color: #4E5560; text-align: center; padding-bottom: 2px; }
 /* والمحتوى يُرفع كي لا يختفي آخرُه خلف الشريط */
 body.has-calm-pri .view, body.has-calm-pri main { padding-bottom: 110px; }
