@@ -59,15 +59,33 @@
 
     const KEY = 'calm_pri';
 
+    /* (الطلبُ الثامن، ٢ سبتمبر) «شوف اللونَ كاملاً لكن خلّه ما فيه حياة،
+       رسميّ»: اللونُ المختار يُطفأ قبل التطبيق — الصبغةُ نفسُها، والإشباعُ
+       يُخفَّض إلى ٤٠٪ ممّا كان، والسطوعُ يُرفع درجتين كي لا يسودّ. */
+    const FORMAL = 0.40;
+    function hexToHsl(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+        const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+        if (mx === mn) return [0, 0, l * 100];
+        const d = mx - mn, s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+        let h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+        return [h * 60, s * 100, l * 100];
+    }
+    function formal(hex) {
+        const [h, s, l] = hexToHsl(hex);
+        return hslToHex(h, s * FORMAL, Math.min(l + 2, 60));
+    }
+
     function apply(hex) {
-        document.documentElement.style.setProperty('--pri', hex);
+        document.documentElement.style.setProperty('--pri', formal(hex));
+        document.documentElement.style.setProperty('--pri-vivid', hex);
         document.querySelectorAll('#calm-pri .sw').forEach((b) => {
             b.classList.toggle('on', b.dataset.hex === hex);
         });
         const lab = document.getElementById('calm-pri-label');
         if (lab) {
             const i = COLORS.findIndex((c) => c[0] === hex);
-            lab.textContent = i >= 0 ? ('رقم ' + (i + 1) + ' — ' + COLORS[i][1] + ' ' + hex) : hex;
+            lab.textContent = i >= 0 ? ('رقم ' + (i + 1) + ' — ' + COLORS[i][1] + ' ' + hex + ' ← مُطفأ ' + formal(hex)) : hex;
         }
     }
 
@@ -100,7 +118,8 @@
         document.body.appendChild(bar);
         let saved = null;
         try { saved = localStorage.getItem(KEY); } catch (e) { /* لا يوقف */ }
-        apply(saved || COLORS[0][0]);
+        /* الافتراضيّ رقم ٧٦ (ذهبي ١) — اختارَه في ٢ سبتمبر */
+        apply(saved || (COLORS[75] ? COLORS[75][0] : COLORS[0][0]));
     }
 
     function sync() {
