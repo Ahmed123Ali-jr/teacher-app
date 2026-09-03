@@ -85,7 +85,7 @@
     /* ── ثابتُ الاتّجاه: كلُّ إزاحةٍ أفقيّةٍ تمرّ به ── */
     --dir: 1;
 
-    --grain-opacity: .16;
+    --grain-opacity: .19;
     --stagger: 90ms;
 }
 
@@ -133,6 +133,16 @@
    ولا حركة، ولا will-change. وتُطلى في خلفيّة القسم لا في طبقةٍ عائمة.
    ومبرّرُها الأقوى ليس «إحساسَ الفيلم» بل كسرَ تشريطِ التدرّج (banding).
    ========================================================================== */
+.vignette::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background:
+        radial-gradient(120% 78% at 50% 42%, transparent 46%, rgba(4, 6, 10, .55) 100%);
+}
+
 .grain::before {
     content: '';
     position: absolute;
@@ -303,8 +313,8 @@
    واحدٌ في كلّ متصفّح ولا يُقلَب من تحتنا.)
 
    ── والحالةُ الأساسيّة محبَّرةٌ كاملة ──
-   من لا يملك `animation-timeline` يقرأ النصَّ كاملاً لا خافتاً. الحركةُ
-   زيادةٌ على نصٍّ مقروء، لا شرطٌ لقراءته.
+   ‎--p‎ افتراضُه ‎1‎، فمن لم يعمل عنده الـJS يقرأ النصَّ كاملاً لا خافتاً.
+   الحركةُ زيادةٌ على نصٍّ مقروء، لا شرطٌ لقراءته.
    ========================================================================== */
 .reveal-text {
     font-size: clamp(30px, 4.8vw, 68px);
@@ -319,7 +329,8 @@
     background-image: linear-gradient(to left, var(--ink) 50%, var(--ink-muted) 50%);
     background-size: 200% 100%;
     background-repeat: no-repeat;
-    background-position: 100% 0;      /* الأساس: محبَّرٌ كاملاً */
+    /* ‎--p‎ من ‎0‎ إلى ‎1‎ يكتبه Statement. وافتراضُه ‎1‎: بلا JS محبَّرٌ كاملاً. */
+    background-position: calc(var(--p, 1) * 100%) 0;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -327,34 +338,9 @@
     padding-block: .06em .19em;
 }
 
-/* ══ الحالةُ الأدنى مقروءةٌ لا خافتة ══
-   اللونُ غيرُ المكشوف `--ink-muted` (‎٨٫٤٥:١‎) لا `--ink-faint`. فلو تعطّل
-   الخطُّ الزمنيُّ في متصفّحٍ يزعم دعمَه، بقيت الجملةُ مقروءةً تماماً —
-   أخفتَ قليلاً لا غير. الحركةُ زينةٌ فوق نصٍّ مقروء، لا شرطٌ لقراءته. */
-@supports (animation-timeline: view()) {
-    .reveal-text {
-        background-position: 0 0;
-        /* ‏بالطُّوَل لا بالمختصر: اختصارُ `animation` يعيد `animation-duration`
-           إلى ‎0s‎، والحركةُ المقودةُ بالتمرير تلزمها `auto` — ومع ‎0s‎ يصير
-           المفعولُ بلا مدّةٍ نشطة فلا يتحرّك شيء. */
-        animation-name: text-reveal;
-        animation-duration: auto;
-        animation-timing-function: linear;
-        animation-fill-mode: both;
-        animation-timeline: view();
-        /* ينتهي الكشفُ باكتمال دخول الكتلة لا بعبورها: `cover` يلزمه أن
-           يخرج العنصرُ من أعلى الشاشة، وذاك متعذّرٌ على آخر قسمٍ في الصفحة. */
-        animation-range: entry 20% entry 100%;
-    }
-}
-@keyframes text-reveal {
-    from { background-position: 0 0; }
-    to   { background-position: 100% 0; }
-}
-
 @media (prefers-reduced-motion: reduce) {
     /* لا كشفَ تدريجيّ — النصُّ محبَّرٌ من أوّل لحظة */
-    .reveal-text { animation: none !important; background-position: 100% 0; }
+    .reveal-text { background-position: 100% 0 !important; }
 }
 
 /* ==========================================================================
@@ -418,4 +404,63 @@
         border-inline-start: 1px solid var(--rule-gold);
         padding-inline-start: var(--pad, 21px);
     }
+}
+
+/* ==========================================================================
+   الضوءُ السينمائيّ.
+   الصفحةُ كانت سطحاً واحداً بلا مدىً بين ضوءٍ وظلّ — وهذا بالضبط ما يجعل
+   الداكنَ يُقرأ «قالباً» لا «فيلماً». فالمدى يُصنع بثلاثة:
+     • بِركةُ ضوءٍ ساطعةٌ في مركز الاهتمام (لا شبحٌ بـ‎١٠٪‎)
+     • عتمةُ أطرافٍ تُغلق الإطار (`.vignette`)
+     • مسحةُ ضوءٍ بطيئةٌ تمرّ فتُحيي السطح
+   وكلُّها مطليّةٌ مرّةً وتُحرَّك بـ`transform` وحدَه — لا `filter` ولا طلاءٌ متكرّر.
+   ========================================================================== */
+.light-pool {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 120%;
+    pointer-events: none;
+    z-index: -1;
+    background:
+        radial-gradient(52% 44% at 50% 18%, rgba(28, 141, 166, .30) 0%,
+                        rgba(20, 96, 111, .16) 38%, rgba(10, 63, 74, 0) 72%);
+}
+
+/* مسحةٌ تمرّ ببطء — الفرقُ بين سطحٍ ميّتٍ وسطحٍ فيه هواء */
+.sheen {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background: linear-gradient(104deg,
+        transparent 34%, rgba(232, 236, 243, .045) 50%, transparent 66%);
+    background-size: 260% 100%;
+    animation: sheen-pass 17s var(--ease-ui) infinite;
+}
+@keyframes sheen-pass {
+    0%, 100% { background-position: 120% 0; }
+    50%      { background-position: -20% 0; }
+}
+
+/* هالةٌ خلف الجوال المثبَّت — ضوءٌ يقع عليه لا إطارٌ يحيطه */
+.phone::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow:
+        inset 0 1px 0 rgba(232, 236, 243, .10),
+        0 34px 89px -34px rgba(0, 0, 0, .85);
+}
+.features-track .phone {
+    box-shadow: 0 0 0 1px rgba(66, 82, 108, .5), 0 21px 55px -21px rgba(20, 96, 111, .55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sheen { animation: none; }
+}
+@media (max-width: 600px) {
+    .sheen { display: none; }          /* طبقةٌ بملء الشاشة تتحرّك — أغلى ما على معالجٍ متوسّط */
+    .vignette::after { background: radial-gradient(130% 82% at 50% 44%, transparent 52%, rgba(4,6,10,.45) 100%); }
 }

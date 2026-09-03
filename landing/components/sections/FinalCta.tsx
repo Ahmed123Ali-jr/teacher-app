@@ -7,7 +7,7 @@ const APP_URL = 'https://ahmed123ali-jr.github.io/teacher-app/';
    معطَّلتان تقولان «قريباً» بصدق. */
 export function FinalCta() {
     return (
-        <section className="grain relative isolate bg-void px-5 py-9 md:px-6 md:py-10">
+        <section className="grain vignette relative isolate bg-void px-5 py-9 md:px-6 md:py-10">
             <SectionMark n={6} />
             <div className="relative z-10 mx-auto mt-8 max-w-column text-center md:mt-9">
                 <h2 className="mx-auto max-w-lede text-h1 font-bold text-ink md:text-[42px] md:leading-[1.24]">

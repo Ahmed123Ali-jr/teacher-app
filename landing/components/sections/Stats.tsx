@@ -14,7 +14,7 @@ const STATS = [
 
 export function Stats() {
     return (
-        <section className="grain relative isolate bg-page px-5 py-8 md:px-6 md:py-9 lg:py-10">
+        <section className="grain vignette relative isolate bg-page px-5 py-8 md:px-6 md:py-9 lg:py-10">
             <SectionMark n={5} />
             <div className="relative z-10 mx-auto mt-8 max-w-column md:mt-9">
                 {/* السطحُ البتروليُّ الوحيدُ في الصفحة — يُقرأ «صفحةَ الملخّص» */}

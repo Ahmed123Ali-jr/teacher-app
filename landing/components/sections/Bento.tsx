@@ -1,4 +1,5 @@
 import { SectionMark } from '@/components/ui/SectionMark';
+import { Reveal } from '@/components/ui/Reveal';
 
 /* القسمُ الرابع — شبكةٌ غير متناظرة.
    ولا أرقامَ أعمدةٍ صريحة (`grid-column: 1/8`): المسارُ ١ يبقى يساراً مهما
@@ -55,16 +56,17 @@ const CELLS: Cell[] = [
 
 export function Bento() {
     return (
-        <section className="grain relative isolate bg-page px-5 py-8 md:px-6 md:py-9 lg:py-10">
+        <section className="grain vignette relative isolate bg-page px-5 py-8 md:px-6 md:py-9 lg:py-10">
             <SectionMark n={4} />
             <div className="relative z-10 mx-auto mt-8 max-w-column md:mt-9">
                 <h2 className="mb-7 max-w-measure text-h1 font-semibold text-ink md:text-[34px] md:leading-[1.28]">
                     وتفاصيلُ لا تُذكر في إعلان — تُحَسّ يومَ تعمل
                 </h2>
                 <div className="bento grid gap-4 md:gap-5">
-                    {CELLS.map((c) => (
+                    {CELLS.map((c, i) => (
+                        <Reveal key={c.area} delay={i * 90} className="contents-reveal"
+                                y={13}>
                         <article
-                            key={c.area}
                             style={{ gridArea: c.area }}
                             className={`bento-card group rounded-lg border border-rule/60 bg-sheet p-5
                                         transition-[background-color,border-color,transform]
@@ -74,6 +76,7 @@ export function Bento() {
                             <h3 className="text-h3 font-semibold text-ink md:text-[21px]">{c.title}</h3>
                             <p className="mt-4 text-body text-ink-muted">{c.body}</p>
                         </article>
+                        </Reveal>
                     ))}
                 </div>
             </div>

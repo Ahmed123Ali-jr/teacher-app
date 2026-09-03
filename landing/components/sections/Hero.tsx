@@ -19,20 +19,14 @@ export function Hero() {
 
     return (
         <section
-            className="grain relative isolate overflow-hidden bg-void px-5 md:px-6"
+            className="grain vignette relative isolate overflow-hidden bg-void px-5 md:px-6"
             style={{ height: '100svh' }}
         >
             {/* ── الخلفيّة: طبقتان مطليّتان مرّةً، تتحرّكان بـtransform وحدَه.
                    صفرُ filter:blur — التوهّجُ مرسومٌ لا مُرشَّح. ── */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-                <div
-                    className="breathe-a absolute inset-0"
-                    style={{
-                        background:
-                            'radial-gradient(64% 46% at 50% 8%, rgba(20,96,111,.28) 0%,' +
-                            ' rgba(20,96,111,.10) 42%, rgba(20,96,111,0) 72%)',
-                    }}
-                />
+                <div className="light-pool breathe-a" />
+                <div className="sheen" />
                 <div
                     className="breathe-b absolute inset-0"
                     style={{
