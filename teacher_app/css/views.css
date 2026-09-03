@@ -284,6 +284,19 @@ body.drawer-open { overflow: hidden; }
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.18);
 }
 
+/* ══ معاينةٌ تنتظر قرارَه: الحبّةُ البارزة بيضاءُ لا بتروليّة ══
+   طلبُ المعلّم (٣ سبتمبر ٢٠٢٦): «الأيقونةُ المختارة بارزةٌ بلونٍ بتروليّ،
+   أبي اللونَ يتغيّر إلى أبيض». وكلُّه محصورٌ بـ`body.nav-white` فلا يمسّ
+   أحداً حتى يُرفع المفتاح: `?nav=1` يرفعه و`?nav=0` يخفضه.
+   والحبرُ ينقلب معها بالضرورة — أبيضُ على أبيضَ لا يُقرأ. */
+body.nav-white .bottom-nav .bn-item.is-active { color: var(--ink-primary); }
+body.nav-white .bottom-nav .bn-item.is-active::before {
+    background: #FFFFFF;
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .16),
+                inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
 .bottom-nav .bn-icon {
     /* صار المحتوى رسماً خطّيّاً لا حرفَ إيموجي (٢ سبتمبر ٢٠٢٦)، فسقط
        `font-size` — لم يعد يقيس شيئاً. والمقاسُ على الوسم نفسِه وفي

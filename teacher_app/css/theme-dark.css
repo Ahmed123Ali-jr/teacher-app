@@ -491,6 +491,12 @@ body.theme-dark .bottom-nav .bn-item,
 body.theme-auto.dark-active .bottom-nav .bn-item {
     color: #D2D8E2 !important;
 }
+/* ومعاينةُ الحبّة البيضاء (`body.nav-white`): تبقى بيضاءَ في الداكن، فحرفُها
+   لا يجوز أن يبقى فاتحاً — ‎#D2D8E2‎ على أبيضَ ‎1.36:1‎. يعود إلى لون الهُويّة. */
+body.nav-white.theme-dark .bottom-nav .bn-item.is-active,
+body.nav-white.theme-auto.dark-active .bottom-nav .bn-item.is-active {
+    color: var(--primary) !important;
+}
 body.theme-dark .bottom-nav,
 body.theme-auto.dark-active .bottom-nav {
     background: rgba(30, 38, 52, .78) !important;

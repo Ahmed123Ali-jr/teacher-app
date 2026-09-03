@@ -38,7 +38,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D32">
     <link rel="stylesheet" href="css/components.css?v=13">
-    <link rel="stylesheet" href="css/views.css?v=D298">
+    <link rel="stylesheet" href="css/views.css?v=D300">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -46,7 +46,7 @@
     <link rel="stylesheet" href="css/theme-white.css?v=22">
 
     <!-- الوضع الداكن — يأتي بعد الأبيض ليغلبه على من اختاره. -->
-    <link rel="stylesheet" href="css/theme-dark.css?v=34">
+    <link rel="stylesheet" href="css/theme-dark.css?v=36">
     <!-- الثوبُ الهادئ: كلُّ قواعده تحت body.theme-calm فلا يمسّ أحداً حتى
          يُرفع المفتاح. يُرفع بـ?calm=1 ويُخفض بـ?calm=0. (معاينةٌ ١ سبتمبر ٢٠٢٦.) -->
     <link rel="stylesheet" href="css/theme-calm.css?v=23">
@@ -63,6 +63,11 @@
         var q = /[?&]calm=([01])/.exec(location.search);
         if (q) { localStorage.setItem('calm', q[1]); localStorage.setItem('calm_ui', '1'); }
         if (localStorage.getItem('calm') === '1') document.body.classList.add('theme-calm');
+
+        /* معاينةُ الحبّة البيضاء في الشريط السفليّ — ?nav=1 يرفعها و?nav=0 يخفضها. */
+        var nv = /[?&]nav=([01])/.exec(location.search);
+        if (nv) localStorage.setItem('navWhite', nv[1]);
+        if (localStorage.getItem('navWhite') === '1') document.body.classList.add('nav-white');
     } catch (e) {}
 })();
 
