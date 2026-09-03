@@ -270,7 +270,9 @@ body.drawer-open { overflow: hidden; }
                 box-shadow var(--dur-fast) var(--ease);
 }
 .bottom-nav .bn-item.is-active {
-    color: #fff;
+    /* الحبّةُ بيضاء، فالحرفُ والرسمُ عليها بلونِ التطبيق لا أبيضَ على أبيض.
+       (بقرار المعلّم ٣ سبتمبر ٢٠٢٦، بعد معاينةٍ بثلاثة ألوان.) */
+    color: var(--ink-primary);
     /* ‎600‎ — درجةٌ واحدةٌ فوق إخوته الخاملين، تكفي لتمييزه ولا تُثقله.
        وكان ‎900‎، و`fonts.css` يحمّل ‎400/500/600/700‎ فقط — قيسَ في
        المتصفّح لا في الملفّ. فكان ‎900‎ وزناً لا وجودَ له يزوّره المتصفّح
@@ -279,18 +281,9 @@ body.drawer-open { overflow: hidden; }
     font-weight: var(--fw-semibold);
 }
 .bottom-nav .bn-item.is-active::before {
-    background: linear-gradient(150deg, var(--primary-lift) 0%, var(--primary) 55%, var(--primary-deep) 100%);
-    box-shadow: 0 4px 11px color-mix(in srgb, var(--primary) 32%, transparent),
-                inset 0 1.5px 0 rgba(255, 255, 255, 0.18);
-}
-
-/* ══ معاينةٌ تنتظر قرارَه: الحبّةُ البارزة بيضاءُ لا بتروليّة ══
-   طلبُ المعلّم (٣ سبتمبر ٢٠٢٦): «الأيقونةُ المختارة بارزةٌ بلونٍ بتروليّ،
-   أبي اللونَ يتغيّر إلى أبيض». وكلُّه محصورٌ بـ`body.nav-white` فلا يمسّ
-   أحداً حتى يُرفع المفتاح: `?nav=1` يرفعه و`?nav=0` يخفضه.
-   والحبرُ ينقلب معها بالضرورة — أبيضُ على أبيضَ لا يُقرأ. */
-body.nav-white .bottom-nav .bn-item.is-active { color: var(--ink-primary); }
-body.nav-white .bottom-nav .bn-item.is-active::before {
+    /* بيضاءُ ممتلئةٌ لا تدرّجَ لون الهُويّة — والشريطُ نفسُه زجاجٌ أبيضُ
+       شفّاف، فالحبّةُ تُرى بحدّها وظلّها لا بلونها. واللونُ المختارُ يبقى
+       حاضراً في الحدّ وفي حبرِ الرسم والاسم. */
     background: #FFFFFF;
     border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
     box-shadow: 0 2px 8px rgba(16, 24, 40, .16),
