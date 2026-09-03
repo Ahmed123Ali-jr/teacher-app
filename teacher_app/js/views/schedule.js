@@ -180,7 +180,7 @@
         container.innerHTML = `
             <div class="container sched-v2${editing ? ' is-editing' : ''}${picking ? ' is-picking' : ''}">
                 <div class="sched-head">
-                    ${todayIdx >= 0 && !editing ? `
+                    ${!editing ? `
                         <button type="button" class="sched-wait-btn${picking ? ' on' : ''}"
                                 id="btn-wait" aria-pressed="${picking}">
                             ${picking ? '✕ إلغاء' : '+ حصة انتظار اليوم'}
@@ -372,6 +372,33 @@
        المعلّم يُسنَد إليه انتظارٌ صباحَ يومه، فيريد تسجيله في حصّته بضغطتين
        بلا أن يفتح وضع التعديل ويبحث عن الخانة ويختار نوعها. */
 
+    /**
+     * أاليومَ إجازة؟ يُرجع سبباً يُقال للمعلّم، أو `null` ليومِ دوام.
+     *
+     * الزرُّ كان يختفي يومَي الجمعة والسبت بلا كلمة، فقرأه المعلّمُ حذفاً
+     * (بلاغُه، ٣ سبتمبر ٢٠٢٦). فصار يبقى ويقول لماذا لا يعمل — والاختفاءُ
+     * الصامتُ أسوأُ من رفضٍ مُعلَّل.
+     *
+     * والتقويمُ يُسأل أيضاً: إجازةُ الخريف تقع في أيّام الدوام، فزرٌّ يعمل
+     * فيها يُسجّل انتظاراً في يومٍ لا دوامَ فيه.
+     * @param {object} ctx
+     * @returns {string|null}
+     */
+    function offReasonToday(ctx) {
+        if (todayIndex() < 0) return 'اليوم إجازة نهاية الأسبوع — الدوام يعود الأحد.';
+        try {
+            if (!global.AcademicCalendar) return null;
+            const cal  = global.AcademicCalendar.resolve(ctx.dept, ctx.calPick);
+            const info = global.AcademicCalendar.offInfo(cal, new Date());
+            /* و`null` من التقويم تعني «لا يعرف هذا اليوم» لا «دوام» —
+               فلا يُبنى عليها منعٌ ولا إذن. */
+            if (info && info.off) {
+                return 'اليوم إجازة: ' + info.name + '.';
+            }
+        } catch (e) { /* التقويمُ لا يمنع الزرَّ من العمل */ }
+        return null;
+    }
+
     function hasFreePeriodToday(ctx) {
         const day = todayIndex();
         if (day < 0) return false;
@@ -439,6 +466,11 @@
         }
 
         container.querySelector('#btn-wait')?.addEventListener('click', () => {
+            const off = offReasonToday(ctx);
+            if (off) {
+                global.TeacherApp.toast(off, 'info', 3000);
+                return;
+            }
             if (!ctx.picking && !hasFreePeriodToday(ctx)) {
                 global.TeacherApp.toast('حصص اليوم كلها مشغولة.', 'info', 1600);
                 return;
