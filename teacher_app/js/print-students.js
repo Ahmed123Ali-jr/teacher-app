@@ -12,7 +12,9 @@
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
     const DAY_NAMES = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
-    const ATT_CHAR = { present: '✓', absent: '✗', late: '⏰', excused: 'م' };
+    /* العلامةُ في الخانة رسمٌ كالذي في وسيلة الإيضاح أسفلَ الورقة — لا حرفٌ
+       ولا إيموجي: الإيموجي يطبع ملوَّناً في طابعةٍ ويسودّ في أخرى. */
+    const ATT_CHAR = { present: '✓', absent: '✗', late: Icons.svg('clock'), excused: 'م' };
 
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, (m) => ({
@@ -287,7 +289,7 @@
                     <strong>الرموز:</strong>
                     <span>✓ حاضر</span>
                     <span>✗ غائب</span>
-                    <span>⏰ متأخر</span>
+                    <span>${Icons.svg('clock')} متأخر</span>
                     <span>م مستأذن</span>
                 </div>`}
                 <div class="pl-sign">توقيع المعلم: ____________________</div>

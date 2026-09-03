@@ -15,7 +15,7 @@
         const parts = String(name || '').trim().split(/\s+/);
         const a = (parts[0] || '').charAt(0);
         const b = (parts[1] || '').charAt(0);
-        return (a + b) || '👤';
+        return (a + b) || '';
     }
 
     async function fillUserBlock() {

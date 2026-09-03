@@ -38,7 +38,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D32">
     <link rel="stylesheet" href="css/components.css?v=13">
-    <link rel="stylesheet" href="css/views.css?v=D297">
+    <link rel="stylesheet" href="css/views.css?v=D298">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -155,8 +155,8 @@
                 <!-- Desktop actions (≥ 768px) -->
                 <div class="header-actions">
                     <span id="header-teacher-name" class="header-user"></span>
-                    <a href="#/help" class="btn btn-ghost btn-sm" title="المساعدة">❓</a>
-                    <a href="#/settings" class="btn btn-ghost btn-sm" title="الإعدادات">⚙️</a>
+                    <a href="#/help" class="btn btn-ghost btn-sm" title="المساعدة" data-icon="question"></a>
+                    <a href="#/settings" class="btn btn-ghost btn-sm" title="الإعدادات" data-icon="gear"></a>
                     <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">
                         تسجيل الخروج
                     </button>
@@ -234,7 +234,7 @@
         <div class="drawer-backdrop" data-drawer-close></div>
         <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
             <header class="drawer-header">
-                <div class="drawer-avatar" id="drawer-avatar">👤</div>
+                <div class="drawer-avatar" id="drawer-avatar" data-icon="user"></div>
                 <div class="drawer-user">
                     <div class="drawer-name" id="drawer-name">معلم</div>
                     <div class="drawer-school" id="drawer-school"></div>
@@ -245,18 +245,18 @@
 
             <nav class="drawer-nav" aria-label="قائمة الحساب">
                 <a href="#/settings" class="drawer-link" data-drawer-close>
-                    <span class="drawer-link-icon">⚙️</span>
+                    <span class="drawer-link-icon" data-icon="gear"></span>
                     <span>الإعدادات</span>
                 </a>
                 <a href="#/help" class="drawer-link" data-drawer-close>
-                    <span class="drawer-link-icon">❓</span>
+                    <span class="drawer-link-icon" data-icon="question"></span>
                     <span>المساعدة</span>
                 </a>
             </nav>
 
             <div class="drawer-footer">
                 <button type="button" class="btn btn-ghost btn-block" id="btn-logout-drawer">
-                    <span class="drawer-link-icon">🚪</span>
+                    <span class="drawer-link-icon" data-icon="door"></span>
                     <span>تسجيل الخروج</span>
                 </button>
             </div>
@@ -278,7 +278,6 @@
     <!-- Toasts -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
     <!-- الإيموجي ← رسومٌ خطّيّة، تحت body.theme-calm فقط (معاينة ٢ سبتمبر ٢٠٢٦) -->
-    <script src="js/calm-icons.js?v=2"></script>
     <script src="js/calm-picker.js?v=9"></script>
     <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
         <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الزجاجي</span>
@@ -309,6 +308,8 @@
          النسخة المغلَّفة. الاتصال بالخادم يظلّ يحتاج شبكة بالطبع. -->
     <script src="vendor/supabase.js?v=1"></script>
     <script src="js/supabase-client.js?v=S3"></script>
+    <!-- رسومُ التطبيق الخطّيّة — تسبق كلَّ شاشةٍ تستعملها. -->
+    <script src="js/icons.js?v=2"></script>
     <script src="js/database.js?v=S34"></script>
     <!-- لونُ التطبيق: الحسابُ والحقنُ والمرآة. يسبق الإعداداتِ وapp.js. -->
     <script src="js/theme-color.js?v=2"></script>
@@ -320,8 +321,8 @@
     <script src="js/edu-departments.js?v=5"></script>
     <script src="js/academic-calendar.js?v=6"></script>
     <script src="js/term-switch.js?v=1"></script>
-    <script src="js/strategies-catalog.js?v=1"></script>
-    <script src="js/initiatives-catalog.js?v=1"></script>
+    <script src="js/strategies-catalog.js?v=2"></script>
+    <script src="js/initiatives-catalog.js?v=2"></script>
     <script src="js/mission-catalog.js?v=1"></script>
     <script src="js/bell.js?v=3"></script>
     <script src="js/auth.js?v=S36"></script>
@@ -334,41 +335,41 @@
     <script src="js/book-reader.js?v=3"></script>
     <script src="js/print-exam.js?v=D25"></script>
     <script src="js/print-reports.js?v=5"></script>
-    <script src="js/print-portfolio.js?v=D31"></script>
-    <script src="js/print-students.js?v=D19"></script>
+    <script src="js/print-portfolio.js?v=D32"></script>
+    <script src="js/print-students.js?v=D20"></script>
     <script src="js/components/modal.js?v=6"></script>
-    <script src="js/components/drawer.js?v=C3"></script>
+    <script src="js/components/drawer.js?v=C4"></script>
     <script src="js/components/bottom-nav.js?v=C12"></script>
-    <script src="js/components/dept-picker.js?v=3"></script>
+    <script src="js/components/dept-picker.js?v=4"></script>
     <script src="js/components/subject-picker.js?v=2"></script>
-    <script src="js/views/login.js?v=27"></script>
+    <script src="js/views/login.js?v=28"></script>
     <script src="js/views/setup.js?v=13"></script>
-    <script src="js/views/dashboard.js?v=C55"></script>
+    <script src="js/views/dashboard.js?v=C56"></script>
     <script src="js/views/classes.js?v=S24"></script>
-    <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C7"></script>
-    <script src="js/views/profile.js?v=D25"></script>
+    <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C8"></script>
+    <script src="js/views/profile.js?v=D26"></script>
     <script src="js/views/reminders.js?v=S9"></script>
-    <script src="js/views/settings.js?v=D56"></script>
-    <script type="text/lazy-view" data-view="class-books" data-src="js/views/class-books.js?v=S22"></script>
-    <script type="text/lazy-view" data-view="class-curriculum" data-src="js/views/class-curriculum.js?v=D13"></script>
-    <script type="text/lazy-view" data-view="class-exams" data-src="js/views/class-exams.js?v=S21"></script>
-    <script type="text/lazy-view" data-view="class-worksheets" data-src="js/views/class-worksheets.js?v=21"></script>
+    <script src="js/views/settings.js?v=D58"></script>
+    <script type="text/lazy-view" data-view="class-books" data-src="js/views/class-books.js?v=S23"></script>
+    <script type="text/lazy-view" data-view="class-curriculum" data-src="js/views/class-curriculum.js?v=D14"></script>
+    <script type="text/lazy-view" data-view="class-exams" data-src="js/views/class-exams.js?v=S22"></script>
+    <script type="text/lazy-view" data-view="class-worksheets" data-src="js/views/class-worksheets.js?v=22"></script>
     <script type="text/lazy-view" data-view="class-homework" data-src="js/views/class-homework.js?v=S11"></script>
-    <script type="text/lazy-view" data-view="class" data-src="js/views/class.js?v=S112"></script>
-    <script type="text/lazy-view" data-view="class-strategies" data-src="js/views/class-strategies.js?v=5"></script>
-    <script type="text/lazy-view" data-view="student" data-src="js/views/student.js?v=12"></script>
-    <script type="text/lazy-view" data-view="portfolio-strategies" data-src="js/views/portfolio-strategies.js?v=S3"></script>
-    <script type="text/lazy-view" data-view="portfolio-initiatives" data-src="js/views/portfolio-initiatives.js?v=S6"></script>
-    <script type="text/lazy-view" data-view="portfolio" data-src="js/views/portfolio.js?v=D33"></script>
-    <script src="js/views/calendar-card.js?v=8"></script>
-    <script src="js/views/schedule.js?v=S67"></script>
-    <script type="text/lazy-view" data-view="help" data-src="js/views/help.js?v=14"></script>
-    <script type="text/lazy-view" data-view="reports" data-src="js/views/reports.js?v=C19"></script>
+    <script type="text/lazy-view" data-view="class" data-src="js/views/class.js?v=S113"></script>
+    <script type="text/lazy-view" data-view="class-strategies" data-src="js/views/class-strategies.js?v=6"></script>
+    <script type="text/lazy-view" data-view="student" data-src="js/views/student.js?v=13"></script>
+    <script type="text/lazy-view" data-view="portfolio-strategies" data-src="js/views/portfolio-strategies.js?v=S4"></script>
+    <script type="text/lazy-view" data-view="portfolio-initiatives" data-src="js/views/portfolio-initiatives.js?v=S7"></script>
+    <script type="text/lazy-view" data-view="portfolio" data-src="js/views/portfolio.js?v=D34"></script>
+    <script src="js/views/calendar-card.js?v=9"></script>
+    <script src="js/views/schedule.js?v=S68"></script>
+    <script type="text/lazy-view" data-view="help" data-src="js/views/help.js?v=15"></script>
+    <script type="text/lazy-view" data-view="reports" data-src="js/views/reports.js?v=C20"></script>
     <script src="js/view-loader.js?v=1"></script>
     <script src="js/router.js?v=S15"></script>
-    <script src="js/guest-notice.js?v=1"></script>
-    <script src="js/phone-prompt.js?v=1"></script>
-    <script src="js/save-account.js?v=1"></script>
+    <script src="js/guest-notice.js?v=2"></script>
+    <script src="js/phone-prompt.js?v=2"></script>
+    <script src="js/save-account.js?v=2"></script>
     <script src="js/app.js?v=S17"></script>
 
     <!-- Service Worker: enables offline + auto-update banner on every deploy. -->

@@ -64,7 +64,7 @@
             ${books.length === 0 ? emptyState() : `
                 ${bookGrid(books)}
                 <p class="local-note">
-                    📱 هذه الملفّات محفوظةٌ على <b>هذا الجهاز وحده</b> —
+                    ${Icons.svg('phone')} هذه الملفّات محفوظةٌ على <b>هذا الجهاز وحده</b> —
                     قد تضيع إن مسحتَ بيانات المتصفّح أو غيّرتَ جهازك.
                     وبياناتُ الكتب (الاسم والفصل) محفوظةٌ في حسابك.
                 </p>
@@ -214,7 +214,7 @@
             const origLabel = btn ? btn.textContent : '';
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = '⏳ جارٍ الرفع...';
+                btn.textContent = 'جارٍ الرفع...';
             }
             try {
                 const title = form.querySelector('#b-title').value.trim();
@@ -257,7 +257,7 @@
                     row.storage_path = 'local';
                 }
 
-                if (btn) btn.textContent = '⏳ جارٍ الحفظ...';
+                if (btn) btn.textContent = 'جارٍ الحفظ...';
                 await global.TeacherDB.put('books', row);
                 // Save the actual PDF locally AFTER the row insert so we know
                 // the final book id.

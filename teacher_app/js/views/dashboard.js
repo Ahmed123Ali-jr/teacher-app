@@ -257,7 +257,7 @@
             return `
                 <div class="rem-card is-empty" id="rem-card" role="button" tabindex="0" aria-expanded="false">
                     <div class="rem-head">
-                        <div class="rem-ic">🔔</div>
+                        <div class="rem-ic">${Icons.svg('bell')}</div>
                         <b>تذكيرات اليوم</b>
                         <span class="rem-empty-tx">لا شيء اليوم</span>
                         <button type="button" class="rem-add" id="rem-add" aria-label="إضافة تذكير">+</button>
@@ -281,7 +281,7 @@
         return `
             <div class="rem-card" id="rem-card" role="button" tabindex="0" aria-expanded="false">
                 <div class="rem-head">
-                    <div class="rem-ic">🔔</div>
+                    <div class="rem-ic">${Icons.svg('bell')}</div>
                     <b>تذكيرات اليوم</b>
                     <span class="rem-bd num">${reminders.length}</span>
                     <button type="button" class="rem-add" id="rem-add" aria-label="إضافة تذكير">+</button>
@@ -351,7 +351,7 @@
         return `
             <div class="pday-box">
                 <div class="pday-head">
-                    <b>🕐 حصص اليوم</b>
+                    <b>${Icons.svg('clock')} حصص اليوم</b>
                     <a href="#/schedule">الجدول كاملاً</a>
                 </div>
                 <div class="pday-chips">${chips}</div>
@@ -478,7 +478,7 @@
             <div class="home-hero-alt">
                 <div class="ha-t">لا حصص لك اليوم</div>
                 <div class="ha-s">يومك خالٍ من الحصص — وقت مناسب لتجهيز الاختبارات وأوراق العمل</div>
-                <a href="#/schedule" class="home-alt-lk">📅 الجدول كاملاً ←</a>
+                <a href="#/schedule" class="home-alt-lk">${Icons.svg('calendar')} الجدول كاملاً ←</a>
             </div>`;
     }
 
@@ -494,7 +494,7 @@
         const isNow = info.state === 'now';
         const badge = isNow
             ? '<span class="hh-badge"><i></i> الآن</span>'
-            : `<span class="hh-badge soft num">${info.minsUntil <= 5 ? 'بعد دقائق ⏰' : 'بعد ' + info.minsUntil + ' دقيقة'}</span>`;
+            : `<span class="hh-badge soft num">${info.minsUntil <= 5 ? 'بعد دقائق ' + Icons.svg('clock') : 'بعد ' + info.minsUntil + ' دقيقة'}</span>`;
         return `
             <div class="home-hero">
                 ${badge}
@@ -502,7 +502,7 @@
                     <div class="hh-l">${isNow ? 'حصتك الحالية' : 'حصتك القادمة'}</div>
                     <div class="hh-t">${esc(shortGrade(info.cls.grade))} / ${esc(info.cls.section)}</div>
                 </a>
-                <a href="#/class/${info.cls.id}/students" class="hh-cta">📋 سجل المتابعة</a>
+                <a href="#/class/${info.cls.id}/students" class="hh-cta">${Icons.svg('clipboard')} سجل المتابعة</a>
             </div>`;
     }
 
@@ -627,7 +627,7 @@
                 </div>
                 <div class="class-card-meta">
                     <span>${global.Words.count(c.student_count || 0)}</span>
-                    <span class="class-card-count">📖</span>
+                    <span class="class-card-count">${Icons.svg('book')}</span>
                 </div>
             </button>
         `).join('');

@@ -207,14 +207,14 @@
                        placeholder="ما الذي نفّذته بالضبط؟" value="${esc(pick.note)}">
 
                 <div class="sch-lbl" style="margin-top:15px">الشواهد</div>
-                <button type="button" class="stg-drop" id="stg-pick">📷 أضف صور التنفيذ</button>
+                <button type="button" class="stg-drop" id="stg-pick">${Icons.svg('camera')} أضف صور التنفيذ</button>
                 <input type="file" id="stg-file" accept="image/*" multiple hidden>
-                <p class="stg-warn">🔒 الشواهد خاصة بك وحدك. وإن ظهر فيها طلاب،
+                <p class="stg-warn">${Icons.svg('lock')} الشواهد خاصة بك وحدك. وإن ظهر فيها طلاب،
                    فتصويرهم تحكمه أنظمة الوزارة وموافقة أولياء الأمور — والأسلم
                    توثيق السبورة أو أعمالهم دون وجوه.</p>
                 <div class="stg-thumbs" id="stg-thumbs"></div>
 
-                <button type="button" class="fsave" id="stg-save">💾 حفظ الشاهد</button>
+                <button type="button" class="fsave" id="stg-save">${Icons.svg('save')} حفظ الشاهد</button>
             `;
             body.querySelector('#stg-note').addEventListener('input', (e) => { pick.note = e.target.value; });
             body.querySelector('#stg-date')?.addEventListener('input', (e) => {
@@ -253,7 +253,7 @@
             const btn = body.querySelector('#stg-save');
             try {
                 for (let i = 0; i < files.length; i++) {
-                    btn.textContent = `⏳ رفع الصورة ${i + 1} من ${files.length}…`;
+                    btn.textContent = `رفع الصورة ${i + 1} من ${files.length}…`;
                     const blob = await compress(files[i]);
                     /* المسار يبدأ بمعرّف المعلم — سياسة المخزن تشترطه. */
                     const path = `${teacher.id}/${key}-${Date.now()}-${i}.jpg`;
@@ -264,7 +264,7 @@
                 }
             } catch (err) {
                 saving = false;
-                btn.textContent = '💾 حفظ الشاهد';
+                btn.textContent = 'حفظ الشاهد';
                 return global.TeacherApp.toast('تعذّر رفع الصورة: ' + err.message, 'error', 6000);
             }
 
@@ -308,7 +308,7 @@
         const body = document.createElement('div');
         body.className = 'sch-sheet';
         body.innerHTML = `<p class="dp-hint">جارٍ تحميل الشواهد…</p>`;
-        global.Modal.open({ title: '📎 ' + (s ? s.name : 'شواهدي'), body });
+        global.Modal.open({ title: '' + (s ? s.name : 'شواهدي'), body });
 
         /* روابط موقّتة: المخزن خاص فلا تُفتح صوره برابط مباشر. */
         const withUrls = await Promise.all(rows.map(async (r) => {
@@ -325,7 +325,7 @@
             <div class="stg-log" data-log="${row.id}">
                 <div class="stg-log-h">
                     <b>${esc(humanDate(row.date))}</b>
-                    <button type="button" class="x" data-del="${row.id}">🗑️</button>
+                    <button type="button" class="x" data-del="${row.id}">${Icons.svg('trash')}</button>
                 </div>
                 ${row.note ? `<p class="stg-log-n">${esc(row.note)}</p>` : ''}
                 ${urls.length ? `<div class="stg-thumbs">

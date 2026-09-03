@@ -44,7 +44,7 @@
                     تُسجَّل من صفحة الفصل ← تبويب <b>الاستراتيجيات</b>: تختار الاستراتيجية،
                     وتضغط «طبّقتها»، وترفع شواهد التنفيذ — وتظهر هنا تلقائياً.
                 </p>
-                <a href="#/classes" class="btn btn-secondary" style="margin-top:12px">📚 اذهب إلى الفصول</a>
+                <a href="#/classes" class="btn btn-secondary" style="margin-top:12px">${Icons.svg('books')} اذهب إلى الفصول</a>
             `;
             return;
         }
@@ -71,7 +71,7 @@
     function famChip(r) {
         const lbl = FAMILY_LABEL[r.family];
         if (!lbl || lbl === r.name) return '';
-        return `<span>🏷️ ${esc(lbl)}</span>`;
+        return `<span>${Icons.svg('tag')} ${esc(lbl)}</span>`;
     }
 
     function cardHtml(r) {
@@ -85,9 +85,9 @@
                 </div>
                 <div class="pstg-meta">
                     ${famChip(r)}
-                    ${span ? `<span>📅 ${esc(span)}</span>` : ''}
-                    ${r.classes.length ? `<span>📚 ${esc(r.classes.join('، '))}</span>` : ''}
-                    <span>📎 ${r.evidence.length} شاهد</span>
+                    ${span ? `<span>${Icons.svg('calendar')} ${esc(span)}</span>` : ''}
+                    ${r.classes.length ? `<span>${Icons.svg('books')} ${esc(r.classes.join('، '))}</span>` : ''}
+                    <span>${Icons.svg('clip')} ${r.evidence.length} شاهد</span>
                 </div>
                 ${r.notes.length ? `
                     <ul class="pstg-notes">

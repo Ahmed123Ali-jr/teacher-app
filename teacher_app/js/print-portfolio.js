@@ -64,7 +64,7 @@
         await signEvidence(initiatives);
 
         const root = ensurePrintRoot();
-        root.innerHTML = '<p style="padding:20mm; text-align:center;">⏳ جارٍ تحضير ملف الطباعة (تحويل الملفات والصور)...</p>';
+        root.innerHTML = '<p style="padding:20mm; text-align:center;">' + Icons.svg('clock') + ' جارٍ تحضير ملف الطباعة (تحويل الملفات والصور)...</p>';
         document.body.classList.add('is-printing');
 
         try {
@@ -215,7 +215,7 @@
             <div class="portfolio-attachment" style="${wrap}">
                 <h4 style="margin:0 0 3mm;">${escapeHtml(it.name || it.filename || 'ملف')}</h4>
                 <p style="color:#B45309; font-size:11pt; margin-top:8mm;">
-                    ⚠️ تعذّر عرض محتوى الملف: ${escapeHtml(reason)}
+                    ${Icons.svg('warning')} تعذّر عرض محتوى الملف: ${escapeHtml(reason)}
                 </p>
                 <p style="font-size:10pt; color:#555;">
                     ${escapeHtml(it.filename || 'بدون اسم')}
@@ -336,7 +336,7 @@
         const classById = Object.fromEntries((classes || []).map((c) => [c.id, c]));
 
         return `
-            <h3 class="weekly-schedule-title">📅 الجدول الأسبوعي</h3>
+            <h3 class="weekly-schedule-title">${Icons.svg('calendar')} الجدول الأسبوعي</h3>
             <table class="weekly-schedule">
                 <thead>
                     <tr>
@@ -359,7 +359,7 @@
                                 const cls = classById[cell.class_id];
                                 if (!cls) {
                                     return `<td class="weekly-cell weekly-cell-waiting">
-                                        <div class="weekly-cell-grade">⏳ انتظار</div>
+                                        <div class="weekly-cell-grade">${Icons.svg('clock')} انتظار</div>
                                         ${cell.topic ? `<div class="weekly-cell-topic">${escapeHtml(cell.topic)}</div>` : ''}
                                     </td>`;
                                 }
@@ -451,7 +451,7 @@
                     <div class="cover-body">
                         ${global.PrintPrefs?.logoDataUrl
                             ? `<img class="cover-logo" src="${global.PrintPrefs.logoDataUrl}" alt="">`
-                            : '<div class="cover-logo">🎓</div>'}
+                            : '<div class="cover-logo">' + Icons.svg('cap') + '</div>'}
 
                         <div class="cover-title-frame-outer">
                             <div class="cover-title-frame-inner">
@@ -610,7 +610,7 @@
             const cs = customSections[i];
             if (onlyFilled && !(cs.items || []).length) continue;
             parts.push('<div class="page-break"></div>');
-            parts.push(sectionHeading(11 + i, (cs.icon ? cs.icon + ' ' : '') + cs.name, secId(11 + i)));
+            parts.push(sectionHeading(11 + i, (cs.icon ? Icons.render(cs.icon) + ' ' : '') + cs.name, secId(11 + i)));
             parts.push(fileListBlock(cs.items || []));
             parts.push(await attachmentsBlock(cs.items || []));
         }
@@ -839,8 +839,8 @@
                     </div>
 
                     <div class="print-id-footer">
-                        <span>📞 ${phone ? escapeHtml(phone) : '—'}</span>
-                        <span>✉️ ${email ? escapeHtml(email) : '—'}</span>
+                        <span>${Icons.svg('call')} ${phone ? escapeHtml(phone) : '—'}</span>
+                        <span>${Icons.svg('mail')} ${email ? escapeHtml(email) : '—'}</span>
                     </div>
                 </div>
             </div>
@@ -952,10 +952,10 @@
             <article class="report-article avoid-break">
                 <h3>${escapeHtml(g.name)}</h3>
                 <div class="meta-line">
-                    🔁 طُبِّقت ${escapeHtml(times)}
-                    ${span ? ' · 📅 ' + escapeHtml(span) : ''}
-                    ${g.classes && g.classes.length ? ' · 📚 ' + escapeHtml(g.classes.join('، ')) : ''}
-                    ${g.family ? ' · 🏷️ ' + escapeHtml(FAM[g.family] || g.family) : ''}
+                    ${Icons.svg('refresh')} طُبِّقت ${escapeHtml(times)}
+                    ${span ? ' · ' + Icons.svg('calendar') + ' ' + escapeHtml(span) : ''}
+                    ${g.classes && g.classes.length ? ' · ' + Icons.svg('books') + ' ' + escapeHtml(g.classes.join('، ')) : ''}
+                    ${g.family ? ' · ' + Icons.svg('tag') + ' ' + escapeHtml(FAM[g.family] || g.family) : ''}
                 </div>
 
                 ${g.brief ? `<h4>عن الاستراتيجية</h4><p>${escapeHtml(g.brief)}</p>` : ''}
@@ -998,9 +998,9 @@
             <article class="report-article avoid-break">
                 <h3>${escapeHtml(g.name)}</h3>
                 <div class="meta-line">
-                    🔁 نُفِّذت ${escapeHtml(times)}
-                    ${span ? ' · 📅 ' + escapeHtml(span) : ''}
-                    ${g.beneficiaries ? ' · 👥 ' + escapeHtml(String(g.beneficiaries)) + ' مستفيد' : ''}
+                    ${Icons.svg('refresh')} نُفِّذت ${escapeHtml(times)}
+                    ${span ? ' · ' + Icons.svg('calendar') + ' ' + escapeHtml(span) : ''}
+                    ${g.beneficiaries ? ' · ' + Icons.svg('users') + ' ' + escapeHtml(String(g.beneficiaries)) + ' مستفيد' : ''}
                 </div>
 
                 ${g.goal  ? `<h4>الهدف</h4><p>${escapeHtml(g.goal)}</p>` : ''}

@@ -50,7 +50,7 @@
             if (global.TeacherApp && global.TeacherApp.toast) {
                 global.TeacherApp.toast(
                     'أنت تجرّب كزائر — وما أدخلته محفوظ وينتقل معك. '
-                    + 'احفظ حسابك من الإعدادات ← «⭐ احفظ حسابك».',
+                    + 'احفظ حسابك من الإعدادات ← «احفظ حسابك».',
                     'info', 9000);
             }
         } catch (e) {

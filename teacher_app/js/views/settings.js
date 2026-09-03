@@ -260,7 +260,7 @@
                 ok: 'خروج'
             }))) return;
             const btn = container.querySelector('#btn-logout-all');
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الإغلاق…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الإغلاق…'; }
             try {
                 await global.Auth.logoutEverywhere();
                 global.location.hash = '#/login';
@@ -336,10 +336,10 @@
             /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
             case 'about':
                 body = aboutBody()
-                     + `<details class="set-fold"><summary>📜 الخصوصية والقانون</summary>
+                     + `<details class="set-fold"><summary>${Icons.svg('file')} الخصوصية والقانون</summary>
                             ${legalBody(await computeQuickStats(teacher))}
                         </details>
-                        <details class="set-fold"><summary>💬 الدعم الفني</summary>
+                        <details class="set-fold"><summary>${Icons.svg('thought')} الدعم الفني</summary>
                             ${supportBody()}
                         </details>`;
                 bindFn = bindAbout;
@@ -405,7 +405,7 @@
             if (step === 'warn') {
                 pane.innerHTML = `
                     <div class="term-warn">
-                        <p class="term-warn-h">⚠️ قبل الانتقال إلى ${esc(other.label)}</p>
+                        <p class="term-warn-h">${Icons.svg('warning')} قبل الانتقال إلى ${esc(other.label)}</p>
                         <ul class="term-warn-l">
                             <li><b>لا يُحذف شيء.</b> فصول ${esc(TS.labelOf(cur))} تبقى كما هي
                                 بحضورها ودرجاتها وملاحظاتها.</li>
@@ -535,7 +535,7 @@
                 <input class="input" id="pw-confirm" type="password" autocomplete="new-password">
             </div>
 
-            <button class="btn btn-primary btn-block" id="btn-change-pw">💾 حفظ كلمة المرور</button>
+            <button class="btn btn-primary btn-block" id="btn-change-pw">${Icons.svg('save')} حفظ كلمة المرور</button>
         `;
     }
 
@@ -600,7 +600,7 @@
                 <div class="idc-top">
                     <span class="ph">${prefs.school_logo instanceof Blob
                         ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
-                        : '🏫'}</span>
+                        : 'school'}</span>
                     <span class="tx">
                         <span class="nm">${escapeHtml(teacher.school_name || 'اسم مدرستك')}</span>
                         <span class="rl">${escapeHtml(schoolLine(teacher, prefs))}</span>
@@ -632,17 +632,17 @@
             <div class="flogo">
                 <span class="box">${prefs.school_logo instanceof Blob
                     ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
-                    : '🏫'}</span>
+                    : 'school'}</span>
                 <span class="tx">
                     <span class="t">شعار المدرسة</span>
                     <span class="h">يظهر في ترويسة المطبوعات</span>
                 </span>
-                <button type="button" class="fchip" id="btn-upload-logo">📷 ${prefs.school_logo ? 'تغيير' : 'رفع'}</button>
-                ${prefs.school_logo ? '<button type="button" class="fchip" id="btn-remove-logo">🗑️</button>' : ''}
+                <button type="button" class="fchip" id="btn-upload-logo">${Icons.svg('camera')} ${prefs.school_logo ? 'تغيير' : 'رفع'}</button>
+                ${prefs.school_logo ? '<button type="button" class="fchip" id="btn-remove-logo">' + Icons.svg('trash') + '</button>' : ''}
                 <input type="file" id="logo-input" accept="image/*" hidden>
             </div>
 
-            <button type="button" class="fsave" id="btn-save-school">💾 حفظ بيانات المدرسة</button>
+            <button type="button" class="fsave" id="btn-save-school">${Icons.svg('save')} حفظ بيانات المدرسة</button>
         `;
     }
 
@@ -729,10 +729,10 @@
     /** يعرض الشعار (أو رمزه) في البطاقة العلوية ومربّع الشعار معاً. */
     function showLogo(container, url) {
         container.querySelectorAll('.idc-top .ph, .flogo .box').forEach((box) => {
-            box.innerHTML = url ? `<img src="${escapeAttr(url)}" alt="">` : '🏫';
+            box.innerHTML = url ? `<img src="${escapeAttr(url)}" alt="">` : Icons.svg('school');
         });
         const btn = container.querySelector('#btn-upload-logo');
-        if (btn) btn.textContent = url ? '📷 تغيير' : '📷 رفع';
+        if (btn) btn.innerHTML = Icons.svg('camera') + (url ? ' تغيير' : ' رفع');
         const rm = container.querySelector('#btn-remove-logo');
         if (rm) rm.hidden = !url;
     }
@@ -834,9 +834,9 @@
             <div class="field">
                 <label class="label">الوضع</label>
                 <div class="flex gap-2" style="flex-wrap: wrap;">
-                    ${themeChip('light', '☀️', 'فاتح',   prefs.theme)}
-                    ${themeChip('dark',  '🌙', 'داكن',    prefs.theme)}
-                    ${themeChip('auto',  '🌓', 'تلقائي',  prefs.theme)}
+                    ${themeChip('light', 'sun', 'فاتح',   prefs.theme)}
+                    ${themeChip('dark',  'moon', 'داكن',    prefs.theme)}
+                    ${themeChip('auto',  'moonHalf', 'تلقائي',  prefs.theme)}
                 </div>
             </div>
         `;
@@ -859,7 +859,7 @@
                 <label class="bell-row">
                     <input type="checkbox" id="bell-school" ${b.schoolBell ? 'checked' : ''}>
                     <span class="tx">
-                        <span class="t">🔔 جرس المدرسة</span>
+                        <span class="t">${Icons.svg('bell')} جرس المدرسة</span>
                         <span class="h">عند بداية كل حصة ونهايتها</span>
                     </span>
                     <button type="button" class="fchip" data-try="bell">▶︎ جرّب</button>
@@ -868,7 +868,7 @@
                 <label class="bell-row">
                     <input type="checkbox" id="bell-class" ${b.classAlert ? 'checked' : ''}>
                     <span class="tx">
-                        <span class="t">⏰ تنبيه حصتك</span>
+                        <span class="t">${Icons.svg('clock')} تنبيه حصتك</span>
                         <span class="h">قبل حصصك أنت فقط — لا كل الحصص</span>
                     </span>
                     <button type="button" class="fchip" data-try="alert">▶︎ جرّب</button>
@@ -884,11 +884,11 @@
             </div>
 
             <p class="bell-note">
-                ⚠️ المنبّه يعمل <strong>والتطبيق مفتوح</strong> فقط. التطبيق صفحة ويب بلا خادم
+                ${Icons.svg('warning')} المنبّه يعمل <strong>والتطبيق مفتوح</strong> فقط. التطبيق صفحة ويب بلا خادم
                 إشعارات، فلا يرنّ وجوالك مقفل أو التطبيق مغلق.
             </p>
             <button type="button" class="fchip" id="bell-notif" style="width:100%; margin-top:var(--space-3)">
-                🔕 السماح بالإشعارات (يظهر تنبيه والتطبيق في الخلفية)
+                ${Icons.svg('bellOff')} السماح بالإشعارات (يظهر تنبيه والتطبيق في الخلفية)
             </button>
         `;
     }
@@ -1160,7 +1160,7 @@
     function themeChip(value, icon, label, current) {
         const active = (current || 'light') === value;
         return `<button type="button" class="chip ${active ? 'active' : ''}" data-theme="${value}"
-                        style="flex:1; min-width:100px;">${icon} ${label}</button>`;
+                        style="flex:1; min-width:100px;">${Icons.render(icon)} ${label}</button>`;
     }
     function bindAppearance(container) {
         container.querySelectorAll('[data-theme]').forEach((btn) => {
@@ -1183,7 +1183,7 @@
     function storageNote(stats) {
         return `
             <p class="text-muted" style="font-size: var(--fs-sm); margin: var(--space-5) 0 0;">
-                💾 ملفات الكتب والمنهج تشغل <strong>${fmtBytes(stats.storageBytes)}</strong> من جهازك
+                ${Icons.svg('save')} ملفات الكتب والمنهج تشغل <strong>${fmtBytes(stats.storageBytes)}</strong> من جهازك
                 — و<strong>${stats.classes}</strong> فصلاً و<strong>${stats.students}</strong> طالباً
                 محفوظة في حسابك. التفاصيل الكاملة في شاشة التقارير.
             </p>
@@ -1197,8 +1197,8 @@
                 <strong>${prefs.last_backup ? fmtDate(prefs.last_backup) : 'لم يتم من قبل'}</strong>
             </p>
             <div class="flex gap-3" style="flex-wrap: wrap;">
-                <button class="btn btn-primary" id="btn-export">📤 تصدير جميع البيانات</button>
-                <button class="btn btn-secondary" id="btn-import">📥 استيراد نسخة</button>
+                <button class="btn btn-primary" id="btn-export">${Icons.svg('upload')} تصدير جميع البيانات</button>
+                <button class="btn btn-secondary" id="btn-import">${Icons.svg('download')} استيراد نسخة</button>
                 <input type="file" id="import-file" accept=".json" hidden>
             </div>
         `;
@@ -1267,7 +1267,7 @@
                  الجهازُ يعود إلى حسابه (٢٦ أغسطس ٢٠٢٦)، فبقي التحذيرُ يُخيف
                  من زرٍّ لا يضرّ. والخطرُ الحقيقيُّ غيرُه: الجهاز. -->
             <p class="dz-h" style="border-inline-start: 3px solid #DC2626; padding-inline-start: 10px;">
-                ⚠️ <strong>بياناتك على هذا الجهاز وحده.</strong>
+                ${Icons.svg('warning')} <strong>بياناتك على هذا الجهاز وحده.</strong>
                 لو ضاع الجهاز أو مُسحت بيانات المتصفّح، ذهبت معه ولا سبيل لاستعادتها —
                 لأنّ حساب الزائر بلا بريد ولا كلمة مرور.
             </p>
@@ -1303,7 +1303,7 @@
             if (pass.length < 6) return global.TeacherApp.toast('كلمة المرور ٦ أحرف فأكثر.', 'error');
 
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ الحفظ…';
+            btn.textContent = 'جارٍ الحفظ…';
             try {
                 await global.Auth.register({ name, email, password: pass });
                 global.TeacherApp.toast('حُفظ حسابك — بياناتك كما هي.', 'success', 4000);
@@ -1327,11 +1327,11 @@
                 <label class="label">رابط التطبيق</label>
                 <div class="flex gap-2">
                     <input class="input" id="invite-link" readonly value="${link}">
-                    <button class="btn btn-secondary" id="btn-copy-invite">📋 نسخ</button>
+                    <button class="btn btn-secondary" id="btn-copy-invite">${Icons.svg('clipboard')} نسخ</button>
                 </div>
             </div>
             <button type="button" class="btn btn-primary btn-block" id="btn-share-invite"
-                    style="margin-top: var(--space-3);">📤 مشاركة</button>
+                    style="margin-top: var(--space-3);">${Icons.svg('upload')} مشاركة</button>
         `;
     }
     function bindInvite(container) {
@@ -1409,7 +1409,7 @@
         container.querySelector('#force-update')?.addEventListener('click', async (e) => {
             const btn = e.currentTarget;
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ التحديث…';
+            btn.textContent = 'جارٍ التحديث…';
             try {
                 if (global.navigator.serviceWorker) {
                     const regs = await global.navigator.serviceWorker.getRegistrations();
@@ -1439,11 +1439,11 @@
                 </tbody>
             </table>
             <button type="button" class="btn btn-secondary btn-block" id="force-update"
-                    style="margin-bottom: var(--space-4);">🔄 تحديث التطبيق الآن</button>
+                    style="margin-bottom: var(--space-4);">${Icons.svg('refresh')} تحديث التطبيق الآن</button>
             <p class="text-muted" style="font-size: var(--fs-sm); margin: calc(-1 * var(--space-3)) 0 var(--space-4);">
                 يمسح النسخة المخزّنة ويعيد تحميل أحدث إصدار. بياناتك لا تتأثر.
             </p>
-            <h4 style="margin-bottom: var(--space-2);">📝 سجل التحديثات</h4>
+            <h4 style="margin-bottom: var(--space-2);">${Icons.svg('edit')} سجل التحديثات</h4>
             ${CHANGELOG.map((log) => `
                 <div style="margin-bottom: var(--space-3);">
                     <strong>${log.v}</strong>
@@ -1479,7 +1479,7 @@
                 </tbody>
             </table>
             <a class="btn btn-secondary btn-block" href="${PRIVACY_URL}"
-               target="_blank" rel="noopener">📄 سياسة الخصوصية كاملة</a>
+               target="_blank" rel="noopener">${Icons.svg('file')} سياسة الخصوصية كاملة</a>
         `;
     }
 
@@ -1503,7 +1503,7 @@
     function dangerBody() {
         return `
             <div class="dz">
-                <div class="dz-t">🧹 مسح البيانات</div>
+                <div class="dz-t">${Icons.svg('broom')} مسح البيانات</div>
                 <p class="dz-h">
                     تُحذف فصولك و${global.Words.studentsMine()} واختباراتك وملف إنجازك،
                     <strong>وكتبك وملفات المنهج والشواهد</strong>،
@@ -1514,7 +1514,7 @@
             </div>
 
             <div class="dz is-final">
-                <div class="dz-t">🗑️ حذف الحساب نهائياً</div>
+                <div class="dz-t">${Icons.svg('trash')} حذف الحساب نهائياً</div>
                 <p class="dz-h">
                     يُحذف حسابك وبريدك وكل بياناتك من الخوادم، ولن تستطيع الدخول بعدها.
                     <strong>لا يمكن التراجع ولا استعادة شيء.</strong>
@@ -1541,7 +1541,7 @@
             if (!(await global.TeacherApp.confirm({ title: 'مسح جميع بياناتك؟', message: 'حسابك يبقى.', ok: 'مسح', danger: true }))) return;
             if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'لا يمكن التراجع.', ok: 'امسح', danger: true }))) return;
             const btn = container.querySelector('#btn-wipe');
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ المسح…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'جارٍ المسح…'; }
             try {
                 /* ١) صفوفُ القاعدة. */
                 for (const s of global.TeacherDB.STORES) await global.TeacherDB.clear(s);
@@ -1578,7 +1578,7 @@
             if (!(await global.TeacherApp.confirm({ title: 'حذف حسابك نهائياً؟', message: 'لن تستطيع الدخول بعدها.', ok: 'حذف', danger: true }))) return;
             if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'سيُحذف الحساب وكل بياناته من الخوادم.', ok: 'احذف حسابي', danger: true }))) return;
             del.disabled = true;
-            del.textContent = '⏳ جارٍ الحذف…';
+            del.textContent = 'جارٍ الحذف…';
             try {
                 await global.Auth.deleteAccount();
                 global.TeacherApp.toast('تم حذف حسابك.', 'info', 3000);

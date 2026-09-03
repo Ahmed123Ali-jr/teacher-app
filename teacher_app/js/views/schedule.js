@@ -207,9 +207,9 @@
             ${editing ? `
                 <div class="container sched-tools">
                     <button type="button" class="sched-import" id="btn-import">
-                        📷 استيراد الجدول من صورة أو ملف
+                        ${Icons.svg('camera')} استيراد الجدول من صورة أو ملف
                     </button>
-                    <button type="button" class="sched-clear" id="btn-clear-all">🗑️ مسح الجدول كاملاً</button>
+                    <button type="button" class="sched-clear" id="btn-clear-all">${Icons.svg('trash')} مسح الجدول كاملاً</button>
                 </div>` : ''}
 
             ${calendarHtml(ctx)}
@@ -348,7 +348,7 @@
                                             <div class="sched-box wait">
                                                 ${cell.sub_class
                                                     ? `<span class="sb-sub">${escapeHtml(shortSub(cell.sub_class))}</span>
-                                                       <span class="sb-w">⏳ ${escapeHtml(stageOf(cell.sub_class))}</span>`
+                                                       <span class="sb-w">${Icons.svg('clock')} ${escapeHtml(stageOf(cell.sub_class))}</span>`
                                                     : 'انتظار'}
                                             </div>
                                         </td>`;
@@ -503,7 +503,7 @@
                  (كُشف بالمعاينة ٣٠ أغسطس ٢٠٢٦.)
                  ولا شَرَطاتٍ مائلةً هنا — التعليقُ داخل قالبٍ نصّيّ. -->
             <button type="button" class="stu-up" id="sched-up">
-                <span class="ic">📄</span>
+                <span class="ic">${Icons.svg('file')}</span>
                 <span class="tx">
                     <span class="t">صورة الجدول أو ملف PDF</span>
                     <span class="s">تبدأ القراءة فور اختياره</span>
@@ -545,7 +545,7 @@
 
         /** يُظهر سطرَ انتظارٍ في مكان النتيجة — يُرى قبل أن يبدأ العمل. */
         function waiting(msg) {
-            resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">⏳ '
+            resultEl.innerHTML = '<div class="callout" style="margin-top:var(--space-4)">' + Icons.svg('clock') + ' '
                 + escapeHtml(msg) + '</div>';
         }
 
@@ -862,7 +862,7 @@
 
             function cellOf(e) {
                 if (!e) return null;
-                if (e.kind === 'wait') return { label: '⏳ انتظار', sub: '', cls: 'wait' };
+                if (e.kind === 'wait') return { label: Icons.svg('clock') + ' انتظار', sub: '', cls: 'wait' };
                 if (e.kind === 'new') {
                     const n = news[e.ni];
                     return n ? { label: CC.label(n.grade, n.section), sub: n.subject, cls: 'new' } : null;
@@ -990,7 +990,7 @@
                         + ((cur && ((o.kind === 'new' && cur.ni === o.ni) || (o.kind === 'have' && cur.class_id === o.class_id))) ? ' on' : '')
                         + '" data-pick="' + escapeAttr(o.key) + '">' + escapeHtml(o.label)
                         + (o.sub ? ' <small>' + escapeHtml(o.sub) + '</small>' : '') + '</button>').join('')
-                    + '<button type="button" class="sch-chip' + (cur && cur.kind === 'wait' ? ' on' : '') + '" data-pick="wait">⏳ انتظار</button>'
+                    + '<button type="button" class="sch-chip' + (cur && cur.kind === 'wait' ? ' on' : '') + '" data-pick="wait">' + Icons.svg('clock') + ' انتظار</button>'
                     + '<button type="button" class="sch-chip danger" data-pick="clear">✕ فارغة</button>'
                     + '</div></div>';
             }
@@ -1052,7 +1052,7 @@
 
                     const b = e.currentTarget;
                     b.disabled = true;
-                    b.textContent = '⏳ جارٍ الحفظ…';
+                    b.textContent = 'جارٍ الحفظ…';
                     try {
                         /* تُنشأ الفصول المستعملة في الشبكة وحدها — فما حذفه
                            المعلّم من كل خاناته لا يُنشأ له فصل. */
@@ -1186,7 +1186,7 @@
                     </button>
                 `).join('')}
                 <button type="button" class="sch-card wait ${selectedId === '__wait__' ? 'on' : ''}" data-wait>
-                    <span class="g">⏳ حصة انتظار</span>
+                    <span class="g">${Icons.svg('clock')} حصة انتظار</span>
                     <span class="s">اضغط لتُضاف فوراً</span>
                 </button>
                 <button type="button" class="sch-card new" data-newcls>
@@ -1279,7 +1279,7 @@
                       amber: true })
                     + (existing.sub_class
                         ? `<div class="sch-cur">
-                               <span class="em">⏳</span>
+                               <span class="em">${Icons.svg('clock')}</span>
                                <span class="tx">
                                    <span class="t">${escapeHtml(existing.sub_class)}</span>
                                    <span class="h">لهذا اليوم فقط · يُمسح نهاية اليوم</span>
@@ -1289,7 +1289,7 @@
                            <div class="sch-lbl">اختر فصلاً آخر لتغييره</div>`
                         : '')
                     + substituteHtml(subState)
-                    + `<button type="button" class="sch-del" data-del>🗑️ إزالة الحصة من الجدول</button>
+                    + `<button type="button" class="sch-del" data-del>${Icons.svg('trash')} إزالة الحصة من الجدول</button>
                        <div class="sch-hint">اضغط خارج اللوحة للإغلاق</div>`;
             } else {
                 const title = existing ? 'تعديل الحصة' : 'اختر الفصل';
@@ -1297,7 +1297,7 @@
                     + `<div class="sch-lbl">${existing ? 'الفصل — اضغط لتغييره فوراً' : 'اضغط الفصل ليُضاف فوراً'}</div>`
                     + classCardsHtml(ctx, existing ? existing.class_id : null)
                     + (existing
-                        ? `<button type="button" class="sch-del" data-del>🗑️ إزالة الحصة من الجدول</button>
+                        ? `<button type="button" class="sch-del" data-del>${Icons.svg('trash')} إزالة الحصة من الجدول</button>
                            <div class="sch-hint">اضغط خارج اللوحة للإغلاق</div>`
                         : '');
             }
@@ -1587,7 +1587,7 @@
            المعلّم. فليضغط الحقلَ بنفسه. (طلبُه، ٢٢ أغسطس ٢٠٢٦؛ والنظيرُ
            في «+ خانة جديدة» و«تعديل الخانات» و«طباعة السجل».) */
         global.Modal.open({
-            title: '⏰ توقيت الحصص', body: form, autofocus: false,
+            title: 'توقيت الحصص', body: form, autofocus: false,
             /* الإغلاقُ يكتب ما لم تبلغه المهلةُ بعد — فمن غيّر وأغلق في
                الحال لا يفقد تغييرَه — ثمّ يُعاد رسمُ الجدول بالأوقات. */
             onClose: () => {

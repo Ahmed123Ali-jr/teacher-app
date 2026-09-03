@@ -45,7 +45,7 @@
         });
 
         /* يُفتح المنتقي على اختياره السابق لا على أوّل القائمة. */
-        global.Modal.open({ title: '🏛️ إدارة التعليم', body });
+        global.Modal.open({ title: 'إدارة التعليم', body });
         const on = body.querySelector('.dp-item.on');
         if (on && on.scrollIntoView) on.scrollIntoView({ block: 'center' });
     }

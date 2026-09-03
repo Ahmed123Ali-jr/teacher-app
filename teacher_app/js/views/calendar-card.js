@@ -268,7 +268,7 @@
             <section class="ac-card ${ui.open ? 'open' : ''}" aria-label="التقويم الدراسي">
                 <button type="button" class="ac-top" data-ac-toggle
                         aria-expanded="${ui.open ? 'true' : 'false'}">
-                    <span class="ac-ic">🗓️</span>
+                    <span class="ac-ic">${Icons.svg('calendar')}</span>
                     <span class="ac-tx">
                         <span class="nm">التقويم الدراسي ${esc(st.cal.year)}</span>
                         <span class="sub">${summary(st)}</span>

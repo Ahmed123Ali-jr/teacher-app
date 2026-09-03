@@ -82,7 +82,7 @@
     function emptyView() {
         return `
             <div class="empty-state" style="margin-top: var(--space-6);">
-                <div class="icon">📊</div>
+                <div class="icon">${Icons.svg('chart')}</div>
                 <h3>لا توجد بيانات للعرض بعد</h3>
                 <p>أضف فصلاً وطلاباً، وسجّل الحضور والدرجات — ثم ستظهر تقارير تفصيلية هنا.</p>
             </div>

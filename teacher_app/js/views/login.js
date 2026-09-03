@@ -24,7 +24,7 @@
             if (mode === 'login') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">🎓</div>
+                        <div class="auth-logo">${Icons.svg('cap')}</div>
                         <h2 class="auth-title">فصول</h2>
                         <p class="auth-subtitle">فصولك وطلابك وحضورهم ودرجاتهم في مكان واحد</p>
 
@@ -73,7 +73,7 @@
             if (mode === 'guest') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">🔒</div>
+                        <div class="auth-logo">${Icons.svg('lock')}</div>
                         <h2 class="auth-title">قبل أن تبدأ</h2>
                         <p class="auth-subtitle">هذا ما نفعله ببياناتك — وأين تُحفظ</p>
 
@@ -106,7 +106,7 @@
             if (mode === 'forgot') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">🔑</div>
+                        <div class="auth-logo">${Icons.svg('key')}</div>
                         <h2 class="auth-title">نسيت كلمة المرور</h2>
                         <p class="auth-subtitle">اكتب بريدك، ونرسل لك رابطاً تختار به كلمةً جديدة</p>
 
@@ -148,7 +148,7 @@
             if (mode === 'recover') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">📱</div>
+                        <div class="auth-logo">${Icons.svg('phone')}</div>
                         <h2 class="auth-title">نسيت بريدك؟</h2>
                         <p class="auth-subtitle">
                             اكتب رقم جوالك الذي سجّلتَ به، وتُفتح واتساب برسالةٍ جاهزة.
@@ -192,7 +192,7 @@
             if (mode === 'reset') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">🔑</div>
+                        <div class="auth-logo">${Icons.svg('key')}</div>
                         <h2 class="auth-title">كلمة مرور جديدة</h2>
                         <p class="auth-subtitle">اخترها ثم ادخل بها</p>
 
@@ -220,7 +220,7 @@
 
             return `
                 <div class="auth-card">
-                    <div class="auth-logo">🎓</div>
+                    <div class="auth-logo">${Icons.svg('cap')}</div>
                     <h2 class="auth-title">إنشاء حساب</h2>
                     <p class="auth-subtitle">حسابك أولاً — ونسألك عن مدرستك بعد الدخول</p>
 
@@ -373,7 +373,7 @@
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ الإرسال…';
+            btn.textContent = 'جارٍ الإرسال…';
             try {
                 await global.Auth.requestPasswordReset(container.querySelector('#fp-email').value);
                 /* جوابٌ واحدٌ سواءٌ وُجد البريد أم لا — راجع `requestPasswordReset`. */
@@ -396,7 +396,7 @@
             if (pw !== ok) return global.TeacherApp.toast('الكلمتان غير متطابقتين.', 'error', 4000);
             const btn = e.target.querySelector('button[type="submit"]');
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ الحفظ…';
+            btn.textContent = 'جارٍ الحفظ…';
             try {
                 await global.Auth.setNewPassword(pw);
                 global.TeacherApp.toast('حُفظت كلمتك الجديدة. أهلاً بعودتك!', 'success', 4000);
@@ -441,7 +441,7 @@
 
             const btn = container.querySelector('#btn-guest');
             const rest = () => { if (btn) { btn.disabled = false; btn.textContent = 'الدخول كزائر'; } };
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الدخول…'; }
             try {
                 await global.Auth.beginGuest();
                 /* اللونُ يُطلى عند الدخول لا عند الإقلاع وحدَه: من دخل داخل الجلسة
@@ -468,7 +468,7 @@
                         message: err.message,
                         ok: 'ابدأ من جديد'
                     }))) return;
-                    if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول…'; }
+                    if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الدخول…'; }
                     try {
                         await global.Auth.beginGuest({ allowNew: true });
                         if (global.ThemeColor) global.ThemeColor.applyStored();

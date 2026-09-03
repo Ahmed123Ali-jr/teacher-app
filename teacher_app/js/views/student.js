@@ -39,7 +39,7 @@
             if (global.Router && global.Router.setTitle) global.Router.setTitle('الطالب');
             container.innerHTML = `
                 <div class="container"><div class="empty-state">
-                    <div class="icon">⚠️</div><h3>الطالب غير موجود</h3>
+                    <div class="icon">${Icons.svg('warning')}</div><h3>الطالب غير موجود</h3>
                     <a href="#/dashboard" class="btn btn-primary">الرئيسية</a>
                 </div></div>`;
             return;
@@ -81,13 +81,13 @@
                         </div>
                     </div>
                     <div class="student-header-actions">
-                        <button class="btn btn-ghost btn-sm" id="btn-edit-student">✏️ تعديل</button>
-                        <button class="btn btn-ghost btn-sm" id="btn-delete-student">🗑️ حذف</button>
+                        <button class="btn btn-ghost btn-sm" id="btn-edit-student">${Icons.svg('pencil')} تعديل</button>
+                        <button class="btn btn-ghost btn-sm" id="btn-delete-student">${Icons.svg('trash')} حذف</button>
                     </div>
                 </div>
 
                 <div class="grid grid-4" style="margin-block: var(--space-6);">
-                    ${statCard('📅', stats.totalDays, 'أيام مسجّلة')}
+                    ${statCard('calendar', stats.totalDays, 'أيام مسجّلة')}
                     ${statCard('✅', stats.presentPct + '%', 'نسبة الحضور', 'var(--success)')}
                     ${stats.columnAverages.slice(0, 2).map((col) =>
                         statCard(col.icon, col.display, 'متوسط ' + col.name, 'var(--primary)')
@@ -96,16 +96,16 @@
 
                 <div class="grid grid-2">
                     <div class="card">
-                        <h3 class="card-title">📅 سجل الحضور</h3>
+                        <h3 class="card-title">${Icons.svg('calendar')} سجل الحضور</h3>
                         ${attendanceList(attendance)}
                     </div>
 
                     <div class="card">
-                        <h3 class="card-title">📝 الملاحظات</h3>
+                        <h3 class="card-title">${Icons.svg('edit')} الملاحظات</h3>
                         <textarea class="textarea" id="student-notes" rows="5"
                                   placeholder="ملاحظات خاصة بالطالب...">${escapeHtml(student.notes || '')}</textarea>
                         <button class="btn btn-primary btn-sm" id="btn-save-notes"
-                                style="margin-top: var(--space-3);">💾 حفظ الملاحظات</button>
+                                style="margin-top: var(--space-3);">${Icons.svg('save')} حفظ الملاحظات</button>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@
             const btn = container.querySelector('#btn-save-notes');
             const origLabel = btn.textContent;
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ الحفظ...';
+            btn.textContent = 'جارٍ الحفظ...';
             try {
                 student.notes = container.querySelector('#student-notes').value.trim();
                 student.updated_at = new Date().toISOString();
@@ -153,7 +153,7 @@
     function statCard(icon, value, label, color) {
         return `
             <div class="card stat-card">
-                <div class="stat-icon">${icon}</div>
+                <div class="stat-icon">${Icons.render(icon)}</div>
                 <div class="stat-value num" ${color ? `style="color:${color}"` : ''}>${value}</div>
                 <div class="stat-label">${label}</div>
             </div>
@@ -180,8 +180,8 @@
             const avg = values.length === 0 ? null :
                 values.reduce((a, b) => a + b, 0) / values.length;
 
-            let icon = '📊';
-            if (col.type === 'stars') icon = '⭐';
+            let icon = 'chart';
+            if (col.type === 'stars') icon = 'star';
             else if (col.type === 'check') icon = '✓';
             else if (col.type === 'tri')   icon = '△';
 

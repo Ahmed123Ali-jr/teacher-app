@@ -265,7 +265,7 @@
        إن سقط — الصمت أسوأ من الخطأ. */
     async function guard(btn, fn) {
         const label = btn ? btn.innerHTML : null;
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = Icons.svg('clock') + ' لحظة…'; }
         try {
             await fn();
         } catch (err) {
@@ -328,7 +328,7 @@
 
             <div class="wizard-footer">
                 <button class="btn btn-ghost" id="btn-back">← رجوع للأسئلة</button>
-                <button class="btn btn-primary" id="btn-print">🖨️ معاينة وطباعة</button>
+                <button class="btn btn-primary" id="btn-print">${Icons.svg('print')} معاينة وطباعة</button>
             </div>
         `;
 

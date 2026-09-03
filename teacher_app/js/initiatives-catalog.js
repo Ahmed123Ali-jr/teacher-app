@@ -14,14 +14,14 @@
     'use strict';
 
     const CATEGORIES = [
-        { key: 'reading-knowledge', label: 'القراءة والمعرفة', icon: '📚' },
-        { key: 'health-sports', label: 'الصحة والرياضة', icon: '🏃' },
-        { key: 'environment-sustainability', label: 'البيئة والاستدامة', icon: '🌱' },
-        { key: 'behavior-values', label: 'السلوك والقيم', icon: '🤝' },
-        { key: 'academic-excellence', label: 'التفوّق الدراسي', icon: '🎯' },
+        { key: 'reading-knowledge', label: 'القراءة والمعرفة', icon: 'books' },
+        { key: 'health-sports', label: 'الصحة والرياضة', icon: 'run' },
+        { key: 'environment-sustainability', label: 'البيئة والاستدامة', icon: 'seed' },
+        { key: 'behavior-values', label: 'السلوك والقيم', icon: 'hands' },
+        { key: 'academic-excellence', label: 'التفوّق الدراسي', icon: 'target' },
         { key: 'citizenship-belonging', label: 'المواطنة والانتماء', icon: '🇸🇦' },
-        { key: 'talent-creativity', label: 'الموهبة والإبداع', icon: '💡' },
-        { key: 'family-community', label: 'الأسرة والمجتمع', icon: '👪' },
+        { key: 'talent-creativity', label: 'الموهبة والإبداع', icon: 'bulb' },
+        { key: 'family-community', label: 'الأسرة والمجتمع', icon: 'family' },
     ];
 
     const ITEMS = [

@@ -45,7 +45,7 @@
 
     function initials(name) {
         const parts = String(name || '').trim().split(/\s+/);
-        return ((parts[0] || '').charAt(0) + (parts[1] || '').charAt(0)) || '👤';
+        return ((parts[0] || '').charAt(0) + (parts[1] || '').charAt(0)) || '';
     }
 
     function avatarInner(teacher, revoke) {
@@ -123,8 +123,8 @@
                         <span class="t">صورتك الشخصية</span>
                         <span class="h">تظهر في الرئيسية والدرج وملف الإنجاز</span>
                     </span>
-                    <button type="button" class="fchip" id="btn-upload-photo">📷 ${hasPhoto(teacher) ? 'تغيير' : 'إضافة'}</button>
-                    ${hasPhoto(teacher) ? '<button type="button" class="fchip" id="btn-remove-photo">🗑️</button>' : ''}
+                    <button type="button" class="fchip" id="btn-upload-photo">${Icons.svg('camera')} ${hasPhoto(teacher) ? 'تغيير' : 'إضافة'}</button>
+                    ${hasPhoto(teacher) ? '<button type="button" class="fchip" id="btn-remove-photo">' + Icons.svg('trash') + '</button>' : ''}
                     <input type="file" accept="image/*" id="photo-input" hidden>
                 </div>
 
@@ -136,7 +136,7 @@
 
                 </form>
 
-                <button type="button" class="fsave" id="btn-profile-save">💾 حفظ بياناتي</button>
+                <button type="button" class="fsave" id="btn-profile-save">${Icons.svg('save')} حفظ بياناتي</button>
             </div>
         `;
 

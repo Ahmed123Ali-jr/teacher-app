@@ -45,16 +45,16 @@
     }
 
     const SECTIONS = [
-        { key: 'personal',    title: 'البيانات الشخصية',       icon: '👤', auto: false },
-        { key: 'certificates',title: 'الشهادات والرخصة المهنية', icon: '🏆', auto: false },
-        { key: 'mission',     title: 'الرسالة والرؤية',        icon: '🎯', auto: false },
-        { key: 'schedules',   title: 'الجداول وتوزيع المنهج',   icon: '📅', auto: false },
-        { key: 'exams',       title: 'الاختبارات',             icon: '📝', auto: true },
-        { key: 'worksheets',  title: 'أوراق العمل',            icon: '📄', auto: true },
-        { key: 'homework',    title: 'الواجبات',               icon: '📚', auto: true },
-        { key: 'strategies',  title: 'استراتيجيات التدريس',     icon: '🎯', auto: true,  star: true },
-        { key: 'initiatives', title: 'المبادرات',              icon: '🌟', auto: false, star: true },
-        { key: 'extras',      title: 'صور ومرفقات إضافية',     icon: '📎', auto: false }
+        { key: 'personal',    title: 'البيانات الشخصية',       icon: 'user', auto: false },
+        { key: 'certificates',title: 'الشهادات والرخصة المهنية', icon: 'trophy', auto: false },
+        { key: 'mission',     title: 'الرسالة والرؤية',        icon: 'target', auto: false },
+        { key: 'schedules',   title: 'الجداول وتوزيع المنهج',   icon: 'calendar', auto: false },
+        { key: 'exams',       title: 'الاختبارات',             icon: 'edit', auto: true },
+        { key: 'worksheets',  title: 'أوراق العمل',            icon: 'file', auto: true },
+        { key: 'homework',    title: 'الواجبات',               icon: 'books', auto: true },
+        { key: 'strategies',  title: 'استراتيجيات التدريس',     icon: 'target', auto: true,  star: true },
+        { key: 'initiatives', title: 'المبادرات',              icon: 'star', auto: false, star: true },
+        { key: 'extras',      title: 'صور ومرفقات إضافية',     icon: 'clip', auto: false }
     ];
 
     /* الأقسامُ كلُّها مطويّةٌ عند الفتح: كان «البيانات الشخصية» يُفتح
@@ -327,9 +327,9 @@
     function openPdfModal(ctx) {
         const filledCount = countFilled(ctx);
         const TYPES = [
-            { k: 'all',    ic: '📘', t: 'الملف كامل',
+            { k: 'all',    ic: 'book', t: 'الملف كامل',
               d: 'كل الأقسام العشرة حتى الفارغ منها' },
-            { k: 'filled', ic: '✨', t: 'الأقسام المعبّأة فقط',
+            { k: 'filled', ic: 'sparkle', t: 'الأقسام المعبّأة فقط',
               d: `يتخطّى الفارغة — ${filledCount.filled} من ${filledCount.total} أقسام فيها محتوى` }
         ];
 
@@ -339,7 +339,7 @@
             ${TYPES.map((t, i) => `
                 <div class="popt ${i === 1 ? 'on' : ''}" data-k="${t.k}">
                     <div class="popt-hd">
-                        <div class="popt-ic">${t.ic}</div>
+                        <div class="popt-ic">${Icons.render(t.ic)}</div>
                         <div class="popt-tx">
                             <div class="popt-tt">${t.t}</div>
                             <div class="popt-dd">${t.d}</div>
@@ -355,7 +355,7 @@
             </div>
 
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary" id="pf-go">📄 جهّز الملف</button>
+                <button type="submit" class="btn btn-primary" id="pf-go">${Icons.svg('file')} جهّز الملف</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
@@ -406,7 +406,7 @@
                 built = out;
                 setBar(100, `جاهز — ${out.pages} صفحة`);
                 go.disabled = false;
-                go.textContent = '📤 مشاركة أو حفظ';
+                go.textContent = 'مشاركة أو حفظ';
             } catch (err) {
                 console.error('[portfolio pdf]', err);
                 prog.hidden = true;
@@ -419,7 +419,7 @@
 
         /* يبدأ تحميل المحرّك مع فتح النافذة لا مع الضغط. */
         global.PdfCore?.preloadPdfEngine().catch(() => {});
-        global.Modal.open({ title: '📄 حفظ ملف الإنجاز', body: form, autofocus: false });
+        global.Modal.open({ title: 'حفظ ملف الإنجاز', body: form, autofocus: false });
     }
 
     function countFilled(ctx) {
@@ -467,7 +467,7 @@
        فالشكلُ واحدٌ وإن اختلف ما بداخله. */
     const chipHtml = (key, fallback) => SECTION_ICONS[key]
         ? SVG(SECTION_ICONS[key])
-        : escapeHtml(fallback || '📂');
+        : Icons.render(fallback || 'folder');
     function sectionHeader(section, counts, open) {
         const count = counts[section.key] ?? '';
         const badge = count !== '' ?
@@ -477,7 +477,7 @@
                 <button class="portfolio-section-header" data-section-toggle="${section.key}">
                     <span class="pf-chip">${chipHtml(section.key, section.icon)}</span>
                     <span class="portfolio-title">${section.title}</span>
-                    ${section.star ? '<span class="badge badge-warning">⭐ مميزة</span>' : ''}
+                    ${section.star ? '<span class="badge badge-warning">' + Icons.svg('star') + ' مميزة</span>' : ''}
                     ${section.auto ? '<span class="badge badge-info">تلقائي</span>' : ''}
                     ${badge}
                     <span class="portfolio-chev">${open ? '▼' : '◀'}</span>
@@ -496,7 +496,7 @@
         }
         switch (key) {
             case 'personal':    return renderPersonal(body, ctx);
-            case 'certificates':return renderFileList(body, ctx, 'certificates', 'شهادة', '🏆');
+            case 'certificates':return renderFileList(body, ctx, 'certificates', 'شهادة', 'trophy');
             case 'mission':     return renderMission(body, ctx);
             case 'schedules':   return renderSchedules(body, ctx);
             case 'exams':       return renderAutoList(body, ctx.exams, 'exam');
@@ -504,7 +504,7 @@
             case 'homework':    return renderAutoList(body, ctx.homework, 'homework');
             case 'strategies':  return global.PortfolioStrategies.render(body, ctx);
             case 'initiatives': return global.PortfolioInitiatives.render(body, ctx);
-            case 'extras':      return renderFileList(body, ctx, 'extras', 'ملف', '📎');
+            case 'extras':      return renderFileList(body, ctx, 'extras', 'ملف', 'clip');
         }
     }
 
@@ -512,7 +512,7 @@
 
     function customSectionHeader(sec, open) {
         const count = (sec.items || []).length;
-        const icon  = sec.icon || '📂';
+        const icon  = sec.icon || 'folder';
         return `
             <div class="portfolio-section ${open ? 'is-open' : ''}">
                 <button class="portfolio-section-header" data-section-toggle="custom_${sec.id}">
@@ -533,13 +533,13 @@
         body.innerHTML = `
             <div class="flex gap-2" style="margin-bottom: var(--space-3); flex-wrap: wrap;">
                 <button class="btn btn-primary" id="cs-add">+ إضافة ملف</button>
-                <button class="btn btn-ghost btn-sm" id="cs-rename">✏️ إعادة تسمية القسم</button>
-                <button class="btn btn-ghost btn-sm" id="cs-delete">🗑️ حذف القسم</button>
+                <button class="btn btn-ghost btn-sm" id="cs-rename">${Icons.svg('pencil')} إعادة تسمية القسم</button>
+                <button class="btn btn-ghost btn-sm" id="cs-delete">${Icons.svg('trash')} حذف القسم</button>
             </div>
             <div class="file-list">
                 ${items.length === 0
                     ? `<p class="text-muted">لا توجد ملفات بعد.</p>`
-                    : items.map((it, i) => fileCard(it, i, sec.icon || '📎')).join('')}
+                    : items.map((it, i) => fileCard(it, i, sec.icon || 'clip')).join('')}
             </div>
         `;
 
@@ -619,7 +619,7 @@
             <div class="field">
                 <label class="label">رمز / إيموجي (اختياري)</label>
                 <input class="input" id="cs-icon" type="text" maxlength="4"
-                       placeholder="📂"
+                       placeholder=""
                        value="${existing ? escapeAttr(existing.icon || '') : ''}">
             </div>
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
@@ -809,7 +809,7 @@
 
         body.innerHTML = `
             <p class="text-muted" style="font-size: var(--fs-sm); margin-bottom: var(--space-4);">
-                💡 هذه البيانات تُدار من <a href="#/profile">الملف التعريفي</a>.
+                ${Icons.svg('bulb')} هذه البيانات تُدار من <a href="#/profile">الملف التعريفي</a>.
                 أي تعديل هناك يظهر هنا تلقائياً.
             </p>
 
@@ -840,15 +840,15 @@
                     </div>
 
                     <div class="pf-id-footer">
-                        <span>📞 ${phone ? escapeHtml(phone) : '—'}</span>
-                        <span>✉️ ${email ? escapeHtml(email) : '—'}</span>
+                        <span>${Icons.svg('call')} ${phone ? escapeHtml(phone) : '—'}</span>
+                        <span>${Icons.svg('mail')} ${email ? escapeHtml(email) : '—'}</span>
                     </div>
                 </div>
             </div>
 
             <div style="text-align:center; margin-top: var(--space-5);">
                 <a href="#/profile" class="btn btn-secondary">
-                    ✏️ تعديل من الملف التعريفي
+                    ${Icons.svg('pencil')} تعديل من الملف التعريفي
                 </a>
             </div>
         `;
@@ -949,7 +949,7 @@
                 ` : `
                     <textarea class="textarea mv-own" id="mv-text" rows="${multi ? 7 : 5}"
                               placeholder="${escapeAttr(f.empty)}">${escapeHtml(draft)}</textarea>
-                    <button type="button" class="fsave" id="mv-save">💾 حفظ</button>
+                    <button type="button" class="fsave" id="mv-save">${Icons.svg('save')} حفظ</button>
                 `}
             `;
 
@@ -992,7 +992,7 @@
         }
 
         paint();
-        global.Modal.open({ title: '📖 ' + f.label, body: box });
+        global.Modal.open({ title: '' + f.label, body: box });
     }
 
     /* ---------- Generic file list (certificates / schedules / extras) ---------- */
@@ -1064,7 +1064,7 @@
         const hasFile = global.TeacherDB.PortfolioFiles.has(item);
         return `
             <div class="file-card">
-                ${icon ? `<div class="file-icon">${icon}</div>` : ''}
+                ${icon ? `<div class="file-icon">${Icons.render(icon)}</div>` : ''}
                 <div class="file-body">
                     <div class="file-name">${escapeHtml(item.name)}</div>
                     <div class="file-meta">
@@ -1179,7 +1179,7 @@
                 global.Modal.close();
                 global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
                 renderFileList(body, ctx, field, typeName,
-                    field === 'certificates' ? '🏆' : field === 'schedules' ? '📅' : '📎');
+                    field === 'certificates' ? 'trophy' : field === 'schedules' ? 'calendar' : 'clip');
             } catch (err) {
                 console.error('[Portfolio] save failed:', err);
                 global.TeacherApp.toast('تعذّر الحفظ: ' + (err.message || 'خطأ غير معروف'), 'error', 5000);

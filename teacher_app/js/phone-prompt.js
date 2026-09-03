@@ -106,7 +106,7 @@
 
         /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح تقفز على الجوّال فتغطّي
            الشرحَ الذي يفسّر لماذا نسأل أصلاً. */
-        global.Modal.open({ title: '📱 رقم جوالك', body: form, autofocus: false });
+        global.Modal.open({ title: 'رقم جوالك', body: form, autofocus: false });
     }
 
     global.PhonePrompt = { maybeAsk };

@@ -9,13 +9,13 @@
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
 
     const TABS = [
-        { key: 'students',   label: null, icon: '👥' },   // النص يُحسب عند الرسم
-        { key: 'books',      label: 'الكتب',        icon: '📖' },
-        { key: 'curriculum', label: 'توزيع المنهج', icon: '🗓️' },
-        { key: 'exams',      label: 'الاختبارات',   icon: '📝' },
-        { key: 'worksheets', label: 'أوراق العمل',  icon: '📄' },
-        { key: 'homework',   label: 'الواجبات',     icon: '📚' },
-        { key: 'strategies', label: 'الاستراتيجيات', icon: '🎯' }
+        { key: 'students',   label: null, icon: 'users' },   // النص يُحسب عند الرسم
+        { key: 'books',      label: 'الكتب',        icon: 'book' },
+        { key: 'curriculum', label: 'توزيع المنهج', icon: 'calendar' },
+        { key: 'exams',      label: 'الاختبارات',   icon: 'edit' },
+        { key: 'worksheets', label: 'أوراق العمل',  icon: 'file' },
+        { key: 'homework',   label: 'الواجبات',     icon: 'books' },
+        { key: 'strategies', label: 'الاستراتيجيات', icon: 'target' }
     ];
 
     /* لونان لكلّ حالة، ولذلك سبب:
@@ -33,8 +33,8 @@
            يُقرآن. أمّا ✓ و✗ فمحرفان يأخذان لونَ النصّ، فالتعبئةُ تُبرزهما.
            وفائدةٌ ثانية: الحاضرُ والغائبُ يُقرآن بطرَف العين في فصلٍ من
            ثلاثين، والمتأخّرُ والمستأذنُ حالتان نادرتان لا تُزاحمهما. */
-        late:    { label: 'متأخر',  icon: '⏰', color: '#F59E0B', ink: '#92400E', outline: true },
-        excused: { label: 'مستأذن', icon: '📝', color: '#3B82F6', ink: '#1D4ED8', outline: true }
+        late:    { label: 'متأخر',  icon: 'clock', color: '#F59E0B', ink: '#92400E', outline: true },
+        excused: { label: 'مستأذن', icon: 'edit', color: '#3B82F6', ink: '#1D4ED8', outline: true }
     };
 
     const COLUMN_TYPES = {
@@ -153,7 +153,7 @@
         if (!cls) {
             container.innerHTML = `
                 <div class="container"><div class="empty-state">
-                    <div class="icon">⚠️</div>
+                    <div class="icon">${Icons.svg('warning')}</div>
                     <h3>لم يتم العثور على الفصل</h3>
                     <a href="#/dashboard" class="btn btn-primary">الرئيسية</a>
                 </div></div>`;
@@ -198,12 +198,12 @@
         const stgLogs = await global.TeacherDB.getAllByIndex('strategy_logs', 'class_id', cls.id);
         const strategyCount = new Set(stgLogs.map((l) => l.strategy_key)).size;
         const GRID = [
-            { key: 'books',      icon: '📖', label: 'الكتب',        count: books.length,      tint: '#7C3AED', bg: '#F5F1FE' },
-            { key: 'exams',      icon: '📝', label: 'الاختبارات',   count: exams.length,      tint: '#DC2626', bg: '#FEF1F1' },
-            { key: 'worksheets', icon: '📄', label: 'أوراق العمل',  count: worksheets.length, tint: '#059669', bg: '#EDFBF5' },
-            { key: 'homework',   icon: '📚', label: 'الواجبات',     count: homework.length,   tint: '#D97706', bg: '#FFF8EB' },
-            { key: 'curriculum', icon: '🗓️', label: 'توزيع المنهج', count: null,              tint: '#0891B2', bg: '#EDFAFD' },
-            { key: 'strategies', icon: '🎯', label: 'الاستراتيجيات', count: strategyCount,     tint: '#BE185D', bg: '#FDF2F8' }
+            { key: 'books',      icon: 'book', label: 'الكتب',        count: books.length,      tint: '#7C3AED', bg: '#F5F1FE' },
+            { key: 'exams',      icon: 'edit', label: 'الاختبارات',   count: exams.length,      tint: '#DC2626', bg: '#FEF1F1' },
+            { key: 'worksheets', icon: 'file', label: 'أوراق العمل',  count: worksheets.length, tint: '#059669', bg: '#EDFBF5' },
+            { key: 'homework',   icon: 'books', label: 'الواجبات',     count: homework.length,   tint: '#D97706', bg: '#FFF8EB' },
+            { key: 'curriculum', icon: 'calendar', label: 'توزيع المنهج', count: null,              tint: '#0891B2', bg: '#EDFAFD' },
+            { key: 'strategies', icon: 'target', label: 'الاستراتيجيات', count: strategyCount,     tint: '#BE185D', bg: '#FDF2F8' }
         ];
 
         /* ولا عنوانَ في الشريط: اسمُ الفصل مكتوبٌ تحته مباشرةً في بطاقته
@@ -246,7 +246,7 @@
                 <div class="hub-grid">
                     ${GRID.map((g) => `
                         <a class="hub-tile" href="#/class/${cls.id}/${g.key}">
-                            <div class="hub-tile-icon" style="background:${g.bg}">${g.icon}</div>
+                            <div class="hub-tile-icon" style="background:${g.bg}">${Icons.render(g.icon)}</div>
                             <div class="hub-tile-body">
                                 <div class="hub-tile-label">${g.label}</div>
                                 <div class="hub-tile-count" style="color:${g.count ? g.tint : '#6B7686'}">
@@ -380,7 +380,7 @@
             <div class="rdl-sheet" id="rdl-sheet" hidden>
                 <div class="rdl-h">الأيام التي عُبّئ فيها السجلّ</div>
                 ${rows}
-                <button type="button" class="rdl-any" id="rd-cal">📅 اختر أيَّ يوم…</button>
+                <button type="button" class="rdl-any" id="rd-cal">${Icons.svg('calendar')} اختر أيَّ يوم…</button>
                 <input type="date" id="rd-input" max="${today}" value="${date}"
                        class="rd-input" aria-hidden="true" tabindex="-1">
             </div>`;
@@ -509,7 +509,7 @@
             ${students.length > 0 ? `
                 <div class="reg-toolrow">
                     <input type="search" class="input search-input" id="student-search"
-                           placeholder="🔍 بحث باسم ${global.Words.theStudent()}...">
+                           placeholder="بحث باسم ${global.Words.theStudent()}...">
                     <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.studentsBare()}</button>
                 </div>
             ` : ''}
@@ -520,9 +520,9 @@
                     ${columns.map((c) => `
                         <button class="col-chip ${focus === c.id ? 'active' : ''}" data-col-focus="${c.id}">${escapeHtml(c.name)}</button>
                     `).join('')}
-                    <button class="col-chip ${focus === 'notes' ? 'active' : ''}" data-col-focus="notes">📝 الملاحظات</button>
+                    <button class="col-chip ${focus === 'notes' ? 'active' : ''}" data-col-focus="notes">${Icons.svg('edit')} الملاحظات</button>
                     <button class="col-chip col-chip-add" id="chip-add-column" title="إضافة خانة جديدة">+</button>
-                    <button class="col-chip col-chip-manage" id="btn-manage-columns">⚙️ تعديل الخانات</button>
+                    <button class="col-chip col-chip-manage" id="btn-manage-columns">${Icons.svg('gear')} تعديل الخانات</button>
                 </div>
             ` : ''}
 
@@ -530,11 +530,11 @@
                 <div class="mark-bar">
                     <button class="mark-bar-btn" id="btn-mark-all"></button>
                     <div class="mark-bar-miss" id="mark-miss"></div>
-                    <!-- ✓ و✗ يفهمهما كلُّ أحد. أمّا ⏰ و📝 فلا — فيُعرَّفان
+                    <!-- ✓ و✗ يفهمهما كلُّ أحد. أمّا ${Icons.svg('clock')} و${Icons.svg('edit')} فلا — فيُعرَّفان
                          هنا بجانب الزرّ، لا في شاشةِ مساعدةٍ لا تُفتح. -->
                     <div class="mark-bar-key">
-                        <span class="mk"><b>⏰</b> متأخر</span>
-                        <span class="mk"><b>📝</b> مستأذن</span>
+                        <span class="mk"><b>${Icons.svg('clock')}</b> متأخر</span>
+                        <span class="mk"><b>${Icons.svg('edit')}</b> مستأذن</span>
                     </div>
                 </div>
             ` : ''}
@@ -639,7 +639,7 @@
                     btn.disabled = false;
                     return confirmUnmarkAll(ids.length, async () => {
                         const b = panel.querySelector('#btn-mark-all');
-                        if (b) { b.disabled = true; b.textContent = '⏳ جارٍ الإلغاء...'; }
+                        if (b) { b.disabled = true; b.textContent = 'جارٍ الإلغاء...'; }
                         try {
                             await global.TeacherDB.bulkRemove('attendance', ids);
                             global.TeacherApp.toast('تم إلغاء تحضير الجميع.', 'success', 2500);
@@ -649,7 +649,7 @@
                         await renderStudents(panel, cls);
                     });
                 } else {
-                    btn.textContent = '⏳ جارٍ التحضير...';
+                    btn.textContent = 'جارٍ التحضير...';
                     const rows = students
                         .filter((s) => !byStudent.get(s.id))
                         .map((s) => ({
@@ -995,7 +995,7 @@
             <button type="button" class="att-btn ${current === key ? 'active' : ''}${meta.outline ? ' outline' : ''}"
                     data-att-btn data-sid="${studentId}" data-status="${key}"
                     title="${meta.label}" style="--att-color:${meta.color};--att-ink:${meta.ink};">
-                ${meta.icon}
+                ${Icons.render(meta.icon)}
             </button>
         `).join('');
     }
@@ -1041,7 +1041,7 @@
                         data-eval-btn data-sid="${studentId}" data-col="${col.id}"
                         data-value="${o.v}" data-current="${v}"
                         title="${o.label}" style="--tri-color:${o.color};">
-                    ${o.icon}
+                    ${Icons.render(o.icon)}
                 </button>
             `).join('') + `</div>`;
         }
@@ -1090,7 +1090,7 @@
                 <br>لا يمكن التراجع.
             </p>
             <div class="modal-footer" style="margin: var(--space-5) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="button" class="btn btn-danger" data-confirm>🗑️ حذف</button>
+                <button type="button" class="btn btn-danger" data-confirm>${Icons.svg('trash')} حذف</button>
                 <button type="button" class="btn btn-ghost"  data-modal-close>إلغاء</button>
             </div>
         `;
@@ -1337,7 +1337,7 @@
                     <input class="input num-input" data-field="max" value="${c.max}"
                            ${c.type !== 'number' && c.type !== 'stars' ? 'disabled' : ''}
                            placeholder="الحد الأعلى">
-                    <button type="button" class="btn btn-ghost btn-sm" data-remove="${i}" title="حذف">🗑️</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-remove="${i}" title="حذف">${Icons.svg('trash')}</button>
                 </div>
             `;
         }
@@ -1411,7 +1411,7 @@
         }
 
         paintList();
-        global.Modal.open({ title: '⚙️ تعديل الخانات', body: form, autofocus: false });
+        global.Modal.open({ title: 'تعديل الخانات', body: form, autofocus: false });
     }
 
     /* ==========================================================================
@@ -1446,7 +1446,7 @@
                 </div>
 
                 <button type="button" class="stu-up" id="stu-up">
-                    <span class="ic">${file ? '✓' : '📄'}</span>
+                    <span class="ic">${file ? '✓' : Icons.svg('file')}</span>
                     <span class="tx">
                         <span class="t">${file ? escapeHtml(file.name)
                                                : 'ارفع ملفاً أو صورةً بأسماء ' + global.Words.students()}</span>
@@ -1483,7 +1483,7 @@
 
         /** شاشةُ انتظارٍ تُرسم قبل العمل، وإلا بدت الشاشةُ واقفةً وهي تعمل. */
         function paintBusy(msg) {
-            form.innerHTML = '<div class="callout" style="margin: var(--space-4) 0">⏳ '
+            form.innerHTML = '<div class="callout" style="margin: var(--space-4) 0">' + Icons.svg('clock') + ' '
                 + escapeHtml(msg) + '</div>';
         }
 
@@ -1568,7 +1568,7 @@
                     let names = typed;
                     let source = 'ai';         /* من أين جاءت — تقوله لافتةُ المراجعة */
                     if (!typed.length) {
-                        btn.textContent = '⏳ جارٍ القراءة...';
+                        btn.textContent = 'جارٍ القراءة...';
                         const got = await readFile();
                         if (!got) return;                  /* مضى إلى شاشة الجدول */
                         names = got.names;
@@ -1737,7 +1737,7 @@
                     return;
                 }
                 b.disabled = true;
-                b.textContent = '⏳ جارٍ الحفظ...';
+                b.textContent = 'جارٍ الحفظ...';
                 try {
                     await save(list, true);
                 } catch (err) {
@@ -1792,9 +1792,9 @@
                 ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} — ${escapeHtml(cls.subject)}
             </p>
             <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-                <button type="button" class="btn btn-secondary btn-block" id="ca-edit">✏️ تعديل الفصل</button>
+                <button type="button" class="btn btn-secondary btn-block" id="ca-edit">${Icons.svg('pencil')} تعديل الفصل</button>
                 <button type="button" class="btn btn-ghost btn-block" id="ca-delete"
-                        style="color: #DC2626;">🗑️ حذف الفصل</button>
+                        style="color: #DC2626;">${Icons.svg('trash')} حذف الفصل</button>
             </div>
         `;
         body.querySelector('#ca-edit').addEventListener('click', () => {
@@ -1899,9 +1899,9 @@
        الطباعة بالعرض دائماً. */
     function openPrintRegisterModal(cls, students, attToday, evalToday, columns) {
         const TYPES = [
-            { k: 'blank', ic: '🗒️', t: 'سجل مُفرّغ', d: 'فاضٍ للتعبئة باليد', sub: 'blankScope' },
+            { k: 'blank', ic: 'file', t: 'سجل مُفرّغ', d: 'فاضٍ للتعبئة باليد', sub: 'blankScope' },
             { k: 'attendance', ic: '✅', t: 'سجل الحضور والغياب', d: 'الحضور فقط — بدون خانات التقييم', sub: 'period' },
-            { k: 'full', ic: '📋', t: 'سجل بكامل الخانات (معبّأ)', d: 'حضور + كل خانات التقييم بقيمها الفعلية', sub: 'period', note: 'الفترة: جدول مستقل لكل يوم' }
+            { k: 'full', ic: 'clipboard', t: 'سجل بكامل الخانات (معبّأ)', d: 'حضور + كل خانات التقييم بقيمها الفعلية', sub: 'period', note: 'الفترة: جدول مستقل لكل يوم' }
         ];
 
         const subHtml = (t) => {
@@ -1932,7 +1932,7 @@
             ${TYPES.map((t, i) => `
                 <div class="popt ${i === 0 ? 'on' : ''}" data-k="${t.k}">
                     <div class="popt-hd">
-                        <div class="popt-ic">${t.ic}</div>
+                        <div class="popt-ic">${Icons.render(t.ic)}</div>
                         <div class="popt-tx">
                             <div class="popt-tt">${t.t}</div>
                             <div class="popt-dd">${t.d}</div>
@@ -1943,7 +1943,7 @@
                 </div>
             `).join('')}
             <div class="modal-footer" style="margin: var(--space-6) calc(var(--space-6) * -1) calc(var(--space-6) * -1);">
-                <button type="submit" class="btn btn-primary">📄 حفظ وطباعة</button>
+                <button type="submit" class="btn btn-primary">${Icons.svg('file')} حفظ وطباعة</button>
                 <button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>
             </div>
         `;
@@ -2039,7 +2039,7 @@
         if (global.PrintStudents && global.PrintStudents.preloadPdfEngine) {
             global.PrintStudents.preloadPdfEngine().catch(() => {});
         }
-        global.Modal.open({ title: '🖨️ طباعة السجل', body: form, autofocus: false });
+        global.Modal.open({ title: 'طباعة السجل', body: form, autofocus: false });
     }
 
     function isoDaysAgo(n) {

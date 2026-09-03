@@ -28,10 +28,10 @@
 
     function iconFor(file) {
         const t = (file?.type || '').toLowerCase();
-        if (t.startsWith('image/')) return '🖼️';
-        if (t === 'application/pdf') return '📕';
-        if (t.includes('word') || t.includes('document')) return '📄';
-        return '📎';
+        if (t.startsWith('image/')) return 'image';
+        if (t === 'application/pdf') return 'book';
+        if (t.includes('word') || t.includes('document')) return 'file';
+        return 'clip';
     }
 
     function ensureList(cls) {
@@ -85,7 +85,7 @@
                         الملفات تظهر تلقائياً في ملف الإنجاز عند الطباعة.
                     </p>
                     <p style="margin: var(--space-3) 0 0; font-size: var(--fs-sm);">
-                        📱 والملفّات محفوظةٌ على <b>هذا الجهاز وحده</b> — قد تضيع إن
+                        ${Icons.svg('phone')} والملفّات محفوظةٌ على <b>هذا الجهاز وحده</b> — قد تضيع إن
                         مسحتَ بيانات المتصفّح أو غيّرتَ جهازك.
                     </p>
                 </div>
@@ -170,20 +170,20 @@
             <div class="file-list">
                 ${files.map((f, i) => `
                     <div class="file-card">
-                        <div class="file-icon">${iconFor({ type: f.mime })}</div>
+                        <div class="file-icon">${Icons.render(iconFor({ type: f.mime }))}</div>
                         <div class="file-body">
                             <div class="file-name">${escapeHtml(f.name)}</div>
                             <div class="file-meta">
                                 ${f.size ? `<span>${formatSize(f.size)}</span>` : ''}
-                                ${f.uploaded_at ? `<span>📅 ${formatDate(f.uploaded_at)}</span>` : ''}
+                                ${f.uploaded_at ? `<span>${Icons.svg('calendar')} ${formatDate(f.uploaded_at)}</span>` : ''}
                                 ${f.notes ? `<span class="text-muted">• ${escapeHtml(f.notes.slice(0, 60))}${f.notes.length > 60 ? '…' : ''}</span>` : ''}
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button class="btn btn-ghost btn-sm" data-f-view="${i}" title="فتح">👁️</button>
-                            <button class="btn btn-ghost btn-sm" data-f-download="${i}" title="تحميل">⬇️</button>
-                            <button class="btn btn-ghost btn-sm" data-f-edit="${i}" title="تعديل">✏️</button>
-                            <button class="btn btn-ghost btn-sm" data-f-del="${i}" title="حذف">🗑️</button>
+                            <button class="btn btn-ghost btn-sm" data-f-view="${i}" title="فتح">${Icons.svg('eye')}</button>
+                            <button class="btn btn-ghost btn-sm" data-f-download="${i}" title="تحميل">${Icons.svg('arrowDown')}</button>
+                            <button class="btn btn-ghost btn-sm" data-f-edit="${i}" title="تعديل">${Icons.svg('pencil')}</button>
+                            <button class="btn btn-ghost btn-sm" data-f-del="${i}" title="حذف">${Icons.svg('trash')}</button>
                         </div>
                     </div>
                 `).join('')}

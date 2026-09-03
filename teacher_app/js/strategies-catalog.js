@@ -22,7 +22,7 @@
     const STRATEGIES = [
         /* ---------- تعاوني ---------- */
         {
-            key: 'cooperative', family: 'coop', icon: '👥',
+            key: 'cooperative', family: 'coop', icon: 'users',
             name: 'التعلّم التعاوني',
             brief: 'مجموعات صغيرة بأدوار محدّدة',
             steps: [
@@ -34,7 +34,7 @@
             ]
         },
         {
-            key: 'numbered_heads', family: 'coop', icon: '🔢',
+            key: 'numbered_heads', family: 'coop', icon: 'hash',
             name: 'الرؤوس المرقّمة',
             brief: 'ترقيم داخل المجموعة واختيار عشوائي',
             steps: [
@@ -46,7 +46,7 @@
             ]
         },
         {
-            key: 'think_pair_share', family: 'coop', icon: '💭',
+            key: 'think_pair_share', family: 'coop', icon: 'thought',
             name: 'فكّر · زاوج · شارك',
             brief: 'تفكير فردي ثم ثنائي ثم جماعي',
             steps: [
@@ -58,7 +58,7 @@
             ]
         },
         {
-            key: 'jigsaw', family: 'coop', icon: '🧩',
+            key: 'jigsaw', family: 'coop', icon: 'puzzle',
             name: 'الجيكسو (تقطيع الخبرة)',
             brief: 'كل طالب يتقن جزءاً ثم يعلّمه زملاءه',
             steps: [
@@ -70,7 +70,7 @@
             ]
         },
         {
-            key: 'peer_teaching', family: 'coop', icon: '🤝',
+            key: 'peer_teaching', family: 'coop', icon: 'hands',
             name: 'تدريس الأقران',
             brief: 'الطالب المتقن يشرح لزميله',
             steps: [
@@ -84,7 +84,7 @@
 
         /* ---------- تفكير واستقصاء ---------- */
         {
-            key: 'brainstorm', family: 'think', icon: '🧠',
+            key: 'brainstorm', family: 'think', icon: 'brain',
             name: 'العصف الذهني',
             brief: 'توليد أفكار حرّ بلا نقد',
             steps: [
@@ -96,7 +96,7 @@
             ]
         },
         {
-            key: 'problem_solving', family: 'think', icon: '🧭',
+            key: 'problem_solving', family: 'think', icon: 'compass',
             name: 'حل المشكلات',
             brief: 'مشكلة واقعية يتدرّج الطلاب في حلّها',
             steps: [
@@ -108,7 +108,7 @@
             ]
         },
         {
-            key: 'inquiry', family: 'think', icon: '🔍',
+            key: 'inquiry', family: 'think', icon: 'search',
             name: 'الاستقصاء',
             brief: 'سؤال يقود الطالب لاكتشاف المعرفة',
             steps: [
@@ -156,7 +156,7 @@
             ]
         },
         {
-            key: 'kwl', family: 'think', icon: '📋',
+            key: 'kwl', family: 'think', icon: 'clipboard',
             name: 'جدول التعلّم (KWL)',
             brief: 'ماذا أعرف · ماذا أريد · ماذا تعلّمت',
             steps: [
@@ -206,7 +206,7 @@
             ]
         },
         {
-            key: 'flipped', family: 'active', icon: '🔄',
+            key: 'flipped', family: 'active', icon: 'refresh',
             name: 'الصف المقلوب',
             brief: 'الشرح في البيت والتطبيق في الفصل',
             steps: [
@@ -218,7 +218,7 @@
             ]
         },
         {
-            key: 'discovery', family: 'active', icon: '💡',
+            key: 'discovery', family: 'active', icon: 'bulb',
             name: 'التعلّم بالاكتشاف',
             brief: 'الطالب يصل للقاعدة بنفسه',
             steps: [
@@ -230,7 +230,7 @@
             ]
         },
         {
-            key: 'deliberate_error', family: 'active', icon: '❗',
+            key: 'deliberate_error', family: 'active', icon: 'warning',
             name: 'تعمّد الخطأ',
             brief: 'خطأ مقصود يكتشفه الطلاب',
             steps: [
@@ -242,7 +242,7 @@
             ]
         },
         {
-            key: 'one_sentence', family: 'active', icon: '✍️',
+            key: 'one_sentence', family: 'active', icon: 'pencil',
             name: 'الخلاصة في جملة',
             brief: 'تلخيص الدرس في سطر واحد',
             steps: [

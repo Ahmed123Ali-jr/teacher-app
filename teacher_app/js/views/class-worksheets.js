@@ -336,7 +336,7 @@
        بلا سبب. انظر النظير في class-exams.js. */
     async function guard(btn, fn) {
         const label = btn ? btn.innerHTML : null;
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ لحظة…'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = Icons.svg('clock') + ' لحظة…'; }
         try {
             await fn();
         } catch (err) {

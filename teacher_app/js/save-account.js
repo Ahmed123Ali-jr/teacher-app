@@ -99,7 +99,7 @@
             }
             const label = btn.textContent;
             btn.disabled = true;
-            btn.textContent = '⏳ جارٍ الحفظ…';
+            btn.textContent = 'جارٍ الحفظ…';
             try {
                 /* اسمُه يُمرَّر كما هو: `register` تكتبه في الملفّ، فلو
                    تُرك فارغاً لمُحي اسمٌ كتبه في التهيئة. */
@@ -122,7 +122,7 @@
 
         /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح تقفز على الجوّال فتغطّي
            الشرحَ الذي يفسّر لماذا نسأل أصلاً. */
-        global.Modal.open({ title: '⭐ احفظ حسابك', body: form, autofocus: false });
+        global.Modal.open({ title: 'احفظ حسابك', body: form, autofocus: false });
     }
 
     global.SaveAccount = { maybeAsk };
