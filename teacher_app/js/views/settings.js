@@ -883,21 +883,54 @@
                 </div>
             </div>
 
-            <p class="bell-note">
-                ${Icons.svg('warning')} المنبّه يعمل <strong>والتطبيق مفتوح</strong> فقط. التطبيق صفحة ويب بلا خادم
-                إشعارات، فلا يرنّ وجوالك مقفل أو التطبيق مغلق.
-            </p>
+            <p class="bell-note" id="bell-note"></p>
             <button type="button" class="fchip" id="bell-notif" style="width:100%; margin-top:var(--space-3)">
                 ${Icons.svg('bellOff')} السماح بالإشعارات (يظهر تنبيه والتطبيق في الخلفية)
             </button>
         `;
     }
 
+    /* نصُّ الحال: يقول أين نحن بالضبط لا وعداً عامّاً. وقبل التغليف
+       المنبّهُ داخل التطبيق وحدَه — وهذا يُقال صراحةً، فالمعلّمُ الذي يظنّ
+       جرسَه يرنّ وجوّالُه في جيبه يفوته الدرس. */
+    async function bellStatus(container) {
+        const el = container.querySelector('#bell-note');
+        if (!el) return;
+        const native = !!(global.Notify && global.Notify.available());
+        let plan = null;
+        try { plan = await global.Bell.rescheduleNow(); } catch (e) { plan = null; }
+
+        const lines = [];
+        if (!native) {
+            lines.push(Icons.svg('warning') + ' المنبّه يعمل <strong>والتطبيق مفتوح</strong> فقط في '
+                     + 'نسخة المتصفّح. وفي نسخة الجوال يرنّ والتطبيق مغلق.');
+        } else {
+            const perm = await global.Notify.permission();
+            if (perm === 'granted') {
+                lines.push(Icons.svg('check') + ' يرنّ <strong>والتطبيق مغلق</strong>.');
+            } else {
+                lines.push(Icons.svg('warning') + ' الإشعارات غير مسموحة، فلن يرنّ '
+                         + 'والتطبيق مغلق. اسمح بها من الزر أدناه.');
+            }
+        }
+        if (plan && plan.total) {
+            lines.push('مواعيد هذا الأسبوع: <strong>' + plan.kept + '</strong>'
+                     + (plan.dropped
+                        ? ' — و<strong>' + plan.dropped + '</strong> موعداً لم يُجدول: '
+                          + 'نظام آيفون يقبل عدداً محدوداً. أطفئ «جرس المدرسة» '
+                          + 'ليتّسع لتنبيهات حصصك كلِّها.'
+                        : '.'));
+        }
+        el.innerHTML = lines.join('<br>');
+    }
+
     function bindBell(container) {
+        bellStatus(container).catch(() => {});
         const opts = container.querySelector('#bell-opts');
         const sync = async (patch) => {
             const next = await global.Bell.savePrefs(patch);
             if (opts) opts.style.cssText = next.enabled ? '' : 'opacity:.45; pointer-events:none;';
+            bellStatus(container).catch(() => {});
         };
 
         container.querySelector('#bell-enabled')?.addEventListener('change', (e) => {

@@ -74,11 +74,17 @@
                         // Warm cache → open instantly, refresh in background,
                         // then repaint the current view with the fresh data.
                         global.TeacherDB.hydrate()
-                            .then(() => { try { global.Router.resolve(); } catch (e) {} })
+                            .then(() => {
+                                try { global.Router.resolve(); } catch (e) {}
+                                /* التفضيلاتُ وصلت الآن — يُعاد بناءُ جدولة
+                                   المنبّه عليها لا على مخبأٍ لم يترطّب. */
+                                try { global.dispatchEvent(new CustomEvent('teacherdb:hydrated')); } catch (e) {}
+                            })
                             .catch((e) => console.warn('[TeacherApp] bg hydrate failed:', e.message));
                     } else {
                         // Cold cache → must fetch before there's anything to show.
                         await global.TeacherDB.hydrate();
+                        try { global.dispatchEvent(new CustomEvent('teacherdb:hydrated')); } catch (e) {}
                     }
                 }
             } catch (e) {

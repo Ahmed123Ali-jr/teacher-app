@@ -5,8 +5,22 @@
    متنافرة تخفت كما يخفت المعدن المطروق، والتنبيه نغمتان ليّنتان. بلا ملفات
    يعمل بلا إنترنت ولا يزيد حجم التطبيق.
 
-   قيدٌ لا مفرّ منه: التطبيق صفحة ويب بلا خادم إشعارات، فالمنبّه يعمل
-   والتطبيق مفتوح فقط. الرنين والجوال في الجيب يحتاج Web Push بخادم.
+   ── قسمةُ العمل ──
+   **المقدّمةُ لهذا الملفّ، والخلفيّةُ للنظام.** ما دام التطبيقُ مفتوحاً
+   يرنّ الصوتُ المولَّدُ هنا — بلا إذنٍ ولا ملفّ. وحين يُغلَق فالإشعارُ
+   المحلّيُّ النظاميُّ هو الذي يرنّ، ويُجدول من `weeklyPlan()` أدناه.
+   ولا تعمل الجدولةُ النظاميّةُ إلّا داخل الغلاف (Capacitor) — وفي المتصفّح
+   تبقى الحلقةُ وحدَها كما كانت.
+
+   ── وثلاثةُ أرقامٍ تحكم التصميم ──
+   ١) **iOS يقبل ‎٦٤‎ طلبَ إشعارٍ معلَّقٍ لكلّ تطبيق**، والزائدُ يسقط صامتاً
+      بلا خطأٍ ولا سجلّ. (جوابُ مهندس آبل، منتدى المطوّرين ٨١١١٧١.)
+   ٢) والطلبُ **المتكرّرُ** يشغل خانةً واحدةً مهما تكرّر — فالجدولُ الأسبوعيُّ
+      الثابتُ يُجدول مرّةً ولا يُعاد. لكنّ خانتَه لا تُفرَّج أبداً.
+   ٣) وسبعُ حصصٍ ببدايةٍ ونهايةٍ = ‎١٤‎ حدثاً يوميّاً، تنكمش إلى ‎٩‎ أوقاتٍ
+      متمايزةٍ بالدمج، × ‎٥‎ أيّام = ‎٤٥‎ للجرس وحدَه. فمعلّمٌ بنصابٍ كاملٍ
+      يتجاوز السقفَ ما لم تُدمج اللحظاتُ وتُرتَّب بالأولويّة — وذاك عملُ
+      `weeklyPlan()`.
    ========================================================================== */
 
 (function (global) {
@@ -122,8 +136,63 @@
         prefs = { ...prefs, ...next };
         await global.TeacherDB.Settings.set(PREF_KEY, prefs);
         restart();
+        reschedule();
         return getPrefs();
     }
+
+    /* ══════════════════════════════════════════════════════════════════
+       الجدولةُ النظاميّة — تُبنى من `weeklyPlan` وتُستبدل كاملةً
+       ══════════════════════════════════════════════════════════════════
+       تُنادى من كلّ ما يغيّر الخطّة: التفضيلات، وتعديلُ الجدول، وأوقاتُ
+       الحصص، وتبديلُ الفصل الدراسيّ، والدخول، وذيلُ الترطيب. والاستبدالُ
+       كاملٌ لا تفاضليّ: المعرّفاتُ محسوبةٌ من (اليوم والوقت)، فتعديلُ وقتِ
+       حصّةٍ يُغيّرها ويترك القديمَ معلّقاً لولا الإلغاء. */
+
+    let _resTimer = null;
+
+    /** آخرُ خطّةٍ حُسبت — تقرؤها شاشةُ الإعدادات لتقول للمعلّم كم جُدول. */
+    let lastPlan = null;
+
+    function reschedule() {
+        clearTimeout(_resTimer);
+        _resTimer = setTimeout(() => { rescheduleNow().catch(() => {}); }, 500);
+    }
+
+    /**
+     * يحسب الخطّةَ ويُسلّمها للنظام. يعمل في المتصفّح أيضاً — يحسب ويحفظ
+     * `lastPlan` ولا يجدول شيئاً، فيُرى العددُ في الإعدادات قبل التغليف.
+     * @returns {Promise<object|null>}
+     */
+    async function rescheduleNow() {
+        let teacher = null;
+        try { teacher = await global.Auth.currentTeacher(); } catch (e) { teacher = null; }
+        if (!teacher || !prefs.enabled) {
+            lastPlan = { items: [], total: 0, kept: 0, dropped: 0 };
+            if (global.Notify) await global.Notify.cancelAll();
+            return lastPlan;
+        }
+        let periods = [];
+        try { periods = await global.PeriodTimes.get(); } catch (e) { return null; }
+
+        const byDay = {};
+        try {
+            const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
+            rows.filter((r) => r.class_id).forEach((r) => {
+                if (!byDay[r.day]) byDay[r.day] = new Set();
+                byDay[r.day].add(r.period);
+            });
+        } catch (e) { /* الجرسُ وحدَه خيرٌ من لا شيء */ }
+
+        lastPlan = weeklyPlan({ prefs, periods, byDay });
+        if (global.Notify && global.Notify.available()) {
+            const perm = await global.Notify.permission();
+            if (perm === 'granted') await global.Notify.replaceWeekly(lastPlan.items);
+        }
+        return lastPlan;
+    }
+
+    /** الخطّةُ كما حُسبت آخرَ مرّة — للعرض لا للجدولة. */
+    function planSummary() { return lastPlan; }
 
     /* ---------- ما أُطلق اليوم ---------- */
 
@@ -172,6 +241,132 @@
         }
     }
 
+    /* ══════════════════════════════════════════════════════════════════
+       اللحظاتُ — حسابٌ واحدٌ يقتسمه المساران
+       ══════════════════════════════════════════════════════════════════
+       كان الحسابُ داخلَ الحلقة، فلو نُسخ للجدولة النظاميّة لتفرّق المنطقُ
+       نسختين تفترقان عند أوّل تعديل. فهو هنا دالّةٌ نقيّةٌ لا تقرأ قاعدةً
+       ولا تلمس صوتاً — تُعطى ما تحتاج وتردّ اللحظات، فتُختبر بتاريخٍ
+       مزيّفٍ بلا متصفّحٍ ولا جهاز. */
+
+    /**
+     * لحظاتُ التنبيه في يومٍ بعينه.
+     * @param {object} ctx
+     *   `prefs`   تفضيلاتُ المعلّم.
+     *   `periods` أوقاتُ الحصص.
+     *   `mine`    مجموعةُ أرقام حصصه في ذلك اليوم.
+     * @returns {Array<{key:string, sec:number, kind:string, n:number}>}
+     *   مرتّبةً بالوقت. `sec` ثوانٍ من منتصف الليل.
+     */
+    function momentsFor(ctx) {
+        const { prefs: pf, periods, mine } = ctx;
+        const out = [];
+        for (const p of periods || []) {
+            const startSec = timeToMin(p.start) * 60;
+            const endSec   = timeToMin(p.end) * 60;
+            if (pf.classAlert && mine && mine.has(p.n)) {
+                out.push({ key: 'pre-' + p.n, sec: startSec - pf.preMinutes * 60,
+                           kind: 'pre', n: p.n });
+            }
+            if (pf.schoolBell) {
+                out.push({ key: 'start-' + p.n, sec: startSec, kind: 'start', n: p.n });
+                out.push({ key: 'end-' + p.n,   sec: endSec,   kind: 'end',   n: p.n });
+            }
+        }
+        return out.sort((a, b) => a.sec - b.sec);
+    }
+
+    function hhmm(sec) {
+        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+        return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+
+    /** نصُّ الإشعار للحظةٍ واحدة أو للحظاتٍ اجتمعت في وقتٍ واحد. */
+    function textFor(list, preMinutes) {
+        const pre   = list.filter((x) => x.kind === 'pre');
+        const start = list.filter((x) => x.kind === 'start');
+        const end   = list.filter((x) => x.kind === 'end');
+        const parts = [];
+        if (pre.length)   parts.push('حصتك بعد ' + preMinutes + ' دقائق — الحصة ' + pre[0].n);
+        if (end.length)   parts.push('انتهت الحصة ' + end.map((x) => x.n).join(' و'));
+        if (start.length) parts.push('بدأت الحصة ' + start.map((x) => x.n).join(' و'));
+        return parts.join(' · ');
+    }
+
+    /* أيّامُ الدراسة: الأحدُ ٠ في جافاسكربت، و١ في تقويم آبل. */
+    const STUDY_DAYS = [0, 1, 2, 3, 4];
+
+    /** الميزانيّة: دون سقف النظام بأربع خاناتٍ احتياطاً لما قد يُجدول لاحقاً. */
+    const BUDGET = 60;
+
+    /**
+     * الخطّةُ الأسبوعيّةُ للإشعارات النظاميّة — طلبٌ متكرّرٌ لكلّ (يومٍ ووقت).
+     *
+     * ثلاثُ خطواتٍ بهذا الترتيب:
+     *   ١) **الدمجُ على الوقت لا على الحدث**: نهايةُ الحصّة الأولى وبدايةُ
+     *      الثانية لحظةٌ واحدةٌ في الساعة، فإشعارٌ واحدٌ نصُّه يجمعهما.
+     *      وهذا وحدَه ينزل بالجرس من ‎٧٠‎ إلى ‎٤٥‎.
+     *   ٢) **الأولويّةُ عند الضيق**: تنبيهُ حصص المعلّم أوّلاً — وهو الذي
+     *      يخسر بفقده — ثمّ بدايةُ الحصّة، ثمّ نهايتُها.
+     *   ٣) **القصُّ عند السقف**: ما زاد يُترك ويُعَدّ، ويُقال للمعلّم في
+     *      الإعدادات. الصمتُ هنا أسوأُ من النقص: النظامُ يُسقط الزائدَ بلا
+     *      كلمة، فيصمت جرسُ آخرِ الأسبوع ولا يدري لماذا.
+     *
+     * @param {object} ctx `prefs` و`periods` و`byDay` (خريطةُ يومٍ ← مجموعةُ حصص).
+     * @returns {{items:Array, total:number, kept:number, dropped:number}}
+     */
+    function weeklyPlan(ctx) {
+        const pf = ctx.prefs || prefs;
+        const rows = [];
+        for (const day of STUDY_DAYS) {
+            const mine = (ctx.byDay && ctx.byDay[day]) || new Set();
+            const moments = momentsFor({ prefs: pf, periods: ctx.periods, mine });
+            const byTime = new Map();
+            for (const m of moments) {
+                if (m.sec < 0) continue;                    /* تنبيهٌ قبل منتصف الليل */
+                const t = hhmm(m.sec);
+                if (!byTime.has(t)) byTime.set(t, []);
+                byTime.get(t).push(m);
+            }
+            for (const [t, list] of byTime) {
+                const [hour, minute] = t.split(':').map(Number);
+                const hasPre = list.some((x) => x.kind === 'pre');
+                rows.push({
+                    /* معرّفٌ ثابتٌ محسوبٌ من (اليوم والوقت) — يُلغى ويُعاد بلا سجلّ. */
+                    id: (day + 1) * 10000 + hour * 100 + minute,
+                    weekday: day + 1,                        /* تقويمُ آبل: الأحد ١ */
+                    hour: hour,
+                    minute: minute,
+                    title: textFor(list, pf.preMinutes),
+                    body: t,
+                    sound: hasPre ? 'alert.wav' : 'bell.wav',
+                    rank: hasPre ? 0 : (list.some((x) => x.kind === 'start') ? 1 : 2)
+                });
+            }
+        }
+        rows.sort((a, b) => (a.rank - b.rank)
+                         || (a.weekday - b.weekday)
+                         || (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+        const kept = rows.slice(0, BUDGET);
+        return { items: kept, total: rows.length, kept: kept.length,
+                 dropped: Math.max(0, rows.length - BUDGET) };
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       الحلقةُ — المقدّمةُ وحدَها
+       ══════════════════════════════════════════════════════════════════ */
+
+    /** أإجازةٌ رسميّةٌ اليوم؟ `null` تعني «لا يعرف التقويمُ هذا اليوم». */
+    async function officialOff(teacher) {
+        if (!global.AcademicCalendar) return null;
+        try {
+            const override = await global.TeacherDB.Settings.get('academic_calendar');
+            const cal = global.AcademicCalendar.resolve(
+                teacher && teacher.education_dept, override);
+            return global.AcademicCalendar.offInfo(cal, new Date());
+        } catch (e) { return null; }
+    }
+
     async function tick() {
         if (!prefs.enabled) return;
         let teacher = null;
@@ -182,6 +377,15 @@
         const dayIdx = now.getDay();
         if (dayIdx > 4) return;                    // الجمعة والسبت
         const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+        /* الإجازةُ الرسميّةُ ثقبٌ كان مفتوحاً: `dayIdx > 4` يمنع الجمعةَ
+           والسبتَ وحدَهما، فيرنّ الجرسُ ٧:٠٠ في إجازة الخريف خمسةَ أيّامٍ
+           متّصلة. و`null` — يومٌ لا يعرفه التقويم — يُعامَل يومَ دوامٍ كما
+           تفعل الرئيسيّةُ تماماً (`officialOffToday` في `dashboard.js`):
+           تواريخُ الفصل الثاني لم تصل، وصمتُ نصفِ سنةٍ أسوأُ من رنّةٍ في
+           إجازةٍ لا يعرفها. */
+        const off = await officialOff(teacher);
+        if (off && off.off) return;
 
         /* أوقاتٌ افتراضيّةٌ لمن لم يضبط أوقاته: كان يخرج هنا صامتاً، فيُفعّل
            المعلّمُ الجرسَ فلا يرنّ أبداً ولا كلمةَ تقول لماذا. */
@@ -206,31 +410,10 @@
             return diff >= 0 && diff < WINDOW_S;
         };
 
-        for (const p of periods) {
-            const startSec = timeToMin(p.start) * 60;
-            const endSec   = timeToMin(p.end) * 60;
-
-            if (prefs.classAlert && mine.has(p.n)) {
-                const preSec = startSec - prefs.preMinutes * 60;
-                const key = 'pre-' + p.n;
-                if (due(preSec) && !alreadyFired(key) && markFired(key)) {
-                    playAlert();
-                    notify('حصتك بعد ' + prefs.preMinutes + ' دقائق', 'الحصة ' + p.n);
-                }
-            }
-
-            if (prefs.schoolBell) {
-                const ks = 'start-' + p.n;
-                if (due(startSec) && !alreadyFired(ks) && markFired(ks)) {
-                    playBell();
-                    notify('بدأت الحصة ' + p.n, p.start);
-                }
-                const ke = 'end-' + p.n;
-                if (due(endSec) && !alreadyFired(ke) && markFired(ke)) {
-                    playBell();
-                    notify('انتهت الحصة ' + p.n, p.end);
-                }
-            }
+        for (const m of momentsFor({ prefs, periods, mine })) {
+            if (!due(m.sec) || alreadyFired(m.key) || !markFired(m.key)) continue;
+            if (m.kind === 'pre') playAlert(); else playBell();
+            notify(textFor([m], prefs.preMinutes), hhmm(m.sec));
         }
     }
 
@@ -244,6 +427,13 @@
         armUnlock();
         await loadPrefs();
         restart();
+        reschedule();
+        /* التفضيلاتُ تصل متأخّرةً: `bell_prefs` مرآةٌ تُملأ بعد الترطيب،
+           فجدولةُ الإقلاع قد تُبنى على تفضيلٍ قديمٍ والنظامُ يحترمه ولو
+           غُيّر بعد ثانية. فيُعاد البناءُ حين ينتهي الترطيب. */
+        global.addEventListener('teacherdb:hydrated', () => {
+            loadPrefs().then(() => { restart(); reschedule(); }).catch(() => {});
+        });
         /* عودة التطبيق للواجهة تفحص فوراً: المؤقّت كان مخنوقاً في الخلفية
            فقد يكون فات موعدٌ لم يُطلق بعد. */
         global.document.addEventListener('visibilitychange', () => {
@@ -253,6 +443,13 @@
 
     /** طلب إذن الإشعارات — يُستدعى من زر في الإعدادات (يلزمه تفاعل مستخدم). */
     async function requestNotifications() {
+        /* داخل الغلاف: إذنُ النظام لا إذنُ المتصفّح — و`Notification` لا
+           وجودَ لها في WKWebView أصلاً. */
+        if (global.Notify && global.Notify.available()) {
+            const r = await global.Notify.request();
+            if (r === 'granted') reschedule();
+            return r;
+        }
         if (!global.Notification) return 'unsupported';
         if (Notification.permission === 'granted') return 'granted';
         try { return await Notification.requestPermission(); }
@@ -262,6 +459,8 @@
     global.Bell = {
         start, getPrefs, savePrefs, loadPrefs,
         playBell, playAlert, requestNotifications,
-        DEFAULTS
+        /* مكشوفتان للاختبار وللجدولة النظاميّة — نقيّتان بلا أثرٍ جانبيّ. */
+        momentsFor, weeklyPlan, textFor, reschedule, rescheduleNow, planSummary,
+        BUDGET, DEFAULTS
     };
 })(window);
