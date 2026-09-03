@@ -404,7 +404,7 @@
         ctx.schedule.push(row);
         ctx.picking = false;
         paintView(container, ctx);
-        global.TeacherApp.toast('أُضيفت حصة انتظار اليوم ✅', 'success', 1400);
+        global.TeacherApp.toast('أُضيفت حصة انتظار اليوم', 'success', 1400);
 
         queueWrite(day, period, async () => {
             if (row.id) await global.TeacherDB.put('schedule', row);
@@ -1078,7 +1078,7 @@
                         const nMade = Object.keys(made).length;
                         global.TeacherApp.toast(
                             'تم استيراد ' + arWord(all.length, true)
-                            + (nMade ? ' وإنشاء ' + clsWord(nMade, true) : '') + ' ✅',
+                            + (nMade ? ' وإنشاء ' + clsWord(nMade, true) : '') + '',
                             'success', 3500);
                     } catch (err) {
                         console.warn('[schedule] apply failed:', err);
@@ -1256,18 +1256,18 @@
 
         function pickClass(id) {
             return commit({ class_id: id, wait_kind: null, wait_date: null,
-                            sub_class: null, sub_date: null }, 'تم الحفظ ✅');
+                            sub_class: null, sub_date: null }, 'تم الحفظ');
         }
 
         /* حصة الانتظار بلا أنواع: تبقى في الجدول حتى يزيلها المعلم بنفسه. */
         function pickWait() {
             return commit({ class_id: null, wait_kind: 'perm', wait_date: null,
-                            sub_class: null, sub_date: null }, 'تمت إضافة حصة انتظار ✅');
+                            sub_class: null, sub_date: null }, 'تمت إضافة حصة انتظار');
         }
 
         function pickSubstitute(label) {
             return commit({ class_id: null, sub_class: label, sub_date: todayKey() },
-                          'تنتظر عند ' + label + ' اليوم ✅');
+                          'تنتظر عند ' + label + ' اليوم');
         }
 
         function paint() {
@@ -1329,7 +1329,7 @@
                         if (i >= 0) ctx.schedule[i] = row; else ctx.schedule.push(row);
 
                         paintView(container, ctx);
-                        global.TeacherApp.toast('أُضيف الفصل وحصّته ✅', 'success', 1600);
+                        global.TeacherApp.toast('أُضيف الفصل وحصّته', 'success', 1600);
 
                         queueWrite(day, period, async () => {
                             if (row.id) await global.TeacherDB.put('schedule', row);

@@ -833,7 +833,7 @@
             /* اللوحة تُغلق قبل الكتابة لا بعدها — الكتابة رحلة شبكة تقارب
                ربع ثانية كان المعلم ينتظرها ينظر إلى لوحة جامدة. */
             global.Modal.close();
-            global.TeacherApp.toast('تمت إضافة الفصل ✅', 'success', 1200);
+            global.TeacherApp.toast('تمت إضافة الفصل', 'success', 1200);
 
             let created;
             try {

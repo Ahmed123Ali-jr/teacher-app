@@ -281,7 +281,7 @@
             else row.created_at = new Date().toISOString();
 
             global.Modal.close();
-            global.TeacherApp.toast('تم تسجيل التطبيق ✅', 'success', 1400);
+            global.TeacherApp.toast('تم تسجيل التطبيق', 'success', 1400);
             try {
                 if (existing) await global.TeacherDB.put('strategy_logs', row);
                 else await global.TeacherDB.add('strategy_logs', row);

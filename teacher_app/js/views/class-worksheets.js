@@ -230,7 +230,7 @@
         panel.querySelector('#ws-save').addEventListener('click', async (e) => {
             await guard(e.currentTarget, async () => {
                 await save(sh);
-                global.TeacherApp.toast('تم الحفظ ✅', 'success');
+                global.TeacherApp.toast('تم الحفظ', 'success');
             });
         });
 

@@ -384,8 +384,8 @@
             /* الضغطة الثانية: نشارك فوراً على الإيماءة الحيّة. */
             if (built) {
                 const how = await global.PdfCore.deliverPdf(built.blob, built.fileName);
-                if (how === 'shared')     global.TeacherApp.toast('تمت المشاركة ✅', 'success');
-                if (how === 'downloaded') global.TeacherApp.toast('نُزِّل الملف ✅', 'success');
+                if (how === 'shared')     global.TeacherApp.toast('تمت المشاركة', 'success');
+                if (how === 'downloaded') global.TeacherApp.toast('نُزِّل الملف', 'success');
                 if (how !== 'cancelled')  global.Modal.close();
                 return;
             }
@@ -661,7 +661,7 @@
                 return global.TeacherApp.toast('تعذّر الحفظ: ' + err.message, 'error', 6000);
             }
             global.Modal.close();
-            global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم إضافة القسم ✅', 'success');
+            global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم إضافة القسم', 'success');
             refresh();
         });
 
@@ -747,7 +747,7 @@
                 await dropFiles([stale]);   /* بعد النجاح وحده */
 
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
+                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة', 'success');
                 renderCustomSection(body, ctx, sec);
             } catch (err) {
                 console.error('[Portfolio] save failed:', err);
@@ -987,7 +987,7 @@
             ctx.portfolio[key] = String(value).trim();
             await savePortfolio(ctx.portfolio);
             global.Modal.close();
-            global.TeacherApp.toast('تم الحفظ ✅', 'success', 3000);
+            global.TeacherApp.toast('تم الحفظ', 'success', 3000);
             renderMission(body, ctx);
         }
 
@@ -1177,7 +1177,7 @@
                 await dropFiles([stale]);   /* بعد النجاح وحده */
 
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
+                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة', 'success');
                 renderFileList(body, ctx, field, typeName,
                     field === 'certificates' ? 'trophy' : field === 'schedules' ? 'calendar' : 'clip');
             } catch (err) {

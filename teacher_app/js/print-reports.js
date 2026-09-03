@@ -286,7 +286,7 @@
             const blob = await global.PdfCore.renderPdf(pages);
             const how = await global.PdfCore.deliverPdf(blob,
                 'تقرير_' + global.PdfCore.todayISO());
-            if (how === 'downloaded') toast('تم حفظ التقرير ✅', 'success', 4000);
+            if (how === 'downloaded') toast('تم حفظ التقرير', 'success', 4000);
         } catch (err) {
             console.warn('[print-reports] savePdf failed:', err);
             toast('تعذّر إنشاء الملف. حاول مرة أخرى.', 'error', 4000);

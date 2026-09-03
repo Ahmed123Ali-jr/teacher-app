@@ -264,7 +264,7 @@
                 await global.TeacherDB.put('classes', cls);
 
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم الرفع ✅', 'success');
+                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تم الرفع', 'success');
                 await render(panel, cls);
             } catch (err) {
                 global.TeacherApp.toast(err.message, 'error');

@@ -97,7 +97,7 @@
                 me.phone = A.normalizePhone(raw);
                 await global.TeacherDB.put('teachers', me);
                 global.Modal.close();
-                global.TeacherApp.toast('حُفظ رقمك ✅', 'success');
+                global.TeacherApp.toast('حُفظ رقمك', 'success');
             } catch (err) {
                 btn.disabled = false;
                 global.TeacherApp.toast(err.message || 'تعذّر الحفظ.', 'error', 6000);

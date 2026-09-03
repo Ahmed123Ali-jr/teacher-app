@@ -265,7 +265,7 @@
                     await global.TeacherDB.BookFiles.save(row.id, file);
                 }
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب ✅', 'success', 2000);
+                global.TeacherApp.toast(existing ? 'تم حفظ التعديل.' : 'تم رفع الكتاب', 'success', 2000);
                 await render(panel, cls);
             } catch (err) {
                 console.error('[books] upload failed:', err);

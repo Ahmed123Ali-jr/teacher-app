@@ -88,7 +88,7 @@
 
                 <div class="grid grid-4" style="margin-block: var(--space-6);">
                     ${statCard('calendar', stats.totalDays, 'أيام مسجّلة')}
-                    ${statCard('✅', stats.presentPct + '%', 'نسبة الحضور', 'var(--success)')}
+                    ${statCard('check', stats.presentPct + '%', 'نسبة الحضور', 'var(--success)')}
                     ${stats.columnAverages.slice(0, 2).map((col) =>
                         statCard(col.icon, col.display, 'متوسط ' + col.name, 'var(--primary)')
                     ).join('')}
@@ -132,7 +132,7 @@
                 student.notes = container.querySelector('#student-notes').value.trim();
                 student.updated_at = new Date().toISOString();
                 await global.TeacherDB.put('students', student);
-                global.TeacherApp.toast('تم حفظ الملاحظات ✅', 'success', 1500);
+                global.TeacherApp.toast('تم حفظ الملاحظات', 'success', 1500);
                 // Back to the register (سجل المتابعة) — where students are
                 // opened from — once the save lands.
                 global.location.hash = '#/class/' + cls.id + '/students';

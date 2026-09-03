@@ -264,7 +264,7 @@
             try {
                 await global.Auth.logoutEverywhere();
                 global.location.hash = '#/login';
-                global.TeacherApp.toast('أُغلقت جلساتك على كل الأجهزة ✅', 'success', 5000);
+                global.TeacherApp.toast('أُغلقت جلساتك على كل الأجهزة', 'success', 5000);
             } catch (err) {
                 if (btn) { btn.disabled = false; btn.textContent = 'تسجيل الخروج من كل الأجهزة'; }
                 global.TeacherApp.toast(err.message || 'تعذّر الإغلاق.', 'error', 6000);
@@ -560,7 +560,7 @@
             btn.disabled = true;
             try {
                 await global.Auth.changePassword(current, next);
-                global.TeacherApp.toast('تم تغيير كلمة المرور ✅', 'success');
+                global.TeacherApp.toast('تم تغيير كلمة المرور', 'success');
                 container.querySelector('#pw-current').value = '';
                 container.querySelector('#pw-new').value     = '';
                 container.querySelector('#pw-confirm').value = '';
@@ -748,7 +748,7 @@
             }
             /* الشعار يظهر فوراً من الملف المحلي، والرفع والترويسة في الخلفية. */
             showLogo(container, URL.createObjectURL(file));
-            global.TeacherApp.toast('تم رفع الشعار ✅', 'success', 1200);
+            global.TeacherApp.toast('تم رفع الشعار', 'success', 1200);
             bgSave(async () => {
                 await setPref('school_logo', file);
                 await refreshPrintCache();
@@ -811,7 +811,7 @@
                 if (cells[0]) cells[0].textContent = year || '—';
                 if (cells[1]) cells[1].textContent = teacher.region || '—';
             }
-            global.TeacherApp.toast('تم الحفظ ✅', 'success', 1200);
+            global.TeacherApp.toast('تم الحفظ', 'success', 1200);
 
             bgSave(() => Promise.all([
                 global.TeacherDB.put('teachers', teacher),
@@ -928,7 +928,7 @@
 
         container.querySelector('#bell-notif')?.addEventListener('click', async () => {
             const r = await global.Bell.requestNotifications();
-            const msg = r === 'granted' ? 'تم السماح بالإشعارات ✅'
+            const msg = r === 'granted' ? 'تم السماح بالإشعارات'
                       : r === 'unsupported' ? 'متصفحك لا يدعم الإشعارات.'
                       : 'لم يُسمح بالإشعارات.';
             global.TeacherApp.toast(msg, r === 'granted' ? 'success' : 'info', 3000);
@@ -1215,7 +1215,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 await setPref('last_backup', new Date().toISOString());
-                global.TeacherApp.toast('تم التصدير ✅', 'success');
+                global.TeacherApp.toast('تم التصدير', 'success');
                 await render(container);
             } catch (err) {
                 global.TeacherApp.toast('فشل التصدير: ' + err.message, 'error');
@@ -1231,7 +1231,7 @@
                 const text = await file.text();
                 const dump = JSON.parse(text);
                 await global.TeacherDB.importAll(dump);
-                global.TeacherApp.toast('تم الاستيراد ✅', 'success');
+                global.TeacherApp.toast('تم الاستيراد', 'success');
                 setTimeout(() => location.reload(), 600);
             } catch (err) {
                 global.TeacherApp.toast('فشل الاستيراد: ' + err.message, 'error');
@@ -1354,7 +1354,7 @@
             const link = container.querySelector('#invite-link').value;
             try {
                 await navigator.clipboard.writeText(link);
-                global.TeacherApp.toast('تم نسخ الرابط ✅', 'success');
+                global.TeacherApp.toast('تم نسخ الرابط', 'success');
             } catch { container.querySelector('#invite-link').select(); }
         });
     }
@@ -1398,7 +1398,7 @@
                 .then((txt) => {
                     const theirs = versionsIn(txt);
                     if (!theirs) return;
-                    if (theirs === mine) { slot.textContent = running + ' (أحدث نسخة ✅)'; return; }
+                    if (theirs === mine) { slot.textContent = running + ' (أحدث نسخة)'; return; }
                     const n = diffCount(mine, theirs);
                     slot.textContent = running + ' ← يتوفر تحديث ('
                         + (n ? n + ' ملفاً' : 'ملفّات') + ') — اضغط «تحديث التطبيق الآن»';

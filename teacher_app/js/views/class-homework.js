@@ -167,7 +167,7 @@
                 if (existing) row.id = existing.id;
                 await global.TeacherDB.put('assignments', row);
                 global.Modal.close();
-                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة ✅', 'success');
+                global.TeacherApp.toast(existing ? 'تم الحفظ.' : 'تمت الإضافة', 'success');
                 await render(panel, cls);
             } catch (err) {
                 saving = false;

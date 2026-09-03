@@ -660,7 +660,7 @@
                             status: 'present'
                         }));
                     await global.TeacherDB.bulkPut('attendance', rows);
-                    global.TeacherApp.toast('تم تحضير الجميع كحاضر ✅', 'success', 2500);
+                    global.TeacherApp.toast('تم تحضير الجميع كحاضر', 'success', 2500);
                 }
             } catch (err) {
                 global.TeacherApp.toast('تعذّر التحضير: ' + err.message, 'error');
@@ -1288,7 +1288,7 @@
             cls.updated_at = new Date().toISOString();
             await global.TeacherDB.put('classes', cls);
             global.Modal.close();
-            global.TeacherApp.toast('تمت إضافة الخانة ✅', 'success');
+            global.TeacherApp.toast('تمت إضافة الخانة', 'success');
             // Jump straight into the new column so grades can be entered now.
             panel.dataset.activeColFocus = col.id;
             await renderStudents(panel, cls);
@@ -1405,7 +1405,7 @@
                 cls.updated_at = new Date().toISOString();
                 await global.TeacherDB.put('classes', cls);
                 global.Modal.close();
-                global.TeacherApp.toast('تم حفظ الخانات ✅', 'success');
+                global.TeacherApp.toast('تم حفظ الخانات', 'success');
                 await renderStudents(panel, cls);
             });
         }
@@ -1607,7 +1607,7 @@
             }));
             await updateClassStudentCount(cls.id);
             global.Modal.close();
-            global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + ' ✅',
+            global.TeacherApp.toast('تمت إضافة ' + global.Words.count(names.length) + '',
                 'success');
             const panel = document.querySelector('#tab-panel');
             if (panel) await renderStudents(panel, cls);
@@ -1900,7 +1900,7 @@
     function openPrintRegisterModal(cls, students, attToday, evalToday, columns) {
         const TYPES = [
             { k: 'blank', ic: 'file', t: 'سجل مُفرّغ', d: 'فاضٍ للتعبئة باليد', sub: 'blankScope' },
-            { k: 'attendance', ic: '✅', t: 'سجل الحضور والغياب', d: 'الحضور فقط — بدون خانات التقييم', sub: 'period' },
+            { k: 'attendance', ic: 'check', t: 'سجل الحضور والغياب', d: 'الحضور فقط — بدون خانات التقييم', sub: 'period' },
             { k: 'full', ic: 'clipboard', t: 'سجل بكامل الخانات (معبّأ)', d: 'حضور + كل خانات التقييم بقيمها الفعلية', sub: 'period', note: 'الفترة: جدول مستقل لكل يوم' }
         ];
 

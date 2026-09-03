@@ -694,7 +694,7 @@
             await global.PdfCore.settle(stage.el);
             const blob = await global.PdfCore.renderPdf(all);
             const how = await global.PdfCore.deliverPdf(blob, buildFileName(ctx));
-            if (how === 'downloaded') toast('تم حفظ الورقة ✅ افتح الملف للطباعة', 'success', 4000);
+            if (how === 'downloaded') toast('تم حفظ الورقة افتح الملف للطباعة', 'success', 4000);
         } catch (err) {
             console.warn('[print-exam] savePdf failed:', err);
             toast('تعذّر إنشاء الملف. حاول مرة أخرى.', 'error', 4000);

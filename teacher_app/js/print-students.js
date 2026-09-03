@@ -220,7 +220,7 @@
                (الورقة نفسها إشعار) ولا بعد إلغاء المعلم لها. */
             const how = await global.PdfCore.deliverPdf(pdf.output('blob'), buildFileName(opts));
             if (how === 'downloaded') {
-                toast('تم حفظ السجل ✅ افتح الملف للطباعة', 'success', 4000);
+                toast('تم حفظ السجل افتح الملف للطباعة', 'success', 4000);
             }
         } catch (err) {
             console.warn('[print-students] savePdf failed:', err);

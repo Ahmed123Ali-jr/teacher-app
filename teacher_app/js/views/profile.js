@@ -261,7 +261,7 @@
                 teacher.photo = file;
                 teacher.updated_at = new Date().toISOString();
                 paint(container, teacher);
-                global.TeacherApp.toast('تم حفظ الصورة ✅', 'success', 1500);
+                global.TeacherApp.toast('تم حفظ الصورة', 'success', 1500);
                 (async () => {
                     teacher.photo = await compressPhoto(file);
                     await global.TeacherDB.put('teachers', teacher);
@@ -348,7 +348,7 @@
            تمضي في الخلفية — كانت تُبقي المعلم ينتظر ربع ثانية أو أكثر على
            الشبكة بعد كل ضغطة حفظ. */
         paint(container, teacher);
-        global.TeacherApp.toast('تم حفظ البيانات ✅', 'success', 1200);
+        global.TeacherApp.toast('تم حفظ البيانات', 'success', 1200);
 
         global.TeacherDB.put('teachers', teacher).catch((err) => {
             console.error('[Profile] save failed:', err);

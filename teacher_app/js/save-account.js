@@ -109,7 +109,7 @@
                     password: pass
                 });
                 global.Modal.close();
-                global.TeacherApp.toast('حُفظ حسابك ✅ — بياناتك صارت معك في أيّ جهاز.',
+                global.TeacherApp.toast('حُفظ حسابك — بياناتك صارت معك في أيّ جهاز.',
                                         'success', 6000);
                 /* الشاشةُ تُعاد لأنّ صفةَ «زائر» سقطت عن المعلّم. */
                 if (global.location.hash === '#/dashboard') global.location.reload();

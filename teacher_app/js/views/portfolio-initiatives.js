@@ -358,7 +358,7 @@
             else row.created_at = new Date().toISOString();
 
             global.Modal.close();
-            global.TeacherApp.toast('تم تسجيل المبادرة ✅', 'success', 1400);
+            global.TeacherApp.toast('تم تسجيل المبادرة', 'success', 1400);
             try {
                 if (existing) await global.TeacherDB.put('initiative_logs', row);
                 else await global.TeacherDB.add('initiative_logs', row);

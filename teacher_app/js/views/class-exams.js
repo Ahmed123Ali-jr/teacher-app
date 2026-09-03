@@ -245,7 +245,7 @@
         body.querySelector('#btn-save').addEventListener('click', async (e) => {
             await guard(e.currentTarget, async () => {
                 await saveExam(exam);
-                global.TeacherApp.toast('تم الحفظ ✅', 'success');
+                global.TeacherApp.toast('تم الحفظ', 'success');
             });
         });
         body.querySelector('#btn-to-print').addEventListener('click', async (e) => {

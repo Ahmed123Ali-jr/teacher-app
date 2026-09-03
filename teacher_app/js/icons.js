@@ -120,7 +120,10 @@
         '🔢': 'hash', '💭': 'thought', '💬': 'thought', '🧩': 'puzzle', '🧠': 'brain',
         '🧭': 'compass', '☀': 'sun', '🌙': 'moon', '🌓': 'moonHalf', '👁': 'eye',
         '🖼': 'image', '✨': 'sparkle', '🚀': 'rocket', '🤖': 'robot', '🧪': 'flask',
-        '🧹': 'broom'
+        '🧹': 'broom',
+        /* كتالوجُ الاستراتيجيات: رموزٌ لا رسمَ لها، تُقرَّب إلى أقربِ معنى */
+        '🎩': 'cap', '🎭': 'users', '🎲': 'puzzle', '🗺': 'compass',
+        '🛠': 'gear', '🪑': 'user'
     };
 
     /**
