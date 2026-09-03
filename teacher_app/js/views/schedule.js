@@ -1377,17 +1377,26 @@
 
     const DURATIONS = [40, 45, 50];
     const BREAK_LENGTHS = [15, 20, 30];
-    const AUTOFILL_DEFAULT = { start: '07:00', dur: 45, breakAfter: 3, breakDur: 30 };
+    /* الراحةُ بين كلّ حصّتين — غيرُ الفسحة الطويلة. أكثرُ المدارس تجعلها
+       خمساً (بقول المعلّم، ٣ سبتمبر ٢٠٢٦)، والصفرُ افتراضيٌّ لأنّ تغييرَه
+       يُزيح أوقاتَ كلّ معلّمٍ لم يطلب شيئاً. */
+    const GAPS = [0, 5, 10];
+    const AUTOFILL_DEFAULT = { start: '07:00', dur: 45, breakAfter: 3, breakDur: 30, gap: 0 };
 
     /** يبني أوقات كل الحصص من وقت البداية ومدة الحصة، ويزيح ما بعد الفسحة. */
     function autofillRows(count, cfg) {
         const out = [];
+        const gap = Math.max(0, Number(cfg.gap) || 0);
         let cursor = timeToMin(cfg.start);
         for (let i = 1; i <= count; i++) {
             const end = cursor + cfg.dur;
             out.push({ n: i, start: minToTime(cursor), end: minToTime(end) });
             cursor = end;
+            if (i === count) break;                       /* لا راحةَ بعد الأخيرة */
+            /* الفسحةُ تُغني عن الراحة في موضعها — وإلّا جُمعتا فصارت
+               الفسحةُ ٣٥ دقيقةً والمعلّمُ طلب ٣٠. */
             if (cfg.breakAfter && i === cfg.breakAfter) cursor += cfg.breakDur;
+            else cursor += gap;
         }
         return out;
     }
@@ -1421,6 +1430,18 @@
                         `).join('')}
                         <input type="number" class="input input-sm tf-num" id="tf-dur" min="20" max="90"
                                value="${otherVal(DURATIONS, cfg.dur)}" placeholder="أخرى" aria-label="مدة أخرى">
+                    </div>
+
+                    <div class="tf-chips">
+                        <span class="tf-lbl">الراحة بين الحصص</span>
+                        ${GAPS.map((d) => `
+                            <button type="button" class="tf-chip ${cfg.gap === d ? 'on' : ''}" data-gap="${d}">
+                                ${d === 0 ? 'بلا' : d + ' د'}
+                            </button>
+                        `).join('')}
+                        <input type="number" class="input input-sm tf-num" id="tf-gap" min="0" max="30"
+                               value="${otherVal(GAPS, cfg.gap)}" placeholder="أخرى"
+                               aria-label="مدة أخرى للراحة بين الحصص">
                     </div>
 
                     <div class="tf-row">
@@ -1484,6 +1505,10 @@
             return bgSave(async () => {
                 await savePeriodTimes(saved);
                 await global.TeacherDB.Settings.set('period_autofill', conf);
+                /* والمنبّهُ يُعاد جدولتُه: خطّتُه مبنيّةٌ على هذه الأوقات،
+                   وكانت تبقى على القديم حتّى إعادة تشغيل التطبيق —
+                   فيرنّ الجرسُ على توقيتٍ بدّله المعلّمُ قبل قليل. */
+                if (global.Bell && global.Bell.reschedule) global.Bell.reschedule();
             }, () => render(container));
         }
 
@@ -1553,6 +1578,15 @@
                 form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', Number(b.dataset.dur) === v));
                 recalc();
             });
+            form.querySelector('#tf-gap')?.addEventListener('input', (e) => {
+                /* الفارغُ يعني «بلا» لا «تجاهل»: الصفرُ اختيارٌ صحيحٌ هنا
+                   بخلاف المدّة والفسحة، فلا يُشترط مدىً أدنى. */
+                const v = e.target.value === '' ? 0 : Number(e.target.value);
+                if (!(v >= 0 && v <= 30)) return;
+                cfg.gap = v;
+                form.querySelectorAll('[data-gap]').forEach((b) => b.classList.toggle('on', Number(b.dataset.gap) === v));
+                recalc();
+            });
             form.querySelector('#tf-brk')?.addEventListener('input', (e) => {
                 const v = Number(e.target.value);
                 if (!(v >= 5 && v <= 90)) return;
@@ -1567,6 +1601,14 @@
                     cfg.dur = Number(btn.dataset.dur);
                     form.querySelector('#tf-dur').value = '';
                     form.querySelectorAll('[data-dur]').forEach((b) => b.classList.toggle('on', b === btn));
+                    recalc();
+                });
+            });
+            form.querySelectorAll('[data-gap]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    cfg.gap = Number(btn.dataset.gap);
+                    form.querySelector('#tf-gap').value = '';
+                    form.querySelectorAll('[data-gap]').forEach((b) => b.classList.toggle('on', b === btn));
                     recalc();
                 });
             });
