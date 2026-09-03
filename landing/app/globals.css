@@ -1,0 +1,421 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './grain.css';
+
+/* ==========================================================================
+   الخطّ — IBM Plex Sans Arabic، مجزَّأٌ لمحارف هذه الصفحة وحدَها.
+   المصدر: teacher_app/vendor/fonts — نفسُ ملفّات التطبيق. SIL OFL 1.1.
+   ========================================================================== */
+@font-face {
+    font-family: 'Plex';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('/fonts/plex-400-ar.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Plex';
+    font-style: normal; font-weight: 500; font-display: swap;
+    src: url('/fonts/plex-500-ar.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Plex';
+    font-style: normal; font-weight: 600; font-display: swap;
+    src: url('/fonts/plex-600-ar.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Plex';
+    font-style: normal; font-weight: 700; font-display: swap;
+    src: url('/fonts/plex-700-ar.woff2') format('woff2');
+}
+/* اللاتينيّ لا يُسبَق تحميلُه — لا يُطلب إلّا إن ظهر «iOS» أو «Android». */
+@font-face {
+    font-family: 'Plex';
+    font-style: normal; font-weight: 400; font-display: swap;
+    src: url('/fonts/plex-400-lat.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+2122;
+}
+
+/* وجهٌ احتياطيٌّ مضبوطُ المقاييس فوق Tahoma — قِيست من الملفّ نفسِه:
+   upm 1000 · صعود 1085 · نزول 415 · ارتفاعُ السين 516 (وTahoma 0.546).
+   فالانتقالُ من الاحتياطيّ إلى الحقيقيّ لا يزحزح سطراً ⇒ CLS ≈ 0 رغم swap. */
+@font-face {
+    font-family: 'Plex Fallback';
+    src: local('Tahoma'), local('Arial');
+    size-adjust: 94.5%;
+    ascent-override: 108.5%;
+    descent-override: 41.5%;
+    line-gap-override: 0%;
+}
+
+:root {
+    --font-plex: 'Plex', 'Plex Fallback', Tahoma, sans-serif;
+
+    /* ── الأسطح ── */
+    --page-void:     #090C11;   /* ميلٌ كحليّ (B>R) يمنع halation */
+    --page:          #0D1117;   /* = أرضيّةُ الوضع الداكن في التطبيق */
+    --sheet:         #171E2B;   /* الورقة — 1.13:1 فوق الأرضيّة */
+    --sheet-raised:  #1F2838;
+    --sheet-petrol:  #0F2A33;
+
+    /* ── الخطوط ── */
+    --rule-hair:     #303D52;   /* 1.73:1 — زخرفيّ */
+    --rule:          #42526C;   /* 2.39:1 */
+    --rule-gold:     #897548;   /* 3.31:1 أسوأ سطح — الحدُّ الوحيدُ الحاملُ للمعنى */
+
+    /* ── الحبر ── */
+    --ink:           #E8ECF3;   /* أبيضُ مكسورٌ لا خالص — theme-dark.css:41 */
+    --ink-muted:     #A3AEC0;
+    --ink-faint:     #96A2B8;
+
+    /* ── اللون ── */
+    --petrol:        #0A3F4A;
+    --petrol-light:  #14606F;   /* 2.64:1 — للتوهّج فقط، ممنوعٌ نصّاً */
+    --petrol-deep:   #05262D;
+    --gold:          #C9A961;
+    --gold-light:    #E8D9A8;
+
+    /* ── المنحنيات ── */
+    --ease-page: cubic-bezier(.16, 1, .3, 1);
+    --ease-ink:  cubic-bezier(.22, .61, .36, 1);
+    --ease-rule: cubic-bezier(.65, 0, .35, 1);
+    --ease-lift: cubic-bezier(.34, 1.12, .64, 1);
+    --ease-ui:   cubic-bezier(.4, 0, .2, 1);
+
+    /* ── ثابتُ الاتّجاه: كلُّ إزاحةٍ أفقيّةٍ تمرّ به ── */
+    --dir: 1;
+
+    --grain-opacity: .16;
+    --stagger: 90ms;
+}
+
+@layer base {
+    /* حارسٌ يفرضه المتصفّح: العائلةُ تنتهي عند ٧٠٠، فلو تسرّب طلبُ ٨٠٠
+       سقط إلى الحقيقيّ بدل أن يُمَطّ تغليظاً صناعيّاً. (main.css:102) */
+    html {
+        font-synthesis: none;
+        font-synthesis-weight: none;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        background: var(--page);
+        color: var(--ink);
+        font-family: var(--font-plex);
+        -webkit-font-smoothing: antialiased;
+        /* ‏لا ‎overflow-x: hidden‎ هنا: القيمةُ تجعل ‎body‎ حاويةَ تمرير،
+           فتصير هي «مَشهدَ» ‎view()‎ بدل نافذة المستند — وهي لا تتمرّر،
+           فيبقى تقدّمُ كلّ حركةٍ مقودةٍ بالتمرير صفراً أبداً.
+           والفائضُ الأفقيُّ يُمنع من مصدره: كلُّ قسمٍ يقصّ فائضَه بنفسه. */
+    }
+
+    /* التتبّعُ صفرٌ في كلّ نصٍّ عربيّ — بلا استثناء.
+       الخاصّيّةُ تُقحَم بين كلّ محرفَين *بعد* التشكيل: الموجبُ يفكّ الوصل،
+       والسالبُ يشبك النقاطَ بالأذيال. الكثافةُ تُضبط بـword-spacing. */
+    :lang(ar), [dir='rtl'] { letter-spacing: 0; }
+
+    /* العربيّةُ بلا كشيدةٍ تتمدّد بفجوات — فالضبطُ محظور. */
+    * { text-align: revert; }
+
+    ::selection { background: var(--gold); color: var(--petrol-deep); }
+
+    /* الذهبيُّ هنا معناه «تركيز» — وهو الاستثناءُ الوحيدُ من ميزانيّة السبعة. */
+    :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 3px;
+        border-radius: 3px;
+    }
+}
+
+/* ==========================================================================
+   طبقةُ الحبيبات — بلاطةٌ مخبوزةٌ وقتَ البناء، ساكنةٌ تماماً.
+   لا mix-blend-mode (يُجبر المتصفّحَ على قراءة الخلفيّة ومزجِها كلَّ إطار)،
+   ولا حركة، ولا will-change. وتُطلى في خلفيّة القسم لا في طبقةٍ عائمة.
+   ومبرّرُها الأقوى ليس «إحساسَ الفيلم» بل كسرَ تشريطِ التدرّج (banding).
+   ========================================================================== */
+.grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--grain);
+    background-repeat: repeat;
+    background-size: 96px 96px;   /* لا يُحجَّم مع كثافة البكسل — حريرٌ لا رمل */
+    opacity: var(--grain-opacity);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ==========================================================================
+   هوامشُ الورق — توقيعُ الاتّجاه.
+   تتبع **عمودَ المحتوى** لا إطارَ العرض: على ١٩٢٠px كان الخطّان يلتصقان
+   بالحافّة فيصيران زينةً لا هامشَ ورقة.
+   ========================================================================== */
+.paper-rules {
+    position: fixed;
+    inset-block: 0;
+    inset-inline: 0;
+    width: min(100% - 42px, 1216px);
+    margin-inline: auto;
+    border-inline: 1px solid var(--rule-hair);
+    pointer-events: none;
+    z-index: 2;
+    transform: scaleY(0);
+    transform-origin: top;
+    animation: rule-draw 987ms var(--ease-rule) 300ms forwards;
+}
+@media (max-width: 899px) {
+    .paper-rules { border-inline-end: 0; }
+}
+
+@keyframes rule-draw { to { transform: scaleY(1); } }
+
+/* ==========================================================================
+   الهيرو — كلمةٌ كلمة، حركةُ CSS خالصةٌ بلا JS.
+   لو انتظرت الكلماتُ ترطيبَ React لتأخّر LCP وراء العتبة.
+   ========================================================================== */
+.hero-word {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 18px, 0);
+    animation:
+        word-in-move 720ms var(--ease-page) forwards,
+        word-in-ink  720ms var(--ease-ink)  forwards;
+    animation-delay: var(--d, 0ms);
+    /* لا will-change: يحجز طبقةَ GPU للجلسة كلِّها، والحركةُ تقع مرّةً عند
+       الإقلاع — وtransform/opacity تُرقَّى تلقائياً أثناءها. */
+}
+@keyframes word-in-move { to { transform: translate3d(0, 0, 0); } }
+@keyframes word-in-ink  { to { opacity: 1; filter: blur(0); } }
+
+/* صندوقُ حبر الخطّ ١٫٧٢٩em والصندوقُ الصادرُ ١٫٥em — فأيُّ overflow:hidden
+   يقصّ همزةَ الألف وذيلَ الياء قصّاً دائماً. فلا قناعَ هنا، وحشوةٌ سفليّة. */
+.hero-title {
+    font-size: clamp(40px, 7.2vw, 118px);
+    line-height: 1.20;          /* قِيس: ١٫٠٥ يصادم ي فوق ك بـ٣٣٩ وحدة */
+    padding-block-end: .19em;   /* نازلةُ و/ص ‎−٠٫٢٤٠em‎ تتجاوز الصندوق */
+    word-spacing: -0.015em;
+}
+
+.gold-underline {
+    display: inline-block;
+    position: relative;
+}
+.gold-underline::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    /* ══ موضعُ الخطّ محسوبٌ لا مُقدَّر ══
+       الخطُّ ‎١٫٢٠em‎ والحبرُ ‎١٫٥em‎ ⇒ نصفُ الرصاص ‎−٠٫١٥em‎، فخطُّ الأساس
+       على بُعد ‎٠٫٩٣٥em‎ من أعلى الصندوق (‎−٠٫١٥ + ١٫٠٨٥‎).
+
+         نازلةُ و/ص ‎−٠٫٢٤٠em‎  ⇒ ذيلُها ينتهي عند ‎١٫١٧٥em‎
+         صاعدةُ ك  ‎+٠٫٧٤١em‎  ⇒ حبرُ السطر الثاني يبدأ عند ‎١٫٣٩٤em‎
+
+       فالشريطُ الخالي بينهما ‎٠٫٢١٩em‎ فقط (‎٢٢٫٧px‎ على المكتب، ‎٨٫٨px‎ على
+       الجوال) — لا ‎٥٣px‎ كما قُدّر أوّلاً. ووسطُه ‎١٫٢٨٤٥em‎ من أعلى الصندوق،
+       أي ‎٠٫٠٨٥em‎ تحت حافّته السفلى. فيُترك للخطّ ‎٠٫١١em‎ من كلّ جانب،
+       ويبقى نسبيّاً فلا ينكسر عند أيّ مقاس. */
+    bottom: -.085em;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: right;   /* بالكلمات لا بالنسب — فلا ينقلب في RTL */
+    animation: gold-draw 610ms var(--ease-rule) 1350ms forwards;
+}
+@keyframes gold-draw { to { transform: scaleX(1); } }
+
+.fade-up {
+    opacity: 0;
+    transform: translate3d(0, 13px, 0);
+    animation: fade-up 830ms var(--ease-page) forwards;
+    animation-delay: var(--d, 0ms);
+}
+@keyframes fade-up { to { opacity: 1; transform: translate3d(0, 0, 0); } }
+
+/* ── تنفّسُ الخلفيّة: تركيبٌ خالصٌ بلا طلاء ── */
+.breathe-a { animation: breathe-a 24s var(--ease-ui) infinite alternate; }
+.breathe-b { animation: breathe-b 18s var(--ease-ui) infinite alternate; }
+@keyframes breathe-a {
+    from { transform: translate3d(0, 0, 0) scale(1);     opacity: .86; }
+    to   { transform: translate3d(0, -1.2%, 0) scale(1.03); opacity: 1; }
+}
+@keyframes breathe-b {
+    from { transform: translate3d(0, 0, 0) scale(1.02);  opacity: 1; }
+    to   { transform: translate3d(0, 1%, 0) scale(1);    opacity: .9; }
+}
+
+/* ── مؤشّرُ التمرير: رأسيٌّ فلا اتّجاهَ له ── */
+.scroll-dash { animation: scroll-dash 2400ms var(--ease-ui) infinite; }
+@keyframes scroll-dash {
+    0%        { transform: translateY(0);    opacity: 0; }
+    18%       { opacity: 1; }
+    72%       { opacity: 1; }
+    100%      { transform: translateY(42px); opacity: 0; }
+}
+
+/* ==========================================================================
+   خفضُ الجوال ≤600px — تُقصَّر المسافاتُ لا المدد.
+   الزمنُ الأقصرُ يُحسّ عصبيّاً؛ المسافةُ الأقصرُ تُحسّ هادئة.
+   ========================================================================== */
+@media (max-width: 600px) {
+    :root { --stagger: 60ms; --grain-opacity: .11; }
+    .hero-word { filter: none; transform: translate3d(0, 8px, 0); }   /* التمويهُ أغلى شيءٍ على معالجٍ متوسّط */
+    .hero-word { animation-name: word-in-move, word-in-fade; }
+    .fade-up   { transform: translate3d(0, 8px, 0); }
+    .breathe-a, .breathe-b { animation: none; }
+}
+@keyframes word-in-fade { to { opacity: 1; } }
+
+/* ==========================================================================
+   تقليلُ الحركة — مسارٌ ثانٍ كامل، لا تخفيفٌ بأمرٍ عامّ.
+   والمدّةُ 1ms لا none حيث تُترك الحركةُ قائمةً: `none` يمنع إطلاقَ
+   animationend، فأيُّ شيفرةٍ تنتظره لا تعمل. (ولا will-change هنا أصلاً.)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .breathe-a, .breathe-b { animation: none !important; }
+    /* الشرطةُ تسكن في وسط الخطّ — لا في أعلاه حيث تركتها اللقطةُ الأولى */
+    .scroll-dash { animation: none !important; top: 50%; transform: translateY(-50%); }
+    .hero-word {
+        filter: none;
+        transform: none;
+        animation: word-in-fade 200ms linear forwards;
+        animation-delay: 0ms;
+    }
+    .fade-up {
+        transform: none;
+        animation: word-in-fade 200ms linear forwards;
+        animation-delay: 0ms;
+    }
+    .paper-rules  { transform: scaleY(1); animation-duration: 1ms; }
+    .gold-underline::after { transform: scaleX(1); animation-duration: 1ms; }
+}
+
+/* ==========================================================================
+   القسمُ الثاني — الجملةُ التعريفيّة تتلوّن مع التمرير.
+
+   ── لماذا هذا الاتّجاه بالضبط ──
+   `linear-gradient(to left, …)` محورُه يبدأ من **يمين** الصندوق. فالحبرُ
+   الكامل يقع في النصف الأيمن من الصورة، والخافتُ في الأيسر. والصورةُ ‎٢٠٠٪‎
+   عرضاً، فانزلاقُ `background-position` من ‎0٪‎ إلى ‎100٪‎ يُدخل الحبرَ من
+   الحافّة اليمنى ويمدّه يساراً — أي **مع اتّجاه القراءة العربيّة لا ضدَّه**.
+   (ونسبُ `background-position` فيزيائيّةٌ لا تتبع `direction`، فالسلوكُ
+   واحدٌ في كلّ متصفّح ولا يُقلَب من تحتنا.)
+
+   ── والحالةُ الأساسيّة محبَّرةٌ كاملة ──
+   من لا يملك `animation-timeline` يقرأ النصَّ كاملاً لا خافتاً. الحركةُ
+   زيادةٌ على نصٍّ مقروء، لا شرطٌ لقراءته.
+   ========================================================================== */
+.reveal-text {
+    font-size: clamp(30px, 4.8vw, 68px);
+    line-height: 1.24;
+
+    /* ── لماذا هذا الاتّجاه بالضبط ──
+       محورُ `to left` يبدأ من **يمين** الصندوق، فالحبرُ الكامل في النصف
+       الأيمن من الصورة والخافتُ في الأيسر. والصورةُ ‎٢٠٠٪‎ عرضاً، فانزلاقُ
+       `background-position` من ‎0٪‎ إلى ‎100٪‎ يُدخل الحبرَ من الحافّة اليمنى
+       ويمدّه يساراً — **مع اتّجاه القراءة العربيّة لا ضدَّه**. ونسبُ
+       `background-position` فيزيائيّةٌ لا تتبع `direction`، فلا تنقلب. */
+    background-image: linear-gradient(to left, var(--ink) 50%, var(--ink-muted) 50%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 0;      /* الأساس: محبَّرٌ كاملاً */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    /* صندوقُ الحبر ‎١٫٧٢٩em‎ أوسعُ من ‎١٫٢٤em‎ — حشوةٌ لئلّا تُقصّ النازلات */
+    padding-block: .06em .19em;
+}
+
+/* ══ الحالةُ الأدنى مقروءةٌ لا خافتة ══
+   اللونُ غيرُ المكشوف `--ink-muted` (‎٨٫٤٥:١‎) لا `--ink-faint`. فلو تعطّل
+   الخطُّ الزمنيُّ في متصفّحٍ يزعم دعمَه، بقيت الجملةُ مقروءةً تماماً —
+   أخفتَ قليلاً لا غير. الحركةُ زينةٌ فوق نصٍّ مقروء، لا شرطٌ لقراءته. */
+@supports (animation-timeline: view()) {
+    .reveal-text {
+        background-position: 0 0;
+        /* ‏بالطُّوَل لا بالمختصر: اختصارُ `animation` يعيد `animation-duration`
+           إلى ‎0s‎، والحركةُ المقودةُ بالتمرير تلزمها `auto` — ومع ‎0s‎ يصير
+           المفعولُ بلا مدّةٍ نشطة فلا يتحرّك شيء. */
+        animation-name: text-reveal;
+        animation-duration: auto;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: view();
+        /* ينتهي الكشفُ باكتمال دخول الكتلة لا بعبورها: `cover` يلزمه أن
+           يخرج العنصرُ من أعلى الشاشة، وذاك متعذّرٌ على آخر قسمٍ في الصفحة. */
+        animation-range: entry 20% entry 100%;
+    }
+}
+@keyframes text-reveal {
+    from { background-position: 0 0; }
+    to   { background-position: 100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* لا كشفَ تدريجيّ — النصُّ محبَّرٌ من أوّل لحظة */
+    .reveal-text { animation: none !important; background-position: 100% 0; }
+}
+
+/* ==========================================================================
+   شبكةُ الـBento — غيرُ متناظرةٍ بأسماء المناطق لا بأرقام المسارات.
+   المسارُ ١ يبقى يساراً في كلّ اتّجاه، فالأرقامُ الصريحةُ تقلب الوزنَ في RTL.
+   ========================================================================== */
+.bento { grid-template-areas: 'a' 'b' 'c' 'd' 'e' 'f'; }
+
+@media (min-width: 600px) {
+    .bento {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: 'a a' 'b c' 'd d' 'e f';
+    }
+}
+@media (min-width: 900px) {
+    .bento {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        grid-template-areas:
+            'a a a a a a a b b b b b'
+            'c c c c d d d d d e e e'
+            'f f f f d d d d d e e e';
+    }
+}
+
+/* الرفعُ للفأرة وحدَها: على اللمس لا مؤشّرَ يحوم، فتُقرأ الحالةُ عالقة. */
+@media (hover: hover) and (pointer: fine) {
+    .bento-card:hover {
+        background: var(--sheet-raised);
+        border-color: var(--rule);
+        transform: translate3d(0, -2px, 0);
+    }
+}
+@media (hover: none) {
+    .bento-card:active { background: var(--sheet-raised); transition-duration: 144ms; }
+}
+
+/* الحدُّ الذهبيُّ العلويُّ — بطاقةٌ واحدةٌ من ستّ.
+   والعلويُّ لا ينقلب في RTL، بخلاف الجانبيّ: القاعدةُ محصّنةٌ بذاتها. */
+.bento-card.border-t-rule-gold { border-block-start-color: var(--rule-gold); }
+
+/* ==========================================================================
+   أرقامُ الإحصاءات — عرضٌ محجوزٌ لكلّ خانة.
+   الخطُّ لا يملك `tnum`، وعروضُ الأرقام الهنديّة فيه ٢٨١→٦٣٥ (مدىً ٢٫٢٦×)،
+   فالعدُّ المتحرّك يهتزّ عرضُه مع كلّ رقم. والجدولةُ تُصنع هنا بالبناء:
+   خانةٌ بعرض ‎.635em‎ (أعرضُ رقمٍ: ٣) وتوسيطٌ داخلها.
+   ========================================================================== */
+.stat-num {
+    display: block;
+    font-size: 55px;
+    line-height: 1.10;
+    font-weight: 700;
+    color: var(--gold-light);
+    font-feature-settings: normal;
+}
+@media (min-width: 900px) { .stat-num { font-size: 89px; } }
+
+/* الشرطتان الرأسيّتان بين الأرقام — الموضعُ السادس من ميزانيّة الذهب.
+   `border-inline-start` لا `left`: تنقلب مع الاتّجاه من تلقائها. */
+@media (min-width: 1200px) {
+    .stat-cell {
+        border-inline-start: 1px solid var(--rule-gold);
+        padding-inline-start: var(--pad, 21px);
+    }
+}

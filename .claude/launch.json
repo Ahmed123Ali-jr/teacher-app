@@ -4,8 +4,37 @@
     {
       "name": "teacher-app",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8001", "--directory", "teacher_app"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8001",
+        "--directory",
+        "teacher_app"
+      ],
       "port": 8001
+    },
+    {
+      "name": "fusul-landing",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "landing"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "fusul-landing-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "3200",
+        "--directory",
+        "landing/out"
+      ],
+      "port": 3200
     }
   ]
 }

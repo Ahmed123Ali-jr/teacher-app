@@ -1,0 +1,29 @@
+{
+  "name": "fusul-landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "grain": "node scripts/make-grain.mjs",
+    "fonts": "node scripts/subset-fonts.mjs",
+    "gates": "node scripts/gates.mjs && node scripts/check-headline.mjs",
+    "prebuild": "npm run gates"
+  },
+  "dependencies": {
+    "next": "^14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "postcss": "^8.5.28",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.5.4"
+  }
+}
