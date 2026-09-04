@@ -39,7 +39,6 @@
         { pattern: /^\/settings$/,                 view: 'settings',  auth: true, chrome: true, title: 'الإعدادات',       root: true },
         { pattern: /^\/portfolio$/,                view: 'portfolio', auth: true, chrome: true, title: 'ملف الإنجاز' },
         { pattern: /^\/schedule$/,                 view: 'schedule',  auth: true, chrome: true, title: 'الجدول الأسبوعي', root: true },
-        { pattern: /^\/help$/,                     view: 'help',      auth: true, chrome: true, title: 'المساعدة' },
         { pattern: /^\/features$/,                 view: 'features',  auth: true, chrome: true, title: 'مميزات التطبيق' },
         { pattern: /^\/feedback$/,                 view: 'feedback',  auth: true, chrome: true, title: 'ملاحظاتكم' },
         { pattern: /^\/reports$/,                  view: 'reports',   auth: true, chrome: true, title: 'التقارير' },
@@ -280,13 +279,6 @@
                 const el = document.getElementById('view-schedule');
                 el.hidden = false;
                 await global.ScheduleView.render(el);
-                await updateHeaderName();
-                break;
-            }
-            case 'help': {
-                const el = document.getElementById('view-help');
-                el.hidden = false;
-                global.HelpView.render(el);
                 await updateHeaderName();
                 break;
             }

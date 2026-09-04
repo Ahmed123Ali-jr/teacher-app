@@ -5818,104 +5818,32 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 /* ==========================================================================
-   مميزاتُ التطبيق — عرضُ قدرةٍ لا دليلُ استعمال
+   مميزاتُ التطبيق — صفوفُ الإعدادات نفسُها
    ==========================================================================
-   الشبكةُ عمودٌ واحدٌ على الجوّال وعمودان من ‎640px‎: البطاقةُ فيها ثلاثةُ
-   أسطرٍ إلى خمسة، وعمودان على شاشةٍ ضيّقةٍ يجعلانها سبعةً فتُقرأ بصعوبة.
+   لا تنسيقَ جديدٌ هنا تقريباً: الشاشةُ تستعير `.set-group` و`.set-list`
+   و`.set-row` كما هي، بقوله «خلّها منسجمة مع تصميم التطبيق العام».
+   وثلاثةُ فروقٍ لا أكثر، وكلُّها **طرحٌ لا إضافة**:
 
-   والحدُّ الذهبيُّ الرفيعُ في رأس البطاقة وحدَه — لو أُحيطت به كلُّها لصار
-   التسعُ بطاقاتٍ حائطاً ذهبيّاً. والأرضيّةُ سطحُ التطبيق نفسُه، فيبقى
-   الذهبيُّ علامةً لا لوناً.
+   • الصفُّ لا يُضغط — فلا مؤشّرُ يدٍ ولا وميضٌ عند اللمس. الوميضُ يَعِد
+     بفتحٍ لا يقع، ومن ضغط مرّتين ولم يُفتح شيءٌ ظنّ التطبيق معطوباً.
+   • السطرُ الخافتُ يلتفّ ولا يُقصّ: في الإعدادات هو شرحُ زرٍّ يُغني عنه
+     العنوان، وهنا هو **الميزةُ نفسُها** — فقصُّه يحذف المعنى.
+   • ولا سهمَ `❯`، لأنّه في الإعدادات علامةُ فتح.
    ========================================================================== */
-.feat-wrap { max-width: 880px; padding-bottom: var(--space-10); }
-
-.feat-hero {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: 6px;
-    margin-top: var(--space-3);
-    padding: var(--space-6) var(--space-5);
-    border-radius: 20px;
-    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
-    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+.feat-group .set-row { cursor: default; }
+.feat-group .set-row:active { background: linear-gradient(150deg, #fff 0%, color-mix(in srgb, var(--beige) 30%, var(--mix-base)) 100%); }
+/* والسطرُ الخافتُ يُستثنى من قاعدة «بلا شروح» في `theme-white.css`: تلك
+   القاعدةُ تُخفي `.set-row .h` كلَّها لأنّها في الإعدادات شرحُ زرٍّ يُغني
+   عنه عنوانُه. وهنا العنوانُ اسمُ الميزة، والسطرُ **هو الميزةُ نفسُها** —
+   فإخفاؤه يترك عشرةَ أسماءٍ لا تقول شيئاً. والاستثناءُ مقصورٌ على هذه
+   الشاشة، وصفوفُ الإعدادات تبقى كما أرادها بلا شروح. */
+.feat-group .set-row .h {
+    display: block !important;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.7;
+    margin-top: 3px;
 }
-.feat-hero-ic { color: var(--pf-gold); }
-.feat-hero-ic svg { width: 30px; height: 30px; stroke-width: 1.5; }
-.feat-hero b { font-size: 21px; color: var(--ink-primary); }
-.feat-hero span:last-child {
-    font-size: 13px; color: var(--text); line-height: 1.8;
-    max-width: 32ch;
-}
-
-/* عنوانُ المجموعة: صغيرٌ ومُتباعدُ الحروف — فاصلٌ لا عنوانُ شاشة. */
-.feat-k {
-    margin: var(--space-7) 0 var(--space-3);
-    font-size: var(--fs-xs); font-weight: var(--fw-bold);
-    letter-spacing: 1px; color: var(--text-muted);
-}
-
-.feat-grid { display: grid; gap: var(--space-3); }
-@media (min-width: 640px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
-
-.feat-c {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: var(--space-5);
-    box-shadow: 0 2px 8px rgba(16, 24, 40, .05);
-}
-.feat-c-hd { display: flex; align-items: flex-start; gap: 11px; }
-.feat-c-ic {
-    flex: none;
-    width: 38px; height: 38px; border-radius: 11px;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--ink-primary);
-    background: color-mix(in srgb, var(--pf-gold) 18%, var(--mix-base));
-    border: 1px solid color-mix(in srgb, var(--pf-gold) 42%, var(--mix-base));
-}
-.feat-c-ic svg { width: 19px; height: 19px; }
-.feat-c-tt { min-width: 0; }
-.feat-c-tt b {
-    display: block;
-    font-size: 15px; color: var(--ink-primary); line-height: 1.5;
-}
-.feat-c-tt span {
-    display: block; margin-top: 2px;
-    font-size: 12.5px; color: var(--text-muted); line-height: 1.7;
-}
-.feat-c-li {
-    margin: var(--space-4) 0 0;
-    padding-right: 0; list-style: none;
-    display: flex; flex-direction: column; gap: 7px;
-}
-.feat-c-li li {
-    position: relative;
-    padding-right: 15px;
-    font-size: 13px; color: var(--text); line-height: 1.8;
-}
-/* النقطةُ ذهبيّةٌ صغيرة — علامةُ بندٍ لا زخرفة. */
-.feat-c-li li::before {
-    content: ''; position: absolute; top: .72em; right: 0;
-    width: 5px; height: 5px; border-radius: 50%;
-    background: var(--pf-gold);
-}
-
-/* ودعوةُ الملاحظات في آخر الصفحة: من قرأ المميّزات كلَّها هو أقدرُ الناس
-   على قول ما ينقص — فيُسأل حيث فرغ لا في قائمةٍ يفتحها قصداً. */
-.feat-cta {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    column-gap: 12px; row-gap: 2px;
-    margin-top: var(--space-7);
-    padding: var(--space-5);
-    border-radius: 18px;
-    background: var(--surface);
-    border: 1px dashed var(--border-strong);
-    text-decoration: none;
-}
-.feat-cta > svg { grid-row: span 2; color: var(--ink-primary); width: 24px; height: 24px; }
-.feat-cta .t { font-size: 15px; font-weight: var(--fw-bold); color: var(--ink-primary); }
-.feat-cta .h { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
 
 /* ==========================================================================
    ملاحظاتكم

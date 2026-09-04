@@ -38,7 +38,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D32">
     <link rel="stylesheet" href="css/components.css?v=13">
-    <link rel="stylesheet" href="css/views.css?v=D308">
+    <link rel="stylesheet" href="css/views.css?v=D310">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -157,7 +157,8 @@
                 <!-- Desktop actions (≥ 768px) -->
                 <div class="header-actions">
                     <span id="header-teacher-name" class="header-user"></span>
-                    <a href="#/help" class="btn btn-ghost btn-sm" title="المساعدة" data-icon="question"></a>
+                    <a href="#/features" class="btn btn-ghost btn-sm" title="مميزات التطبيق" data-icon="star"></a>
+                    <a href="#/feedback" class="btn btn-ghost btn-sm" title="ملاحظاتكم" data-icon="thought"></a>
                     <a href="#/settings" class="btn btn-ghost btn-sm" title="الإعدادات" data-icon="gear"></a>
                     <button type="button" class="btn btn-ghost btn-sm" id="btn-logout">
                         تسجيل الخروج
@@ -201,7 +202,6 @@
             <section class="view" id="view-schedule" hidden></section>
 
             <!-- View: Help -->
-            <section class="view" id="view-help" hidden></section>
             <section class="view" id="view-features" hidden></section>
             <section class="view" id="view-feedback" hidden></section>
 
@@ -248,13 +248,13 @@
             </header>
 
             <nav class="drawer-nav" aria-label="قائمة الحساب">
-                <a href="#/settings" class="drawer-link" data-drawer-close>
-                    <span class="drawer-link-icon" data-icon="gear"></span>
-                    <span>الإعدادات</span>
+                <a href="#/features" class="drawer-link" data-drawer-close>
+                    <span class="drawer-link-icon" data-icon="star"></span>
+                    <span>مميزات التطبيق</span>
                 </a>
-                <a href="#/help" class="drawer-link" data-drawer-close>
-                    <span class="drawer-link-icon" data-icon="question"></span>
-                    <span>المساعدة</span>
+                <a href="#/feedback" class="drawer-link" data-drawer-close>
+                    <span class="drawer-link-icon" data-icon="thought"></span>
+                    <span>ملاحظاتكم</span>
                 </a>
             </nav>
 
@@ -348,7 +348,7 @@
     <script src="js/components/bottom-nav.js?v=C12"></script>
     <script src="js/components/dept-picker.js?v=4"></script>
     <script src="js/components/subject-picker.js?v=2"></script>
-    <script src="js/views/login.js?v=28"></script>
+    <script src="js/views/login.js?v=29"></script>
     <script src="js/views/setup.js?v=13"></script>
     <script src="js/views/dashboard.js?v=C61"></script>
     <script src="js/views/classes.js?v=S24"></script>
@@ -369,12 +369,11 @@
     <script type="text/lazy-view" data-view="portfolio" data-src="js/views/portfolio.js?v=D35"></script>
     <script src="js/views/calendar-card.js?v=9"></script>
     <script src="js/views/schedule.js?v=S72"></script>
-    <script type="text/lazy-view" data-view="help" data-src="js/views/help.js?v=15"></script>
-    <script type="text/lazy-view" data-view="features" data-src="js/views/features.js?v=1"></script>
+    <script type="text/lazy-view" data-view="features" data-src="js/views/features.js?v=2"></script>
     <script type="text/lazy-view" data-view="feedback" data-src="js/views/feedback.js?v=1"></script>
     <script type="text/lazy-view" data-view="reports" data-src="js/views/reports.js?v=C20"></script>
     <script src="js/view-loader.js?v=1"></script>
-    <script src="js/router.js?v=S16"></script>
+    <script src="js/router.js?v=S17"></script>
     <script src="js/guest-notice.js?v=2"></script>
     <script src="js/phone-prompt.js?v=3"></script>
     <script src="js/save-account.js?v=3"></script>

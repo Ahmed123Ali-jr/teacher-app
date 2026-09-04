@@ -85,7 +85,8 @@ teacher_app/
 │       ├── portfolio.js, portfolio-strategies.js, portfolio-initiatives.js
 │       ├── schedule.js
 │       ├── settings.js
-│       └── help.js
+│       ├── features.js
+│       └── feedback.js
 ```
 
 ---
