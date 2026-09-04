@@ -1,0 +1,106 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/css/fonts.css">
+<style>
+
+    .ex-pg { font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; color: #111; }
+    .ex-pg h1, .ex-pg ol, .ex-pg ul, .ex-pg p { margin: 0; padding: 0; }
+    .ex-pg ol, .ex-pg ul { list-style: none; }
+    .ex-body > :first-child { margin-top: 0 !important; }
+    .ex-foot {
+        position: absolute; bottom: 26px; inset-inline: 57px;
+        text-align: center; font-size: 11.5px; color: #555;
+        border-top: 1px solid #DDD; padding-top: 6px;
+    }
+    .ex-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+    .ex-head .side { font-size: 13.5px; line-height: 2.05; font-weight: 700; }
+    .ex-head .side.l { text-align: left; }
+    /* يُقاس بالعرض ويُترك ارتفاعُه: نسبةُ الشعار ‎1.32:1‎، ومربّعُ ‎78×78‎
+       كان يهبط به إلى ‎59px‎ ارتفاعاً فيصغر عمّا يليق بترويسةٍ رسميّة. */
+    .ex-logo { width: 96px; height: auto; object-fit: contain; }
+    .ex-logo-ph { width: 96px; height: 73px; }
+    .ex-rule  { border: 0; border-top: 2px solid #111; margin: 10px 0 0; }
+    .ex-rule2 { border: 0; border-top: 1px solid #111; margin: 2px 0 14px; }
+    .ex-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 14px !important; }
+    .ex-info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    .ex-info td { border: 1px solid #111; padding: 9px 10px; font-size: 14px; font-weight: 700; }
+    /* خانةُ الدرجة موسَّطةٌ في اللغتين — و«important» لسبب الملاحظة أسفلَه. */
+    .ex-info .mk { text-align: center !important; }
+    .ex-note { font-size: 13px; line-height: 1.9; margin-bottom: 14px !important; }
+    .ex-sec {
+        display: flex; align-items: baseline; gap: 8px;
+        font-size: 15.5px; font-weight: 700; margin: 18px 0 10px;
+        border-bottom: 1.5px solid #111; padding-bottom: 5px;
+    }
+    .ex-sec .g { margin-inline-start: auto; font-size: 13px; font-weight: 700; }
+    .ex-cont {
+        font-size: 13px; font-weight: 700; color: #555;
+        margin: 0 0 10px; padding-bottom: 4px; border-bottom: 1px dashed #BBB;
+    }
+    .ex-q { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
+    .ex-q .n { font-weight: 700; font-size: 15px; line-height: 1.9; }
+    .ex-q .t { font-size: 15px; line-height: 1.9; }
+    .ex-q .m { margin-inline-start: auto; font-size: 12.5px; color: #555; white-space: nowrap; }
+    .ex-tbl { width: 100%; border-collapse: collapse; }
+    .ex-tbl th, .ex-tbl td { border: 1px solid #111; padding: 9px 10px; font-size: 14.5px; }
+    .ex-tbl th { background: #F0F0F0; font-weight: 700; font-size: 13.5px; }
+    .ex-tbl .c { text-align: center; width: 62px; }
+    .ex-tbl .m { text-align: center; width: 40px; }
+    /* جدولُ الاختيار من متعدد: السؤالُ سطرٌ يمتدّ، وخياراتُه تحته خلايا.
+       وتثبيتُ التخطيط ليس تجميلاً: الرصُّ يقيس الصفَّ وحدَه خارج جدوله،
+       فلو وُزّعت الأعمدةُ بالمحتوى لاختلف عرضُها بين القياس والرسم وفاض
+       الجدولُ على الورقة. وبه صار الفرقُ واحدَ بكسل ثابتاً — حدَّ الجدول
+       المنهار. */
+    .ex-mcq { table-layout: fixed; }
+    .ex-mcq .q { font-weight: 700; }
+    .ex-mcq .o { font-size: 14px; }
+    .ex-mcq td { overflow-wrap: anywhere; }
+    /* ورقةٌ إنجليزيّة: الاتّجاهُ من اليسار، فتنقلب الجداولُ والترويسةُ معاً
+       بلا قاعدةٍ لكلّ عنصر. والخاناتُ الموسَّطةُ تبقى موسَّطة. */
+    .ex-ltr { direction: ltr; text-align: left; }
+    /* الترويسةُ وحدَها تبقى على ترتيبها العربيّ: «المملكة العربية السعودية»
+       جهةَ اليمين كما في كلّ ورقةٍ رسميّة — بطلبه. والنصُّ داخلها إنجليزيٌّ
+       من اليسار، فالاتّجاهُ يُعاد لكلّ جهةٍ على حدة. */
+    .ex-ltr .ex-head { direction: rtl; }
+    .ex-ltr .ex-head .side   { direction: ltr; text-align: right; }
+    .ex-ltr .ex-head .side.l { direction: ltr; text-align: left; }
+    .ex-ltr .ex-title { text-align: center; }
+    /* «important» ليست ترفاً هنا: تنسيقُ الطباعة العامّ يُحقن في مسرح
+       التصدير محصوراً بمعرّفه، وفيه «th, td { text-align: right }» —
+       ومعرّفٌ يغلب كلَّ صنفٍ في هذا الملف. والعربيّةُ أخفت ذلك لأنّ اليمين
+       صوابُها، فلم ينكشف إلّا يوم صارت الورقةُ إنجليزيّة. */
+    .ex-ltr .ex-tbl th, .ex-ltr .ex-tbl td,
+    .ex-ltr .ex-key  th, .ex-ltr .ex-key  td,
+    .ex-ltr .ex-info td { text-align: left !important; }
+    .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m, .ex-ltr .ex-key .m,
+    .ex-ltr .ex-mcq .o, .ex-ltr .ex-info .mk { text-align: center !important; }
+    .ex-tbl-wrap { margin-bottom: 16px; }
+    .ex-lines { margin-bottom: 16px; }
+    .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
+    .ex-key { width: 100%; border-collapse: collapse; }
+    .ex-key td, .ex-key th { border: 1px solid #111; padding: 8px 10px; font-size: 14px; }
+    .ex-key th { background: #F0F0F0; font-weight: 700; font-size: 13px; }
+    .ex-key .m { text-align: center; width: 46px; font-weight: 700; }
+    
+
+/* ── بدائلُ حرف الخيار (معاينة) ── */
+.v .obx { display:inline-flex; align-items:center; justify-content:center;
+          width:19px; height:19px; border:1px solid #111; border-radius:3px;
+          font-size:12.5px; font-weight:700; line-height:1; flex:none;
+          margin-inline-end:7px; vertical-align:-3px; }
+.v-b .o, .v-c .o { }
+.v-b .ow, .v-c .ow { display:flex; align-items:flex-start; gap:7px; text-align:start; }
+.v-b .ow .obx, .v-c .ow .obx { margin-inline-end:0; margin-top:1px; }
+.v-c .obx { background:#EDEDED; }
+
+body{margin:0;padding:16px 12px 40px;background:#EDEEF0;font-family:'IBM Plex Sans Arabic',sans-serif}
+.pv{max-width:700px;margin:0 auto 24px}
+.pk{font-size:13px;font-weight:700;color:#111;margin-bottom:4px}
+.pn{font-size:12px;color:#555;margin-bottom:8px;line-height:1.7}
+.sheet{background:#fff;padding:18px 16px;color:#111;box-shadow:0 2px 10px rgba(0,0,0,.14);
+       font-family:'IBM Plex Sans Arabic',sans-serif}
+.sheet table{margin-bottom:14px}
+.ltr{direction:ltr}
+</style></head><body>
+<div class="pv"><div class="pk">الحالي · أ) نصّ الخيار</div><div class="pn">كما هو اليوم — الحرفُ وقوسٌ بعده.</div><div class="sheet"><table class="ex-tbl ex-mcq "><tr><th class="m">م</th><th colspan="4">السؤال وخياراته</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">أيُّ الأجزاء الآتية مسؤولٌ عن نقل الماء في النبات؟</td></tr><tr><td class="o">أ) الخشب</td><td class="o">ب) اللحاء</td><td class="o">ج) الورقة</td><td class="o">د) الزهرةُ الكاملةُ ذاتُ البتلات</td></tr></table><div class="ltr ex-ltr"><table class="ex-tbl ex-mcq "><tr><th class="m">No.</th><th colspan="4">Question and choices</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">Which part of the plant transports water?</td></tr><tr><td class="o">A) Xylem</td><td class="o">B) Phloem</td><td class="o">C) Leaf</td><td class="o">D) The complete flower with petals</td></tr></table></div></div></div><div class="pv"><div class="pk">أ · مربّعٌ حول الحرف</div><div class="pn">النصُّ يبدأ بعد المربّع مباشرةً. والخيارُ الطويل يلتفّ <b>تحت</b> المربّع.</div><div class="sheet"><table class="ex-tbl ex-mcq v v-a"><tr><th class="m">م</th><th colspan="4">السؤال وخياراته</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">أيُّ الأجزاء الآتية مسؤولٌ عن نقل الماء في النبات؟</td></tr><tr><td class="o"><span class="obx">أ</span>الخشب</td><td class="o"><span class="obx">ب</span>اللحاء</td><td class="o"><span class="obx">ج</span>الورقة</td><td class="o"><span class="obx">د</span>الزهرةُ الكاملةُ ذاتُ البتلات</td></tr></table><div class="ltr ex-ltr"><table class="ex-tbl ex-mcq v v-a"><tr><th class="m">No.</th><th colspan="4">Question and choices</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">Which part of the plant transports water?</td></tr><tr><td class="o"><span class="obx">A</span>Xylem</td><td class="o"><span class="obx">B</span>Phloem</td><td class="o"><span class="obx">C</span>Leaf</td><td class="o"><span class="obx">D</span>The complete flower with petals</td></tr></table></div></div></div><div class="pv"><div class="pk">ب · مربّعٌ والنصُّ في عمودٍ مستقلّ</div><div class="pn">الخيارُ الطويلُ يبقى محاذياً لأوّل سطره ولا يمرّ تحت المربّع.</div><div class="sheet"><table class="ex-tbl ex-mcq v v-b"><tr><th class="m">م</th><th colspan="4">السؤال وخياراته</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">أيُّ الأجزاء الآتية مسؤولٌ عن نقل الماء في النبات؟</td></tr><tr><td class="o"><span class="ow"><span class="obx">أ</span><span>الخشب</span></span></td><td class="o"><span class="ow"><span class="obx">ب</span><span>اللحاء</span></span></td><td class="o"><span class="ow"><span class="obx">ج</span><span>الورقة</span></span></td><td class="o"><span class="ow"><span class="obx">د</span><span>الزهرةُ الكاملةُ ذاتُ البتلات</span></span></td></tr></table><div class="ltr ex-ltr"><table class="ex-tbl ex-mcq v v-b"><tr><th class="m">No.</th><th colspan="4">Question and choices</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">Which part of the plant transports water?</td></tr><tr><td class="o"><span class="ow"><span class="obx">A</span><span>Xylem</span></span></td><td class="o"><span class="ow"><span class="obx">B</span><span>Phloem</span></span></td><td class="o"><span class="ow"><span class="obx">C</span><span>Leaf</span></span></td><td class="o"><span class="ow"><span class="obx">D</span><span>The complete flower with petals</span></span></td></tr></table></div></div></div><div class="pv"><div class="pk">ج · مربّعٌ مظلَّلٌ والنصُّ في عمود</div><div class="pn">الظلُّ يُبرز الحرفَ على الطابعات الباهتة.</div><div class="sheet"><table class="ex-tbl ex-mcq v v-c"><tr><th class="m">م</th><th colspan="4">السؤال وخياراته</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">أيُّ الأجزاء الآتية مسؤولٌ عن نقل الماء في النبات؟</td></tr><tr><td class="o"><span class="ow"><span class="obx">أ</span><span>الخشب</span></span></td><td class="o"><span class="ow"><span class="obx">ب</span><span>اللحاء</span></span></td><td class="o"><span class="ow"><span class="obx">ج</span><span>الورقة</span></span></td><td class="o"><span class="ow"><span class="obx">د</span><span>الزهرةُ الكاملةُ ذاتُ البتلات</span></span></td></tr></table><div class="ltr ex-ltr"><table class="ex-tbl ex-mcq v v-c"><tr><th class="m">No.</th><th colspan="4">Question and choices</th></tr><tr><td class="m" rowspan="2">١</td><td class="q" colspan="4">Which part of the plant transports water?</td></tr><tr><td class="o"><span class="ow"><span class="obx">A</span><span>Xylem</span></span></td><td class="o"><span class="ow"><span class="obx">B</span><span>Phloem</span></span></td><td class="o"><span class="ow"><span class="obx">C</span><span>Leaf</span></span></td><td class="o"><span class="ow"><span class="obx">D</span><span>The complete flower with petals</span></span></td></tr></table></div></div></div>
+</body></html>
