@@ -38,7 +38,7 @@
 
     <link rel="stylesheet" href="css/main.css?v=D32">
     <link rel="stylesheet" href="css/components.css?v=13">
-    <link rel="stylesheet" href="css/views.css?v=D305">
+    <link rel="stylesheet" href="css/views.css?v=D307">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
 
     <!-- الأرضية البيضاء — المظهر المعتمد. يأتي بعد ملفّات التصميم كلِّها
@@ -64,10 +64,6 @@
         if (q) { localStorage.setItem('calm', q[1]); localStorage.setItem('calm_ui', '1'); }
         if (localStorage.getItem('calm') === '1') document.body.classList.add('theme-calm');
 
-        /* معاينةُ بطاقة الإجازة بالمقولات — ?rest=1 ترفعها و?rest=0 تخفضها. */
-        var rq = /[?&]rest=([01])/.exec(location.search);
-        if (rq) localStorage.setItem('restQuote', rq[1]);
-        if (localStorage.getItem('restQuote') === '1') document.body.classList.add('rest-quote');
 
     } catch (e) {}
 })();
@@ -352,7 +348,7 @@
     <script src="js/components/subject-picker.js?v=2"></script>
     <script src="js/views/login.js?v=28"></script>
     <script src="js/views/setup.js?v=13"></script>
-    <script src="js/views/dashboard.js?v=C60"></script>
+    <script src="js/views/dashboard.js?v=C61"></script>
     <script src="js/views/classes.js?v=S24"></script>
     <script type="text/lazy-view" data-view="shortcuts" data-src="js/views/shortcuts.js?v=C8"></script>
     <script src="js/views/profile.js?v=D27"></script>
