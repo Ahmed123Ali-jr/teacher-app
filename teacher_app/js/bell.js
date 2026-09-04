@@ -177,7 +177,12 @@
         const byDay = {};
         try {
             const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-            rows.filter((r) => r.class_id).forEach((r) => {
+            /* وحصّةُ الانتظار حصّةٌ يقفها المعلّم — بقراره (٤ سبتمبر ٢٠٢٦):
+               «حصّة الانتظار ضُمّها للجرس». والدائمُ منها وحدَه يدخل الخطّةَ
+               الأسبوعيّة؛ أمّا «انتظارُ اليوم» فيمضي مع يومه، ولو جُدول
+               أسبوعيّاً لرنّ في كلّ خميسٍ بعده على حصّةٍ لم تعد قائمة.
+               وهو محسوبٌ في الحلقة داخل التطبيق أدناه. */
+            rows.filter((r) => r.class_id || r.wait_kind === 'perm').forEach((r) => {
                 if (!byDay[r.day]) byDay[r.day] = new Set();
                 byDay[r.day].add(r.period);
             });
@@ -408,7 +413,13 @@
         if (prefs.classAlert || prefs.schoolBell) {
             try {
                 const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
-                rows.filter((r) => r.day === dayIdx && r.class_id)
+                /* هنا يدخل «انتظارُ اليوم» أيضاً — بتاريخه، فلا يُحسب صفُّ
+                   الأمس الذي لم يُنظَّف بعد. */
+                const today = todayKey();
+                rows.filter((r) => r.day === dayIdx && (
+                        r.class_id
+                        || r.wait_kind === 'perm'
+                        || (r.wait_kind === 'today' && r.wait_date === today)))
                     .forEach((r) => mine.add(r.period));
             } catch { /* نكمل بالجرس وحده */ }
         }
