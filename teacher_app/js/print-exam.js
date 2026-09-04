@@ -169,8 +169,10 @@
     .ex-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
     .ex-head .side { font-size: 13.5px; line-height: 2.05; font-weight: 700; }
     .ex-head .side.l { text-align: left; }
-    .ex-logo { width: 78px; height: 78px; object-fit: contain; }
-    .ex-logo-ph { width: 78px; height: 78px; }
+    /* يُقاس بالعرض ويُترك ارتفاعُه: نسبةُ الشعار ‎1.32:1‎، ومربّعُ ‎78×78‎
+       كان يهبط به إلى ‎59px‎ ارتفاعاً فيصغر عمّا يليق بترويسةٍ رسميّة. */
+    .ex-logo { width: 96px; height: auto; object-fit: contain; }
+    .ex-logo-ph { width: 96px; height: 73px; }
     .ex-rule  { border: 0; border-top: 2px solid #111; margin: 10px 0 0; }
     .ex-rule2 { border: 0; border-top: 1px solid #111; margin: 2px 0 14px; }
     .ex-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 14px !important; }
@@ -470,8 +472,19 @@
             s.include_grade !== false && total ? `${H.total}: ${H.num(total)}` : ''
         ].filter(Boolean).join('<br>');
 
-        const logo = p.logoDataUrl
-            ? `<img class="ex-logo" src="${p.logoDataUrl}" alt="">`
+        /* ══ شعارُ الوزارة، لا شعارُ المدرسة ══
+           قرارُه (٤ سبتمبر ٢٠٢٦) بعد أن عُرضت عليه ثلاثةُ أشكال:
+           **«نعتمد شعار الوزارة فقط»**. وكانت الخانةُ تحمل شعارَ المدرسة
+           الذي يرفعه المعلّم — ومن لم يرفع (وهم الأكثر) طبع ورقتَه وفي
+           وسط ترويستها فراغٌ مربّعٌ ‎78×78‎.
+
+           وشعارُ المدرسة لم يسقط من التطبيق: ملفُّ الإنجاز ما زال يطبعه
+           (`print-portfolio.js`)، ورفعُه في الإعدادات كما هو.
+
+           والبديلُ خانةٌ فارغةٌ لا انهيار: لو غاب `moe-logo.js` بقيت
+           الترويسةُ على ثلاثة أعمدةٍ ولم تنزلق. */
+        const logo = global.MoeLogo
+            ? `<img class="ex-logo" src="${global.MoeLogo}" alt="وزارة التعليم">`
             : '<div class="ex-logo-ph"></div>';
 
         const term = p.academicYear ? ` — ${esc(p.academicYear)}` : '';
