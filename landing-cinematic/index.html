@@ -3,8 +3,9 @@
      فصول — صفحةُ هبوطٍ سينمائيّة
      مبنيّةٌ على محرّك cinematic-landing-kit (Lenis + GSAP على مؤقّتٍ واحد،
      هيدرٌ يختفي وينزل، جوٌّ يتبدّل لكلّ قسم، حبيبات، شريطُ تقدّم).
-     وقلبُها **العرضُ التلقائيّ**: سبعةُ فصولٍ 4K من التطبيق الحقيقيّ،
-     تُثبَّت الشاشةُ لها وتتوالى وحدَها، وشريطٌ يقفز إلى أيّها.
+     وقلبُها **سبعةُ أقسامٍ متتالية**، كلٌّ تحت الذي قبله: في كلِّ قسمٍ
+     شاشةٌ من التطبيق الحقيقيّ تُبنى أمامك بذوبان ثلاثِ لقطات، وشريطٌ
+     ملتصقٌ أعلى الصفحة يقفز إلى أيّها.
      ============================================================================ -->
 <html lang="ar" dir="rtl">
 <head>
@@ -117,38 +118,76 @@ section{position:relative}
 @keyframes cue{0%{transform:scaleY(.2);opacity:.2;transform-origin:top}
   50%{transform:scaleY(1);opacity:1}100%{transform:scaleY(.2);opacity:.2;transform-origin:bottom}}
 
-/* ══ ٢ · العرض المثبَّت ══ */
-/* ‎٦٢٠vh‎ لمئةٍ وخمسة إطارات ≈ ‎٦vh‎ للإطار — سحبٌ ناعمٌ لا قافز.
-   والطولُ هنا مقصود: التمريرُ **يقود** المشهد، فكلُّ حركةٍ منه تُغيّر شيئاً. */
-#tour{height:620vh}
-#tour .pin{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:clamp(12px,2.2vh,26px);padding:clamp(64px,10vh,110px) clamp(14px,3vw,40px) clamp(20px,4vh,46px);overflow:hidden}
-#tour .tnav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;z-index:4}
-#tour .tnav button{font-size:13px;font-weight:500;color:var(--ink-faint);padding:7px 14px;
+/* ══ ٢ · الفصولُ السبعة — كلٌّ تحت الذي قبله ══ */
+/* لا تثبيتَ ولا صندوقٌ واحد: كلُّ شاشةٍ قسمٌ قائمٌ بذاته يُنزَل إليه
+   بالتمرير الطبيعيّ. والحركةُ داخلَ الجهاز لا تحته — ثلاثُ لقطاتٍ
+   حقيقيّةٍ من التطبيق تذوب إحداها في الأخرى حين يدخل القسمُ المجال،
+   فترى الشاشةَ تُبنى أمامك كما تُبنى فيه فعلاً. */
+/* ‏clip‎ لا ‎hidden‎: الأخيرُ يجعل القسمَ حاويةَ تمريرٍ فيموت التصاقُ
+   الشريط. وبه تُقصّ الورقةُ الطالّةُ حين يضيق العرض (قِيس: ٨بكسل
+   تخرج عند ‎1024‎). */
+#tour{padding:clamp(70px,12vh,150px) 0 clamp(24px,4vh,60px);overflow-x:clip}
+#tour .head{text-align:center;margin-bottom:clamp(26px,4vh,54px)}
+#tour h2{font-size:clamp(32px,5.2vw,68px);margin-top:10px}
+#tour .lead{margin:18px auto 0;max-width:46ch;color:var(--ink-soft);font-size:clamp(15px,1.7vw,19px)}
+
+/* شريطُ الفصول: يلتصق أعلى الشاشة فيبقى الانتقالُ بيد المعلّم */
+.tnav{position:sticky;top:var(--hdr,68px);z-index:12;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;
+  padding:14px clamp(14px,3vw,30px) 18px;margin-bottom:clamp(14px,3vh,38px);
+  background:linear-gradient(180deg,rgba(8,11,16,.95) 46%,rgba(8,11,16,0));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.tnav button{font-size:13px;font-weight:500;color:var(--ink-faint);padding:7px 14px;white-space:nowrap;
   border-radius:999px;border:1px solid transparent;transition:color .35s,border-color .35s,background .35s}
-#tour .tnav button:hover{color:var(--ink)}
-#tour .tnav button.on{color:var(--gold-lit);border-color:rgba(201,169,97,.42);background:rgba(201,169,97,.09)}
-#tour .screen{position:relative;width:min(100%,1180px);aspect-ratio:16/9;border-radius:14px;
-  overflow:hidden;background:var(--void);
-  box-shadow:0 60px 140px -60px rgba(0,0,0,.95),0 0 0 1px var(--line),
-             0 0 120px -40px rgba(0,112,120,.5)}
-/* الفيلمُ تسلسلُ إطاراتٍ يُرسم على canvas ويُسحب بالتمرير — لا مشغّلَ
-   فيديو ولا `currentTime`. فالمشهدُ يتقدّم بيد المستخدم لا بساعةٍ تمضي
-   وحدَها، ولا ومضةَ تحميلٍ بين مشهدٍ وآخر. (memory/02) */
-#tour canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-#tour .ldr{position:absolute;inset-inline-start:clamp(16px,3vw,40px);
-  bottom:clamp(46px,7vh,74px);z-index:5;font-family:"Cormorant Garamond",serif;
-  letter-spacing:.26em;font-size:11.5px;color:var(--ink-faint);transition:opacity .6s}
-#tour .cap{position:absolute;inset-inline-end:clamp(16px,3vw,44px);bottom:clamp(16px,3vh,40px);
-  z-index:3;max-width:min(72%,540px);text-align:start;font-family:"El Messiri",serif;
-  font-size:clamp(15px,1.9vw,26px);line-height:1.42;text-shadow:0 2px 26px rgba(0,0,0,.92);
-  opacity:0;transform:translateY(12px);transition:opacity .75s var(--ease),transform .75s var(--ease)}
-#tour .cap.on{opacity:1;transform:none}
-#tour .rail{position:absolute;inset-inline-start:clamp(16px,3vw,40px);bottom:clamp(18px,3vh,42px);
-  z-index:3;display:flex;gap:7px}
-#tour .rail i{display:block;width:18px;height:2px;border-radius:2px;background:rgba(234,238,245,.2);
-  transition:background .45s,width .45s var(--ease)}
-#tour .rail i.on{background:var(--gold);width:32px}
+.tnav button:hover{color:var(--ink)}
+.tnav button.on{color:var(--gold-lit);border-color:rgba(201,169,97,.42);background:rgba(201,169,97,.09)}
+@media(max-width:760px){
+  .tnav{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}
+  .tnav::-webkit-scrollbar{display:none}
+}
+
+.ch{display:grid;grid-template-columns:1fr;gap:clamp(30px,5vw,76px);align-items:center;
+  padding-block:clamp(54px,10vh,128px);scroll-margin-top:calc(var(--hdr,68px) + 76px)}
+.ch + .ch{border-top:1px solid var(--hair)}
+@media(min-width:940px){
+  .ch{grid-template-columns:1fr .74fr}
+  .ch.flip .dev{order:-1}
+}
+.ch h3{font-size:clamp(26px,3.6vw,48px);margin-top:12px;text-wrap:balance}
+.ch .say{margin-top:16px;max-width:44ch;color:var(--ink-soft);font-size:clamp(15px,1.7vw,19px)}
+.ch .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.ch .tags span{font-size:12.5px;color:var(--ink-faint);border:1px solid var(--hair);
+  border-radius:999px;padding:6px 14px}
+
+/* الجهازُ: هالةٌ خلفَه، وإطارٌ رفيع، وثلاثُ لقطاتٍ فوق بعضها */
+.dev{position:relative;justify-self:center;width:min(316px,72vw)}
+.dev .halo{position:absolute;inset:-14% -32%;z-index:0;pointer-events:none;filter:blur(30px);
+  background:radial-gradient(circle at 50% 42%,rgba(0,112,120,.52),rgba(0,166,180,.1) 46%,transparent 70%)}
+.phone{position:relative;z-index:1;aspect-ratio:1125/2436;border-radius:min(9%,34px);overflow:hidden;
+  background:var(--void);
+  box-shadow:0 46px 108px -44px rgba(0,0,0,.95),0 0 0 1px var(--line),
+             0 0 0 7px #0C1119,0 0 0 8px rgba(234,238,245,.09)}
+/* آخرُ لقطةٍ هي الظاهرةُ افتراضاً — فمن أطفأ الحركةَ يرى الشاشةَ تامّةً */
+.phone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .95s var(--ease-cin)}
+.phone img:last-child{opacity:1}
+.phone::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(196deg,rgba(255,255,255,.09),transparent 34%)}
+/* الاختباراتُ وحدَها: ورقتُها المطبوعةُ تطلّ خلف الجهاز — فالشاشةُ هناك
+   قائمةٌ فيها اختبارٌ واحد، والحكايةُ كلُّها في ما يخرج منها. */
+.dev .peek{position:absolute;top:6%;width:80%;z-index:0;border-radius:3px;
+  box-shadow:0 36px 84px -30px rgba(0,0,0,.94),0 0 0 1px rgba(234,238,245,.13)}
+.ch:not(.flip) .dev .peek{inset-inline-end:-56%;transform:rotate(-7deg)}
+.ch.flip .dev .peek{inset-inline-start:-56%;transform:rotate(7deg)}
+@media(max-width:939px){.dev .peek{display:none}}
+
+/* بعدَ القاعدةِ الأساسيّة لا قبلَها: تساوي الأولويّةِ يجعل الأخيرَ هو الحاكم */
+@media(min-width:940px){
+  /* في العمودين يتقاسم الجهازُ ارتفاعَ الشاشة مع الهيدر والشريط والحشوة،
+     فيُقيَّد عرضُه بما يُبقيه كاملاً — ‎1125/2436 = .4618‎ (قِيس: بلا هذا
+     القيدِ يُقصّ شريطُ التطبيق السفليُّ عند ارتفاع ‎900‎). */
+  .dev{width:min(316px,34vw,calc((100svh - 300px) * .4618))}
+}
+
 /* بوّابةُ البدء: الجوالُ ينزل، ثمّ ضبابةٌ وزرّ */
 .btn{border-radius:999px;font-family:"El Messiri",serif;font-weight:700;text-decoration:none;
   display:inline-block;transition:transform .35s var(--ease),box-shadow .35s,background .35s,color .35s}
@@ -230,7 +269,7 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
 <header id="header">
   <a class="brand" href="#hero"><img src="assets/brand/logo-mark.png" alt=""><b>فصول</b></a>
   <nav class="hnav">
-    <a href="#tour">الاستعراض</a>
+    <a href="#tour">الشاشات</a>
     <a href="#papers">الأوراق</a>
     <a href="#nums">في التطبيق</a>
     <a class="hcta" href="https://ahmed123ali-jr.github.io/teacher-app/">ابدأ الآن</a>
@@ -260,16 +299,108 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
     </div>
   </section>
 
-  <!-- ٢ · العرض -->
-  <section id="tour" data-amb="#05080C" data-glow=".62">
-    <div class="pin">
-      <div class="tnav" id="tnav"></div>
-      <div class="screen">
-        <canvas id="film"></canvas>
-        <div class="cap" id="cap"></div>
-        <div class="rail" id="rail"></div>
-        <div class="ldr" id="ldr">…</div>
+  <!-- ٢ · الفصولُ السبعة -->
+  <section id="tour" data-amb="#05080C" data-glow=".56">
+    <div class="wrap">
+      <div class="head rv">
+        <span class="idx">٠٠ — العرض</span>
+        <h2 class="gold-text">سبعُ شاشاتٍ، واحدةً تلوَ الأخرى</h2>
+        <p class="lead">كلُّ لقطةٍ هنا من التطبيق نفسِه، مأخوذةٌ وهو يعمل بلا إنترنت. مرِّر لتنزل من شاشةٍ إلى التي تليها.</p>
       </div>
+    </div>
+    <div class="tnav" id="tnav" role="tablist" aria-label="فصولُ العرض"></div>
+    <div class="wrap">
+    <article class="ch" id="ch-schedule" aria-labelledby="h-schedule">
+      <div class="ch-copy">
+        <span class="idx rv">٠١ — الجدول</span>
+        <h3 class="rv" id="h-schedule">جدولُك صورةٌ… فيصير تطبيقاً</h3>
+        <p class="say rv">ارفع صورةَ جدولك الأسبوعيّ، فيُقرأ ويُبنى: خمسةُ أيامٍ في سبع حصص، وفصولُك تُنشأ معه بأسمائها ومراحلها — ثمّ لا تعود إليه.</p>
+        <div class="tags rv"><span>صورة أو ملف</span><span>خمسةُ أيام × سبعُ حصص</span><span>الفصلان الدراسيّان</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/schedule-0.jpg" alt=""  width="820" height="1776"><img src="assets/shots/schedule-1.jpg" alt=""  width="820" height="1776"><img src="assets/shots/schedule-2.jpg" alt="شاشةُ الجدول في تطبيق فصول"  width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch flip" id="ch-home" aria-labelledby="h-home">
+      <div class="ch-copy">
+        <span class="idx rv">٠٢ — الرئيسية</span>
+        <h3 class="rv" id="h-home">شاشةٌ تعرف يومَك</h3>
+        <p class="say rv">حصصُ اليوم مرتَّبةً بأوقاتها، وحصّتُك الجاريةُ الآن في بطاقةٍ واحدةٍ معها زرُّ سجلّها — تفتحه وأنت واقفٌ أمام الصفّ.</p>
+        <div class="tags rv"><span>حصصُ اليوم</span><span>حصّتُك الآن</span><span>سجلُّها بضغطة</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/home-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/home-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/home-2.jpg" alt="شاشةُ الرئيسية في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch" id="ch-register" aria-labelledby="h-register">
+      <div class="ch-copy">
+        <span class="idx rv">٠٣ — سجل المتابعة</span>
+        <h3 class="rv" id="h-register">أربعةٌ وعشرون طالباً في ثوانٍ</h3>
+        <p class="say rv">أربعُ حالاتٍ للحضور بضغطةٍ واحدة، وخاناتُ تقييمٍ تصنعها أنت كما تريدها. والأسماءُ تُستورَد من كشفِ إكسل أو صورة — بلا دمجٍ ولا حذفِ اسم.</p>
+        <div class="tags rv"><span>حاضر · غائب · متأخّر · معذور</span><span>خاناتٌ تصنعها أنت</span><span>استيرادُ الكشف</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/register-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/register-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/register-2.jpg" alt="شاشةُ سجل المتابعة في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch flip" id="ch-classes" aria-labelledby="h-classes">
+      <div class="ch-copy">
+        <span class="idx rv">٠٤ — الفصول</span>
+        <h3 class="rv" id="h-classes">مرتَّبةٌ بالمراحل، كما تفكّر بها</h3>
+        <p class="say rv">ابتدائيٌّ ومتوسّطٌ وثانويّ. ولكلِّ فصلٍ ستّةُ تبويبات: طلابُه وكتبُه وتوزيعُ منهجه واختباراتُه وأوراقُه وواجباتُه.</p>
+        <div class="tags rv"><span>ثلاثُ مراحل</span><span>ستّةُ تبويباتٍ للفصل</span><span>كتبٌ وتوزيعُ منهج</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/classes-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/classes-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/classes-2.jpg" alt="شاشةُ الفصول في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch" id="ch-exams" aria-labelledby="h-exams">
+      <div class="ch-copy">
+        <span class="idx rv">٠٥ — الاختبارات</span>
+        <h3 class="rv" id="h-exams">من السؤال إلى الورقة</h3>
+        <p class="say rv">معالجٌ من أربع خطوات: خمسةُ أنواعِ أسئلة، ثمّ مراجعة، ثمّ ورقةٌ بترويسة وزارة التعليم — ومعها نموذجُ إجابةٍ في صفحةٍ للمعلّم وحدَه.</p>
+        <div class="tags rv"><span>خمسةُ أنواعِ أسئلة</span><span>ترويسةٌ رسميّة</span><span>نموذجُ إجابةٍ منفصل</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <img class="peek" src="assets/paper-exam.jpg" alt="ورقةُ اختبارٍ مطبوعةٌ من التطبيق بترويسة وزارة التعليم" loading="lazy">
+        <div class="phone"><img src="assets/shots/exams-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/exams-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/exams-2.jpg" alt="شاشةُ الاختبارات في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch flip" id="ch-initiatives" aria-labelledby="h-initiatives">
+      <div class="ch-copy">
+        <span class="idx rv">٠٦ — المبادرات</span>
+        <h3 class="rv" id="h-initiatives">ثلاثون مبادرةً بخطواتها</h3>
+        <p class="say rv">كتالوجٌ جاهزٌ لكلِّ مبادرةٍ فيه خطواتُها وشواهدُها المقترحة — تختار ما يناسب فصلك، فتدخل ملفَّ إنجازك بشواهدها.</p>
+        <div class="tags rv"><span>ثلاثون مبادرة</span><span>خطواتٌ وشواهد</span><span>تدخل الملفَّ مباشرة</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/initiatives-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/initiatives-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/initiatives-2.jpg" alt="شاشةُ المبادرات في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
+
+    <article class="ch" id="ch-portfolio" aria-labelledby="h-portfolio">
+      <div class="ch-copy">
+        <span class="idx rv">٠٧ — ملف الإنجاز</span>
+        <h3 class="rv" id="h-portfolio">عشرةُ أقسام، ثلاثةٌ تملأ نفسَها</h3>
+        <p class="say rv">بياناتُك وشهاداتُك وجدولُك واختباراتُك وواجباتُك ومبادراتُك — ثمّ يخرج مستنداً واحداً بغلافٍ وفهرس، جاهزاً للتسليم.</p>
+        <div class="tags rv"><span>عشرةُ أقسام</span><span>ثلاثةٌ تُملأ تلقائيّاً</span><span>غلافٌ وفهرس</span></div>
+      </div>
+      <div class="dev rv">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="phone"><img src="assets/shots/portfolio-0.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/portfolio-1.jpg" alt="" loading="lazy" width="820" height="1776"><img src="assets/shots/portfolio-2.jpg" alt="شاشةُ ملف الإنجاز في تطبيق فصول" loading="lazy" width="820" height="1776"></div>
+      </div>
+    </article>
     </div>
   </section>
 
@@ -427,98 +558,92 @@ if (hasG && !reduce){
 } else document.querySelectorAll("#hero .mark,#hero h1,#hero .tag,#hero .lat")
         .forEach(function(e){ e.style.opacity = 1; });
 
-/* ══ العرض ══ */
-var CH = [
-  { k:"schedule",    t:"الجدول",       c:"ارفع صورةَ جدولك — فتُبنى فصولُك وحصصُك معه." },
-  { k:"home",        t:"الرئيسية",     c:"الرئيسيّةُ تعرف يومَك: حصصَه، وحصّتَك الآن، وزرَّ سجلّها." },
-  { k:"register",    t:"سجل المتابعة", c:"أربعُ حالاتٍ بضغطة، وأربعةٌ وعشرون طالباً في ثوانٍ." },
-  { k:"classes",     t:"الفصول",       c:"فصولُك مرتَّبةٌ بالمراحل — كما تفكّر بها." },
-  { k:"exams",       t:"الاختبارات",   c:"اكتب أسئلتك، وتخرج الورقةُ بترويسة الوزارة جاهزةً للطباعة." },
-  { k:"initiatives", t:"المبادرات",    c:"ثلاثون مبادرةً بخطواتها وشواهدها المقترحة." },
-  { k:"portfolio",   t:"ملف الإنجاز",  c:"عشرةُ أقسام، ثلاثةٌ تملأ نفسَها — ثمّ يخرج مستنداً بغلافٍ وفهرس." }
-];
-var cvs=document.getElementById("film"), cap=document.getElementById("cap"),
-    rail=document.getElementById("rail"), tnav=document.getElementById("tnav"),
-    ldr=document.getElementById("ldr"),
-    stage=cvs.closest(".screen"), ctx=cvs.getContext("2d",{alpha:false});
+/* ══ الفصولُ السبعة ══
+   لا canvas ولا تسلسلَ إطارات: كلُّ قسمٍ يقف بنفسه. والحركةُ ثلاثُ
+   لقطاتٍ تذوب داخلَ الجهاز حين يدخل القسمُ المجال — مرّةً واحدةً لا
+   تتكرّر، فلا تشوّشُ من يعود بالتمرير إلى الأعلى. */
+var secs = [].slice.call(document.querySelectorAll(".ch")),
+    tnav = document.getElementById("tnav");
 
-var MARKS = [
-  {k:"schedule",a:0,b:14},{k:"home",a:15,b:29},{k:"register",a:30,b:44},
-  {k:"classes",a:45,b:59},{k:"exams",a:60,b:74},{k:"initiatives",a:75,b:89},
-  {k:"portfolio",a:90,b:104}
-];
-var N = 105;
-var frames = new Array(N), loaded = 0, errored = 0, ready = false, cur = -1, last = 0, ST = null;
+/* ارتفاعُ الهيدر يُقاس ولا يُكتب — فالحشوةُ clamp تتغيّر بالمقاس.
+   والشريطُ يلتصق تحته، فلا يغطّيه الهيدرُ حين يعود بالتمرير لأعلى. */
+function hdrH(){
+  var h = Math.round(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty("--hdr", h + "px");
+  return h;
+}
+hdrH(); addEventListener("resize", function(){ hdrH(); if (hasG) ScrollTrigger.refresh(); }, {passive:true});
 
-CH.forEach(function(c,i){
-  var b=document.createElement("button"); b.textContent=c.t; b.dataset.i=i;
-  tnav.appendChild(b); rail.appendChild(document.createElement("i"));
+secs.forEach(function(sec){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.textContent = sec.querySelector(".idx").textContent.split("—")[1].trim();
+  tnav.appendChild(b);
 });
-var dots = rail.querySelectorAll("i"), btns = tnav.querySelectorAll("button");
+var btns = tnav.querySelectorAll("button");
 
-var lastCh = -1;
-function paint(p){
-  var f = Math.round(p*(N-1)), ci = 0;
-  for (var j=0;j<MARKS.length;j++) if (f >= MARKS[j].a) ci = j;
-  if (ci !== lastCh){
-    lastCh = ci;
-    dots.forEach(function(d,j){ d.classList.toggle("on", j===ci); });
-    btns.forEach(function(b,j){ b.classList.toggle("on", j===ci); });
-    cap.classList.remove("on"); cap.textContent = CH[ci].c;
-    setTimeout(function(){ cap.classList.add("on"); }, 260);
+/* الشريطُ يُمرِّر إلى القسم — بيدِ المعلّم لا بمؤقّت */
+tnav.addEventListener("click", function(e){
+  var b = e.target.closest("button"); if (!b) return;
+  var i = [].indexOf.call(btns, b), el = secs[i];
+  var y = el.getBoundingClientRect().top + (window.lenis ? window.lenis.scroll : scrollY)
+          - hdrH() - tnav.offsetHeight - 10;
+  if (window.lenis) window.lenis.scrollTo(y, {duration:1.05}); else scrollTo({top:y, behavior:"smooth"});
+});
+
+function markCh(i){
+  btns.forEach(function(b,j){
+    var on = j === i;
+    b.classList.toggle("on", on);
+    if (on) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current");
+  });
+  /* الزرُّ الفعّالُ يبقى مرئيّاً في الشريط الأفقيّ على الجوال */
+  if (tnav.scrollWidth > tnav.clientWidth + 4 && btns[i])
+    btns[i].scrollIntoView({block:"nearest", inline:"center", behavior:"smooth"});
+}
+markCh(0);
+
+/* اللقطاتُ تبدأ من الأولى — ثمّ تُبنى الشاشةُ بالذوبان أمام الداخل.
+   ومن أطفأ الحركةَ تبقى عندَه اللقطةُ الأخيرةُ (التامّةُ) وحدَها. */
+if (!reduce) secs.forEach(function(sec){
+  sec.querySelectorAll(".phone img").forEach(function(im,j){ im.style.opacity = j ? 0 : 1; });
+});
+function playSec(sec){
+  sec.querySelectorAll(".phone img").forEach(function(im,j){
+    if (!j) return;
+    setTimeout(function(){ im.style.opacity = 1; }, 340 + j * 620);
+  });
+}
+
+/* التتبّعُ على ScrollTrigger لا على IntersectionObserver: الأخيرُ لا
+   يُطلق أصلاً في لسانٍ مخفيّ (لأنّ تسليمَه معلّقٌ بخطوة الرسم)، فيبقى
+   الشريطُ جامداً بلا خطأٍ يُرى. (memory/08) */
+if (hasG){
+  secs.forEach(function(sec, i){
+    var go = function(){ markCh(i); };
+    ScrollTrigger.create({ trigger:sec, start:"top 54%", end:"bottom 46%",
+      onEnter:go, onEnterBack:go });
+    if (!reduce) ScrollTrigger.create({ trigger:sec, start:"top 72%", once:true,
+      onEnter:function(){ playSec(sec); } });
+  });
+} else if ("IntersectionObserver" in window){
+  var nio = new IntersectionObserver(function(es){ es.forEach(function(e){
+    if (e.isIntersecting) markCh(secs.indexOf(e.target)); }); },
+    { rootMargin:"-46% 0px -46% 0px", threshold:0 });
+  secs.forEach(function(x){ nio.observe(x); });
+  if (!reduce){
+    var pio = new IntersectionObserver(function(es){ es.forEach(function(e){
+      if (!e.isIntersecting) return; pio.unobserve(e.target); playSec(e.target); }); },
+      { threshold:.34 });
+    secs.forEach(function(x){ pio.observe(x); });
   }
 }
 
-function fit(){
-  var dpr = Math.min(2, devicePixelRatio || 1),
-      w = stage.clientWidth, h = stage.clientHeight;
-  cvs.width = Math.round(w*dpr); cvs.height = Math.round(h*dpr);
-  cvs.style.width = w+"px"; cvs.style.height = h+"px";
-  cur = -1; if (ready) draw(last);
-}
-/* رسمٌ بحساب object-cover، وأرضيّةٌ بلون حافّة الإطارات فلا يظهر خيط */
-function draw(i){
-  i = Math.max(0, Math.min(N-1, i));
-  var im = frames[i];
-  if (!im){ for (var d=1; d<N; d++){ if (frames[i-d]){ im=frames[i-d]; break; }
-                                     if (frames[i+d]){ im=frames[i+d]; break; } } }
-  if (!im || i === cur) return;
-  cur = i; last = i;
-  var cw=cvs.width, ch=cvs.height, iw=im.naturalWidth, ih=im.naturalHeight,
-      s=Math.max(cw/iw, ch/ih), dw=iw*s, dh=ih*s;
-  ctx.fillStyle="#090C11"; ctx.fillRect(0,0,cw,ch);
-  ctx.drawImage(im,(cw-dw)/2,(ch-dh)/2,dw,dh);
-}
-function progIdx(){ return ST ? Math.round(Math.max(0,Math.min(1,ST.progress))*(N-1)) : 0; }
-function settle(){
-  if (ready) return;
-  if (loaded+errored >= N || loaded >= Math.ceil(N*0.6)){
-    if (!loaded) return;
-    ready = true; ldr.style.opacity = 0; fit(); draw(progIdx());
-    lastCh = -1; paint(ST ? ST.progress : 0);   /* الفصلُ الأوّل مُسمّىً قبل أن يُمرَّر */
-  } else ldr.textContent = "… " + Math.round(loaded/N*100) + "%";
-}
-for (var i=0;i<N;i++) (function(i){
-  var im = new Image(); im.decoding = "async";
-  im.onload  = function(){ frames[i]=im; loaded++; settle(); };
-  im.onerror = function(){ errored++; settle(); };
-  im.src = "assets/seq/f"+String(i).padStart(3,"0")+".jpg";
-})(i);
-setTimeout(function(){ if(!ready && loaded){ ready=true; ldr.style.opacity=0; fit(); draw(progIdx());
-  lastCh = -1; paint(ST ? ST.progress : 0); } }, 9000);
-addEventListener("resize", fit, {passive:true});
-
-if (hasG){
-  ST = ScrollTrigger.create({ trigger:"#tour", start:"top top", end:"bottom bottom", scrub:true,
-    onUpdate:function(self){ if (ready) draw(Math.round(self.progress*(N-1))); paint(self.progress); }});
-  /* الشريطُ يمرّر إلى بداية الفصل — فيبقى كلُّ شيءٍ بيد التمرير */
-  tnav.addEventListener("click", function(e){
-    var b = e.target.closest("button"); if (!b) return;
-    var m = MARKS[+b.dataset.i], sec = document.querySelector("#tour");
-    var y = sec.offsetTop + (sec.offsetHeight - innerHeight) * (m.a/(N-1));
-    if (window.lenis) window.lenis.scrollTo(y, {duration:1.1}); else scrollTo({top:y, behavior:"smooth"});
-  });
-} else { ldr.style.display="none"; }
+/* اختلافُ سرعةٍ خفيفٌ بين الجهاز والنصّ — عمقٌ بلا تشتيت */
+if (hasG && !reduce) secs.forEach(function(sec){
+  gsap.fromTo(sec.querySelector(".dev"), {y:34}, {y:-34, ease:"none",
+    scrollTrigger:{ trigger:sec, start:"top bottom", end:"bottom top", scrub:.55 }});
+});
 
 /* العدّاد — القيمةُ النهائيّةُ مكتوبةٌ سلفاً، والـJS يعدّ إن سُمح بالحركة */
 if (!reduce && "IntersectionObserver" in window){
