@@ -49,6 +49,19 @@
     <option value="dark">الوضع الداكن</option>
     <option value="light">الوضع الفاتح</option>
 </select>
+<!-- ولونُ المعلّم يدخل الفحص: الألوانُ تُحقَن على `body` فتغلب رموزَ
+     المظهر، فلا يُقاس ما يراه المعلّمُ إن قيس الافتراضيُّ وحدَه.
+     اتركه فارغاً للبترولي المنشور. -->
+<select id="appcolor">
+    <option value="">اللون الافتراضي (بترولي)</option>
+    <option value="#293F6B">كحلي — أفتحُ ما يُتاح</option>
+    <option value="#0E1625">كحلي — أغمقُ ما يُتاح</option>
+    <option value="#76211E">أحمر — أفتحُ ما يُتاح</option>
+    <option value="#4A370D">ذهبي — أفتحُ ما يُتاح</option>
+    <option value="#1B4630">أخضر — أفتحُ ما يُتاح</option>
+    <option value="#404040">أسود — أفتحُ ما يُتاح</option>
+    <option value="#1A1A1A">أسود — أغمقُ ما يُتاح</option>
+</select>
 <div id="bar"></div>
 <table id="out">
     <thead><tr><th>الشاشة / العنصر</th><th>النصّ</th><th>الألوان</th><th style="width:52px">النسبة</th></tr></thead>
@@ -375,6 +388,20 @@ async function run() {
 
     win.document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
     win.document.body.classList.add('theme-' + mode);
+
+    /* ══ يُعاد الطلاءُ دائماً بعد قلب المظهر ══
+       `paint` تقرأ `isDark()` من أصناف `body` **لحظةَ الطلاء**، وتحقن
+       السُّلَّمَ كلَّه سطريّاً — والسطريُّ يغلب قاعدةَ المظهر. فقلبُ الصنف
+       وحدَه يترك سُلَّمَ المظهر السابق قائماً: حبرٌ داكنٌ على أرضيّةٍ داكنة.
+
+       والتطبيقُ لا يقع فيه — `applyTheme` تنتهي إلى `syncAuto` وهي تُعيد
+       الطلاء. لكنّ هذه الأداةَ تقلب الصنفَ بيدها، فتقيس حالاً لا وجود له:
+       قِيست ‎١١٧‎ «عيباً» في الداكن كلُّها من هذا وحدَه (٤ سبتمبر ٢٠٢٦).
+       فتُحاكى `syncAuto` هنا حرفاً بحرف. */
+    const appColor = document.getElementById('appcolor').value;
+    if (win.ThemeColor) {
+        win.ThemeColor.paint(appColor || win.ThemeColor.current());
+    }
 
     /* تُجمَّد الحركةُ في المسرح قبل أيِّ قياس: حبّةُ التنقّل السفلي تتحرّك
        (`transition: background`)، و`auditPressed` يضع صنفَ الحالة على
