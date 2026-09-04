@@ -78,7 +78,7 @@
   .eyebrow{font-family:"Cormorant Garamond",serif;letter-spacing:.46em;text-transform:uppercase;font-size:13px;color:var(--gold-deep);font-weight:500}
   .idx{font-family:"El Messiri",serif;font-size:15px;color:var(--gold);font-weight:600}
   .gold-text{background:linear-gradient(180deg,var(--gold-bright),var(--gold) 50%,var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .multiply{mix-blend-mode:screen}   /* ONLY on non-GSAP-transformed product shots (see memory/05) */
+  .multiply{mix-blend-mode:normal}   /* الأصولُ خلفيّتُها لونُ الصفحة — فلا حاجةَ لمزجٍ ينكسر تحت transform */   /* ONLY on non-GSAP-transformed product shots (see memory/05) */
   .fallback-host{position:relative}
   .fallback-host.is-missing{background-image:linear-gradient(135deg,var(--cream),var(--sand) 78%);background-size:cover}
   .reveal{opacity:0;transform:translateY(34px);transition:opacity 1.1s var(--ease),transform 1.1s var(--ease)}
@@ -129,7 +129,7 @@
   #reveal .grid{display:grid;grid-template-columns:1fr;gap:clamp(40px,6vw,84px);align-items:center}
   @media(min-width:900px){#reveal .grid{grid-template-columns:1.05fr .95fr}}
   #reveal .shot{position:relative;aspect-ratio:4/3;display:grid;place-items:center}
-  #reveal .shot img{width:100%;height:100%;object-fit:contain}
+  #reveal .shot img{width:100%;height:100%;object-fit:cover;border-radius:4px}
   #reveal .copy{text-align:right} #reveal .idx{display:block;margin-bottom:12px}
   #reveal h2{font-size:clamp(36px,5.6vw,78px);margin:8px 0 22px}
   #reveal .lead{font-size:clamp(16px,1.8vw,20px);color:var(--ink-soft);max-width:46ch;margin-inline-start:auto}
@@ -151,7 +151,7 @@
   /* 5 · CTA */
   #cta{height:260vh}
   #cta .stage{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;place-items:center;background:var(--paper)}
-  #cta video,#cta .cta-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+  #cta video,#cta .cta-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   #cta .cta-poster{transition:opacity .8s ease}
   #cta .dim{position:absolute;inset:0;opacity:0;backdrop-filter:blur(3px);background:radial-gradient(120% 100% at 50% 50%,rgba(9,12,17,.70),rgba(4,6,10,.94))}
   #cta .content{position:relative;z-index:3;text-align:center;opacity:0;transform:translateY(28px);padding-inline:20px}
@@ -172,8 +172,8 @@
   @media(min-width:760px){#editions .cards{grid-template-columns:repeat(3,1fr)}}
   .ed-card{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--mist);transition:transform .5s var(--ease),box-shadow .5s,border-color .5s}
   .ed-card:hover{transform:translateY(-8px);box-shadow:0 34px 70px -36px rgba(0,0,0,.75)}
-  .ed-card .pic{aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;padding:8%}
-  .ed-card .pic img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;transition:transform .9s var(--ease)}
+  .ed-card .pic{aspect-ratio:16/10;display:grid;place-items:center;overflow:hidden}
+  .ed-card .pic img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
   .ed-card:hover .pic img{transform:scale(1.05)}
   .ed-card .body{padding:6px 22px 28px} .ed-card h3{font-size:23px;color:var(--ink)} .ed-card p{font-size:14px;color:var(--ink-soft);margin-top:8px}
 

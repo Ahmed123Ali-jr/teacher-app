@@ -156,7 +156,13 @@ export async function waitReady(tries = 60) {
                          || +getComputedStyle(sp).opacity === 0;
             if (!gone) return -1;
             const main = document.getElementById('app-main');
-            return main ? main.textContent.trim().length : -1;
+            if (!main) return -1;
+            const t = main.textContent;
+            /* الاستقرارُ وحدَه لا يكفي: شاشةُ التقارير تعرض «جارٍ حساب
+               الإحصائيات…» وحولها شريطٌ وتنقّلٌ يتجاوز طولُهما الحدَّ، فتبدو
+               ثابتةً وتُلتقط حالةَ تحميل. (وقعت فعلاً وشُحنت.) */
+            if (/جارٍ|جاري|جارِ/.test(t)) return -1;
+            return t.trim().length;
         })()`);
         /* الاستقرارُ لا مجرّدُ الظهور: بعضُ الشاشات ترسم هيكلاً (‏~٩٠٠ محرف)
            ثمّ تُكمل بالبيانات (‏~١٠٠٠٠). فالقياسُ على «ظهر شيء» يلتقط
