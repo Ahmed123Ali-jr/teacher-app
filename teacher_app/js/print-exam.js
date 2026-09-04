@@ -229,9 +229,19 @@
        والنصُّ يبدأ من جهة البداية لا موسَّطاً: نصٌّ موسَّطٌ بجانب شريطٍ
        ثابتٍ يبدو منزلقاً، وفي العربيّة هو مبتدئٌ أصلاً. */
     .ex-mcq td.o { padding: 0; height: 1px; }
-    .ex-mcq .ow  { display: flex; align-items: stretch; height: 100%; min-height: 38px; }
+    /* والزيادةُ بكسلٌ والإزاحةُ نصفُه: الجدولُ ذو حدٍّ منهار، فحدُّ الخانة
+       الواحد مشترَكٌ بين جارتين ويقع نصفُه داخلَ كلٍّ منهما — فيبدأ صندوقُ
+       المحتوى على بُعد ‎0.5px‎ من الخطّ ويقف قبله بمثلها، فيبقى الشريطُ
+       قصيراً عن الضلعين بشعرة. وبهذه الزيادة يبلغهما ويلامسهما تماماً. */
+    .ex-mcq .ow  {
+        display: flex; align-items: stretch;
+        height: calc(100% + 1px); margin-block: -0.5px;
+        min-height: 38px;
+    }
+    /* ‎22px‎ لا ‎28‎: بطلبه — «يكون عرضه أصغر». والحرفُ الواحد يسعها،
+       والباقي يعود إلى نصّ الخيار. */
     .ex-mcq .obx {
-        flex: none; width: 28px;
+        flex: none; width: 22px;
         display: flex; align-items: center; justify-content: center;
         font-weight: 700; font-size: 13px;
         border-inline-end: 1px solid #111;
