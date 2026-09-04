@@ -1555,7 +1555,10 @@
         });
 
         container.querySelector('#btn-wipe')?.addEventListener('click', async () => {
-            if (!(await global.TeacherApp.confirm({ title: 'مسح جميع بياناتك؟', message: 'حسابك يبقى.', ok: 'مسح', danger: true }))) return;
+            /* نصُّ النافذتين بحروفه هو (٤ سبتمبر ٢٠٢٦): «حسابك يبقى» كانت تقول
+               ما **لا** يُمسح ولا تقول ما يُمسح — والمعلّمُ الواقفُ أمام زرٍّ
+               أحمرَ يريد أن يعرف ما يذهب لا ما يبقى. */
+            if (!(await global.TeacherApp.confirm({ title: 'مسح جميع بياناتك؟', message: 'سيتم مسح جميع بياناتك على هذا الحساب.', ok: 'مسح', danger: true }))) return;
             if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'لا يمكن التراجع.', ok: 'امسح', danger: true }))) return;
             const btn = container.querySelector('#btn-wipe');
             if (btn) { btn.disabled = true; btn.textContent = 'جارٍ المسح…'; }
@@ -1592,7 +1595,7 @@
 
         del?.addEventListener('click', async () => {
             if (!ack.checked) return;
-            if (!(await global.TeacherApp.confirm({ title: 'حذف حسابك نهائياً؟', message: 'لن تستطيع الدخول بعدها.', ok: 'حذف', danger: true }))) return;
+            if (!(await global.TeacherApp.confirm({ title: 'حذف حسابك نهائياً؟', message: 'سيتم حذف حسابك وبياناتك بشكل نهائي.', ok: 'حذف', danger: true }))) return;
             if (!(await global.TeacherApp.confirm({ title: 'تأكيد أخير', message: 'سيُحذف الحساب وكل بياناته من الخوادم.', ok: 'احذف حسابي', danger: true }))) return;
             del.disabled = true;
             del.textContent = 'جارٍ الحذف…';
