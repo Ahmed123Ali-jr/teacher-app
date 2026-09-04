@@ -95,13 +95,12 @@
             if (t && root() && !root().hidden) close();
         });
 
-        // Logout inside drawer
+        /* الخروجُ من القائمة — بنسخة `TeacherApp` الواحدة لا بنسخةٍ هنا.
+           والدرجُ يبقى مفتوحاً خلف نافذة التأكيد (طبقتُها ‎900‎ وطبقتُه ‎800‎)
+           فمن ألغى وجده كما تركه، ومن خرج أغلقه تبدُّلُ المسار. */
         const logoutBtn = document.getElementById('btn-logout-drawer');
-        if (logoutBtn) logoutBtn.addEventListener('click', async () => {
-            close();
-            await global.Auth.logout();
-            if (global.TeacherApp?.toast) global.TeacherApp.toast('تم تسجيل الخروج.', 'info');
-            global.location.hash = '#/login';
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+            if (global.TeacherApp && global.TeacherApp.logout) global.TeacherApp.logout();
         });
 
         // Close on any hash change (navigation)

@@ -227,26 +227,10 @@
             });
         });
 
-        container.querySelector('#btn-logout-settings')?.addEventListener('click', async () => {
-            /* ══ تحذيرُ الزائر تغيّر مع تغيّر الحقيقة ══
-               كان يقول «الخروج يُنهي هذا الحساب نهائياً» — وكان صادقاً يوم
-               كان كلُّ دخولٍ يُنشئ حساباً جديداً. وصار الجهازُ يعود إلى
-               حسابه (٢٦ أغسطس ٢٠٢٦)، فبقاءُ التحذير كذبٌ يُخيف المعلّم من
-               زرٍّ لا يضرّه.
-
-               والتحذيرُ الصحيحُ الآن في موضعٍ آخر: بياناتُه تنتظره **على
-               هذا الجهاز وحده** — فإن ضاع الجهازُ ضاعت. ولذلك يُذكَّر
-               بالربط، لا بالخوف من الخروج. */
-            if (teacher && teacher.is_guest) {
-                if (!(await global.TeacherApp.confirm({
-                    title: 'تسجيل الخروج؟',
-                    message: 'بياناتك على هذا الجهاز وحده — تعود إليها بـ«الدخول '
-                           + 'كزائر». واربط حسابك ببريدك لتنتقل معك.',
-                    ok: 'خروج'
-                }))) return;
-            } else if (!(await global.TeacherApp.confirm({ title: 'تسجيل الخروج؟', ok: 'خروج' }))) return;
-            await global.Auth.logout();
-            global.location.hash = '#/login';
+        /* والخروجُ من هنا هو الخروجُ من القائمة والترويسة — نسخةٌ واحدةٌ
+           في `TeacherApp.logout`، وفيها السؤالُ وتحذيرُ الزائر. */
+        container.querySelector('#btn-logout-settings')?.addEventListener('click', () => {
+            global.TeacherApp.logout();
         });
 
         /* ══ خروجٌ من كلّ الأجهزة ══

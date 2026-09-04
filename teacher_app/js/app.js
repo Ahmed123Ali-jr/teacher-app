@@ -122,15 +122,7 @@
 
         _bindGlobalUI() {
             const logoutBtn = document.getElementById('btn-logout');
-            if (logoutBtn) logoutBtn.addEventListener('click', async () => {
-                await global.Auth.logout();
-                /* تعود شاشةُ الدخول إلى اللون الافتراضيّ. والمرآةُ تبقى
-                   موسومةً بصاحبها — خروجُ الزائر طيٌّ لا خروج، وله أن يعود
-                   بلونه؛ والمحوُ مكانُه حذفُ الحساب وحدَه. */
-                if (global.ThemeColor) global.ThemeColor.reset();
-                this.toast('تم تسجيل الخروج.', 'info');
-                global.location.hash = '#/login';
-            });
+            if (logoutBtn) logoutBtn.addEventListener('click', () => { this.logout(); });
         },
 
         /** Toast helper — available app-wide. */
@@ -204,6 +196,40 @@
                     onClose: () => finish(false)
                 });
             });
+        },
+
+        /** ══ خروجٌ واحدٌ لثلاثة أزرار ══
+         *  كان لكلِّ زرٍّ سلوكُه: زرُّ الإعدادات يسأل ويُنذر الزائر، وزرُّ
+         *  القائمة يخرج بلا سؤالٍ ولا يُعيد اللون، وزرُّ الترويسة يخرج بلا
+         *  سؤالٍ ويُعيده. فبلّغ المعلّم (٤ سبتمبر ٢٠٢٦): «زرُّ تسجيل الخروج
+         *  في الثلاث شرطات يطلّع بدون رسالة تأكيد». والعلّةُ ليست في زرٍّ
+         *  بل في ثلاثةِ نسخ — فصارت واحدةً هنا، ومن أضاف زرَّ خروجٍ رابعاً
+         *  فليناديها.
+         *
+         *  ولا `ThemeColor.reset()` هنا: `Auth.logout` تفعلها من داخلها
+         *  (`auth.js:377`)، وتكرارُها يوهم أنّ لها موضعين.
+         *  @returns {Promise<boolean>} صحيحٌ إن خرج، وكاذبٌ إن ألغى. */
+        async logout() {
+            let teacher = null;
+            try { teacher = await global.Auth.currentTeacher(); } catch (e) { /* نسأل عامّاً */ }
+
+            /* ══ تحذيرُ الزائر ══
+               بياناتُه على هذا الجهاز وحدَه — فإن ضاع الجهازُ ضاعت. ولا
+               يُقال له إنّ الخروج «يُنهي حسابه»: صار الجهازُ يعود إلى حسابه
+               (٢٦ أغسطس ٢٠٢٦)، فذاك التحذيرُ كذبٌ يُخيفه من زرٍّ لا يضرّه. */
+            const ask = (teacher && teacher.is_guest)
+                ? { title: 'تسجيل الخروج؟',
+                    message: 'بياناتك على هذا الجهاز وحده — تعود إليها بـ«الدخول '
+                           + 'كزائر». واربط حسابك ببريدك لتنتقل معك.',
+                    ok: 'خروج' }
+                : { title: 'تسجيل الخروج؟', ok: 'خروج' };
+
+            if (!(await this.confirm(ask))) return false;
+
+            await global.Auth.logout();
+            this.toast('تم تسجيل الخروج.', 'info');
+            global.location.hash = '#/login';
+            return true;
         },
 
         toast(message, type = 'info', duration = 3000) {
