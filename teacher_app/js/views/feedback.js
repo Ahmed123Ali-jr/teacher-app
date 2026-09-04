@@ -181,9 +181,21 @@
         if (typeof navigator !== 'undefined' && navigator.onLine === false) {
             return { ok: false, msg: 'لا يوجد اتّصال. ملاحظتُك محفوظةٌ هنا — أرسلها حين تعود الشبكة.' };
         }
+        /* المُعرّفُ من الجلسة لا من `teacher`: السياسةُ تقارنه بـ`auth.uid()`،
+           فلو تأخّر ملفُّ المعلّم أو سقطت قراءتُه أُرسل `null` فرُفض الصفُّ
+           وقيل للمعلّم «الخللُ عندنا» — وهو ليس خللاً بل مُعرّفٌ ضائع.
+           و`getSession()` تقرأ من التخزين المحليّ بلا شبكة. */
+        let uid = (teacher && teacher.id) || null;
+        if (!uid) {
+            try {
+                const { data } = await global.SB.auth.getSession();
+                uid = (data && data.session && data.session.user && data.session.user.id) || null;
+            } catch (e) { /* يبقى `null` فيُقال له إنّها لم تُرسل */ }
+        }
+
         try {
             const { error } = await global.SB.from('feedback').insert({
-                teacher_id: (teacher && teacher.id) || null,
+                teacher_id: uid,
                 kind: kind,
                 body: text.slice(0, MAX),
                 app_version: (global.TeacherApp && global.TeacherApp.version) || null,
