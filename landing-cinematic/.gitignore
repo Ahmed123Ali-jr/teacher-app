@@ -1,6 +1,9 @@
 node_modules
-assets/film/raw
-*.mp4
+
+# المراحلُ الوسيطة — تُصنع منها الفيديوهات ثمّ لا تُشحن.
+# تُعاد بأمرٍ واحد: node scripts/chapters.mjs && python3 scripts/compose-all.py
 assets/raw
 assets/frames
 assets/film
+
+# ملاحظة: لا تُتجاهَل *.mp4 — فيديوهاتُ assets/video هي المُخرَجُ المشحون.
