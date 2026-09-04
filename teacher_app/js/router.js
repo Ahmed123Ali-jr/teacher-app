@@ -40,6 +40,8 @@
         { pattern: /^\/portfolio$/,                view: 'portfolio', auth: true, chrome: true, title: 'ملف الإنجاز' },
         { pattern: /^\/schedule$/,                 view: 'schedule',  auth: true, chrome: true, title: 'الجدول الأسبوعي', root: true },
         { pattern: /^\/help$/,                     view: 'help',      auth: true, chrome: true, title: 'المساعدة' },
+        { pattern: /^\/features$/,                 view: 'features',  auth: true, chrome: true, title: 'مميزات التطبيق' },
+        { pattern: /^\/feedback$/,                 view: 'feedback',  auth: true, chrome: true, title: 'ملاحظاتكم' },
         { pattern: /^\/reports$/,                  view: 'reports',   auth: true, chrome: true, title: 'التقارير' },
         { pattern: /^\/classes$/,                  view: 'classes',   auth: true, chrome: true, title: 'الفصول',          root: true },
         { pattern: /^\/shortcuts$/,                view: 'shortcuts', auth: true, chrome: true, title: 'إنجاز',           root: true },
@@ -285,6 +287,20 @@
                 const el = document.getElementById('view-help');
                 el.hidden = false;
                 global.HelpView.render(el);
+                await updateHeaderName();
+                break;
+            }
+            case 'features': {
+                const el = document.getElementById('view-features');
+                el.hidden = false;
+                global.FeaturesView.render(el);
+                await updateHeaderName();
+                break;
+            }
+            case 'feedback': {
+                const el = document.getElementById('view-feedback');
+                el.hidden = false;
+                await global.FeedbackView.render(el);
                 await updateHeaderName();
                 break;
             }

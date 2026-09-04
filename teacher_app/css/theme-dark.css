@@ -549,3 +549,12 @@ body.theme-auto.dark-active .att-btn.outline.active {
 
 /* شريطُ التمرير ولونُ واجهة المتصفّح يتبعان المظهر. */
 body.theme-dark, body.theme-auto.dark-active { color-scheme: dark; }
+
+/* ══ ملاحظاتكم: حبرُ النتيجة يُقلب على الداكن ══
+   الغامقُ الذي يُقرأ على الأبيض (‎#0E6B4A‎ و‎#B42318‎) يهبط إلى ‎1.6‎ و‎1.7‎
+   على سطحٍ داكن — فيُبدَّل بلونَي الحالة الفاتحين: ‎8.88‎ و‎6.17‎ على
+   ‎#161C27‎. وهذا عكسُ القاعدة في الفاتح، وهو صحيحٌ في الموضعين. */
+body.theme-dark .fb-note.is-good,
+body.theme-auto.dark-active .fb-note.is-good { color: var(--success) !important; }
+body.theme-dark .fb-note.is-bad,
+body.theme-auto.dark-active .fb-note.is-bad  { color: var(--danger)  !important; }

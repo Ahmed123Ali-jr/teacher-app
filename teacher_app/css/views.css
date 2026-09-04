@@ -5816,3 +5816,205 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     font-size: 13px;
     color: var(--text);
 }
+
+/* ==========================================================================
+   مميزاتُ التطبيق — عرضُ قدرةٍ لا دليلُ استعمال
+   ==========================================================================
+   الشبكةُ عمودٌ واحدٌ على الجوّال وعمودان من ‎640px‎: البطاقةُ فيها ثلاثةُ
+   أسطرٍ إلى خمسة، وعمودان على شاشةٍ ضيّقةٍ يجعلانها سبعةً فتُقرأ بصعوبة.
+
+   والحدُّ الذهبيُّ الرفيعُ في رأس البطاقة وحدَه — لو أُحيطت به كلُّها لصار
+   التسعُ بطاقاتٍ حائطاً ذهبيّاً. والأرضيّةُ سطحُ التطبيق نفسُه، فيبقى
+   الذهبيُّ علامةً لا لوناً.
+   ========================================================================== */
+.feat-wrap { max-width: 880px; padding-bottom: var(--space-10); }
+
+.feat-hero {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 6px;
+    margin-top: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+}
+.feat-hero-ic { color: var(--pf-gold); }
+.feat-hero-ic svg { width: 30px; height: 30px; stroke-width: 1.5; }
+.feat-hero b { font-size: 21px; color: var(--ink-primary); }
+.feat-hero span:last-child {
+    font-size: 13px; color: var(--text); line-height: 1.8;
+    max-width: 32ch;
+}
+
+/* عنوانُ المجموعة: صغيرٌ ومُتباعدُ الحروف — فاصلٌ لا عنوانُ شاشة. */
+.feat-k {
+    margin: var(--space-7) 0 var(--space-3);
+    font-size: var(--fs-xs); font-weight: var(--fw-bold);
+    letter-spacing: 1px; color: var(--text-muted);
+}
+
+.feat-grid { display: grid; gap: var(--space-3); }
+@media (min-width: 640px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
+
+.feat-c {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: var(--space-5);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .05);
+}
+.feat-c-hd { display: flex; align-items: flex-start; gap: 11px; }
+.feat-c-ic {
+    flex: none;
+    width: 38px; height: 38px; border-radius: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-primary);
+    background: color-mix(in srgb, var(--pf-gold) 18%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 42%, var(--mix-base));
+}
+.feat-c-ic svg { width: 19px; height: 19px; }
+.feat-c-tt { min-width: 0; }
+.feat-c-tt b {
+    display: block;
+    font-size: 15px; color: var(--ink-primary); line-height: 1.5;
+}
+.feat-c-tt span {
+    display: block; margin-top: 2px;
+    font-size: 12.5px; color: var(--text-muted); line-height: 1.7;
+}
+.feat-c-li {
+    margin: var(--space-4) 0 0;
+    padding-right: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 7px;
+}
+.feat-c-li li {
+    position: relative;
+    padding-right: 15px;
+    font-size: 13px; color: var(--text); line-height: 1.8;
+}
+/* النقطةُ ذهبيّةٌ صغيرة — علامةُ بندٍ لا زخرفة. */
+.feat-c-li li::before {
+    content: ''; position: absolute; top: .72em; right: 0;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--pf-gold);
+}
+
+/* ودعوةُ الملاحظات في آخر الصفحة: من قرأ المميّزات كلَّها هو أقدرُ الناس
+   على قول ما ينقص — فيُسأل حيث فرغ لا في قائمةٍ يفتحها قصداً. */
+.feat-cta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 12px; row-gap: 2px;
+    margin-top: var(--space-7);
+    padding: var(--space-5);
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    text-decoration: none;
+}
+.feat-cta > svg { grid-row: span 2; color: var(--ink-primary); width: 24px; height: 24px; }
+.feat-cta .t { font-size: 15px; font-weight: var(--fw-bold); color: var(--ink-primary); }
+.feat-cta .h { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+
+/* ==========================================================================
+   ملاحظاتكم
+   ==========================================================================
+   الصندوقُ كبيرٌ عمداً (‎7‎ أسطر): من رأى صندوقاً ضيّقاً كتب سطراً، ومن
+   رأى صندوقاً واسعاً كتب ما عنده — وهذا كلُّه ما نريده منه.
+   ========================================================================== */
+.fb-wrap { max-width: 640px; padding-bottom: var(--space-10); }
+
+.fb-hero {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 6px;
+    margin-top: var(--space-3);
+    padding: var(--space-6) var(--space-5);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+}
+.fb-hero-ic { color: var(--pf-gold); }
+.fb-hero-ic svg { width: 30px; height: 30px; stroke-width: 1.5; }
+.fb-hero b { font-size: 19px; color: var(--ink-primary); }
+.fb-hero span:last-child {
+    font-size: 13px; color: var(--text); line-height: 1.8; max-width: 34ch;
+}
+
+.fb-kinds {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-top: var(--space-6);
+}
+.fb-kind {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 11px 4px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12.5px; font-weight: var(--fw-medium);
+    cursor: pointer;
+}
+.fb-kind svg { width: 19px; height: 19px; }
+.fb-kind.on {
+    background: color-mix(in srgb, var(--pf-gold) 18%, var(--mix-base));
+    border-color: var(--pf-gold);
+    color: var(--ink-primary);
+    font-weight: var(--fw-bold);
+}
+
+.fb-lbl {
+    display: block; margin: var(--space-6) 0 var(--space-2);
+    font-size: 13px; font-weight: var(--fw-bold); color: var(--ink-primary);
+}
+.fb-text {
+    width: 100%;
+    padding: var(--space-4);
+    border-radius: 14px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit; font-size: 15px; line-height: 1.9;
+    resize: vertical;
+}
+.fb-text:focus { outline: 2px solid var(--ink-primary); outline-offset: 1px; }
+.fb-count {
+    margin-top: 4px; text-align: left;
+    font-size: var(--fs-xs); color: var(--text-muted);
+}
+
+.fb-who {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: var(--space-4);
+    padding: 11px 13px;
+    border-radius: 12px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text-muted); line-height: 1.7;
+}
+.fb-who svg { flex: none; width: 17px; height: 17px; color: var(--ink-primary); }
+.fb-who b { color: var(--ink-primary); }
+
+.fb-send {
+    width: 100%; margin-top: var(--space-5);
+    padding: 14px;
+    border: 0; border-radius: 14px;
+    /* والحبرُ `--surface` لا `--text-inverse`: الأخيرُ أبيضُ في المظهرين
+       معاً، و`--ink-primary` على الداكن أبيضُ أيضاً — فيصير الزرُّ أبيضَ
+       على أبيض (‎1.09‎). و`--surface` يتبع المظهر فيقلب معه: أبيضُ على
+       البتروليّ (‎10.32‎)، وداكنٌ على الفاتح (‎15.3‎). */
+    background: var(--ink-primary); color: var(--surface);
+    font-family: inherit; font-size: 15px; font-weight: var(--fw-bold);
+    cursor: pointer;
+}
+.fb-send:disabled { opacity: .6; cursor: default; }
+
+/* والنتيجةُ تُقال بلونٍ ونصّ معاً — لا بلونٍ وحدَه: من لا يميّز الأخضرَ
+   من الأحمر يقرأ الجملة. */
+.fb-note { margin: var(--space-3) 0 0; font-size: 13px; line-height: 1.8; min-height: 1.8em; }
+/* ولا يُستعمل `--success`/`--danger` هنا: قيسا على الأبيض فكانا ‎2.54‎
+   و‎3.76‎ — تحت العتبة. وهو الدرسُ المسجَّلُ في `class.js:21` نفسُه: لونُ
+   الحالةِ الفاتحُ للأرضيّات لا للحبر. فحبرٌ غامقٌ صريحٌ هنا: ‎6.52‎ و‎6.57‎
+   على الأبيض. */
+.fb-note.is-good { color: #0E6B4A; }
+.fb-note.is-bad  { color: #B42318; }
