@@ -13,7 +13,7 @@ import os, glob, math
 
 RAW   = 'assets/film/raw'
 OUT   = 'assets/film'
-W, H  = 1600, 900          # يُصغَّر إلى ١٢٨٠ عند الحفظ
+W, H  = 3840, 2160         # 4K — يُبنى بالحجم النهائيّ لا مُصغَّراً
 BG    = (9, 12, 17)        # #090C11 — لونُ حافّةِ الإطارات الموحَّد
 GLOW  = (20, 96, 111)      # #14606F البترولي
 
@@ -68,17 +68,17 @@ for i, f in enumerate(files):
     ph = int(H * 0.955 * scale)
     pw = int(shot.width * ph / shot.height)
     shot = shot.resize((pw, ph), Image.LANCZOS)
-    shot = rounded(shot, int(30 * scale))
+    shot = rounded(shot, int(72 * scale))
 
     px = (W - pw) // 2
     py = int((H - ph) / 2 + (1 - t) * 6)          # انجرافٌ رأسيٌّ ضئيل
 
     # ظلٌّ ناعمٌ تحت الجهاز
-    sh = Image.new('RGBA', (pw + 120, ph + 120), (0, 0, 0, 0))
+    sh = Image.new('RGBA', (pw + 288, ph + 288), (0, 0, 0, 0))
     ImageDraw.Draw(sh).rounded_rectangle(
-        [60, 70, pw + 60, ph + 70], radius=int(30 * scale), fill=(0, 0, 0, 170))
-    sh = sh.filter(ImageFilter.GaussianBlur(34))
-    frame.paste(sh, (px - 60, py - 60), sh)
+        [144, 168, pw + 144, ph + 168], radius=int(72 * scale), fill=(0, 0, 0, 170))
+    sh = sh.filter(ImageFilter.GaussianBlur(82))
+    frame.paste(sh, (px - 144, py - 144), sh)
 
     frame.paste(shot, (px, py), shot)
 
@@ -87,8 +87,7 @@ for i, f in enumerate(files):
         [px, py, px + pw - 1, py + ph - 1], radius=int(30 * scale),
         outline=(66, 82, 108), width=1)
 
-    frame = frame.resize((1280, 720), Image.LANCZOS)
-    frame.save(os.path.join(OUT, 'f%03d.jpg' % i), 'JPEG', quality=80, optimize=True)
+    frame.save(os.path.join(OUT, 'f%03d.jpg' % i), 'JPEG', quality=93, subsampling=0, optimize=True)
 
 total = sum(os.path.getsize(os.path.join(OUT, 'f%03d.jpg' % i)) for i in range(N))
 print('✓ %d إطاراً · %.1f MB · %.0f KB للإطار' % (N, total/1048576, total/N/1024))

@@ -1,3 +1,6 @@
 node_modules
 assets/film/raw
 *.mp4
+assets/raw
+assets/frames
+assets/film

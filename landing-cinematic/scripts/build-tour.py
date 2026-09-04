@@ -1,0 +1,252 @@
+# -*- coding: utf-8 -*-
+import pathlib, json
+
+CHAPTERS = [
+    ("schedule",    "الجدول",         "ارفع صورةَ جدولك — فتُبنى فصولُك وحصصُك معه."),
+    ("home",        "الرئيسية",       "الرئيسيّةُ تعرف يومَك: حصصُه، وحصّتُك الآن، وزرُّ سجلّها."),
+    ("register",    "سجل المتابعة",   "أربعُ حالاتٍ بضغطة، وأربعةٌ وعشرون طالباً في ثوانٍ."),
+    ("classes",     "الفصول",         "فصولُك مرتَّبةٌ بالمراحل — كما تفكّر بها."),
+    ("exams",       "الاختبارات",     "اكتب أسئلتك، وتخرج الورقةُ بترويسة الوزارة جاهزةً للطباعة."),
+    ("initiatives", "المبادرات",      "ثلاثون مبادرةً بخطواتها وشواهدها المقترحة."),
+    ("portfolio",   "ملف الإنجاز",    "عشرةُ أقسام، ثلاثةٌ منها تملأ نفسَها — ثمّ يخرج مستنداً بغلافٍ وفهرس."),
+]
+NAV_ORDER = ["home","classes","schedule","initiatives","portfolio","exams","register"]
+LABEL = {k: t for k, t, _ in CHAPTERS}
+DATA = [{"key": k, "title": t, "cap": c} for k, t, c in CHAPTERS]
+
+nav = "\n".join(
+    f'      <button class="nv" data-go="{k}">{LABEL[k]}</button>' for k in NAV_ORDER)
+
+html = f'''<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>فصول — استعراض</title>
+<meta name="description" content="استعراضٌ حيٌّ لتطبيق فصول: الجدول والتحضير والاختبارات وملفّ الإنجاز.">
+<link rel="icon" href="assets/brand/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{{
+  --void:#05070B; --page:#090C11; --sheet:#131A26;
+  --ink:#E8ECF3; --ink-soft:#A3AEC0; --ink-faint:#7E8CA3;
+  --teal:#007078; --teal-lit:#00A0AC; --petrol:#0A3F4A;
+  --gold:#C9A961; --gold-lit:#E8D9A8;
+  --line:rgba(232,236,243,.13);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}}
+*{{margin:0;padding:0;box-sizing:border-box}}
+html,body{{height:100%;overflow:hidden}}
+body{{background:var(--void);color:var(--ink);font-family:"Tajawal",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column}}
+h1,h2,h3,.disp{{font-family:"El Messiri",serif;font-weight:600;line-height:1.15}}
+button{{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}}
+
+/* ــ طبقاتُ الضوء ــ */
+#glow{{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(58% 46% at 50% 34%,rgba(0,112,120,.34),rgba(0,112,120,0) 70%)}}
+#vig{{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(128% 104% at 50% 46%,transparent 46%,rgba(2,3,6,.82) 100%)}}
+#grain{{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}}
+
+/* ــ الشريطُ العلويّ ــ */
+header{{position:relative;z-index:6;display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:14px clamp(14px,3vw,34px);flex-wrap:wrap}}
+.brand{{display:flex;align-items:center;gap:10px}}
+.brand img{{height:38px;width:auto;display:block}}
+.brand b{{font-family:"El Messiri",serif;font-size:23px;font-weight:700;letter-spacing:0}}
+nav{{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}}
+.nv{{font-size:13.5px;font-weight:500;color:var(--ink-faint);padding:7px 13px;border-radius:999px;
+  border:1px solid transparent;transition:color .3s,border-color .3s,background .3s}}
+.nv:hover{{color:var(--ink)}}
+.nv.on{{color:var(--gold-lit);border-color:rgba(201,169,97,.42);background:rgba(201,169,97,.08)}}
+
+/* ــ المسرح ــ */
+main{{position:relative;z-index:5;flex:1;min-height:0;display:grid;place-items:center;
+  padding:0 clamp(10px,2vw,26px)}}
+.stage{{position:relative;width:min(100%,1360px);aspect-ratio:16/9;max-height:100%;
+  border-radius:14px;overflow:hidden;background:var(--page);
+  box-shadow:0 40px 120px -50px rgba(0,0,0,.95),0 0 0 1px var(--line)}}
+.stage video{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}}
+.cap{{position:absolute;right:clamp(16px,3.4vw,46px);bottom:clamp(16px,3.4vh,42px);z-index:3;
+  max-width:min(74%,560px);text-align:right;font-family:"El Messiri",serif;
+  font-size:clamp(15px,2vw,27px);line-height:1.4;text-shadow:0 2px 24px rgba(0,0,0,.9);
+  opacity:0;transform:translateY(12px);transition:opacity .7s var(--ease),transform .7s var(--ease)}}
+.cap.on{{opacity:1;transform:none}}
+.rail{{position:absolute;left:clamp(16px,3vw,40px);bottom:clamp(18px,3.4vh,44px);z-index:3;
+  display:flex;gap:7px}}
+.rail i{{display:block;width:20px;height:2px;border-radius:2px;background:rgba(232,236,243,.22);
+  transition:background .4s,width .4s var(--ease)}}
+.rail i.on{{background:var(--gold);width:34px}}
+
+/* ــ المدخل: الجوال ينزل ثمّ ضبابةٌ وزرّ ــ */
+#intro{{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:var(--page)}}
+#intro .ph{{width:min(23%,190px);aspect-ratio:375/812;border-radius:20px;overflow:hidden;
+  border:1px solid rgba(120,145,175,.5);background:#fff;
+  box-shadow:0 30px 80px -30px rgba(0,0,0,.9);
+  transform:translateY(-130%) rotate(-7deg);opacity:0;
+  animation:drop 1.25s var(--ease) .25s forwards}}
+#intro .ph img{{width:100%;height:100%;object-fit:cover;object-position:top;
+  opacity:0;animation:wake .7s ease 1.35s forwards}}
+@keyframes drop{{60%{{opacity:1}}to{{transform:translateY(0) rotate(0);opacity:1}}}}
+@keyframes wake{{to{{opacity:1}}}}
+#intro.blur .ph{{filter:blur(9px);transform:scale(.97);transition:filter .7s,transform .7s}}
+#gate{{position:absolute;inset:0;display:grid;place-items:center;gap:18px;z-index:2;
+  background:rgba(9,12,17,.55);backdrop-filter:blur(10px);
+  opacity:0;pointer-events:none;transition:opacity .6s}}
+#gate.on{{opacity:1;pointer-events:auto}}
+#gate .box{{text-align:center;display:grid;gap:16px;justify-items:center;padding:20px}}
+#gate h2{{font-size:clamp(21px,3.4vw,38px)}}
+#start{{background:linear-gradient(180deg,var(--gold-lit),var(--gold));color:#05262D;
+  font-family:"El Messiri",serif;font-weight:700;font-size:17px;padding:14px 40px;border-radius:999px;
+  box-shadow:0 18px 44px -16px rgba(201,169,97,.75);transition:transform .3s var(--ease)}}
+#start:hover{{transform:translateY(-2px)}}
+#count{{font-size:13px;color:var(--ink-faint)}}
+#count b{{color:var(--gold-lit);font-weight:700}}
+
+/* ــ الأسفل ــ */
+footer{{position:relative;z-index:6;display:flex;align-items:center;justify-content:center;
+  gap:14px;flex-wrap:wrap;padding:14px clamp(14px,3vw,34px) 20px}}
+.store{{display:inline-flex;align-items:center;gap:11px;border:1px solid var(--line);
+  border-radius:12px;padding:9px 18px;background:rgba(19,26,38,.7);cursor:not-allowed;opacity:.85}}
+.store small{{display:block;font-size:10.5px;color:var(--ink-faint);line-height:1.3}}
+.store b{{display:block;font-size:15px;font-weight:700;color:var(--ink-soft);
+  font-family:"El Messiri",serif;direction:ltr}}
+.cta{{background:linear-gradient(180deg,var(--gold-lit),var(--gold));color:#05262D;
+  font-family:"El Messiri",serif;font-weight:700;font-size:15.5px;padding:12px 30px;
+  border-radius:999px;text-decoration:none;box-shadow:0 16px 40px -16px rgba(201,169,97,.7)}}
+
+@media (max-width:820px){{
+  html,body{{overflow:auto}}
+  .brand b{{font-size:20px}} .brand img{{height:32px}}
+  .nv{{font-size:12.5px;padding:6px 11px}}
+  .stage{{border-radius:11px}}
+}}
+@media (prefers-reduced-motion:reduce){{
+  #intro .ph{{animation:none;opacity:1;transform:none}}
+  #intro .ph img{{animation:none;opacity:1}}
+  .cap{{transition:none}}
+}}
+</style>
+</head>
+<body>
+<div id="glow"></div><div id="vig"></div><div id="grain"></div>
+
+<header>
+  <div class="brand">
+    <img src="assets/brand/logo-mark.png" alt="">
+    <b>فصول</b>
+  </div>
+  <nav id="nav">
+{nav}
+  </nav>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <video id="vid" muted playsinline preload="auto" poster="assets/frames/schedule/f000.jpg"></video>
+    <div class="cap" id="cap"></div>
+    <div class="rail" id="rail"></div>
+
+    <div id="intro">
+      <div class="ph"><img src="assets/screens/register.png" alt="تطبيق فصول"></div>
+      <div id="gate">
+        <div class="box">
+          <h2>شاهد «فصول» وهو يعمل</h2>
+          <button id="start">ابدأ الاستعراض</button>
+          <div id="count">يبدأ تلقائياً بعد <b id="n">٣</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <a class="cta" href="https://ahmed123ali-jr.github.io/teacher-app/">ابدأ الآن — فصلُك الأوّل مجّاناً</a>
+  <span class="store"><small>قريباً على</small><b>App Store</b></span>
+  <span class="store"><small>قريباً على</small><b>Google Play</b></span>
+</footer>
+
+<script>
+(function(){{
+  "use strict";
+  var CH = {json.dumps(DATA, ensure_ascii=False)};
+  var AR = "٠١٢٣٤٥٦٧٨٩";
+  var ar = function(n){{ return String(n).replace(/\\d/g, function(d){{ return AR[+d]; }}); }};
+
+  var vid=document.getElementById('vid'), cap=document.getElementById('cap'),
+      rail=document.getElementById('rail'), intro=document.getElementById('intro'),
+      gate=document.getElementById('gate'), startBtn=document.getElementById('start'),
+      nEl=document.getElementById('n'), navEl=document.getElementById('nav');
+
+  /* 4K حيث تُرى، و1080p على الشاشات الصغيرة — لا يُحمَّل ٢١٦٠ على جوال */
+  var big = Math.min(screen.width, screen.height) >= 700 ||
+            (window.innerWidth * (window.devicePixelRatio||1)) >= 1800;
+  var res = big ? '2160' : '1080';
+  function src(k){{ return 'assets/video/' + k + '-' + res + '.mp4'; }}
+
+  CH.forEach(function(){{ rail.appendChild(document.createElement('i')); }});
+  var dots = rail.querySelectorAll('i');
+  var idx = 0, started = false, timer = null;
+
+  function paint(i){{
+    dots.forEach(function(d,j){{ d.classList.toggle('on', j===i); }});
+    navEl.querySelectorAll('.nv').forEach(function(b){{
+      b.classList.toggle('on', b.dataset.go === CH[i].key); }});
+    cap.classList.remove('on');
+    cap.textContent = CH[i].cap;
+    setTimeout(function(){{ cap.classList.add('on'); }}, 340);
+  }}
+
+  function play(i){{
+    idx = ((i % CH.length) + CH.length) % CH.length;
+    paint(idx);
+    vid.src = src(CH[idx].key);
+    var p = vid.play();
+    if (p && p.catch) p.catch(function(){{}});
+  }}
+
+  vid.addEventListener('ended', function(){{ play(idx + 1); }});
+  vid.addEventListener('error', function(){{ play(idx + 1); }});
+
+  function begin(){{
+    if (started) return;
+    started = true;
+    if (timer) clearInterval(timer);
+    intro.style.transition = 'opacity .7s';
+    intro.style.opacity = '0';
+    setTimeout(function(){{ intro.style.display = 'none'; }}, 720);
+    play(0);
+  }}
+
+  startBtn.addEventListener('click', begin);
+  navEl.addEventListener('click', function(e){{
+    var b = e.target.closest('.nv'); if (!b) return;
+    var i = CH.findIndex(function(c){{ return c.key === b.dataset.go; }});
+    if (i < 0) return;
+    if (!started) begin(); 
+    play(i);
+  }});
+
+  /* الضبابةُ والزرّ بعد نزول الجوال، ثمّ بدءٌ تلقائيٌّ بعد ثلاث */
+  setTimeout(function(){{
+    intro.classList.add('blur');
+    gate.classList.add('on');
+    var left = 3;
+    nEl.textContent = ar(left);
+    timer = setInterval(function(){{
+      left -= 1;
+      if (left <= 0) {{ clearInterval(timer); begin(); return; }}
+      nEl.textContent = ar(left);
+    }}, 1000);
+  }}, 2200);
+}})();
+</script>
+</body>
+</html>
+'''
+pathlib.Path('tour.html').write_text(html, encoding='utf-8')
+print('✓ tour.html —', len(html), 'حرفاً ·', len(CHAPTERS), 'فصول')

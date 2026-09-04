@@ -11,9 +11,12 @@ import { join } from 'node:path';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const APP = process.env.APP_URL || 'http://localhost:8001';
-const OUT = process.env.SHOT_OUT || 'assets/film/raw';
+const OUT = () => process.env.SHOT_OUT || 'assets/film/raw';
 const PORT = 9222;
-const W = 375, H = 812, DSF = 2;
+const W = 375, H = 812;
+/* كثافةُ ٣× لا ٢×: الإطارُ النهائيُّ ‎3840×2160‎ والجوالُ فيه ‎١٩٤٤px‎ طولاً،
+   فمصدرٌ بـ‎1624‎ يُمطّ ويفقد الحدّة. و‎٣×‎ يعطي ‎2436‎ — فوق الحاجة. */
+const DSF = Number(process.env.DSF || 3);
 
 const profile = mkdtempSync(join(tmpdir(), 'fusul-shot-'));
 const chrome = spawn(CHROME, [
@@ -139,7 +142,7 @@ await send('Page.addScriptToEvaluateOnNewDocument', {
     }catch(e){}`,
 });
 
-mkdirSync(OUT, { recursive: true });
+mkdirSync(OUT(), { recursive: true });
 
 export const reload = async () => { await send('Page.reload', { ignoreCache: false }); await sleep(3400); };
 
@@ -178,9 +181,20 @@ export const hop = async (hash) => {
 };
 
 /* لقطةٌ فوريّةٌ للحالة الراهنة — بلا تنقّلٍ ولا انتظارِ جهوزيّة. */
+/* لقطةٌ لمنطقةٍ محدّدة — تتجاوز حدودَ النافذة.
+   لازمةٌ لمسرح الطباعة: عرضُه ‎794px‎ (A4) والنافذةُ ‎375px‎، فاللقطةُ
+   العاديّةُ تقصّ ثلثَي الورقة. */
+export async function shootClip(name, rect, scale = 2) {
+    const { data } = await send('Page.captureScreenshot', {
+        format: 'png', captureBeyondViewport: true,
+        clip: { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale },
+    });
+    writeFileSync(join(OUT(), `${name}.png`), Buffer.from(data, 'base64'));
+}
+
 export async function shootRaw(name) {
     const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-    writeFileSync(join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
+    writeFileSync(join(OUT(), `${name}.png`), Buffer.from(data, 'base64'));
 }
 
 export async function shoot(name, hash, prepare = '') {
@@ -190,7 +204,7 @@ export async function shoot(name, hash, prepare = '') {
     if (prepare) await evaluate(`(async()=>{${prepare}})()`);
     await sleep(500);
     const { data } = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-    writeFileSync(join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
+    writeFileSync(join(OUT(), `${name}.png`), Buffer.from(data, 'base64'));
     const title = await evaluate(`document.querySelector('.hdr-title')?.textContent || document.title`);
     console.log(`✓ ${name.padEnd(12)} ${String(title).slice(0, 40)}`);
 }
