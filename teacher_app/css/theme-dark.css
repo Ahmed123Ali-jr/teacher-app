@@ -289,8 +289,15 @@ body.theme-auto.dark-active table tr,
    والحرزُ `:not(.is-today)` كما في «✓ تم» و«حصة انتظار اليوم»: الحالةُ
    الملوّنةُ تُستثنى من قلب الأسطح، ويحرسها
    `tools/check-active-states.mjs`. */
-body.theme-dark tbody td:not(.is-today),
-body.theme-auto.dark-active tbody td:not(.is-today) {
+/* ══ وعمودُ الحصص يُستثنى كذلك ══
+   بلاغُه (٤ سبتمبر ٢٠٢٦): «لون عمود الحصص في الجدول باقي فيه مشكلة».
+   وهو `td` في `tbody`، فكانت هذه القاعدةُ تفرض عليه `--surface` بـ‎!important‎
+   فيصير **لونَ الخلايا نفسَه** (`#161C27`) — عمودٌ يذوب في جدوله، ولا يتبع
+   لونَ التطبيق الذي اختاره المعلّم. قِيس: خلفيّتُه ‎rgb(22,28,39)‎ وخلفيّةُ
+   الخانة ‎rgb(22,28,39)‎ — سواء.
+   وهو سطحُ هُويّةٍ ملوّنٌ كـ`.is-today`، فيُستثنى مثلَه. */
+body.theme-dark tbody td:not(.is-today):not(.sched-per),
+body.theme-auto.dark-active tbody td:not(.is-today):not(.sched-per) {
     background: var(--surface) !important;
     background-image: none !important;
     border-color: var(--border) !important;
