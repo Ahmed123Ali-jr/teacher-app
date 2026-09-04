@@ -5781,67 +5781,51 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 /* ==========================================================================
-   بطاقةُ الإجازة — معاينةٌ تنتظر قرارَه (‎body.rest-quote‎، ?rest=1)
+   بطاقةُ الإجازة — معاينةُ خطِّ التحيّة (‎body.rest-quote‎، ?rest=1)
    ==========================================================================
-   قال المعلّم (٣ سبتمبر ٢٠٢٦): «أحسّ الخط عريضاً جدّاً» — و«إجازة سعيدة»
-   كانت ‎21px‎ بوزن ‎700‎، وهي جملةُ تحيّةٍ لا عنوانَ شاشة. فخفّ وزنُها إلى
-   ‎500‎ وكبُر مقاسُها: الحجمُ يعطيها مكانَها، والوزنُ كان يعطيها صراخاً.
-   والعربيّةُ تُظهر ثقلَ ‎700‎ أكثرَ من اللاتينيّة — حروفُها متّصلةٌ فتلتحم.
+   «إجازة سعيدة» كانت ‎21px‎ بوزن ‎700‎، وهي تحيّةٌ لا عنوانُ شاشة — قال
+   المعلّم إنّها عريضةٌ جدّاً. والعربيّةُ تُظهر ثقلَ ‎700‎ أكثرَ من
+   اللاتينيّة: حروفُها متّصلةٌ فتلتحم عند التغليظ.
+
+   والبدائلُ الثلاثةُ **كلُّها من خطوط أجهزة آبل** — لا ملفَّ يُحمَّل ولا
+   حجمَ يُزاد ولا طلبَ شبكة. ولكلٍّ بديلٌ ينتهي إلى خطّ التطبيق، فمن لا
+   يملك الخطَّ يرى الحاليَّ لا خطّاً غريباً.
    ========================================================================== */
 .home-hero-alt.rest-q {
     gap: 0;
     padding: var(--space-7) var(--space-6);
 }
+.rest-q .rq-try + .rq-try { margin-top: var(--space-6); }
 .rest-q .rq-t {
-    font-size: 27px;
-    font-weight: var(--fw-medium);
-    letter-spacing: -0.4px;
+    font-size: 25px;
+    letter-spacing: -0.2px;
     color: var(--ink-primary);
-    line-height: 1.5;
+    line-height: 1.6;
+}
+/* أ — خطُّ التطبيق نفسُه، وزنُه ‎500‎ لا ‎700‎ */
+.rest-q .f-plex { font-weight: var(--fw-medium); }
+/* ب — نسخيُّ آبل: أرقُّ وأكثرُ استدارةً، وحجمُه أصغرُ فيُكبَّر قليلاً */
+.rest-q .f-bayan {
+    font-family: 'Al Bayan', 'Baghdad', 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 400;
+    font-size: 28px;
+}
+/* ج — دمشق: نسخيٌّ أعرضُ قليلاً وأوضحُ في المقاسات الكبيرة */
+.rest-q .f-damascus {
+    font-family: 'Damascus', 'Geeza Pro', 'IBM Plex Sans Arabic', sans-serif;
+    font-weight: 400;
+    font-size: 26px;
+}
+/* وسمُ المعاينة وحدَه — يسقط عند الاعتماد */
+.rest-q .rq-tag {
+    margin-top: 6px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--pf-gold);
+    letter-spacing: .3px;
 }
 .rest-q .rq-sub {
-    margin-top: 4px;
+    margin-top: var(--space-6);
     font-size: var(--fs-sm);
     color: var(--text-muted);
 }
-/* خطٌّ ذهبيٌّ قصيرٌ يفصل التحيّةَ عن المقولة — لا حدٌّ يقسم البطاقةَ نصفين. */
-.rest-q .rq-rule {
-    width: 44px; height: 2px;
-    margin: var(--space-5) 0 var(--space-4);
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, var(--pf-gold), transparent);
-}
-/* المقولةُ تُقرأ لا تُزيَّن: سطرٌ واسعٌ ومقاسٌ مريح. والعلامتان من `::before`
-   و`::after` فلا تدخلان النصَّ فتُنطقا مع قارئ الشاشة. */
-.rest-q .rq-q {
-    margin: 0;
-    max-width: 34ch;
-    font-size: 15px;
-    font-weight: var(--fw-regular, 400);
-    line-height: 2.1;
-    color: var(--text);
-}
-.rest-q .rq-q::before { content: '”'; margin-inline-end: 2px; }
-.rest-q .rq-q::after  { content: '“'; margin-inline-start: 2px; }
-.rest-q .rq-q::before,
-.rest-q .rq-q::after {
-    color: var(--pf-gold);
-    font-size: 22px;
-    line-height: 0;
-    vertical-align: -6px;
-}
-/* والبيتُ شطران: كلٌّ في سطره، وعلامتا الاقتباس تسقطان — الشِّعرُ يُعرف
-   بانكساره لا بعلامةٍ حوله. */
-.rest-q .rq-q.is-verse { display: flex; flex-direction: column; gap: 2px; max-width: none; }
-.rest-q .rq-q.is-verse::before,
-.rest-q .rq-q.is-verse::after { content: none; }
-.rest-q .rq-line { line-height: 1.9; }
-
-.rest-q .rq-by {
-    margin-top: var(--space-3);
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-bold);
-    color: var(--text-muted);
-    letter-spacing: .2px;
-}
-.rest-q .rq-by::before { content: '— '; }
