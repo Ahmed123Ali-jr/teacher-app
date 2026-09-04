@@ -5784,48 +5784,55 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    بطاقةُ الإجازة — معاينةُ خطِّ التحيّة (‎body.rest-quote‎، ?rest=1)
    ==========================================================================
    «إجازة سعيدة» كانت ‎21px‎ بوزن ‎700‎، وهي تحيّةٌ لا عنوانُ شاشة — قال
-   المعلّم إنّها عريضةٌ جدّاً. والعربيّةُ تُظهر ثقلَ ‎700‎ أكثرَ من
-   اللاتينيّة: حروفُها متّصلةٌ فتلتحم عند التغليظ.
+   المعلّم إنّها عريضةٌ جدّاً، ثمّ طلبها أصغرَ وعلى أرضيّةٍ ذهبيّة **كلافتة
+   «لا يوجد لديك فصول»** (٣ سبتمبر ٢٠٢٦). فالأرضيّةُ والحدُّ منقولان من
+   `.start-note` حرفاً بحرف — لا لونٌ ذهبيٌّ ثانٍ في الشاشة نفسِها.
 
-   والبدائلُ الثلاثةُ **كلُّها من خطوط أجهزة آبل** — لا ملفَّ يُحمَّل ولا
+   والبدائلُ الثلاثةُ **كلُّها من خطوط أجهزة آبل**: لا ملفَّ يُحمَّل ولا
    حجمَ يُزاد ولا طلبَ شبكة. ولكلٍّ بديلٌ ينتهي إلى خطّ التطبيق، فمن لا
    يملك الخطَّ يرى الحاليَّ لا خطّاً غريباً.
    ========================================================================== */
 .home-hero-alt.rest-q {
     gap: 0;
-    padding: var(--space-7) var(--space-6);
+    padding: 15px 16px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--pf-gold) 15%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--pf-gold) 45%, var(--mix-base));
+    box-shadow: none;
 }
-.rest-q .rq-try + .rq-try { margin-top: var(--space-6); }
+.rest-q .rq-try + .rq-try { margin-top: var(--space-5); }
 .rest-q .rq-t {
-    font-size: 25px;
+    font-size: 19px;
     letter-spacing: -0.2px;
     color: var(--ink-primary);
-    line-height: 1.6;
+    line-height: 1.7;
 }
 /* أ — خطُّ التطبيق نفسُه، وزنُه ‎500‎ لا ‎700‎ */
 .rest-q .f-plex { font-weight: var(--fw-medium); }
-/* ب — نسخيُّ آبل: أرقُّ وأكثرُ استدارةً، وحجمُه أصغرُ فيُكبَّر قليلاً */
+/* ب — نسخيُّ آبل: عينُه أصغرُ فيُكبَّر قليلاً ليتساوى بصريّاً */
 .rest-q .f-bayan {
     font-family: 'Al Bayan', 'Baghdad', 'IBM Plex Sans Arabic', sans-serif;
     font-weight: 400;
-    font-size: 28px;
+    font-size: 22px;
 }
-/* ج — دمشق: نسخيٌّ أعرضُ قليلاً وأوضحُ في المقاسات الكبيرة */
+/* ج — دمشق */
 .rest-q .f-damascus {
     font-family: 'Damascus', 'Geeza Pro', 'IBM Plex Sans Arabic', sans-serif;
     font-weight: 400;
-    font-size: 26px;
+    font-size: 20px;
 }
 /* وسمُ المعاينة وحدَه — يسقط عند الاعتماد */
 .rest-q .rq-tag {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: var(--fs-xs);
     font-weight: var(--fw-bold);
-    color: var(--pf-gold);
+    color: var(--text-muted);
     letter-spacing: .3px;
 }
+/* الشرحُ بحبر النصّ لا بالخافت — كلافتة `.start-note`، والقياسُ على
+   الأرضيّة الذهبيّة لا على الأبيض. */
 .rest-q .rq-sub {
-    margin-top: var(--space-6);
-    font-size: var(--fs-sm);
-    color: var(--text-muted);
+    margin-top: var(--space-4);
+    font-size: 13px;
+    color: var(--text);
 }
