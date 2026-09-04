@@ -385,7 +385,7 @@
      * @returns {string|null}
      */
     function offReasonToday(ctx) {
-        if (todayIndex() < 0) return 'اليوم إجازة نهاية الأسبوع — الدوام يعود الأحد.';
+        if (todayIndex() < 0) return 'اليوم إجازة نهاية الأسبوع.';
         try {
             if (!global.AcademicCalendar) return null;
             const cal  = global.AcademicCalendar.resolve(ctx.dept, ctx.calPick);
