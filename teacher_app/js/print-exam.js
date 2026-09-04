@@ -209,6 +209,34 @@
     .ex-mcq .q { font-weight: 700; }
     .ex-mcq .o { font-size: 14px; }
     .ex-mcq td { overflow-wrap: anywhere; }
+    /* ══ حرفُ الخيار في شريطٍ موصولٍ بالخانة ══
+       كان «أ) نصّ الخيار» — حرفاً وقوساً في مجرى النصّ. فطلبه المعلّم في
+       مربّعٍ (٤ سبتمبر ٢٠٢٦)، ثمّ ردّ المربّعَ المنفصلَ: **«لا يكون مربّعاً
+       لحاله، يوصل ضلعٌ واحدٌ داخل المربّع الأساسيّ»**، ثمّ اختار الشريطَ
+       الكامل: **«ج، لكن نفس الخيار د الخطُّ متّصل»**.
+
+       ── و«متّصل» هي كلُّ المسألة ──
+       الخانةُ ترتفع بأطول خيارٍ في الصفّ، و«span» داخلها لا يرث ذلك
+       الارتفاع — فكان الشريطُ يبلغ الحدَّين في الخيار الطويل وحدَه ويقف
+       قصيراً في إخوته. والعلاجُ «height: 1px» على الخانة: قيمةٌ تُحلّ بها
+       «height: 100%» على الارتفاع الفعليّ لا على «تلقائيّ»، وهي حيلةُ
+       الجداول المعروفة — ولا تُقصّر الخانة، فمحتواها أطولُ من بكسل.
+
+       ولا موضعَ مُطلَق: «html2canvas» يلتقط ما رُسم، والمرقِّمُ يقيس الصفَّ
+       **خارج جدوله** — وطبقةٌ مُطلَقةٌ في خانةٍ مقيسةٍ وحدَها مخاطرةٌ بلا
+       مقابل، والانسيابُ يُعطي الشكلَ نفسَه.
+
+       والنصُّ يبدأ من جهة البداية لا موسَّطاً: نصٌّ موسَّطٌ بجانب شريطٍ
+       ثابتٍ يبدو منزلقاً، وفي العربيّة هو مبتدئٌ أصلاً. */
+    .ex-mcq td.o { padding: 0; height: 1px; }
+    .ex-mcq .ow  { display: flex; align-items: stretch; height: 100%; min-height: 38px; }
+    .ex-mcq .obx {
+        flex: none; width: 28px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 13px;
+        border-inline-end: 1px solid #111;
+    }
+    .ex-mcq .otx { flex: 1; padding: 9px 10px; text-align: start; }
     /* ورقةٌ إنجليزيّة: الاتّجاهُ من اليسار، فتنقلب الجداولُ والترويسةُ معاً
        بلا قاعدةٍ لكلّ عنصر. والخاناتُ الموسَّطةُ تبقى موسَّطة. */
     .ex-ltr { direction: ltr; text-align: left; }
@@ -227,7 +255,9 @@
     .ex-ltr .ex-key  th, .ex-ltr .ex-key  td,
     .ex-ltr .ex-info td { text-align: left !important; }
     .ex-ltr .ex-tbl .c, .ex-ltr .ex-tbl .m, .ex-ltr .ex-key .m,
-    .ex-ltr .ex-mcq .o, .ex-ltr .ex-info .mk { text-align: center !important; }
+    .ex-ltr .ex-info .mk { text-align: center !important; }
+    /* و«.ex-mcq .o» سقطت من قائمة التوسيط: نصُّها صار في «.otx» يبدأ من
+       جهة البداية، والخانةُ نفسُها لم يعد فيها نصٌّ يُوسَّط. */
     .ex-tbl-wrap { margin-bottom: 16px; }
     .ex-lines { margin-bottom: 16px; }
     .ex-lines .ln { border-bottom: 1px dotted #9AA0A6; height: 30px; }
@@ -267,7 +297,9 @@
         let out = '';
         for (let k = 0; k < cols; k++) {
             const t = esc(o[k] || '');
-            out += `<td class="o">${L.letters[k]}) ${t || '&nbsp;'}</td>`;
+            out += `<td class="o"><span class="ow">`
+                 + `<span class="obx">${L.letters[k]}</span>`
+                 + `<span class="otx">${t || '&nbsp;'}</span></span></td>`;
         }
         return out;
     };
