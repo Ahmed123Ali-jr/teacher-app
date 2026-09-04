@@ -118,7 +118,9 @@ section{position:relative}
   50%{transform:scaleY(1);opacity:1}100%{transform:scaleY(.2);opacity:.2;transform-origin:bottom}}
 
 /* ══ ٢ · العرض المثبَّت ══ */
-#tour{height:520vh}
+/* ‎٣٠٠vh‎ لا ‎٥٢٠‎: العرضُ يمضي بساعته لا بالتمرير، فتثبيتٌ أطولُ من اللازم
+   يجعل المستخدمَ يمرّر ولا يتغيّر شيء — وهو أكثرُ ما يُحَسّ «غيرَ ناعم». */
+#tour{height:300vh}
 #tour .pin{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:clamp(12px,2.2vh,26px);padding:clamp(64px,10vh,110px) clamp(14px,3vw,40px) clamp(20px,4vh,46px);overflow:hidden}
 #tour .tnav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;z-index:4}
@@ -130,7 +132,13 @@ section{position:relative}
   overflow:hidden;background:var(--void);
   box-shadow:0 60px 140px -60px rgba(0,0,0,.95),0 0 0 1px var(--line),
              0 0 120px -40px rgba(0,112,120,.5)}
-#tour video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+/* مشغّلان متراكبان: الحاليُّ يُعرض والتالي يُحمَّل خلفه، ثمّ يتلاشيان.
+   ‏`vid.src` الجديد يمسح الإطارَ فيومض أسودَ ريثما يُحمَّل — والتلاشي
+   يمحو الومضة، ويجعل القطعَ بين شاشتين مختلفتين انتقالاً لا صدمة. */
+#tour .vv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transform:scale(1.012);
+  transition:opacity .62s var(--ease-cin),transform 1.1s var(--ease-cin)}
+#tour .vv.show{opacity:1;transform:scale(1)}
 #tour .cap{position:absolute;inset-inline-end:clamp(16px,3vw,44px);bottom:clamp(16px,3vh,40px);
   z-index:3;max-width:min(72%,540px);text-align:start;font-family:"El Messiri",serif;
   font-size:clamp(15px,1.9vw,26px);line-height:1.42;text-shadow:0 2px 26px rgba(0,0,0,.92);
@@ -275,7 +283,8 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
     <div class="pin">
       <div class="tnav" id="tnav"></div>
       <div class="screen">
-        <video id="vid" muted playsinline preload="auto"></video>
+        <video class="vv" id="vidA" muted playsinline preload="auto"></video>
+        <video class="vv" id="vidB" muted playsinline preload="auto"></video>
         <div class="cap" id="cap"></div>
         <div class="rail" id="rail"></div>
         <div id="gate">
@@ -454,57 +463,104 @@ var CH = [
   { k:"initiatives", t:"المبادرات",    c:"ثلاثون مبادرةً بخطواتها وشواهدها المقترحة." },
   { k:"portfolio",   t:"ملف الإنجاز",  c:"عشرةُ أقسام، ثلاثةٌ تملأ نفسَها — ثمّ يخرج مستنداً بغلافٍ وفهرس." }
 ];
-var vid=document.getElementById("vid"), cap=document.getElementById("cap"),
-    rail=document.getElementById("rail"), tnav=document.getElementById("tnav"),
-    gate=document.getElementById("gate"), startB=document.getElementById("start"),
-    cnt=document.getElementById("cnt");
+var vA=document.getElementById("vidA"), vB=document.getElementById("vidB"),
+    cap=document.getElementById("cap"), rail=document.getElementById("rail"),
+    tnav=document.getElementById("tnav"), gate=document.getElementById("gate"),
+    startB=document.getElementById("start"), cnt=document.getElementById("cnt");
 
-/* ‎4K‎ حيث تُرى، و‎1080p‎ على الصغيرة — لا يُنزَّل ‎2160‎ على جوال */
 var big = Math.min(screen.width, screen.height) >= 700 ||
           (innerWidth * (devicePixelRatio||1)) >= 1800;
 var RES = big ? "2160" : "1080";
+var url = function(i){ return "assets/video/" + CH[(i+CH.length)%CH.length].k + "-" + RES + ".mp4"; };
 
 CH.forEach(function(c, i){
   var b = document.createElement("button"); b.textContent = c.t; b.dataset.i = i;
-  tnav.appendChild(b);
-  rail.appendChild(document.createElement("i"));
+  tnav.appendChild(b); rail.appendChild(document.createElement("i"));
 });
 var dots = rail.querySelectorAll("i"), btns = tnav.querySelectorAll("button");
 var idx = 0, started = false, timer = null, armed = false;
+var cur = vA, nxt = vB, swapping = false;
 
 function paint(i){
   dots.forEach(function(d,j){ d.classList.toggle("on", j===i); });
   btns.forEach(function(b,j){ b.classList.toggle("on", j===i); });
   cap.classList.remove("on"); cap.textContent = CH[i].c;
-  setTimeout(function(){ cap.classList.add("on"); }, 330);
+  setTimeout(function(){ cap.classList.add("on"); }, 300);
 }
-function play(i){
+
+/* الفصلُ التالي يُحمَّل بينما يُعرض الحاليّ — فلا انتظارَ عند التبديل */
+function preload(i){
+  var u = url(i);
+  if (nxt.getAttribute("src") === u) return;
+  nxt.src = u; try { nxt.load(); } catch(e){}
+}
+
+function show(i, instant){
+  playedOk = false;
   idx = ((i % CH.length) + CH.length) % CH.length;
   paint(idx);
-  vid.src = "assets/video/" + CH[idx].k + "-" + RES + ".mp4";
-  var p = vid.play(); if (p && p.catch) p.catch(function(){});
+  var u = url(idx);
+  var target = (nxt.getAttribute("src") === u) ? nxt : cur;
+
+  if (target === cur){ if (cur.getAttribute("src") !== u) cur.src = u; }
+  var p = target.play(); if (p && p.catch) p.catch(function(){});
+
+  if (target !== cur){
+    /* تلاشٍ متقاطع: يظهر التالي ثمّ يُخفى السابقُ بعد اكتمال الانتقال */
+    swapping = true;
+    target.classList.add("show");
+    var prev = cur;
+    setTimeout(function(){
+      prev.classList.remove("show");
+      try { prev.pause(); } catch(e){}
+      swapping = false;
+    }, instant ? 0 : 640);
+    cur = target; nxt = prev;
+  } else {
+    cur.classList.add("show");
+  }
+  preload(idx + 1);
 }
-vid.addEventListener("ended", function(){ play(idx+1); });
-vid.addEventListener("error", function(){ play(idx+1); });
+
+/* ══ لا تقدُّمَ إلّا بعد تشغيلٍ فعليّ ══
+   لو مُنع التشغيلُ التلقائيّ (سياسةُ متصفّح، أو لسانٌ مخفيّ) أطلق المشغّلُ
+   `error` فوراً؛ ولو تقدّمنا عنده لفشل التالي أيضاً — فتمرّ الفصولُ كلُّها
+   في ثوانٍ ويقف العرضُ على آخرها بلا أن يرى أحدٌ شيئاً.
+   فالقاعدة: `ended` وحدَه يُقدّم. و`error` لا يُقدّم إلّا مرّةً واحدة، فإن
+   لم يُشغَّل التالي أيضاً تَوقّف العرضُ وبقي ما هو معروضٌ على الشاشة. */
+var playedOk = false, errStreak = 0, halted = false;
+
+[vA, vB].forEach(function(v){
+  v.addEventListener("playing", function(){ if (v === cur){ playedOk = true; errStreak = 0; } });
+  v.addEventListener("ended", function(){
+    if (v !== cur || halted || swapping) return;
+    show(idx + 1);
+  });
+  v.addEventListener("error", function(){
+    if (v !== cur || halted || swapping) return;
+    if (++errStreak >= 2){ halted = true; return; }   /* لا دوّامة */
+    show(idx + 1);
+  });
+});
 
 function begin(){
   if (started) return; started = true;
   if (timer) clearInterval(timer);
-  gate.style.transition = "opacity .75s"; gate.style.opacity = "0";
-  setTimeout(function(){ gate.style.display = "none"; }, 780);
-  play(0);
+  gate.style.transition = "opacity .8s var(--ease-cin)"; gate.style.opacity = "0";
+  setTimeout(function(){ gate.style.display = "none"; }, 820);
+  show(0, true);
 }
 startB.addEventListener("click", begin);
 tnav.addEventListener("click", function(e){
   var b = e.target.closest("button"); if (!b) return;
-  if (!started) begin();
-  play(+b.dataset.i);
+  if (!started) begin(); else show(+b.dataset.i);
 });
 
 /* لا يبدأ قبل أن يصل القسمَ — فلا يضيع المشهدُ قبل أن يُرى */
 function arm(){
   if (armed) return; armed = true;
   gate.classList.add("run");
+  vA.src = url(0); try { vA.load(); } catch(e){}   /* جاهزٌ قبل أن يُضغط الزرّ */
   setTimeout(function(){
     if (started) return;
     gate.classList.add("blur");
@@ -516,7 +572,7 @@ function arm(){
     }, 1000);
   }, 2300);
 }
-if (reduce){ gate.style.display = "none"; play(0); vid.pause(); }
+if (reduce){ gate.style.display = "none"; show(0, true); try{ cur.pause(); }catch(e){} }
 else if (hasG) ScrollTrigger.create({ trigger:"#tour", start:"top 55%", once:true, onEnter:arm });
 else arm();
 
