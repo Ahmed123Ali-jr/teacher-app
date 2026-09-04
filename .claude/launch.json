@@ -35,6 +35,18 @@
         "landing/out"
       ],
       "port": 3200
+    },
+    {
+      "name": "fusul-cinematic",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "3300",
+        "--directory",
+        "landing-cinematic"
+      ],
+      "port": 3300
     }
   ]
 }

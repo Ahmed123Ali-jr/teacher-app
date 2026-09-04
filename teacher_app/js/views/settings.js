@@ -844,7 +844,7 @@
                     <input type="checkbox" id="bell-school" ${b.schoolBell ? 'checked' : ''}>
                     <span class="tx">
                         <span class="t">${Icons.svg('bell')} جرس المدرسة</span>
-                        <span class="h">عند بداية كل حصة ونهايتها</span>
+                        <span class="h">عند بداية حصصك ونهايتها</span>
                     </span>
                     <button type="button" class="fchip" data-try="bell">▶︎ جرّب</button>
                 </label>

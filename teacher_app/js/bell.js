@@ -268,7 +268,13 @@
                 out.push({ key: 'pre-' + p.n, sec: startSec - pf.preMinutes * 60,
                            kind: 'pre', n: p.n });
             }
-            if (pf.schoolBell) {
+            /* الجرسُ على حصصه هو لا على حصص المدرسة كلِّها — بقراره
+               (٤ سبتمبر ٢٠٢٦): «جرس المدرسة يكون على حصص المعلّم فقط».
+               وكان يرنّ لكلِّ حصّةٍ في الجدول ولو لم يُدرّسها، فيرنّ في يده
+               سبعَ مرّاتٍ ذهاباً وسبعاً إياباً وهو يُدرّس أربعاً.
+               وفائدةٌ ثانيةٌ تبعت: ‎٧٠‎ إشعاراً أسبوعيّاً نزلت إلى ما دون
+               سقف آبل، فلم يعد شيءٌ يُقصّ. */
+            if (pf.schoolBell && mine && mine.has(p.n)) {
                 out.push({ key: 'start-' + p.n, sec: startSec, kind: 'start', n: p.n });
                 out.push({ key: 'end-' + p.n,   sec: endSec,   kind: 'end',   n: p.n });
             }
@@ -395,9 +401,11 @@
         } catch { return; }
         if (!periods.length) return;
 
-        /* حصص المعلم اليوم — التنبيه اللين يخصّها وحدها. */
+        /* حصصُ المعلّم اليوم. وكانت تُقرأ للتنبيه اللين وحدَه، فلمّا صار
+           الجرسُ أيضاً على حصصه لزمت الاثنين — ولولا ذلك لصمت الجرسُ عند
+           من أطفأ «تنبيه حصتك» وأبقى «جرس المدرسة». */
         let mine = new Set();
-        if (prefs.classAlert) {
+        if (prefs.classAlert || prefs.schoolBell) {
             try {
                 const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
                 rows.filter((r) => r.day === dayIdx && r.class_id)
