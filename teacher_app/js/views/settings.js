@@ -8,7 +8,18 @@
 
     const APP_VERSION = '0.9.0';
     const APP_RELEASE_DATE = '2026-04';
-    const SUPPORT_EMAIL = 'support@teacher-app.local';
+    /* **فارغٌ عمداً حتى يصل العنوانُ الحقيقيّ.** كان هنا
+       `support@teacher-app.local` — نطاقٌ لا وجودَ له، فرسالةُ المعلّم
+       تضيع بلا ردٍّ ولا إشعارِ فشل. والمعلّمُ يظنّ أنّه راسل الدعمَ وانتظر.
+       و`fusooli.com` لا يصلح بديلاً اليوم: **لا سجلَّ MX في جذره** (قِيس ٥
+       سبتمبر ٢٠٢٦)، وجذرُه يشير إلى خوادم GitHub Pages — فترتدّ الرسالةُ
+       بعد أيّامٍ من المحاولة لا في الحال، وهو أسوأُ من الرفض الفوريّ.
+       والمستخدمُ ينشئ عنواناً مخصّصاً ويرسله.
+       ── وحتى يصل: العنوانُ يختفي ولا يُستبدل بمزيَّف. سطرُ «الدعم» في «عن
+       التطبيق» لا يُعرض، وقسمُ «الدعم الفنّي» يدلّ على «ملاحظاتكم» — وهي
+       قناةٌ **تعمل فعلاً** وتكتب في القاعدة.
+       ── ولإحيائه: اكتب العنوانَ هنا وحدَه. الموضعان يتبعانه. */
+    const SUPPORT_EMAIL = '';
 
 
     const CHANGELOG = [
@@ -1493,7 +1504,9 @@
                     <tr><th>الإصدار</th><td>${APP_VERSION}</td></tr>
                     <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
                     <tr><th>الاسم</th><td>فصول</td></tr>
-                    <tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>
+                    ${SUPPORT_EMAIL
+                        ? `<tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>`
+                        : ''}
                     <tr><th>رقم البناء</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                 </tbody>
             </table>
@@ -1548,6 +1561,21 @@
     }
 
     function supportBody() {
+        /* بلا عنوانٍ حقيقيٍّ لا يُعرض بريدٌ البتّة — الطريقُ إلى «ملاحظاتكم»،
+           وهي تكتب في القاعدة فتصل فعلاً. */
+        if (!SUPPORT_EMAIL) {
+            return `
+            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
+                إذا واجهت مشكلة أو لديك اقتراح، أرسلها من «ملاحظاتكم» — تصلنا مباشرة.
+            </p>
+            <a href="#/feedback" class="btn btn-secondary btn-block">فتح «ملاحظاتكم»</a>
+            <table class="info-table-compact" style="margin-top: var(--space-3);">
+                <tbody>
+                    <tr><th>ساعات الدعم</th><td>الأحد — الخميس · ٩ص — ٥م</td></tr>
+                </tbody>
+            </table>
+        `;
+        }
         return `
             <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
                 إذا واجهت مشكلة أو لديك اقتراح، تواصل معنا:
