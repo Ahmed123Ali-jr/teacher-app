@@ -47,27 +47,44 @@
 
     <!-- الوضع الداكن — يأتي بعد الأبيض ليغلبه على من اختاره. -->
     <link rel="stylesheet" href="css/theme-dark.css?v=40">
-    <!-- الثوبُ الهادئ: كلُّ قواعده تحت body.theme-calm فلا يمسّ أحداً حتى
-         يُرفع المفتاح. يُرفع بـ?calm=1 ويُخفض بـ?calm=0. (معاينةٌ ١ سبتمبر ٢٠٢٦.) -->
-    <link rel="stylesheet" href="css/theme-calm.css?v=23">
+    <!-- ══════════════════════════════════════════════════════════════
+         سياسةُ أمنِ المحتوى — البندُ ٧٫١ من خطّة الاختبار
+         ══════════════════════════════════════════════════════════════
+         لا سكربتَ من خارج التطبيق ولا اتّصالَ بغير خادمه. وهي في وسمٍ لا
+         في ترويسة لأنّ GitHub Pages لا يسمح بالترويسات، والحزمةُ المغلَّفة
+         تُقرأ من `file://` فلا ترويسةَ فيها أصلاً.
 
+         ── ولماذا `'unsafe-inline'` للسكربت ──
+         في `index.html` سكربتاتٌ داخليّةٌ لازمةٌ **قبل أوّل رسم**: طلاءُ
+         لون المعلّم وشاشةُ البدء — ولو حُمّلت من ملفٍّ لومض البترولي ثمّ
+         تبدّل. والبديلُ بصماتٌ (`sha256-…`) تُعاد كتابتُها مع كلّ تعديل
+         حرفٍ فيها، فتُنسى مرّةً فيسقط الإقلاع صامتاً. فالمكسبُ الباقي —
+         وهو الأهمّ — **منعُ تحميل أيّ سكربتٍ من نطاقٍ غريب**.
+
+         ── ولا `'unsafe-eval'` ──
+         pdf.js وحدَها تطلبه، وقد أُطفئ عندها صراحةً (`isEvalSupported`
+         في `pdf-core.js`).
+
+         ── و`frame-ancestors` ليست هنا ──
+         تُتجاهَل في الوسم ولا تعمل إلّا ترويسةً، فوضعُها ضجيجٌ في السجلّ.
+         ══════════════════════════════════════════════════════════════ -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        base-uri 'self';
+        object-src 'none';
+        form-action 'self';
+        script-src 'self' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob: https://rbsfpsmolxldmwcclhlc.supabase.co;
+        media-src 'self' blob:;
+        font-src 'self';
+        worker-src 'self' blob:;
+        connect-src 'self' blob: https://rbsfpsmolxldmwcclhlc.supabase.co wss://rbsfpsmolxldmwcclhlc.supabase.co;
+    ">
     <link rel="stylesheet" href="css/print.css?v=D29" media="print">
 </head>
 <body>
 <script>
-/* بوّابةُ الثوب الهادئ — تُقرأ قبل أوّل رسمٍ لئلّا يومض القديمُ ثمّ يتبدّل.
-   ?calm=1 يرفعه ويُبقي المفتاحَ ظاهراً، و?calm=0 يخفضه. ومن لم يفتح الرابطَ
-   قطّ لا يرى شيئاً من هذا. */
-(function () {
-    try {
-        var q = /[?&]calm=([01])/.exec(location.search);
-        if (q) { localStorage.setItem('calm', q[1]); localStorage.setItem('calm_ui', '1'); }
-        if (localStorage.getItem('calm') === '1') document.body.classList.add('theme-calm');
-
-
-    } catch (e) {}
-})();
-
 /* لونُ التطبيق الذي اختاره المعلّم — يُطلى قبل أوّل رسمٍ لئلّا يومض
    البتروليُّ ثمّ يتبدّل. ولا حسابَ هنا: `js/theme-color.js` يكتب القيمَ
    المحسوبةَ في المرآة عند الاختيار، وهذا يطليها كما هي.
@@ -281,30 +298,6 @@
 
     <!-- Toasts -->
     <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
-    <!-- الإيموجي ← رسومٌ خطّيّة، تحت body.theme-calm فقط (معاينة ٢ سبتمبر ٢٠٢٦) -->
-    <script src="js/calm-picker.js?v=9"></script>
-    <button type="button" id="calm-switch" hidden aria-label="تبديل الثوب">
-        <span class="dot" aria-hidden="true"></span><span id="calm-label">الثوب الزجاجي</span>
-    </button>
-    <script>
-    (function () {
-        try {
-            if (localStorage.getItem('calm_ui') !== '1') return;
-            var b = document.getElementById('calm-switch');
-            var paint = function () {
-                var on = document.body.classList.contains('theme-calm');
-                document.getElementById('calm-label').textContent = on ? 'الثوب الزجاجي' : 'الثوب الحالي';
-            };
-            b.hidden = false;
-            b.addEventListener('click', function () {
-                var on = document.body.classList.toggle('theme-calm');
-                localStorage.setItem('calm', on ? '1' : '0');
-                paint();
-            });
-            paint();
-        } catch (e) {}
-    })();
-    </script>
 
     <!-- Scripts: order matters -->
     <!-- Supabase 2.112.2 مثبّتاً محلياً: تحميله من CDN يعني أن التطبيق
@@ -335,7 +328,7 @@
     <script src="js/ai-service.js?v=D16"></script>
     <script src="js/question-editor.js?v=12"></script>
     <script src="js/image-compress.js?v=1"></script>
-    <script src="js/pdf-core.js?v=13"></script>
+    <script src="js/pdf-core.js?v=14"></script>
     <script src="js/pdf-text.js?v=1"></script>
     <script src="js/sheet-read.js?v=1"></script>
     <script src="js/book-reader.js?v=3"></script>
