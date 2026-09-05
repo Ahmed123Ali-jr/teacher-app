@@ -5321,17 +5321,30 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
     margin-top: 30px;
 }
 
-/* الشعارُ حلقةٌ تتجاوز حافّةَ البطاقة إلى أعلى. */
+/* الشعارُ حلقةٌ تتجاوز حافّةَ البطاقة إلى أعلى.
+   وأرضيّتُها **بيضاءُ مثبَّتة** لا `--surface`: العلامةُ بترولّيةٌ مرسومةٌ
+   لأرضٍ فاتحة، وسطحُ الداكن يبتلعها. والبياضُ يجعلها شارةَ هُويّةٍ في
+   المظهرين معاً. ولا حبرَ يتبع المظهر فوقها — صورةٌ لا نصّ. */
 .view-auth .auth-logo {
     width: 58px;
     height: 58px;
     border-radius: 50%;
-    background: var(--ink-primary);
+    background: #FFFFFF;
     border: 2.5px solid var(--accent);
     display: grid;
     place-items: center;
+    /* تبقى: شاشاتُ الاستعادة تضع في الحلقة رموزَ قفلٍ ومفتاحٍ وجوّال،
+       ومقاسُها `1em` — فحذفُها يجعلها ‎48‎px داخل حلقةٍ ‎58‎px. */
     font-size: 25px;
     margin: -48px auto var(--space-3);
+}
+
+/* كانت قبعةً خطّيّةً بلون `--text` على أرضٍ بتروليّة — ‎١٫٩:١‎، لا تكاد
+   تُرى. والصورةُ لا ترث لوناً فينتهي الأمر. */
+.auth-mark {
+    width: 40px;
+    height: 40px;
+    display: block;
 }
 
 .view-auth .auth-title {

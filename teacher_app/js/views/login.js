@@ -24,7 +24,7 @@
             if (mode === 'login') {
                 return `
                     <div class="auth-card">
-                        <div class="auth-logo">${Icons.svg('cap')}</div>
+                        <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="40" height="40"></div>
                         <h2 class="auth-title">فصول</h2>
                         <p class="auth-subtitle">فصولك وطلابك وحضورهم ودرجاتهم في مكان واحد</p>
 
@@ -220,7 +220,7 @@
 
             return `
                 <div class="auth-card">
-                    <div class="auth-logo">${Icons.svg('cap')}</div>
+                    <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="40" height="40"></div>
                     <h2 class="auth-title">إنشاء حساب</h2>
                     <p class="auth-subtitle">حسابك أولاً — ونسألك عن مدرستك بعد الدخول</p>
 
