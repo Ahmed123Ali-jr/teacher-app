@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "فصول — تطبيق المعلّم",
   "scripts": {
-    "cap:sync": "npx cap sync ios && tools/strip-dev-pages.sh ios/App/App/public"
+    "cap:sync": "npx cap sync ios && tools/strip-dev-pages.sh ios/App/App/public",
+    "check": "node teacher_app/tools/check-version.mjs && node teacher_app/tools/check-fixed-surfaces.mjs && node teacher_app/tools/check-active-states.mjs"
   },
   "repository": {
     "type": "git",

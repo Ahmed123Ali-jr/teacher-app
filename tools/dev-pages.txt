@@ -29,3 +29,4 @@ btns.html
 README.md                    # وثيقةُ المطوّر
 tools/check-fixed-surfaces.mjs   # حارسُ الأسطح المثبَّتة — يُشغَّل من المستودع
 tools/check-active-states.mjs    # حارسُ الحالات الملوّنة — يُشغَّل من المستودع
+tools/check-version.mjs          # حارسُ رقم الإصدار — أُضيف ٥ سبتمبر ٢٠٢٦
