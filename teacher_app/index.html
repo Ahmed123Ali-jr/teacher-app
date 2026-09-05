@@ -8,6 +8,25 @@
          منذ اعتُمد البترولي. ويُحدَّث وقتَ التشغيل إن بدّل المعلّمُ لونَه. -->
     <meta name="theme-color" content="#0A3F4A">
 
+    <!-- ══ الأيقوناتُ وبطاقةُ التثبيت ══
+         `manifest.json` هو ما يجعل كروم يعرض «تثبيت التطبيق» على أندرويد —
+         وهو طريقُنا هناك بقراره (٥ سبتمبر ٢٠٢٦): أندرويد رابطاً من الموقع
+         لا متجراً، فلا رسومَ ولا اثنا عشرَ مختبِراً ولا D-U-N-S.
+         و`apple-touch-icon` لسفاري على آيفون قبل التغليف.
+
+         والأيقونةُ مقتطعةٌ من ورقة هُويّته: **العلامةُ وحدَها بلا نصّ** —
+         الورقةُ فيها الاسمُ والوصفُ وأربعُ أيقونات، وكلُّها عند ‎60‎ بكسلاً
+         لطخةٌ لا تُقرأ. ونُزعت أرضيّتُها البيضاء بقناعٍ متدرّجٍ يحفظ الحواف،
+         فتُركَّب على أيّ لون. واختار الأبيضَ أرضيّةً (الشكل «أ»).
+
+         و`maskable` نسخةٌ بهامشٍ أوسع (‎20.5٪‎ لا ‎11٪‎): أندرويد يقصّ
+         الأيقونةَ إلى دائرةٍ أو قطرةٍ حسب الجهاز، فما خرج عن المنطقة الآمنة
+         يُقصّ — والهامشُ الضيّقُ يأكل حوافَ العلامة. -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+
     <!-- Always re-fetch index.html so new ?v= cache-busts on JS/CSS take effect immediately. -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
