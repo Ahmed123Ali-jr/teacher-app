@@ -865,6 +865,20 @@
                                 data-pre="${m}">${m} دقائق</button>
                     `).join('')}
                 </div>
+
+                <!-- مدّةُ الجرس — بطلبه (٤ سبتمبر ٢٠٢٦): «كم ثانية يجلس يدقّ».
+                     والضغطةُ تُسمعه المدّةَ فوراً: رقمٌ بلا صوتٍ لا يُقاس. -->
+                <div class="fgrp-t" style="margin-top:var(--space-4)">مدّة الجرس</div>
+                <div class="fchips">
+                    ${[3, 5, 10, 20].map((sec) => `
+                        <button type="button" class="fchip ${(b.ringSeconds || 4) === sec ? 'on' : ''}"
+                                data-ring="${sec}">${sec} ثوانٍ</button>
+                    `).join('')}
+                </div>
+                <p class="bell-note" style="margin-top:6px">
+                    ${Icons.svg('bell')} تُسمعها فورَ اختيارها. وهي داخل التطبيق —
+                    والإشعارُ والتطبيقُ مغلقٌ يدقّ بطول ملفّ الصوت.
+                </p>
             </div>
 
             <p class="bell-note" id="bell-note"></p>
@@ -927,6 +941,17 @@
             sync({ schoolBell: e.target.checked }));
         container.querySelector('#bell-class')?.addEventListener('change', (e) =>
             sync({ classAlert: e.target.checked }));
+
+        /* ومدّةُ الجرس تُسمَع عند اختيارها لا تُقرأ رقماً — والمعلّمُ يقيسها
+           بأذنه لا بالعدد. */
+        container.querySelectorAll('[data-ring]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const sec = Number(btn.dataset.ring);
+                container.querySelectorAll('[data-ring]').forEach((b) => b.classList.toggle('on', b === btn));
+                global.Bell.playBell(sec);
+                sync({ ringSeconds: sec });
+            });
+        });
 
         container.querySelectorAll('[data-pre]').forEach((btn) => {
             btn.addEventListener('click', () => {
