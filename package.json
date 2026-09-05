@@ -1,0 +1,26 @@
+{
+  "name": "fusool",
+  "version": "0.9.0",
+  "description": "فصول — تطبيق المعلّم",
+  "scripts": {
+    "cap:sync": "npx cap sync ios && tools/strip-dev-pages.sh ios/App/App/public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ahmed123Ali-jr/teacher-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ahmed123Ali-jr/teacher-app/issues"
+  },
+  "homepage": "https://github.com/Ahmed123Ali-jr/teacher-app#readme",
+  "private": true,
+  "dependencies": {
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.1"
+  }
+}

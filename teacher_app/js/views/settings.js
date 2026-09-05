@@ -1519,7 +1519,12 @@
        لأي خادم — وهذا لم يعد صحيحاً منذ الانتقال إلى Supabase، وادّعاءٌ
        خاطئ في صفحة خصوصية أخطر من غيابها. الملخّص هنا صار مطابقاً للواقع،
        والتفصيل الكامل في الصفحة العامة التي يطلبها متجر آبل. */
-    const PRIVACY_URL = 'https://ahmed123ali-jr.github.io/teacher-app/privacy.html';
+    /* نسبيٌّ لا مطلق: كان يشير إلى `ahmed123ali-jr.github.io` صراحةً،
+       فيوم رُبط النطاقُ `fusooli.com` (٤ سبتمبر ٢٠٢٦) كان يظلّ يفتح
+       العنوانَ القديم — ولو أُغلق يوماً لفتح لا شيء. والنسبيُّ يتبع
+       الموقعَ حيثما حلّ، **ويعمل داخل الحزمة المغلَّفة بلا إنترنت**
+       لأنّ `privacy.html` تُشحن معها (ليست في `tools/dev-pages.txt`). */
+    const PRIVACY_URL = 'privacy.html';
 
     function legalBody(stats) {
         const dataSummary = `${stats.classes} فصل · ${stats.students} ${global.Words.studentsBare()} · ${stats.exams + stats.worksheets + stats.homework} مستند تعليمي`;
