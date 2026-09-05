@@ -31,6 +31,25 @@
 	     App Store Connect ويتأخّر التسليم. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- ══ المخطَّطُ الخاصّ — `fusooli://` ══
+	     يفتح به رابطُ استعادة كلمة المرور **التطبيقَ** لا سفاري
+	     (`auth.js` يضبط `redirectTo` عليه في الغلاف وحدَه، و`app.js`
+	     يلتقطه بـ`appUrlOpen`). واسمُه من نطاقه فلا يزاحم غيرَه.
+	     ويُضاف `fusooli://` في `Redirect URLs` بلوحة سوبابيس وإلّا رُدَّ
+	     الرابطُ قبل أن يُرسَل. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.fusooli.app</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fusooli</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

@@ -123,6 +123,47 @@
         _bindGlobalUI() {
             const logoutBtn = document.getElementById('btn-logout');
             if (logoutBtn) logoutBtn.addEventListener('click', () => { this.logout(); });
+            this._bindDeepLinks();
+        },
+
+        /** ══ الروابطُ العميقة — `fusooli://` ══
+         *  رابطُ استعادة كلمة المرور يعود إلى `fusooli://reset#access_token=…`
+         *  في النسخة المغلَّفة (`auth.js`)، فيفتحه النظامُ في التطبيق لا في
+         *  سفاري. ويصل هنا حدثاً لا صفحةً — فالتطبيقُ يعمل أصلاً، ولا إقلاعَ
+         *  جديدَ يلتقط العنوان.
+         *
+         *  والمقطعُ يُمرَّر إلى `consumeRecoveryLink` نفسِها التي تخدم
+         *  المتصفّح: منطقٌ واحدٌ لمسارين، فلا يتفرّقان عند أوّل تعديل.
+         *
+         *  ولا شيءَ من هذا في المتصفّح: `Capacitor.Plugins.App` غيرُ موجود،
+         *  فتصمت الدالّةُ ولا ترمي. */
+        _bindDeepLinks() {
+            const cap = global.Capacitor;
+            if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return;
+            const AppPlugin = (cap.Plugins && cap.Plugins.App) || global.CapacitorApp;
+            if (!AppPlugin || !AppPlugin.addListener) return;
+
+            const self = this;
+            AppPlugin.addListener('appUrlOpen', async (data) => {
+                try {
+                    const url = String((data && data.url) || '');
+                    const i = url.indexOf('#');
+                    if (i < 0) return;
+                    const frag = url.slice(i + 1);
+                    if (!frag || frag.indexOf('=') < 0) return;
+
+                    const r = await global.Auth.consumeRecoveryLink(frag);
+                    if (r === 'recovery') {
+                        global.location.hash = '#/reset-password';
+                    } else if (r === 'error') {
+                        global.location.hash = '#/login';
+                        self.toast('انتهت صلاحية الرابط أو استُعمل من قبل. اطلب رابطاً جديداً.',
+                                   'error', 8000);
+                    }
+                } catch (e) {
+                    console.warn('[TeacherApp] deep link:', e && e.message);
+                }
+            });
         },
 
         toast(message, type = 'info', duration = 3000) {

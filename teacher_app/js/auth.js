@@ -520,9 +520,25 @@
     async function requestPasswordReset(email) {
         const clean = String(email || '').trim();
         if (!clean) throw new Error('اكتب بريدك الإلكتروني.');
-        /* يعود إلى صفحة التطبيق نفسِها؛ ويلتقط `consumeRecoveryLink` الرمزَ
-           من العنوان عند الإقلاع. */
-        const redirectTo = global.location.origin + global.location.pathname;
+        /* ══ أين يعود الرابط؟ ══
+           في المتصفّح: إلى صفحة التطبيق نفسِها، ويلتقط `consumeRecoveryLink`
+           الرمزَ من العنوان عند الإقلاع.
+
+           وفي النسخة المغلَّفة: **إلى التطبيق نفسِه** بمخطَّطٍ خاصّ. ولولاه
+           لفتح الرابطُ سفاري — فيجد المعلّمُ نسخةَ الويب لا تطبيقَه، ويغيّر
+           كلمتَه في مكانٍ ثمّ يعود إلى التطبيق فلا يجد جلسة. وهو أوّلُ ما
+           يفعله من نسيَ كلمتَه، وأسوأُ موضعٍ يقع فيه الالتباس.
+
+           والمخطَّطُ `fusooli://reset` — مسجَّلٌ في `Info.plist`
+           (`CFBundleURLTypes`)، ويلتقطه `appUrlOpen` في `app.js`.
+
+           وروابطُ الويب العميقة (Universal Links) أنظفُ منه لأنّها تفتح
+           التطبيقَ **من رابط `https://fusooli.com`** نفسِه، لكنّها تحتاج
+           ملفَّ `apple-app-site-association` فيه **معرّفُ فريقه في آبل** —
+           ولا نعرفه بعد. فتُترك خطوةً ثانية بعد أوّل توقيع. */
+        const redirectTo = isNative()
+            ? 'fusooli://reset'
+            : global.location.origin + global.location.pathname;
         const { error } = await sb.auth.resetPasswordForEmail(clean, { redirectTo });
         if (error) {
             /* حدُّ الإرسال يُقال صراحةً — وهو الخطأ الوحيد الذي يفيد المعلّمَ
@@ -545,8 +561,18 @@
      *
      * @returns {Promise<'recovery'|'error'|null>}
      */
-    async function consumeRecoveryLink() {
-        const raw = String(global.location.hash || '').replace(/^#/, '');
+    /** أنحن داخل الغلاف؟ */
+    function isNative() {
+        const c = global.Capacitor;
+        return !!(c && c.isNativePlatform && c.isNativePlatform());
+    }
+
+    async function consumeRecoveryLink(hashOverride) {
+        /* والمَقطعُ قد يأتي من عنوان الصفحة (المتصفّح) أو من رابطٍ عميقٍ
+           فتحه النظام (`appUrlOpen` في الغلاف) — والمنطقُ واحدٌ بعدها. */
+        const raw = String(
+            hashOverride != null ? hashOverride : (global.location.hash || '')
+        ).replace(/^#/, '');
         if (!raw || raw.indexOf('=') < 0) return null;
         const q = new URLSearchParams(raw);
 
