@@ -88,29 +88,38 @@ section{position:relative}
 .rv.in{opacity:1;transform:none}
 .rule{height:1px;background:var(--hair);margin:0 auto;max-width:var(--maxw)}
 
-/* ══ ١ · الهيرو ══ */
-#hero{height:118vh}
+/* ══ ١ · الهيرو — الفيلمُ يُسحَب بالتمرير ══ */
+/* ‎93‎ إطاراً على ‎430vh‎ ≈ ‎4.6vh‎ للإطار. والمشهدُ لا يمضي وحدَه: يتقدّم
+   بقدر ما يُسحَب ويرجع بقدر ما يُردّ — كالأقسام تحته، فالصفحةُ كلُّها
+   بيدٍ واحدة. */
+#hero{height:430vh}
+#hero .film{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%}
+#hero .veil{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(78% 62% at 50% 44%,rgba(4,6,10,.34),rgba(4,6,10,.86) 92%)}
+#hero .ldr{position:absolute;inset-inline-start:clamp(16px,4vw,44px);bottom:clamp(22px,4vh,44px);
+  z-index:4;font-family:"Cormorant Garamond",serif;letter-spacing:.26em;font-size:11.5px;
+  color:var(--ink-faint);transition:opacity .6s}
 #hero .stage{position:sticky;top:0;height:100svh;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:8vh 18px 0;overflow:hidden}
 #hero .aura{position:absolute;top:42%;left:50%;width:92vmin;height:92vmin;border-radius:50%;
   z-index:0;pointer-events:none;filter:blur(20px);opacity:0;
   transform:translate3d(calc(-50% + var(--px,0px)),calc(-50% + var(--py,0px)),0);
-  background:radial-gradient(circle,rgba(0,112,120,.58),rgba(0,166,180,.15) 42%,transparent 68%);
+  background:radial-gradient(circle,rgba(0,112,120,.34),rgba(0,166,180,.09) 42%,transparent 68%);
   animation:auraIn 1.8s ease-out .2s forwards,auraPulse 9s ease-in-out 2s infinite}
-@keyframes auraIn{to{opacity:.8}} @keyframes auraPulse{0%,100%{opacity:.66}50%{opacity:.92}}
-#hero .motes{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+@keyframes auraIn{to{opacity:.55}} @keyframes auraPulse{0%,100%{opacity:.42}50%{opacity:.66}}
+#hero .motes{position:absolute;inset:0;z-index:2;opacity:.5;pointer-events:none;overflow:hidden}
 #hero .motes span{position:absolute;border-radius:50%;opacity:0;filter:blur(.4px);
   background:radial-gradient(circle,rgba(201,169,97,.85),rgba(201,169,97,0) 70%);
   animation:mote linear infinite}
 @keyframes mote{0%{opacity:0;transform:translateY(46px) scale(.5)}14%{opacity:.7}
   58%{opacity:.5}100%{opacity:0;transform:translateY(-130px) scale(1.05)}}
-#hero .inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+#hero .inner{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center}
 #hero .mark{height:clamp(84px,13vh,140px);width:auto;opacity:0;filter:drop-shadow(0 24px 44px rgba(0,0,0,.75))}
 #hero h1{font-size:clamp(58px,13vw,172px);font-weight:700;line-height:.92;margin-top:2.4vh;
-  opacity:0;letter-spacing:0}
+  opacity:0;letter-spacing:0;text-shadow:0 6px 60px rgba(2,4,8,.92)}
 #hero .tag{margin-top:1.6vh;font-size:clamp(15px,2vw,22px);color:var(--ink-soft);opacity:0;max-width:30ch}
 #hero .lat{display:block;font-size:12px;color:var(--gold);margin-bottom:2.4vh;opacity:0}
-.cue{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:3;
+.cue{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:4;
   display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink-faint);
   font-size:10.5px;letter-spacing:.3em;font-family:"Cormorant Garamond",serif;text-transform:uppercase}
 .cue .bar{width:1px;height:42px;background:linear-gradient(var(--gold),transparent);
@@ -280,6 +289,8 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
   <!-- ١ · الهيرو -->
   <section id="hero" data-amb="#080B10" data-glow=".42">
     <div class="stage">
+        <canvas class="film" id="film" aria-hidden="true"></canvas>
+      <div class="veil" aria-hidden="true"></div>
       <div class="aura" aria-hidden="true"></div>
       <div class="motes" aria-hidden="true">
         <span style="left:23%;top:66%;width:7px;height:7px;animation-duration:10s"></span>
@@ -295,6 +306,7 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
         <h1>فصول</h1>
         <p class="tag">منظومةٌ متكاملةٌ لإدارة عمل المعلّم — تعمل بلا إنترنت، وتُخرج ورقاً رسميّاً بضغطة.</p>
       </div>
+      <div class="ldr" id="ldr">…</div>
       <div class="cue"><span>مرِّر</span><span class="bar"></span></div>
     </div>
   </section>
@@ -546,8 +558,11 @@ if (hasG && !reduce){
     .fromTo("#hero .lat",  { opacity:0, y:12 }, { opacity:1, y:0, duration:.8 }, .6)
     .fromTo("#hero h1",    { opacity:0, y:26 }, { opacity:1, y:0, duration:1.15 }, .75)
     .fromTo("#hero .tag",  { opacity:0, y:12 }, { opacity:1, y:0, duration:.85 }, 1.1);
-  gsap.to("#hero .inner", { scrollTrigger:{ trigger:"#hero", start:"top top", end:"80% top", scrub:true },
-    y:-48, opacity:0, ease:"none" });
+  /* العنوانُ ينسحب باكراً — الفيلمُ بعدَه بلا حجاب */
+  gsap.to("#hero .inner", { scrollTrigger:{ trigger:"#hero", start:"top top", end:"16% top", scrub:true },
+    y:-56, opacity:0, ease:"none" });
+  gsap.to("#hero .cue",   { scrollTrigger:{ trigger:"#hero", start:"top top", end:"8% top", scrub:true },
+    opacity:0, ease:"none" });
   var st = document.querySelector("#hero .stage"), aura = document.querySelector("#hero .aura"),
       mot = document.querySelector("#hero .motes");
   st.addEventListener("pointermove", function(e){
@@ -557,6 +572,65 @@ if (hasG && !reduce){
     mot.style.transform = "translate3d("+(nx*20).toFixed(1)+"px,"+(ny*14).toFixed(1)+"px,0)"; });
 } else document.querySelectorAll("#hero .mark,#hero h1,#hero .tag,#hero .lat")
         .forEach(function(e){ e.style.opacity = 1; });
+
+/* ══ فيلمُ الهيرو: ٩٣ إطاراً تُرسم على canvas ويقودها التمرير ══
+   لا مشغّلَ فيديو ولا `currentTime` — الأوّلُ يتلعثم عند السحب، والثاني
+   يومض عند الطلب. الإطاراتُ تُحمَّل مسبقاً وتُرسم واحداً واحداً، فالمشهدُ
+   يتقدّم بقدر ما يُسحَب. (memory/02)
+   والحدودُ متطابقة: لُحمةُ الوصل بين المقاطع قِيست ٠٫٧–٢٫٥ من ٢٥٥. */
+(function(){
+  var cvs = document.getElementById("film"), ldr = document.getElementById("ldr");
+  if (!cvs) return;
+  var stage = cvs.closest(".stage"), ctx = cvs.getContext("2d", { alpha:false });
+  var N = 93, frames = new Array(N), loaded = 0, errored = 0, ready = false, cur = -1, last = 0, FT = null;
+
+  function fit(){
+    var dpr = Math.min(2, devicePixelRatio || 1), w = stage.clientWidth, h = stage.clientHeight;
+    cvs.width = Math.round(w*dpr); cvs.height = Math.round(h*dpr);
+    cvs.style.width = w+"px"; cvs.style.height = h+"px";
+    cur = -1; if (ready) draw(last);
+  }
+  /* object-cover بحسابٍ يدويّ، وأرضيّةٌ بلونِ حافّةِ الإطارات فلا يظهر خيط */
+  function draw(i){
+    i = Math.max(0, Math.min(N-1, i));
+    var im = frames[i];
+    if (!im) for (var d=1; d<N; d++){ if (frames[i-d]){ im=frames[i-d]; break; }
+                                      if (frames[i+d]){ im=frames[i+d]; break; } }
+    if (!im || i === cur) return;
+    cur = i; last = i;
+    var cw=cvs.width, ch=cvs.height, iw=im.naturalWidth, ih=im.naturalHeight,
+        sc=Math.max(cw/iw, ch/ih), dw=iw*sc, dh=ih*sc;
+    ctx.fillStyle = "#04060A"; ctx.fillRect(0,0,cw,ch);
+    ctx.drawImage(im, (cw-dw)/2, (ch-dh)/2, dw, dh);
+  }
+  function at(){ return FT ? Math.round(Math.max(0,Math.min(1,FT.progress))*(N-1)) : 0; }
+  function settle(){
+    if (ready) return;
+    if (loaded+errored >= N || loaded >= Math.ceil(N*0.55)){
+      if (!loaded) return;
+      ready = true; ldr.style.opacity = 0; fit(); draw(at());
+    } else ldr.textContent = "… " + Math.round(loaded/N*100) + "%";
+  }
+  for (var i=0;i<N;i++) (function(i){
+    var im = new Image(); im.decoding = "async";
+    im.onload  = function(){ frames[i]=im; loaded++; if (!i && !ready){ fit(); draw(0); } settle(); };
+    im.onerror = function(){ errored++; settle(); };
+    im.src = "assets/film-seq/f"+String(i).padStart(3,"0")+".jpg";
+  })(i);
+  setTimeout(function(){ if(!ready && loaded){ ready=true; ldr.style.opacity=0; fit(); draw(at()); } }, 9000);
+  addEventListener("resize", fit, { passive:true });
+
+  if (hasG && !reduce){
+    FT = ScrollTrigger.create({ trigger:"#hero", start:"top top", end:"bottom bottom", scrub:true,
+      onUpdate:function(self){ if (ready) draw(Math.round(self.progress*(N-1))); } });
+  } else {
+    /* من أطفأ الحركة يرى آخرَ إطارٍ ثابتاً — الجوالُ وحدَه في الفراغ */
+    ldr.style.display = "none";
+    var lastIm = new Image();
+    lastIm.onload = function(){ frames[N-1]=lastIm; ready=true; fit(); draw(N-1); };
+    lastIm.src = "assets/film-seq/f092.jpg";
+  }
+})();
 
 /* ══ الفصولُ السبعة ══
    لا canvas ولا تسلسلَ إطارات: كلُّ قسمٍ يقف بنفسه. والحركةُ ثلاثُ
