@@ -1,6 +1,6 @@
 {
   "name": "fusool",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "فصول — تطبيق المعلّم",
   "scripts": {
     "cap:sync": "npx cap sync ios && tools/strip-dev-pages.sh ios/App/App/public"
