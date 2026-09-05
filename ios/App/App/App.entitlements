@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ══ إشعارٌ يخترق وضعَ التركيز ══
+	     بقرار المعلّم (٣ سبتمبر ٢٠٢٦): معلّمٌ يشغّل «تركيز» أثناء الحصّة
+	     كان لا يصله تنبيهُ التي بعدها البتّة — وهو الحالُ الغالبُ لا النادر.
+	     ولا يعمل الحقلُ `interruptionLevel: 'timeSensitive'` في `notify.js`
+	     بدون هذه القدرة، ويُتجاهَل بصمت.
+
+	     وهي **لا تحتاج استئذانَ آبل** — تُفعَّل في Signing & Capabilities
+	     ويضيفها Xcode إلى مُعرّف التطبيق في اللوحة. وهي **غير**
+	     `Critical Alerts`: تلك تتجاوز مفتاحَ الصامت وتحتاج استحقاقاً
+	     يُطلب بنموذج — **ورفضها المعلّم صراحةً**: «خلّه يخضع لمفتاح
+	     الصامت». فلا تُضاف هنا أبداً. -->
+	<key>com.apple.developer.usernotifications.time-sensitive</key>
+	<true/>
+</dict>
+</plist>

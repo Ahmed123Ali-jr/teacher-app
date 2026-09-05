@@ -2,7 +2,39 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- `viewport-fit=cover` لازمٌ للنسخة المغلَّفة: بدونه يرسم WKWebView
+         ملءَ الشاشة **و`env(safe-area-inset-*)` تعود أصفاراً** — فيقع
+         الشريطُ العلويّ تحت شريط الحالة والنتوء، ويلتصق السفليُّ بخطّ
+         الإيماءة. قِيس على المحاكي (٥ سبتمبر ٢٠٢٦): `T=0px` والمحتوى فوقه.
+         والتنسيقُ يقرأ هذه الرموزَ أصلاً (`main.css:154` و`views.css:4347`)،
+         فلم يكن ينقصه إلّا أن تصير لها قيمة. ولا يضرّ المتصفّح: هناك
+         الأصفارُ صحيحةٌ لأنّ الصفحةَ داخل نافذة. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script>
+    /* ══ التكبيرُ التلقائيُّ عند الكتابة — في الغلاف وحدَه ══
+       قِيس على المحاكي (٥ سبتمبر ٢٠٢٦): بمجرّد لمس حقلِ الاسم يصير
+       `innerWidth` ‎352‎ و`outerWidth` ‎402‎ — أي **تكبيرٌ ‎١٤٪‎**، فيفيض
+       المستندُ ‎50‎ بكسلاً وينزاح يمنةً، فيُقصّ أوّلُ كلِّ سطرٍ عربيّ:
+       «أهلاً بك» تصير «بك».
+
+       والسببُ قاعدةُ آبل: كلُّ حقلٍ خطُّه **دون ‎16px‎** يُكبَّر تلقائيّاً
+       عند التركيز. وحقولُنا ‎13.5‎ و‎14‎ — وهي مقاسٌ مقصودٌ في التصميم.
+
+       فيُمنع التكبيرُ **في النسخة المغلَّفة وحدَها** بإضافة
+       `maximum-scale=1` — ولا يُكتب في الوسم أصلاً لأنّ ذلك يقتل
+       **تكبيرَ الأصابع** في نسخة الويب، ومعلّمو أندرويد كلُّهم عليها
+       (وهي طريقُنا هناك بقراره). فداخلَ الغلاف: لا تكبيرَ تلقائيّاً؛
+       وعلى الويب: التكبيرُ بالأصابع باقٍ كما هو. */
+    (function () {
+        try {
+            var cap = window.Capacitor;
+            if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return;
+            var m = document.querySelector('meta[name="viewport"]');
+            if (m) m.setAttribute('content', m.getAttribute('content') +
+                ', maximum-scale=1.0, user-scalable=no');
+        } catch (e) {}
+    })();
+    </script>
     <meta name="description" content="فصول — سجل الطلاب والاختبارات وملف الإنجاز">
     <!-- لونُ الهُويّة. كان ‎#1E40AF‎ — أزرقُ ملكيٌّ لا وجودَ له في التطبيق
          منذ اعتُمد البترولي. ويُحدَّث وقتَ التشغيل إن بدّل المعلّمُ لونَه. -->
@@ -55,7 +87,7 @@
     <link rel="stylesheet" href="css/fonts.css?v=2" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="css/fonts.css?v=2"></noscript>
 
-    <link rel="stylesheet" href="css/main.css?v=D32">
+    <link rel="stylesheet" href="css/main.css?v=D33">
     <link rel="stylesheet" href="css/components.css?v=13">
     <link rel="stylesheet" href="css/views.css?v=D311">
     <link rel="stylesheet" href="css/portfolio-theme.css?v=16">
@@ -390,7 +422,7 @@
     <script src="js/guest-notice.js?v=2"></script>
     <script src="js/phone-prompt.js?v=3"></script>
     <script src="js/save-account.js?v=3"></script>
-    <script src="js/app.js?v=S19"></script>
+    <script src="js/app.js?v=S21"></script>
 
     <!-- Service Worker: enables offline + auto-update banner on every deploy. -->
     <script>
