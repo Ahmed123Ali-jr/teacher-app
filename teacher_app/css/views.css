@@ -1366,15 +1366,61 @@ body.drawer-open { overflow: hidden; }
 }
 
 /* البحث القصير + إضافة طلاب بلون الفصل */
+/* ══ شريطٌ ثابتٌ في قاع الشاشة — اختيارُه ٦ سبتمبر ٢٠٢٦ ══
+   كان صفّاً فوق القائمة، فيذهب مع أوّل تمرير. والبحثُ في سجلٍّ من ثلاثين
+   طالباً يُطلب وأنت في وسط القائمة لا في أوّلها.
+   و`z-index: 60` **تحت** الشريط السفليّ (‎70‎) فلا يغطّي التنقّل.
+   والارتفاعُ صغُر: ‎40‎px بدل ‎48‎. **وخطُّ البحث يبقى ‎16‎px** — أقلُّ منها
+   يجعل iOS يكبّر الصفحةَ عند اللمس فيقفز كلُّ شيء. */
 .reg-toolrow {
+    position: fixed;
+    inset-inline: var(--bottom-nav-gap);
+    /* على الشاشات العريضة لا شريطَ سفليّ، فيجلس على القاع مباشرةً. */
+    bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap));
+    z-index: 60;
     display: flex;
     gap: var(--space-2);
-    margin-bottom: var(--space-4);
+    margin: 0 auto;
+    max-width: 720px;
+    padding: 8px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 20px rgba(16, 24, 40, .10);
 }
+/* ومن لا يعرف الزجاج يرى سطحاً معتماً بدل شفٍّ لا يُقرأ خلفه. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .reg-toolrow { background: var(--surface); }
+}
+/* على الجوّال يرتفع فوق شريط التنقّل: قاعُه + ارتفاعُه + فُرجة. */
+@media (max-width: 768px) {
+    .reg-toolrow {
+        bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap)
+                     + var(--bottom-nav-height) + 8px);
+    }
+}
+/* الشريطُ خارج التدفّق، فيُحجز له فراغٌ وإلّا اختفت آخرُ بطاقةٍ تحته.
+   والحسابُ: `body` تحجز أصلاً ارتفاعَ شريط التنقّل وفجوتَه، والشريطُ يعلوها
+   بـ‎8‎px + ارتفاعِه ‎58‎ = ‎66‎. فـ‎78‎ تترك ‎12‎px تنفّس.
+   ⚠️ وقِيس بقائمةٍ **طويلة**: بـ‎24‎px كان يغطّي آخرَ بطاقةٍ ‎13‎px،
+   والقائمةُ القصيرةُ لا تكشفه لأنّ الصفحةَ لا تمرّر أصلاً. */
+.reg-toolrow-space { height: 78px; }
+
 .reg-toolrow .search-input {
     flex: 1;
     min-width: 0;
     max-width: none;
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: var(--fs-body);
+}
+.reg-toolrow .reg-add {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: 11px;
 }
 .reg-add {
     --cls-color: var(--primary);

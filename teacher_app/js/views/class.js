@@ -507,14 +507,6 @@
             ${students.length > 0 ? daysSheetHtml(date, markedDates) : ''}
 
             ${students.length > 0 ? `
-                <div class="reg-toolrow">
-                    <input type="search" class="input search-input" id="student-search"
-                           placeholder="بحث باسم ${global.Words.theStudent()}...">
-                    <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.studentsBare()}</button>
-                </div>
-            ` : ''}
-
-            ${students.length > 0 ? `
                 <div class="col-chips-bar" id="col-chips">
                     <button class="col-chip ${focus === 'attendance' ? 'active' : ''}" data-col-focus="attendance">الحضور</button>
                     ${columns.map((c) => `
@@ -543,6 +535,21 @@
                 : (focus === 'notes'
                     ? studentsNotesCards(students)
                     : studentsCards(students, attendanceToday, evalToday, visibleCols, showAtt))}
+
+            ${students.length > 0 ? `
+                <!-- ══ البحثُ والإضافةُ في قاع الشاشة — اختيارُه ٦ سبتمبر ٢٠٢٦ ══
+                     كانا صفّاً فوق القائمة يذهب مع أوّل تمرير. والبحثُ في سجلٍّ
+                     من ثلاثين طالباً يُطلب وأنت في وسط القائمة لا في أوّلها،
+                     فصارا شريطاً ثابتاً تحت الإبهام.
+                     والفراغُ أخوهما: الشريطُ مثبَّتٌ خارج التدفّق، فلولاه
+                     لاختفت آخرُ بطاقةٍ تحته. -->
+                <div class="reg-toolrow-space" aria-hidden="true"></div>
+                <div class="reg-toolrow">
+                    <input type="search" class="input search-input" id="student-search"
+                           placeholder="بحث باسم ${global.Words.theStudent()}...">
+                    <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ ${global.Words.student()}</button>
+                </div>
+            ` : ''}
         `;
 
         /* التنقّل بين الأيام: تغيير التاريخ يعيد القراءة كاملةً — لا
