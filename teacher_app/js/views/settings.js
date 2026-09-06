@@ -609,8 +609,8 @@
         return `
             <div class="idc">
                 <div class="idc-top">
-                    <span class="ph">${prefs.school_logo instanceof Blob
-                        ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
+                    <span class="ph">${hasLogo(prefs.school_logo)
+                        ? `<img src="${escapeAttr(logoSrc(prefs.school_logo))}" alt="">`
                         : 'school'}</span>
                     <span class="tx">
                         <span class="nm">${escapeHtml(teacher.school_name || 'اسم مدرستك')}</span>
@@ -641,15 +641,15 @@
             <div class="flist">${yearRows.map(fieldRow).join('')}</div>
 
             <div class="flogo">
-                <span class="box">${prefs.school_logo instanceof Blob
-                    ? `<img src="${URL.createObjectURL(prefs.school_logo)}" alt="">`
+                <span class="box">${hasLogo(prefs.school_logo)
+                    ? `<img src="${escapeAttr(logoSrc(prefs.school_logo))}" alt="">`
                     : 'school'}</span>
                 <span class="tx">
                     <span class="t">شعار المدرسة</span>
                     <span class="h">يظهر في ترويسة المطبوعات</span>
                 </span>
-                <button type="button" class="fchip" id="btn-upload-logo">${Icons.svg('camera')} ${prefs.school_logo ? 'تغيير' : 'رفع'}</button>
-                ${prefs.school_logo ? '<button type="button" class="fchip" id="btn-remove-logo">' + Icons.svg('trash') + '</button>' : ''}
+                <button type="button" class="fchip" id="btn-upload-logo">${Icons.svg('camera')} ${hasLogo(prefs.school_logo) ? 'تغيير' : 'رفع'}</button>
+                ${hasLogo(prefs.school_logo) ? '<button type="button" class="fchip" id="btn-remove-logo">' + Icons.svg('trash') + '</button>' : ''}
                 <input type="file" id="logo-input" accept="image/*" hidden>
             </div>
 
@@ -757,11 +757,11 @@
             if (file.size > 3 * 1024 * 1024) {
                 return global.TeacherApp.toast('الصورة كبيرة (أقصى ٣ MB).', 'warning');
             }
-            /* الشعار يظهر فوراً من الملف المحلي، والرفع والترويسة في الخلفية. */
+            /* الشعار يظهر فوراً من الملف المحلي، والتحويلُ والحفظ في الخلفية. */
             showLogo(container, URL.createObjectURL(file));
             global.TeacherApp.toast('تم رفع الشعار', 'success', 1200);
             bgSave(async () => {
-                await setPref('school_logo', file);
+                await setPref('school_logo', await logoToDataUrl(file));
                 await refreshPrintCache();
             }, () => render(container));
         });
@@ -1762,13 +1762,67 @@
         } catch (e) { /* اللونُ لا يوقف الإقلاع */ }
     }
 
+    /* ══ شعارُ المدرسة: نصٌّ لا ملفّ (٦ سبتمبر ٢٠٢٦) ══
+       كان يُحفظ `File` خامّاً في `app_settings.value` وهو `jsonb`، فيصير
+       `{}` عند الإرسال ويُمحى بعد الرفع بثوانٍ (التفصيل في `database.js`).
+       فصار **data URL**: نصٌّ يعبر jsonb سالماً، ويمرّ بالصندوق الصادر
+       فيُحفظ بلا إنترنت أيضاً — وكان الخامُّ يرمي ويضيع.
+
+       وهذه الثلاثُ تقرأ الشكلين معاً: النصَّ الجديد، و`Blob`اً بقي في
+       مخبأ جهازٍ قديم. و`{}` المكتوبةُ في حسابات من رفع شعاراً قبل اليوم
+       ليست شيئاً منهما — فتُقرأ «لا شعار»، وهو الصواب. */
+    function hasLogo(v) {
+        return (typeof v === 'string' && v.length > 0)
+            || (typeof Blob !== 'undefined' && v instanceof Blob);
+    }
+    function logoSrc(v) {
+        if (typeof v === 'string' && v) return v;
+        if (typeof Blob !== 'undefined' && v instanceof Blob) return URL.createObjectURL(v);
+        return null;
+    }
+
+    /* يُصغّر ويُعيد نصّاً. و‎400‎px حدُّ الضلع: الشعارُ يُطبع في ‎40‎مم —
+       أي ‎254‎ نقطة/بوصة، وفوقها ترفٌ يثقل صفّاً يُقرأ مع كلّ إعداد.
+       وPNG أوّلاً لتبقى الشفافيّة (شعاراتُ المدارس تُقصّ عادةً)، فإن
+       تجاوز النصُّ ‎300‎ ك.ب أُعيد JPEG — أرضٌ بيضاءُ خيرٌ من صفٍّ ثقيل. */
+    const LOGO_EDGE = 400;
+    async function logoToDataUrl(file) {
+        const url = URL.createObjectURL(file);
+        try {
+            const img = await new Promise((res, rej) => {
+                const i = new Image();
+                i.onload = () => res(i);
+                i.onerror = () => rej(new Error('تعذّرت قراءة الصورة.'));
+                i.src = url;
+            });
+            const scale = Math.min(1, LOGO_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+            const w = Math.max(1, Math.round(img.naturalWidth  * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const cv = document.createElement('canvas');
+            cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            let out = cv.toDataURL('image/png');
+            if (out.length > 300 * 1024) {
+                const c2 = document.createElement('canvas');
+                c2.width = w; c2.height = h;
+                const g = c2.getContext('2d');
+                g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, w, h);
+                g.drawImage(img, 0, 0, w, h);
+                out = c2.toDataURL('image/jpeg', 0.85);
+            }
+            return out;
+        } finally { URL.revokeObjectURL(url); }
+    }
+
     async function refreshPrintCache() {
         const logo = await getPref('school_logo', null);
         global.PrintPrefs = {
             academicYear:  await getPref('academic_year', ''),
             principal:     await getPref('principal_name', ''),
             educationDept: await getPref('education_dept', ''),
-            logoDataUrl:   logo instanceof Blob ? await blobToDataUrl(logo) : null
+            logoDataUrl:   typeof logo === 'string' && logo
+                               ? logo
+                               : (logo instanceof Blob ? await blobToDataUrl(logo) : null)
         };
     }
     function blobToDataUrl(blob) {

@@ -1254,12 +1254,19 @@
            تعرف مخزنَ `settings` أصلاً، وليس في `OUTBOX_SKIP`. (قِيس ٢ سبتمبر
            ٢٠٢٦ عند بناء «ألوان التطبيق»: اللونُ يُطلى ثمّ يسقط حفظُه صامتاً.) */
         async set(key, value) {
-            /* والملفُّ يبقى خارجَ الصندوق: شعارُ المدرسة يُحفظ Blobاً، ولو
-               صُفّ لأُرسل لاحقاً إلى عمود jsonb فيصير `{}` — نجاحٌ كاذبٌ
-               يمحو الشعار. فيبقى كما كان: يرمي بلا إنترنت ويُقال للمعلّم. */
-            const isFile = (typeof Blob !== 'undefined' && value instanceof Blob);
-            return isFile ? put('settings', { key, value })
-                          : putGuarded('settings', { key, value });
+            /* ══ ولا `Blob` هنا — يُرفض صراحةً (٦ سبتمبر ٢٠٢٦) ══
+               كان شعارُ المدرسة يُحفظ ملفّاً خامّاً، وعمودُ `app_settings.value`
+               من نوع `jsonb`. وسوبابيس ترسل الصفَّ بـ`JSON.stringify`،
+               و`JSON.stringify(new File(…))` تساوي **`{}`** — قِيس في
+               المتصفّح. ثمّ يُكتب جوابُ الخادم فوق النسخة المحليّة، فيُمحى
+               الشعارُ **بعد رفعه بثوانٍ**، ويبقى `{}` صادقاً في الواجهة
+               فتقول «تغيير» ولا صورةَ تحتها.
+               والصوابُ أن يُحوَّل إلى نصٍّ (data URL) قبل الحفظ — كما تفعل
+               `views/settings.js`. والرفضُ هنا لئلّا يعود أحدٌ إلى الخامّ. */
+            if (typeof Blob !== 'undefined' && value instanceof Blob) {
+                throw new Error('لا تُحفظ الملفّاتُ في الإعدادات — حوّلها إلى data URL أوّلاً.');
+            }
+            return putGuarded('settings', { key, value });
         },
         /** محلّيٌّ فوريّ — للتهيئة وحدها، ويُتبع بكتابةٍ حقيقيةٍ في الخلفية. */
         async setLocal(key, value) { return Cache.put('settings', { key, value }); },
