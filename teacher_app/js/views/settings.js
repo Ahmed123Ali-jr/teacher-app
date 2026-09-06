@@ -16,7 +16,6 @@
        ذاك رقمُ البناء، يرتفع مع كلّ رفعةٍ إلى App Store Connect ولو لم
        يتغيّر الإصدار. */
     const APP_VERSION = '1.0.0';
-    const APP_RELEASE_DATE = '2026-09';
     /* **فارغٌ عمداً حتى يصل العنوانُ الحقيقيّ.** كان هنا
        `support@teacher-app.local` — نطاقٌ لا وجودَ له، فرسالةُ المعلّم
        تضيع بلا ردٍّ ولا إشعارِ فشل. والمعلّمُ يظنّ أنّه راسل الدعمَ وانتظر.
@@ -33,28 +32,6 @@
     const SUPPORT_EMAIL = 'fusool96@gmail.com';
 
 
-    const CHANGELOG = [
-        { v: '1.0.0', date: '2026-09', items: [
-            'تنبيه الحصة وجرس المدرسة — يعملان والتطبيق مغلق',
-            'الوضع الداكن، ولون التطبيق يختاره المعلم',
-            'شعار وزارة التعليم في ترويسة الاختبارات وأوراق العمل',
-            'العمل بلا إنترنت — ما تكتبه يُحفظ ويُرسل حين تعود الشبكة',
-            'قراءة الجدول وكشف الأسماء من صورة أو ملف PDF'
-        ]},
-        { v: '0.9.0', date: '2026-04', items: [
-            'شاشة الملف التعريفي مع تعديل فوري لكل حقل',
-            'تقرير استهلاك الذكاء الاصطناعي + تقدير التكلفة',
-            'تحسينات شاملة لتجربة الجوال'
-        ]},
-        { v: '0.8.0', date: '2026-03', items: [
-            'شاشة التقارير مع تحليل الحضور والتقييمات',
-            'طباعة سجل الطلاب (سجل فارغ / معبّأ / فترة / مجمّع)'
-        ]},
-        { v: '0.7.0', date: '2026-03', items: [
-            'الجدول الأسبوعي + إشعارات الحصة القادمة',
-            'ملف الإنجاز مع تقارير AI للاستراتيجيات والمبادرات'
-        ]}
-    ];
 
     /**
      * Menu items. `page` is the detail-screen key; if it's a direct hash,
@@ -89,7 +66,9 @@
         {
             title: 'معلومات',
             items: [
-                { page: 'about',         label: 'عن التطبيق',       sub: 'الإصدار، التحديث، الخصوصية، الدعم' },
+                { page: 'about',         label: 'عن التطبيق',        sub: 'الإصدار ورقم التحديث' },
+                { page: 'support',       label: 'الدعم الفني',        sub: 'البريد وساعات الرد' },
+                { page: 'legal',         label: 'الخصوصية والقانون',  sub: 'بياناتك وأين تُحفظ' },
                 { page: 'danger',        label: 'حذف البيانات أو الحساب', sub: 'لا يمكن التراجع', danger: true }
             ]
         }
@@ -346,17 +325,15 @@
                 body = claimBody(teacher); bindFn = bindClaim; break;
             case 'invite':
                 body = inviteBody(); bindFn = bindInvite; break;
-            /* «الخصوصية» و«الدعم الفني» صارتا قسمين مطويّين داخل «عن التطبيق». */
+            /* ══ ثلاثُ صفحاتٍ لا شاشةٌ واحدةٌ مكدّسة (قرارُه ٦ سبتمبر ٢٠٢٦) ══
+               كانت «الخصوصية» و«الدعم» قسمين مطويّين داخل «عن التطبيق»،
+               فصار لكلٍّ صفحتُه: «ما تكون كلها، تكون لها صفحة خاصة». */
             case 'about':
-                body = aboutBody()
-                     + `<details class="set-fold"><summary>${Icons.svg('file')} الخصوصية والقانون</summary>
-                            ${legalBody(await computeQuickStats(teacher))}
-                        </details>
-                        <details class="set-fold"><summary>${Icons.svg('thought')} الدعم الفني</summary>
-                            ${supportBody()}
-                        </details>`;
-                bindFn = bindAbout;
-                break;
+                body = aboutBody(); bindFn = bindAbout; break;
+            case 'support':
+                body = supportBody(); break;
+            case 'legal':
+                body = legalBody(await computeQuickStats(teacher)); break;
             case 'danger':
                 body = dangerBody(); bindFn = bindDanger; break;
             default:
@@ -1457,92 +1434,30 @@
        كان المؤشّر يقارن schedule.js وحده، فإذا تغيّر غيره — محرّك
        الطباعة مثلاً — أعلن «أحدث نسخة ✅» والمعلّم يشغّل كوداً قديماً.
        مؤشّرٌ يطمئن كذباً أسوأ من غيابه. */
-    function versionsIn(text) {
-        return (text.match(/(?:js|css)\/[\w./-]+\?v=[A-Za-z0-9]+/g) || []).sort().join('|');
-    }
-    function runningVersions() {
-        const tags = [...global.document.scripts].map((s) => s.getAttribute('src') || '')
-            .concat([...global.document.querySelectorAll('link[rel="stylesheet"]')]
-                .map((l) => l.getAttribute('href') || ''));
-        return versionsIn(tags.join('\n'));
-    }
     /* عدد الملفّات المختلفة، ليعرف المعلّم حجم الفارق لا وجوده فقط. */
-    function diffCount(a, b) {
-        const A = new Set(a.split('|')), B = new Set(b.split('|'));
-        let n = 0;
-        B.forEach((x) => { if (!A.has(x)) n += 1; });
-        return n;
-    }
 
+    /* ══ رقمُ التحديث وحدَه ══
+       كان هنا كشفٌ يجلب `index.html` ويقارن النسخ ويقول «اضغط تحديث
+       التطبيق الآن» — وقد سقط الزرّ، فبقاءُ الرسالة يدلّ على ما لا وجودَ
+       له. وهو بلا معنًى في الغلاف أصلاً: الملفّاتُ محلّيّةٌ والتحديثُ يمرّ
+       بمراجعة آبل. فبقي الرقمُ يُقرأ من وسم النسخة الجاري. */
     function bindAbout(container) {
         const slot = container.querySelector('#build-id');
-        if (slot) {
-            const runningEl = [...global.document.scripts].find((s) => VER_RE.test(s.src));
-            const running = runningEl ? runningEl.src.match(VER_RE)[1] : '؟';
-            const mine = runningVersions();
-            slot.textContent = running;
-            fetch('index.html?nocache=' + Number(new Date()), { cache: 'no-store' })
-                .then((r) => r.text())
-                .then((txt) => {
-                    const theirs = versionsIn(txt);
-                    if (!theirs) return;
-                    if (theirs === mine) { slot.textContent = running + ' (أحدث نسخة)'; return; }
-                    const n = diffCount(mine, theirs);
-                    slot.textContent = running + ' ← يتوفر تحديث ('
-                        + (n ? n + ' ملفاً' : 'ملفّات') + ') — اضغط «تحديث التطبيق الآن»';
-                })
-                .catch(() => {});
-        }
-
-        container.querySelector('#force-update')?.addEventListener('click', async (e) => {
-            const btn = e.currentTarget;
-            btn.disabled = true;
-            btn.textContent = 'جارٍ التحديث…';
-            try {
-                if (global.navigator.serviceWorker) {
-                    const regs = await global.navigator.serviceWorker.getRegistrations();
-                    await Promise.all(regs.map((r) => r.unregister()));
-                }
-                if (global.caches) {
-                    const keys = await global.caches.keys();
-                    await Promise.all(keys.map((k) => global.caches.delete(k)));
-                }
-            } catch (err) {
-                global.TeacherApp.toast('تعذّر المسح: ' + (err && err.message), 'error', 5000);
-            }
-            const base = global.location.href.split('#')[0].split('?')[0];
-            global.location.replace(base + '?u=' + Number(new Date()));
-        });
+        if (!slot) return;
+        const el = [...global.document.scripts].find((sc) => VER_RE.test(sc.src));
+        slot.textContent = el ? el.src.match(VER_RE)[1] : '؟';
     }
 
     function aboutBody() {
         return `
-            <table class="info-table-compact" style="margin-bottom: var(--space-4);">
+            <table class="info-table-compact">
                 <tbody>
                     <tr><th>الإصدار</th><td>${APP_VERSION}</td></tr>
-                    <tr><th>تاريخ الإصدار</th><td>${APP_RELEASE_DATE}</td></tr>
+                    <tr><th>رقم التحديث</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                     <tr><th>الاسم</th><td>فصول</td></tr>
-                    ${SUPPORT_EMAIL
-                        ? `<tr><th>الدعم</th><td><a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></td></tr>`
-                        : ''}
-                    <tr><th>رقم البناء</th><td><code id="build-id" style="font-size:11px;">…</code></td></tr>
                 </tbody>
             </table>
-            <button type="button" class="btn btn-secondary btn-block" id="force-update"
-                    style="margin-bottom: var(--space-4);">${Icons.svg('refresh')} تحديث التطبيق الآن</button>
-            <p class="text-muted" style="font-size: var(--fs-sm); margin: calc(-1 * var(--space-3)) 0 var(--space-4);">
-                يمسح النسخة المخزّنة ويعيد تحميل أحدث إصدار. بياناتك لا تتأثر.
-            </p>
-            <h4 style="margin-bottom: var(--space-2);">${Icons.svg('edit')} سجل التحديثات</h4>
-            ${CHANGELOG.map((log) => `
-                <div style="margin-bottom: var(--space-3);">
-                    <strong>${log.v}</strong>
-                    <span class="text-muted" style="font-size: var(--fs-sm);"> — ${log.date}</span>
-                    <ul style="margin: var(--space-1) 0 0; padding-right: var(--space-5); line-height: 1.8;">
-                        ${log.items.map((x) => `<li>${x}</li>`).join('')}
-                    </ul>
-                </div>
-            `).join('')}
+            <p class="about-made">made in saudi</p>
         `;
     }
 
@@ -1557,14 +1472,34 @@
        لأنّ `privacy.html` تُشحن معها (ليست في `tools/dev-pages.txt`). */
     const PRIVACY_URL = 'privacy.html';
 
+    /* ══ أرقامٌ عربيّةٌ وتمييزٌ صحيح ══
+       كان السطرُ يقول «6 فصل · 184 طالب» — أرقامٌ لاتينيّةٌ في شاشةٍ عربيّة،
+       وتمييزٌ مكسور. والقاعدةُ: مفردٌ، ثمّ مثنّى، ثمّ جمعٌ من ٣ إلى ١٠،
+       ثمّ منصوبٌ مفردٌ فوق العشرة.
+       و«الطلاب» لها `Words.count` أصلاً — تعرف بنينَ من بنات — فتُستعمل
+       ولا تُكرَّر، ويُحوَّل رقمُها وحدَه. */
+    function arDigits(v) {
+        return String(v).replace(/[0-9]/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
+    }
+    function countAr(n, one, two, few, many) {
+        const k = Number(n) || 0;
+        if (k === 0) return 'بلا ' + few;
+        if (k === 1) return one;
+        if (k === 2) return two;
+        if (k <= 10) return arDigits(k) + ' ' + few;
+        return arDigits(k) + ' ' + many;
+    }
+
     function legalBody(stats) {
-        const dataSummary = `${stats.classes} فصل · ${stats.students} ${global.Words.studentsBare()} · ${stats.exams + stats.worksheets + stats.homework} مستند تعليمي`;
+        const docs = stats.exams + stats.worksheets + stats.homework;
+        const dataSummary = [
+            countAr(stats.classes, 'فصل واحد', 'فصلان', 'فصول', 'فصلاً'),
+            arDigits(global.Words.count(stats.students)),
+            countAr(docs, 'مستند تعليمي', 'مستندان تعليميّان', 'مستندات تعليمية', 'مستنداً تعليميّاً')
+        ].join(' · ');
+        /* والفقرةُ التي كانت تشرح هذا كلَّه سقطت بقراره: الجدولُ يقول
+           الحقائقَ نفسَها في أربعة سطورٍ تُقرأ، والسياسةُ الكاملةُ خلف زرّ. */
         return `
-            <p class="text-muted" style="font-size: var(--fs-sm); margin-top: 0;">
-                بياناتك محفوظة في حسابك على خوادم Supabase بفرانكفورت، ومعها نسخة على
-                جهازك ليعمل التطبيق بلا إنترنت. لا يصل إليها معلّم آخر، ولا تُباع،
-                ولا تُستخدم في إعلانات.
-            </p>
             <table class="info-table-compact" style="margin-bottom: var(--space-4);">
                 <tbody>
                     <tr><th>بياناتك المحفوظة</th><td>${dataSummary}</td></tr>
@@ -1574,7 +1509,10 @@
                 </tbody>
             </table>
             <a class="btn btn-secondary btn-block" href="${PRIVACY_URL}"
-               target="_blank" rel="noopener">${Icons.svg('file')} سياسة الخصوصية كاملة</a>
+               target="_blank" rel="noopener">${Icons.svg('file')} سياسة الخصوصية</a>
+            <a class="btn btn-secondary btn-block" href="terms.html"
+               target="_blank" rel="noopener"
+               style="margin-top: var(--space-3);">${Icons.svg('file')} شروط الاستخدام</a>
         `;
     }
 
@@ -1604,6 +1542,8 @@
                     <tr><th>ساعات الدعم</th><td>الأحد — الخميس · ٩ص — ٥م</td></tr>
                 </tbody>
             </table>
+            <a class="btn btn-secondary btn-block" href="#/feedback"
+               style="margin-top: var(--space-4);">ملاحظاتكم</a>
         `;
     }
 
