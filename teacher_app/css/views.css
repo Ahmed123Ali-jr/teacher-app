@@ -204,7 +204,8 @@ body.drawer-open { overflow: hidden; }
    ‎الارتفاع + الفجوة + الآمنة‎، وهو ما تحسبه القواعدُ الخمسُ الأخرى. */
 .bottom-nav {
     position: fixed;
-    bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap));
+    /* القاعُ في `--nav-bottom` بـ`main.css` — ومعه شريطُ أدوات السجلّ. */
+    bottom: var(--nav-bottom);
     inset-inline: var(--bottom-nav-gap);
     z-index: 70;
     display: none;                     /* Visible only on mobile (@media below) */
@@ -1397,8 +1398,7 @@ body.drawer-open { overflow: hidden; }
 /* على الجوّال يرتفع فوق شريط التنقّل: قاعُه + ارتفاعُه + فُرجة. */
 @media (max-width: 768px) {
     .reg-toolrow {
-        bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap)
-                     + var(--bottom-nav-height) + 8px);
+        bottom: calc(var(--nav-bottom) + var(--bottom-nav-height) + 8px);
     }
 }
 /* الشريطُ خارج التدفّق، فيُحجز له فراغٌ وإلّا اختفت آخرُ بطاقةٍ تحته.

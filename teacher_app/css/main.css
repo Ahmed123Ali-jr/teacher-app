@@ -153,6 +153,15 @@
     /* Safe-area insets (iPhone notch / home indicator) */
     --safe-top:    env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* ══ قاعُ حبّة التنقّل — رمزٌ واحدٌ يتبعه الشريطُ العائمُ فوقها ══
+       كان `الآمنة + ١٢`، فيصير على آيفونٍ بمؤشّر صفحة ‎46‎px: المنطقةُ
+       الآمنةُ محجوزةٌ أصلاً، فزيادةُ ‎12‎ فوقها ترفع الحبّةَ مرّتين.
+       واختار (٦ سبتمبر ٢٠٢٦) أن تنزل إلى **‎24‎px** — أي داخلَ المحجوز
+       بعشرة. وقيل له إنّ ذلك يخالف إرشادَ آبل وقد يزاحم إيماءةَ الخروج،
+       فاختار التجربة. والرجوعُ سطرٌ واحد.
+       و`max` لا الطرحُ المجرّد: على آيفونٍ بزرّ رئيسيّة (آمنة = صفر) تبقى
+       ‎12‎ كما كانت، فلا يخسر القديمُ شيئاً. */
+    --nav-bottom:  max(calc(var(--safe-bottom) - 10px), var(--bottom-nav-gap));
     --safe-left:   env(safe-area-inset-left, 0px);
     --safe-right:  env(safe-area-inset-right, 0px);
 
