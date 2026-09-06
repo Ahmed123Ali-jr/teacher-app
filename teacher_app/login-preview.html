@@ -29,7 +29,9 @@ body {
     font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
     color: #E8EAEA;
 }
-.wrap { max-width: 460px; margin: 0 auto; }
+.wrap { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; }
+/* «د» أوّلاً لأنّها المطلوبة، والباقي تحتها للمقارنة — بترتيبٍ لا بنقل. */
+.page-head { order: -2; } .opt-d { order: -1; } .foot { order: 9; }
 
 .page-head { text-align: center; margin-bottom: 26px; }
 .page-head h1 { font-size: 21px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.2px; }
@@ -168,7 +170,9 @@ body {
 .c-body .switch button { color: var(--petrol); }
 
 /* ══════════ د — عاجيٌّ هادئ، خطوطٌ لا صناديق ══════════ */
-.d-bg { background: var(--ivory); padding: 44px 26px 30px; justify-content: center; }
+/* أبيضُ صافٍ بطلبه — لا عاجيّ. والدفءُ ينتقل إلى الخيوط الذهبيّة
+   وحدَها: على بياضٍ تامٍّ يصير الخطُّ الرفيعُ هو الزينةَ كلَّها. */
+.d-bg { background: #FFFFFF; padding: 44px 26px 30px; justify-content: center; }
 /* بطاقةٌ مقصودةٌ لا رقعةٌ بيضاء: العلامةُ أرضُها بيضاءُ صمّاء،
    فعلى العاجيّ تبدو بقعةً ما لم يُحدَّ لها إطار. */
 .d-mark { width: 58px; height: 58px; display: block; margin: 0 auto 14px;
@@ -181,7 +185,7 @@ body {
 .d-bg .lb { color: var(--gray); font-size: 12px; }
 /* لا صناديق: سطرٌ تحت الحقل وحدَه — أهدأُ ما يمكن، وأقربُ إلى أوراق المعلّم. */
 .d-bg .in {
-    background: transparent; border: 0; border-bottom: 1.5px solid #DAD6C8;
+    background: transparent; border: 0; border-bottom: 1.5px solid #E3DFD2;
     border-radius: 0; padding: 6px 2px; min-height: 40px; color: var(--charcoal);
 }
 .d-bg .forgot { color: var(--gray); padding-bottom: 20px; }
@@ -203,7 +207,7 @@ body {
 
     <div class="page-head">
         <h1>شكل شاشة الدخول</h1>
-        <p>أربعةُ اتّجاهاتٍ بألوان «فصول» وخطّه. اختر حرفاً.</p>
+        <p>«د» بالأبيض في الأعلى — والثلاثةُ الأخرى تحتها للمقارنة.</p>
     </div>
 
     <!-- ═════════ أ ═════════ -->
@@ -272,9 +276,9 @@ body {
     </div>
 
     <!-- ═════════ د ═════════ -->
-    <div class="opt">
-        <div class="opt-bar"><div class="opt-letter">د</div><div class="opt-name">عاجيٌّ هادئ</div></div>
-        <p class="opt-why">أرضٌ عاجيّةٌ وخطوطٌ تحت الحقول بلا صناديق، وزرٌّ مستدير. أهدأُ الأربعة وأقربُها إلى ورق المعلّم.</p>
+    <div class="opt opt-d">
+        <div class="opt-bar"><div class="opt-letter">د</div><div class="opt-name">أبيضُ هادئ</div></div>
+        <p class="opt-why">أبيضُ صافٍ، وخطوطٌ تحت الحقول بلا صناديق، وزرٌّ مستدير. أهدأُ الأربعة وأقربُها إلى ورق المعلّم.</p>
         <div class="screen"><div class="screen-in d-bg">
             <img class="d-mark" src="assets/icons/icon-192.png" alt="">
             <h2 class="d-title">فصول</h2>
