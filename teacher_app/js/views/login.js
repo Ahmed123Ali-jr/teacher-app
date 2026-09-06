@@ -26,7 +26,7 @@
                     <div class="auth-card">
                         <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="36" height="36"></div>
                         <h2 class="auth-title">فصول</h2>
-                        <p class="auth-subtitle">فصولك وطلابك وحضورهم ودرجاتهم في مكان واحد</p>
+                        <p class="auth-subtitle">منظومة متكاملة لإدارة عمل المعلم</p>
 
                         <form id="form-login" novalidate>
                             <div class="field">

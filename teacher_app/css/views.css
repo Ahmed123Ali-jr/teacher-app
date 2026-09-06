@@ -5296,73 +5296,122 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
 }
 
 /* ==========================================================================
-   شاشاتُ الدخول — التصميم «د» (اختيار المستخدم، ٢٥ أغسطس ٢٠٢٦)
+   شاشاتُ الدخول — «أبيضٌ هادئ» (اختارها ٦ سبتمبر ٢٠٢٦)
    ==========================================================================
-   بطاقةٌ بيضاءُ ترتفع على أرضيّةٍ بلون الهُويّة، وشعارٌ يتدلّى منها بحلقةٍ
-   ذهبية. اختاره من استوديو المعاينة بعد تجربة الأربعة.
+   عُرضت عليه أربعةٌ حيّةٌ على `login-preview.html` فاختار هذه: أرضٌ بيضاءُ
+   بلا بطاقة، وخطوطٌ تحت الحقول بلا صناديق، وزرٌّ مستدير. وطلب الأبيضَ
+   صراحةً لا العاجيّ — «أبيض هادئ لكن مو لون عاجي».
 
-   وتشمل الشاشاتِ الأربعَ كلَّها — الدخول والتسجيل والاسترجاع واختيارَ
-   الكلمة الجديدة — فهي بابٌ واحدٌ لا أربعة.
+   وقبلها كانت بطاقةً بيضاءَ ترتفع على أرضٍ بلون الهُويّة بحلقةٍ متدلّية.
+
+   وتشمل الشاشاتِ الستَّ — الدخول والتسجيل و«قبل أن تبدأ» والاسترجاعَ
+   ونسيانَ البريد والكلمةَ الجديدة — بابٌ واحدٌ لا ستّة.
+
+   ── وثلاثةٌ لا تُنقض هنا ──
+   ١) **الأرضُ `--surface` لا `#fff` صريحاً**: في الداكن تصير `#161C27`.
+      ولو ثُبّتت بيضاءَ لصار حبرُ المظهر أبيضَ فوقها فاختفى النصُّ كلُّه.
+   ٢) **بطاقةُ العلامة بيضاءُ مثبَّتةٌ وحبرُها `--ink-fixed`**: العلامةُ
+      بتروليّةٌ مرسومةٌ لأرضٍ فاتحة، ورموزُ القفل والمفتاح والجوّال داخلها
+      ترث اللون — فلو تُركت للمظهر لابيضّت على أبيضَ في الداكن. وهذا هو
+      عطبُ القبعة نفسُه الذي كان ‎١٫٩:١‎، فلا يُعاد.
+   ٣) **العنوانُ والزرُّ يتبعان لونَ المعلّم** (`--ink-primary` و`--primary`)
+      — فالأبيضُ أرضٌ لا هُويّة، ولونُه يبقى ظاهراً في أهمّ عنصرين.
    ========================================================================== */
 .view-auth {
-    background: var(--ink-primary);
+    background: var(--surface);
     background-attachment: scroll;
-    padding: var(--space-6) var(--space-4);
+    padding: 44px 26px var(--space-8);
 }
-/* والنقطُ الضوئيّةُ تُطفأ: كانت تُلطّف تدرّجاً، ولا معنى لها على لونٍ صافٍ. */
+/* والنقطُ الضوئيّةُ تُطفأ: كانت تُلطّف تدرّجاً، ولا معنى لها على أرضٍ صافية. */
 .view-auth::before { display: none; }
 
+/* لا بطاقةَ بعد اليوم — المحتوى على الأرض مباشرةً. والصنفُ يبقى لأنّ ستَّ
+   شاشاتٍ تبنيه، ولأنّه هو الذي يحدّ العرضَ ويوسّط. */
 .view-auth .auth-card {
-    max-width: 420px;
-    border-radius: 18px;
-    padding: var(--space-6) var(--space-5);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .20);
-    /* مساحةٌ للشعار المتدلّي — وإلّا لصق العنوانُ بالحافّة. */
-    margin-top: 30px;
+    max-width: 380px;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
 }
 
-/* الشعارُ حلقةٌ تتجاوز حافّةَ البطاقة إلى أعلى.
-   وأرضيّتُها **بيضاءُ مثبَّتة** لا `--surface`: العلامةُ بترولّيةٌ مرسومةٌ
-   لأرضٍ فاتحة، وسطحُ الداكن يبتلعها. والبياضُ يجعلها شارةَ هُويّةٍ في
-   المظهرين معاً. ولا حبرَ يتبع المظهر فوقها — صورةٌ لا نصّ. */
+/* بطاقةُ العلامة — لا حلقةً متدلّية. */
 .view-auth .auth-logo {
     width: 58px;
     height: 58px;
-    border-radius: 50%;
+    border-radius: 15px;
     background: #FFFFFF;
-    border: 2.5px solid var(--accent);
+    color: var(--ink-fixed);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(44, 44, 42, .07);
     display: grid;
     place-items: center;
-    /* تبقى: شاشاتُ الاستعادة تضع في الحلقة رموزَ قفلٍ ومفتاحٍ وجوّال،
-       ومقاسُها `1em` — فحذفُها يجعلها ‎48‎px داخل حلقةٍ ‎58‎px. */
+    overflow: hidden;
+    /* تبقى: شاشاتُ الاستعادة تضع فيها رموزَ قفلٍ ومفتاحٍ وجوّال، ومقاسُها `1em`. */
     font-size: 25px;
-    margin: -48px auto var(--space-3);
+    margin: 0 auto var(--space-4);
 }
-
-/* كانت قبعةً خطّيّةً بلون `--text` على أرضٍ بتروليّة — ‎١٫٩:١‎، لا تكاد
-   تُرى. والصورةُ لا ترث لوناً فينتهي الأمر. */
-.auth-mark {
-    /* ‎36‎ لا ‎40‎: قطرُ الحلقة الداخليُّ ‎53‎px، وقطرُ مربّعٍ ‎40‎ هو ‎56.6‎ —
-       فتلامس أركانُ العلامة الحدَّ الذهبيّ. قِيس بالنظر في المتصفّح. */
-    width: 36px;
-    height: 36px;
-    display: block;
-}
+.auth-mark { width: 52px; height: 52px; display: block; }
 
 .view-auth .auth-title {
-    font-size: 19.5px;
+    font-size: 26px;
     font-weight: var(--fw-bold);
-    margin-bottom: 3px;
+    margin-bottom: 0;
+    text-align: center;
+}
+/* خيطٌ ذهبيٌّ تحت العنوان — الزينةُ كلُّها في هذا السطر. */
+.view-auth .auth-title::after {
+    content: "";
+    display: block;
+    width: 54px;
+    height: 1.5px;
+    background: var(--accent);
+    margin: 9px auto 0;
 }
 .view-auth .auth-subtitle {
     font-size: var(--fs-sm);
-    margin-bottom: var(--space-5);
     line-height: 1.7;
+    margin: 11px 0 30px;
+    text-align: center;
+}
+
+/* حقولٌ بلا صناديق: خطٌّ تحتها وحدَه. */
+.view-auth .field { margin-bottom: 22px; }
+.view-auth .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+.view-auth .input,
+.view-auth .select {
+    background: transparent;
+    border: 0;
+    /* فاتحٌ مثبَّتٌ للمظهر الفاتح، ويُقلب في `theme-dark.css` — وليس رمزاً
+       لأنّ `--border` ذهبيٌّ ‎#E8D9A8‎، وهو على البياض التامّ خيطٌ أصفر. */
+    border-bottom: 1.5px solid #E3DFD2;
+    border-radius: 0;
+    padding: 6px 2px;
+    min-height: 40px;
+}
+.view-auth .input:focus,
+.view-auth .select:focus {
+    box-shadow: none;
+    border-bottom-color: var(--primary);
+}
+
+/* «نسيت كلمة المرور» وسطَ السطر لا في بدايته — لا بطاقةَ تسنده الآن. */
+.view-auth .auth-forgot { margin: 0 0 16px; text-align: center; }
+.view-auth .auth-forgot button {
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
 }
 
 /* ثقلُ ٥٠٠ باختياره. والخطُّ لا يحمل ٨٠٠ أصلاً (`css/fonts.css`) —
    فما فوق ٧٠٠ يصطنعه المتصفّحُ تغليظاً فتتورّم الحروف. */
-.view-auth .btn-primary { font-weight: var(--fw-medium); }
+/* مستديرٌ تامّاً — من شكل «أبيض هادئ». والثقلُ ٥٠٠ باختياره،
+   والخطُّ لا يحمل ٨٠٠ أصلاً فما فوق ٧٠٠ يصطنعه المتصفّح. */
+.view-auth .btn-primary { font-weight: var(--fw-medium); border-radius: 999px; }
 
 /* «الدخول كزائر» بلا شيء: نصٌّ هادئٌ لا زرٌّ يزاحم. ويسقط معه فاصلُ
    «أو» — فهو لم يعد بديلاً مكافئاً بل باباً جانبيّاً. */

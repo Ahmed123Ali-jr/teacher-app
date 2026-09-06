@@ -578,3 +578,12 @@ body.theme-dark .fb-note.is-good,
 body.theme-auto.dark-active .fb-note.is-good { color: var(--success) !important; }
 body.theme-dark .fb-note.is-bad,
 body.theme-auto.dark-active .fb-note.is-bad  { color: var(--danger)  !important; }
+
+/* خطُّ حقول الدخول — «أبيض هادئ» يثبّته فاتحاً في views.css لأنّ الذهبيَّ
+   يصفرّ على البياض التامّ. وهنا يُقلب، وإلّا بقي خيطٌ عاجيٌّ على أرضٍ داكنة. */
+body.theme-dark .view-auth .input,
+body.theme-dark .view-auth .select,
+body.theme-auto.dark-active .view-auth .input,
+body.theme-auto.dark-active .view-auth .select {
+    border-bottom-color: var(--border);
+}
