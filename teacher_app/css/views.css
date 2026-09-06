@@ -5317,39 +5317,23 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    ٣) **العنوانُ والزرُّ يتبعان لونَ المعلّم** (`--ink-primary` و`--primary`)
       — فالأبيضُ أرضٌ لا هُويّة، ولونُه يبقى ظاهراً في أهمّ عنصرين.
    ========================================================================== */
-/* ══ الإطارُ البتروليُّ حول الورقة — «إطار عريض» باختياره ٦ سبتمبر ٢٠٢٦ ══
-   الأرضُ لونُ الهُويّة، والورقةُ البيضاءُ ورقةٌ تطفو داخلها بانحناءٍ ‎26‎.
-   و`--primary` لا `--ink-primary`: الأوّلُ بترولّيٌّ عميقٌ في المظهرين
-   (‎#0A3F4A‎ و‎#09363F‎)، والثاني ينقلب فاتحاً في الداكن — فيصير الإطارُ
-   أفتحَ من الورقة.
-   والحشوةُ تضمّ المساحاتِ الآمنة: على الجوّال يمتدّ الإطارُ تحت النَّتوء
-   والشريط السفليّ، فيصير حافّةَ الشاشة لا مستطيلاً معلّقاً داخلها. */
 .view-auth {
-    background: var(--primary);
+    background: var(--surface);
     background-attachment: scroll;
-    padding: calc(21px + env(safe-area-inset-top))
-             calc(21px + env(safe-area-inset-right))
-             calc(21px + env(safe-area-inset-bottom))
-             calc(21px + env(safe-area-inset-left));
-    /* تمتدُّ الورقةُ طولاً لا تُوسَّط كبطاقة. */
-    align-items: stretch;
+    padding: 44px 26px var(--space-8);
 }
-/* والنقطُ الضوئيّةُ تُطفأ: كانت تُلطّف تدرّجاً، ولا معنى لها على لونٍ صافٍ. */
+/* والنقطُ الضوئيّةُ تُطفأ: كانت تُلطّف تدرّجاً، ولا معنى لها على أرضٍ صافية. */
 .view-auth::before { display: none; }
 
-/* الورقةُ نفسُها. و`min-height` من الأمّ لا `height`، فإن طال المحتوى
-   (شاشةُ التسجيل) نمت الورقةُ ونما الإطارُ معها — ولا يُقصّ شيء. */
+/* لا بطاقةَ بعد اليوم — المحتوى على الأرض مباشرةً. والصنفُ يبقى لأنّ ستَّ
+   شاشاتٍ تبنيه، ولأنّه هو الذي يحدّ العرضَ ويوسّط. */
 .view-auth .auth-card {
-    max-width: 460px;
-    width: 100%;
-    margin: 0 auto;
-    background: var(--surface);
+    max-width: 380px;
+    background: none;
     box-shadow: none;
-    border-radius: 26px;
-    padding: 26px 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
 }
 
 /* بطاقةُ العلامة — لا حلقةً متدلّية. */
