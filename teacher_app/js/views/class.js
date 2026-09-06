@@ -547,7 +547,7 @@
                 <div class="reg-toolrow">
                     <input type="search" class="input search-input" id="student-search"
                            placeholder="بحث باسم ${global.Words.theStudent()}...">
-                    <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ ${global.Words.student()}</button>
+                    <button class="btn reg-add" id="btn-add-students" style="--cls-color:${heroColor(cls)}">+ إضافة ${global.Words.student()}</button>
                 </div>
             ` : ''}
         `;
