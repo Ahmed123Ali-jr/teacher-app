@@ -449,9 +449,16 @@
                     </div>
 
                     <div class="cover-body">
+                        ${/* من لم يرفع شعارَ مدرسته: **الموضعُ يبقى فارغاً**
+                              بقراره ٥ سبتمبر ٢٠٢٦. وكانت هنا قبعةُ تخرّجٍ
+                              تُطبع في ورقةٍ تُسلَّم للمشرف — رمزٌ عامٌّ لا
+                              يخصّ مدرسته ولا التطبيق.
+                              و**فراغٌ محجوزٌ لا حذف**: الصندوقُ ‎40‎مم في
+                              `print.css`، فلو حُذف لصعد إطارُ العنوان ‎50‎مم
+                              وصار غلافُ من رفع شعاراً غيرَ غلاف من لم يرفع. */''}
                         ${global.PrintPrefs?.logoDataUrl
                             ? `<img class="cover-logo" src="${global.PrintPrefs.logoDataUrl}" alt="">`
-                            : '<div class="cover-logo">' + Icons.svg('cap') + '</div>'}
+                            : '<div class="cover-logo" aria-hidden="true"></div>'}
 
                         <div class="cover-title-frame-outer">
                             <div class="cover-title-frame-inner">

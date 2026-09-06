@@ -261,10 +261,10 @@
         padding: 12mm 0;
     }
 
+    /* `font-size` و`color` سقطتا مع قبعة التخرّج — كانتا تقيسانها وتصبغانها
+       (رسمُها `1em`). ولم يبقَ هنا إلّا الصندوقُ: صورةُ المدرسة أو فراغُه. */
     .cover-page .cover-logo {
-        font-size: 28pt;
         margin: 0 auto 10mm;
-        color: #000000;
     }
 
     .cover-title-frame-outer {
