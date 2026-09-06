@@ -209,7 +209,7 @@
                 <div class="sch-lbl" style="margin-top:15px">الشواهد</div>
                 <button type="button" class="stg-drop" id="stg-pick">${Icons.svg('camera')} أضف صور التنفيذ</button>
                 <input type="file" id="stg-file" accept="image/*" multiple hidden>
-                <p class="stg-warn">${Icons.svg('lock')} الشواهد خاصة بك وحدك. وإن ظهر فيها طلاب،
+                <p class="stg-warn">${Icons.svg('lock')} الشواهد خاصة بك وحدك، ولا يفتح التطبيق مكتبة صورك. وإن ظهر فيها طلاب،
                    فتصويرهم تحكمه أنظمة الوزارة وموافقة أولياء الأمور — والأسلم
                    توثيق السبورة أو أعمالهم دون وجوه.</p>
                 <div class="stg-thumbs" id="stg-thumbs"></div>

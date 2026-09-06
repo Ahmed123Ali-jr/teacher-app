@@ -631,6 +631,7 @@
                 ${hasLogo(prefs.school_logo) ? '<button type="button" class="fchip" id="btn-remove-logo">' + Icons.svg('trash') + '</button>' : ''}
                 <input type="file" id="logo-input" accept="image/*" hidden>
             </div>
+            <p class="pick-note">يصل التطبيقَ ما تختاره فقط.</p>
 
             <button type="button" class="fsave" id="btn-save-school">${Icons.svg('save')} حفظ بيانات المدرسة</button>
         `;
@@ -1505,6 +1506,7 @@
                     <tr><th>بياناتك المحفوظة</th><td>${dataSummary}</td></tr>
                     <tr><th>مكان التخزين</th><td>حسابك على Supabase (فرانكفورت) + نسخة على جهازك</td></tr>
                     <tr><th>ما يخرج لطرف ثالث</th><td>الصورة التي تختار استيرادها فقط</td></tr>
+                    <tr><th>صورك</th><td>لا يفتح التطبيق مكتبتك — تختار الصورة بنفسك، ويصله ما اخترته وحده</td></tr>
                     <tr><th>حذف بياناتك</th><td>الإعدادات ← حذف الحساب والبيانات</td></tr>
                 </tbody>
             </table>

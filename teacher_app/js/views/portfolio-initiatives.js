@@ -277,7 +277,7 @@
                 <div class="sch-lbl" style="margin-top:15px">الشواهد</div>
                 <button type="button" class="stg-drop" id="ini-pick">${Icons.svg('camera')} أضف صور التنفيذ</button>
                 <input type="file" id="ini-file" accept="image/*" multiple hidden>
-                <p class="stg-warn">${Icons.svg('lock')} الشواهد خاصة بك وحدك. وإن ظهر فيها طلاب،
+                <p class="stg-warn">${Icons.svg('lock')} الشواهد خاصة بك وحدك، ولا يفتح التطبيق مكتبة صورك. وإن ظهر فيها طلاب،
                    فتصويرهم تحكمه أنظمة الوزارة وموافقة أولياء الأمور — والأسلم
                    توثيق اللوحات أو الأعمال دون وجوه.</p>
                 <div class="stg-thumbs" id="ini-thumbs"></div>

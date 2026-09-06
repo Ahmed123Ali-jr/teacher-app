@@ -127,6 +127,7 @@
                     ${hasPhoto(teacher) ? '<button type="button" class="fchip" id="btn-remove-photo">' + Icons.svg('trash') + '</button>' : ''}
                     <input type="file" accept="image/*" id="photo-input" hidden>
                 </div>
+                <p class="pick-note">يصل التطبيقَ ما تختاره فقط.</p>
 
                 <form id="profile-form" novalidate>
                     ${GROUPS.map((g) => `
