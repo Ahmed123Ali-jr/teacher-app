@@ -519,8 +519,20 @@ body.theme-auto.dark-active .bottom-nav .bn-item.is-active {
 }
 body.theme-dark .bottom-nav,
 body.theme-auto.dark-active .bottom-nav {
-    background: rgba(30, 38, 52, .78) !important;
+    /* العمقُ نفسُه في الداكن، بمصدر الضوء نفسِه: لمعةٌ خافتةٌ في القمّة
+       وظلٌّ أعمقُ تحت — والأبيضُ هنا يُهمس لا يُصرخ (‎.14‎ لا ‎.95‎). */
+    background: linear-gradient(180deg,
+                    rgba(42, 52, 70, .84) 0%,
+                    rgba(30, 38, 52, .80) 52%,
+                    rgba(22, 28, 39, .78) 100%) !important;
     border-color: rgba(255, 255, 255, .16) !important;
+    border-top-color: rgba(255, 255, 255, .22) !important;
+    border-bottom-color: rgba(0, 0, 0, .38) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .42),
+                0 8px 18px rgba(0, 0, 0, .46),
+                0 20px 40px rgba(0, 0, 0, .40),
+                inset 0 1.5px 0 rgba(255, 255, 255, .14),
+                inset 0 -2px 3px rgba(0, 0, 0, .38) !important;
     box-shadow: 0 8px 28px rgba(0, 0, 0, .55),
                 0 2px 6px rgba(0, 0, 0, .3),
                 inset 0 1px 0 rgba(255, 255, 255, .14) !important;
