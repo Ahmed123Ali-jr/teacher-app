@@ -609,6 +609,10 @@ if (hasG && !reduce){
   if (!cvs) return;
   var stage = cvs.closest(".stage"), ctx = cvs.getContext("2d", { alpha:false });
   var N = 93, frames = new Array(N), loaded = 0, errored = 0, ready = false, cur = -1, last = 0, FT = null;
+  /* ‏أسماءُ الإطارات ثابتة، فتبديلُ محتواها لا يبلغ متصفّحاً يحتفظ بالقديم.
+     **ارفع هذا الرقمَ كلّما أعدتَ بناء التسلسل** — وإلّا رأى الزائرُ فيلماً
+     قديماً بلا أيّ خطأ يدلّ عليه. */
+  var FV = 2;
 
   function fit(){
     var dpr = Math.min(2, devicePixelRatio || 1), w = stage.clientWidth, h = stage.clientHeight;
@@ -641,7 +645,7 @@ if (hasG && !reduce){
     var im = new Image(); im.decoding = "async";
     im.onload  = function(){ frames[i]=im; loaded++; if (!i && !ready){ fit(); draw(0); } settle(); };
     im.onerror = function(){ errored++; settle(); };
-    im.src = "assets/film-seq/f"+String(i).padStart(3,"0")+".jpg";
+    im.src = "assets/film-seq/f"+String(i).padStart(3,"0")+".jpg?v="+FV;
   })(i);
   setTimeout(function(){ if(!ready && loaded){ ready=true; ldr.style.opacity=0; fit(); draw(at()); } }, 9000);
   addEventListener("resize", fit, { passive:true });
@@ -654,7 +658,7 @@ if (hasG && !reduce){
     ldr.style.display = "none";
     var lastIm = new Image();
     lastIm.onload = function(){ frames[N-1]=lastIm; ready=true; fit(); draw(N-1); };
-    lastIm.src = "assets/film-seq/f092.jpg";
+    lastIm.src = "assets/film-seq/f092.jpg?v="+FV;
   }
 })();
 
