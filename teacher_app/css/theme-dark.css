@@ -597,3 +597,17 @@ body.theme-auto.dark-active .view-auth .select {
     border-style: none none solid !important;
     border-bottom-color: var(--border) !important;
 }
+
+/* ══ الإطارُ البتروليُّ حول شاشة الدخول يُرفع درجةً في الداكن ══
+   `--primary` (‎#09363F‎) على ورقةٍ داكنةٍ (‎#161C27‎) يعطي **‎1.31:1‎** —
+   إطارٌ لا يكاد يُرى، وقد اختاره «عريضاً» ليُرى. و`--primary-mid` يعطي
+   **‎1.95:1‎**: حاضرٌ ولا يصرخ. (وفي الفاتح النسبةُ ‎11.52:1‎ فلا تحتاج شيئاً.)
+   وكلاهما يتبع لونَ المعلّم، فالرفعُ درجةٌ لا لونٌ آخر. */
+body.theme-dark .view-auth,
+body.theme-auto.dark-active .view-auth {
+    /* و`!important` **ردٌّ لا اختيار**: قاعدةُ «الأرضية والقشرة» أعلاه
+       تفرض `--bg` على كلّ `[id^="view-"]` بـ`!important`، فتمحو الإطارَ
+       وتجعله ‎#0D1117‎ على ورقةٍ ‎#161C27‎ — أي ‎1.11:1‎، لا إطارَ أصلاً. */
+    background: var(--primary-mid) !important;
+    background-image: none !important;
+}
