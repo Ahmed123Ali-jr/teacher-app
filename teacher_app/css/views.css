@@ -206,7 +206,7 @@ body.drawer-open { overflow: hidden; }
     position: fixed;
     /* القاعُ في `--nav-bottom` بـ`main.css` — ومعه شريطُ أدوات السجلّ. */
     bottom: var(--nav-bottom);
-    inset-inline: var(--bottom-nav-gap);
+    inset-inline: var(--nav-inset);
     z-index: 70;
     display: none;                     /* Visible only on mobile (@media below) */
     padding: 4px;
@@ -1394,7 +1394,7 @@ body.drawer-open { overflow: hidden; }
    يجعل iOS يكبّر الصفحةَ عند اللمس فيقفز كلُّ شيء. */
 .reg-toolrow {
     position: fixed;
-    inset-inline: var(--bottom-nav-gap);
+    inset-inline: var(--nav-inset);
     /* على الشاشات العريضة لا شريطَ سفليّ، فيجلس على القاع مباشرةً. */
     bottom: calc(var(--safe-bottom) + var(--bottom-nav-gap));
     z-index: 60;
