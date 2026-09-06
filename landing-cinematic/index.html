@@ -74,7 +74,6 @@ header .hnav a{color:var(--ink-soft);text-decoration:none;font-size:14px;font-we
 header .hnav a:hover{color:var(--gold-lit)}
 .hcta{border:1px solid rgba(201,169,97,.5);border-radius:999px;padding:8px 22px;color:var(--gold-lit)!important}
 .hcta:hover{background:var(--gold);color:#05262D!important;border-color:var(--gold)}
-@media(max-width:760px){header .hnav a:not(.hcta){display:none}}
 
 /* ══ عامّ ══ */
 section{position:relative}
@@ -251,11 +250,34 @@ section{position:relative}
 #cta h2{font-size:clamp(38px,7.5vw,102px);line-height:.98}
 #cta p{margin:20px auto 0;max-width:40ch;color:var(--ink-soft);font-size:clamp(15px,1.8vw,19px)}
 #cta .acts{margin-top:38px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.store{display:inline-flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:12px;
-  padding:10px 20px;background:rgba(17,24,37,.7);cursor:not-allowed;opacity:.86}
-.store small{display:block;font-size:10.5px;color:var(--ink-faint);line-height:1.35}
-.store b{display:block;font-size:15px;font-weight:700;color:var(--ink-soft);
-  font-family:"El Messiri",serif;direction:ltr}
+/* شاراتُ المتاجر — بشعاراتها، في الهيدر وفي النداء معاً.
+   وهي **معطَّلةٌ عن قصد**: التطبيقُ لم يُرفع بعد، فالوعدُ «قريباً» لا
+   رابطٌ يكذب. تُفتح بتبديل span→a وحذف .soon. */
+.store{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);
+  border-radius:12px;padding:9px 17px;background:rgba(17,24,37,.72);text-decoration:none;
+  transition:border-color .35s,background .35s,transform .35s var(--ease)}
+.store.soon{cursor:not-allowed;opacity:.84}
+.store:not(.soon):hover{border-color:rgba(201,169,97,.45);background:rgba(24,32,47,.86);transform:translateY(-2px)}
+.store .si{flex:none;width:23px;height:23px;display:block}
+.store .tx{text-align:start}
+.store small{display:block;font-size:10px;color:var(--ink-faint);line-height:1.3;letter-spacing:.02em}
+.store b{display:block;font-size:14px;font-weight:700;color:var(--ink-soft);
+  font-family:"El Messiri",serif;direction:ltr;line-height:1.25}
+
+/* في الهيدر: أضيقُ قليلاً كي يتّسع الشريطُ للاسم والروابط والنداء */
+header .store{padding:7px 13px;gap:8px;border-radius:10px}
+header .store .si{width:19px;height:19px}
+header .store small{font-size:9px}
+header .store b{font-size:12.5px}
+.hstores{display:flex;align-items:center;gap:8px}
+/* دون ‎1180‎ تسقط روابطُ النصّ، وتبقى الشاراتُ والنداء — هي المقصودة */
+@media(max-width:1180px){header .hnav a:not(.hcta){display:none}}
+@media(max-width:620px){
+  header .store .tx{display:none}          /* الشعارُ وحدَه — الشريطُ ضيّق */
+  header .store{padding:8px 10px}
+  .hstores{gap:6px}
+}
+@media(max-width:400px){.hcta{padding:7px 14px;font-size:13px}}
 
 footer{padding:clamp(50px,8vh,90px) 0 clamp(30px,5vh,54px);border-top:1px solid var(--hair)}
 footer .in{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap}
@@ -281,6 +303,10 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
     <a href="#tour">الشاشات</a>
     <a href="#papers">الأوراق</a>
     <a href="#nums">في التطبيق</a>
+    <span class="hstores">
+      <span class="store soon" role="link" aria-disabled="true" title="App Store — قريباً"><svg class="si" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.54c-.03-2.79 2.28-4.13 2.38-4.2-1.3-1.9-3.32-2.16-4.04-2.19-1.72-.17-3.36 1.01-4.23 1.01-.87 0-2.22-.99-3.65-.96-1.88.03-3.61 1.09-4.58 2.77-1.95 3.39-.5 8.4 1.4 11.15.93 1.35 2.04 2.86 3.5 2.81.4-.06 1.93-.9 3.62-.9 1.69 0 2.17.9 3.65.87 1.51-.03 2.46-1.37 3.38-2.73 1.07-1.57 1.51-3.09 1.53-3.17-.03-.01-2.94-1.13-2.96-4.45z"/><path d="M14.5 4.3c.77-.93 1.29-2.22 1.15-3.5-1.11.04-2.45.74-3.24 1.67-.71.82-1.33 2.14-1.16 3.41.24.1 2.5-.63 3.25-1.57z"/></svg><span class="tx"><small>قريباً على</small><b>App Store</b></span></span>
+      <span class="store soon" role="link" aria-disabled="true" title="Google Play — قريباً"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.61 1.81 13.79 12 3.61 22.19A1.6 1.6 0 0 1 3 20.93V3.07c0-.5.23-.94.61-1.26z" fill="#00A0FF"/><path d="M17.21 15.42 13.79 12l3.42-3.42 4.06 2.31c1.15.65 1.15 1.72 0 2.37l-4.06 2.16z" fill="#FFBC00"/><path d="M17.21 15.42 13.79 12 3.61 22.19c.38.4.99.45 1.69.05l11.91-6.82z" fill="#FF3A44"/><path d="M17.21 8.58 5.3 1.76c-.7-.4-1.31-.35-1.69.05L13.79 12l3.42-3.42z" fill="#00C853"/></svg><span class="tx"><small>قريباً على</small><b>Google Play</b></span></span>
+    </span>
     <a class="hcta" href="https://ahmed123ali-jr.github.io/teacher-app/">ابدأ الآن</a>
   </nav>
 </header>
@@ -486,8 +512,8 @@ footer .cr{color:var(--ink-faint);font-size:12.5px}
       <p class="rv">فصلُك الأوّل مجّانيٌّ كاملاً — بلا بطاقةٍ ولا تجربةٍ تنتهي. وإن انتهى اشتراكُك يوماً، لا تُحذف بياناتك.</p>
       <div class="acts rv">
         <a class="btn btn-gold" href="https://ahmed123ali-jr.github.io/teacher-app/">افتح فصول الآن</a>
-        <span class="store"><small>قريباً على</small><b>App Store</b></span>
-        <span class="store"><small>قريباً على</small><b>Google Play</b></span>
+        <span class="store soon" role="link" aria-disabled="true" title="App Store — قريباً"><svg class="si" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.54c-.03-2.79 2.28-4.13 2.38-4.2-1.3-1.9-3.32-2.16-4.04-2.19-1.72-.17-3.36 1.01-4.23 1.01-.87 0-2.22-.99-3.65-.96-1.88.03-3.61 1.09-4.58 2.77-1.95 3.39-.5 8.4 1.4 11.15.93 1.35 2.04 2.86 3.5 2.81.4-.06 1.93-.9 3.62-.9 1.69 0 2.17.9 3.65.87 1.51-.03 2.46-1.37 3.38-2.73 1.07-1.57 1.51-3.09 1.53-3.17-.03-.01-2.94-1.13-2.96-4.45z"/><path d="M14.5 4.3c.77-.93 1.29-2.22 1.15-3.5-1.11.04-2.45.74-3.24 1.67-.71.82-1.33 2.14-1.16 3.41.24.1 2.5-.63 3.25-1.57z"/></svg><span class="tx"><small>قريباً على</small><b>App Store</b></span></span>
+        <span class="store soon" role="link" aria-disabled="true" title="Google Play — قريباً"><svg class="si" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.61 1.81 13.79 12 3.61 22.19A1.6 1.6 0 0 1 3 20.93V3.07c0-.5.23-.94.61-1.26z" fill="#00A0FF"/><path d="M17.21 15.42 13.79 12l3.42-3.42 4.06 2.31c1.15.65 1.15 1.72 0 2.37l-4.06 2.16z" fill="#FFBC00"/><path d="M17.21 15.42 13.79 12 3.61 22.19c.38.4.99.45 1.69.05l11.91-6.82z" fill="#FF3A44"/><path d="M17.21 8.58 5.3 1.76c-.7-.4-1.31-.35-1.69.05L13.79 12l3.42-3.42z" fill="#00C853"/></svg><span class="tx"><small>قريباً على</small><b>Google Play</b></span></span>
       </div>
     </div>
   </section>
@@ -529,8 +555,8 @@ var header = document.getElementById("header"), prog = document.getElementById("
 if (hasG) ScrollTrigger.create({ start:0, end:"max", onUpdate:function(s){
   prog.style.transform = "scaleX(" + s.progress + ")";
   header.classList.toggle("solid", s.scroll() > 40);
-  if (s.scroll() > 160) header.classList.toggle("hidden", s.direction === 1);
-  else header.classList.remove("hidden");
+  /* لا يختفي الهيدرُ بعد اليوم: شاراتُ المتاجر فيه، وطُلب أن تبقى
+     في مكانها. فيكتفي بأن يصلُب ويعتم عند أوّل تمرير. */
 }});
 
 /* الجوُّ لكلّ قسم */
