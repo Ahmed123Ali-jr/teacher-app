@@ -36,3 +36,6 @@ json.dump({'count': idx, 'width': W, 'marks': marks},
           open(OUT+'/index.json','w'), ensure_ascii=False)
 print(f'✓ {idx} إطاراً · {W}px · {kb/1024:.1f} م.ب · {kb/idx:.0f}ك.ب للإطار')
 for m in marks: print(f'   {m["clip"]}: {m["start"]}–{m["end"]}')
+print('\n⚠ أعِد الآن:  python3 scripts/brand-screen.py')
+print('  البناءُ يمحو ختمَ الشعار عن الشاشة — ولا شيءَ يشتكي إن نسيتَه.')
+print('  وارفع FV في index.html، وإلّا خدم المتصفّحُ إطاراتٍ قديمة.')
