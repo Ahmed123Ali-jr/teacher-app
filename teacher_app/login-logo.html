@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex"><title>شكل الشعار في الدخول</title>
+<link rel="stylesheet" href="css/fonts.css?v=2">
+<link rel="stylesheet" href="css/main.css?v=D33">
+<link rel="stylesheet" href="css/components.css?v=13">
+<link rel="stylesheet" href="css/views.css?v=D317">
+<link rel="stylesheet" href="css/portfolio-theme.css?v=16">
+<link rel="stylesheet" href="css/theme-white.css?v=22">
+<link rel="stylesheet" href="css/theme-dark.css?v=46">
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin:0; padding:20px 14px 48px; background:#12181B;
+         font-family:'IBM Plex Sans Arabic',system-ui,sans-serif; color:#E8EAEA; }
+  .wrap { max-width:460px; margin:0 auto; }
+  .page-head { text-align:center; margin-bottom:26px; }
+  .page-head h1 { font-size:20px; font-weight:700; margin:0 0 6px; }
+  .page-head p { font-size:13px; line-height:1.8; color:#9AA5A8; margin:0; }
+  .opt { margin-bottom:34px; }
+  .opt-bar { display:flex; align-items:center; gap:11px; margin-bottom:11px; }
+  .opt-letter { width:34px; height:34px; flex:none; border-radius:50%; display:grid;
+                place-items:center; background:#C9A961; color:#0A3F4A; font-size:17px; font-weight:700; }
+  .opt-name { font-size:15px; font-weight:700; }
+  .opt-why { font-size:12.5px; color:#9AA5A8; line-height:1.7; margin:0 45px 11px 0; }
+  .screen { border-radius:20px; overflow:hidden; box-shadow:0 10px 34px rgba(0,0,0,.45); }
+
+  /* الشاشةُ في صندوقٍ لا في ملء النافذة */
+  .screen .view-auth { min-height:0; padding:30px 16px 26px; }
+
+  /* ══ مشتركٌ في الثلاثة: مربّعٌ داخل البطاقة، لا حلقةٌ تتدلّى ══ */
+  .sq .auth-card { margin-top:0; }
+  .sq .auth-logo {
+      border-radius:0;            /* يُلغى نصفُ القطر ثمّ يُعاد لكلّ شكل */
+      margin:0 auto var(--space-3);
+      overflow:hidden;
+  }
+  .sq .auth-mark { width:100%; height:100%; }
+
+  /* أ — انحناءٌ خفيف */
+  .r-a .auth-logo { width:62px; height:62px; border-radius:13px; border:1.5px solid var(--accent); }
+  /* ب — انحناءٌ متوسّط، أقربُ لأيقونة الجوّال */
+  .r-b .auth-logo { width:66px; height:66px; border-radius:19px; border:1.5px solid var(--accent); }
+  /* ج — انحناءٌ كبيرٌ بلا إطار، وظلٌّ خفيفٌ مكانه */
+  .r-c .auth-logo { width:66px; height:66px; border-radius:26px; border:0;
+                    box-shadow:0 2px 10px rgba(10,63,74,.18); }
+</style></head><body><div class="wrap">
+  <div class="page-head"><h1>شكل الشعار في شاشة الدخول</h1>
+  <p>مربّعٌ ناعمُ الزوايا داخل البطاقة البيضاء — لا يدخل البترولي. ثلاثةُ انحناءات.</p></div>
+
+    <div class="opt">
+      <div class="opt-bar"><div class="opt-letter">أ</div><div class="opt-name">انحناءٌ خفيف</div></div>
+      <p class="opt-why">‎62‎px وانحناء ‎13‎ — مربّعٌ واضحٌ بإطارٍ ذهبيّ.</p>
+      <div class="screen"><section class="view view-auth sq r-a">
+                    <div class="auth-card">
+                        <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="36" height="36"></div>
+                        <h2 class="auth-title">فصول</h2>
+                        <p class="auth-subtitle">منظومة متكاملة لإدارة عمل المعلم</p>
+
+                        <form id="form-login" novalidate>
+                            <div class="field">
+                                <label class="label" for="login-email">البريد الإلكتروني</label>
+                                <input class="input" id="login-email" type="email"
+                                       autocomplete="email" required placeholder="name@example.com">
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="login-password">كلمة المرور</label>
+                                <input class="input" id="login-password" type="password"
+                                       autocomplete="current-password" required>
+                            </div>
+
+                            <!-- فوق الزرّ لا تحته: المعلّم الذي فشلت كلمتُه
+                                 ينظر إلى الخانة التي فشلت، لا إلى أسفل الشاشة. -->
+                            <p class="auth-forgot">
+                                <button type="button" id="btn-forgot">نسيت كلمة المرور أو البريد؟</button>
+                            </p>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                تسجيل الدخول
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">أو</div>
+
+                        <!-- اسمٌ واحدٌ لا اسمان: جُرّب أن يتبدّل إلى «العودة إلى
+                             بياناتي» لمن له حسابٌ على الجهاز، فرُدّ — الزرُّ عَلَمٌ
+                             يعرفه المعلّم بمكانه وشكله، وتبدُّلُ اسمه يجعله زرّاً
+                             آخر يُقرأ من جديد. والفرقُ في السلوك لا في الاسم. -->
+                        <button type="button" class="auth-guest" id="btn-guest">
+                            الدخول كزائر
+                        </button>
+
+                        <p class="auth-switch">
+                            ليس لديك حساب؟
+                            <button type="button" id="btn-switch-register">إنشاء حساب جديد</button>
+                        </p>
+                    </div>
+                </section></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-bar"><div class="opt-letter">ب</div><div class="opt-name">انحناءٌ متوسّط</div></div>
+      <p class="opt-why">‎66‎px وانحناء ‎19‎ — أقربُ إلى أيقونة التطبيق على الجوّال.</p>
+      <div class="screen"><section class="view view-auth sq r-b">
+                    <div class="auth-card">
+                        <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="36" height="36"></div>
+                        <h2 class="auth-title">فصول</h2>
+                        <p class="auth-subtitle">منظومة متكاملة لإدارة عمل المعلم</p>
+
+                        <form id="form-login" novalidate>
+                            <div class="field">
+                                <label class="label" for="login-email">البريد الإلكتروني</label>
+                                <input class="input" id="login-email" type="email"
+                                       autocomplete="email" required placeholder="name@example.com">
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="login-password">كلمة المرور</label>
+                                <input class="input" id="login-password" type="password"
+                                       autocomplete="current-password" required>
+                            </div>
+
+                            <!-- فوق الزرّ لا تحته: المعلّم الذي فشلت كلمتُه
+                                 ينظر إلى الخانة التي فشلت، لا إلى أسفل الشاشة. -->
+                            <p class="auth-forgot">
+                                <button type="button" id="btn-forgot">نسيت كلمة المرور أو البريد؟</button>
+                            </p>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                تسجيل الدخول
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">أو</div>
+
+                        <!-- اسمٌ واحدٌ لا اسمان: جُرّب أن يتبدّل إلى «العودة إلى
+                             بياناتي» لمن له حسابٌ على الجهاز، فرُدّ — الزرُّ عَلَمٌ
+                             يعرفه المعلّم بمكانه وشكله، وتبدُّلُ اسمه يجعله زرّاً
+                             آخر يُقرأ من جديد. والفرقُ في السلوك لا في الاسم. -->
+                        <button type="button" class="auth-guest" id="btn-guest">
+                            الدخول كزائر
+                        </button>
+
+                        <p class="auth-switch">
+                            ليس لديك حساب؟
+                            <button type="button" id="btn-switch-register">إنشاء حساب جديد</button>
+                        </p>
+                    </div>
+                </section></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-bar"><div class="opt-letter">ج</div><div class="opt-name">ناعمٌ بلا إطار</div></div>
+      <p class="opt-why">‎66‎px وانحناء ‎26‎، وظلٌّ خفيفٌ بدل الحدّ الذهبيّ.</p>
+      <div class="screen"><section class="view view-auth sq r-c">
+                    <div class="auth-card">
+                        <div class="auth-logo"><img class="auth-mark" src="assets/icons/icon-192.png" alt="" width="36" height="36"></div>
+                        <h2 class="auth-title">فصول</h2>
+                        <p class="auth-subtitle">منظومة متكاملة لإدارة عمل المعلم</p>
+
+                        <form id="form-login" novalidate>
+                            <div class="field">
+                                <label class="label" for="login-email">البريد الإلكتروني</label>
+                                <input class="input" id="login-email" type="email"
+                                       autocomplete="email" required placeholder="name@example.com">
+                            </div>
+
+                            <div class="field">
+                                <label class="label" for="login-password">كلمة المرور</label>
+                                <input class="input" id="login-password" type="password"
+                                       autocomplete="current-password" required>
+                            </div>
+
+                            <!-- فوق الزرّ لا تحته: المعلّم الذي فشلت كلمتُه
+                                 ينظر إلى الخانة التي فشلت، لا إلى أسفل الشاشة. -->
+                            <p class="auth-forgot">
+                                <button type="button" id="btn-forgot">نسيت كلمة المرور أو البريد؟</button>
+                            </p>
+
+                            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                تسجيل الدخول
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">أو</div>
+
+                        <!-- اسمٌ واحدٌ لا اسمان: جُرّب أن يتبدّل إلى «العودة إلى
+                             بياناتي» لمن له حسابٌ على الجهاز، فرُدّ — الزرُّ عَلَمٌ
+                             يعرفه المعلّم بمكانه وشكله، وتبدُّلُ اسمه يجعله زرّاً
+                             آخر يُقرأ من جديد. والفرقُ في السلوك لا في الاسم. -->
+                        <button type="button" class="auth-guest" id="btn-guest">
+                            الدخول كزائر
+                        </button>
+
+                        <p class="auth-switch">
+                            ليس لديك حساب؟
+                            <button type="button" id="btn-switch-register">إنشاء حساب جديد</button>
+                        </p>
+                    </div>
+                </section></div>
+    </div>
+</div></body></html>
