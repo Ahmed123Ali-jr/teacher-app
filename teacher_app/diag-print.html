@@ -105,7 +105,17 @@ li.wait { opacity: .55; }
             'يدعم مشاركة الملفّات': canShareFiles ? 'نعم' : 'لا — سيُنزّل الملف',
             'navigator.share': typeof nav.share,
             'عامل الخدمة يتحكّم': nav.serviceWorker && nav.serviceWorker.controller ? 'نعم' : 'لا',
-            'نسخ الوحدات': 'question-editor v12 · pdf-core v13 · moe-logo v1 · print-exam D27'
+            /* ══ يُقرأ من وسوم السكربت لا يُكتب بيد ══
+               كان مكتوباً حرفاً (v12 · v13 · v1 · D27) والمحمَّلُ فعلاً
+               (v12 · **v14** · v1 · **D29**) — فالأداةُ تفحص الجديدَ
+               وتقول القديم، ومن قرأ تقريرَها ظنّ أنّه جرّب ما لم يجرّبه.
+               وهذا فخُّ «الأداة المجمَّدة» بعينه: **الخللُ في أداة القياس
+               لا في المقيس**. فصار يُشتقّ من الوسوم نفسِها فلا يتخلّف. */
+            'نسخ الوحدات': [...document.querySelectorAll('script[src^="js/"]')]
+                .map((t) => {
+                    const m = t.getAttribute('src').match(/js\/(.+?)\.js\?v=(.+)$/);
+                    return m ? m[1] + ' ' + m[2] : null;
+                }).filter(Boolean).join(' · ') || '—'
         };
     }
 
