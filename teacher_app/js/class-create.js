@@ -274,26 +274,31 @@
      * طالب» — فيُقال له إنّ الأسماءَ عنده أصلاً قبل أن يكتبها ثانيةً.
      * (طلبُه، ٧ سبتمبر ٢٠٢٦.)
      *
+     * ── والردُّ ثلاثيٌّ لا ثنائيّ ──
+     *   `'linked'`    رُبط، فالأسماءُ وصلت ولا حاجةَ لشاشة الإضافة
+     *   `'dismissed'` أغلق بلا اختيار — **يعود كما جاء، ويُسأل ثانيةً**
+     *   `'none'`      لا سؤالَ أصلاً (أو قال «لا») — تُفتح شاشةُ الإضافة
+     *
      * @param {object} cls — صفُّ الفصل المفتوح
-     * @returns {Promise<boolean>} هل رُبط؟ (فإن رُبط فلا حاجةَ لشاشة الإضافة)
+     * @returns {Promise<'linked'|'dismissed'|'none'>}
      */
     async function offerSharedRoster(cls) {
         const db = global.TeacherDB;
-        if (!db || !cls || !cls.id) return false;
+        if (!db || !cls || !cls.id) return 'none';
 
         /* كشفُه فيه أسماءُ فعلاً: لا يُقترح دمجٌ على كشفٍ قائم — الربطُ
            يجمع الكشفين ولا يفصلهما، فيُعرض على الفارغ وحدَه. */
-        try { if ((await db.studentsOf(cls.id)).length) return false; }
-        catch (e) { return false; }
+        try { if ((await db.studentsOf(cls.id)).length) return 'none'; }
+        catch (e) { return 'none'; }
 
-        if ((await declinedIds(db)).indexOf(cls.id) >= 0) return false;
+        if ((await declinedIds(db)).indexOf(cls.id) >= 0) return 'none';
 
         let classes = [];
-        try { classes = await db.getAll('classes'); } catch (e) { return false; }
+        try { classes = await db.getAll('classes'); } catch (e) { return 'none'; }
         classes = classes.filter((c) => c.teacher_id === cls.teacher_id);
 
         const cands = rosterCandidates(classes, cls);
-        if (!cands.length) return false;
+        if (!cands.length) return 'none';
 
         /* العددُ يُقرأ من الكشف لا من `student_count` — العدّادُ قد يتخلّف،
            والرقمُ المعروضُ هو الذي يُبنى عليه القرار فلا يُؤخذ من مذكّرة. */
@@ -303,7 +308,7 @@
             try { n = (await db.studentsOf(c.id)).length; } catch (e) { continue; }
             if (n > 0 && (!best || n > best.n)) best = { cls: c, n };
         }
-        if (!best) return false;   /* كلُّهم فارغون: لا كشفَ يُشارَك */
+        if (!best) return 'none';   /* كلُّهم فارغون: لا كشفَ يُشارَك */
 
         const name = label(best.cls.grade, best.cls.section)
                    + (best.cls.subject ? ' — ' + best.cls.subject : '');
@@ -316,9 +321,12 @@
             title:   'نفس الطلاب؟',
             message: 'عندك «' + name + '» فيه ' + countOf(best.n) + '.',
             ok:     'نعم',
-            cancel: 'لا'
+            cancel: 'لا',
+            /* أغلقها ليتحقّق من الأسماء ثمّ يعود — فليست «لا». */
+            closeIsUndecided: true
         });
-        if (!ok) { await rememberDecline(db, cls.id); return false; }
+        if (ok === null) return 'dismissed';
+        if (!ok) { await rememberDecline(db, cls.id); return 'none'; }
 
         try {
             const row = await db.get('classes', cls.id);
@@ -329,13 +337,13 @@
             await db.syncRosterCounts(cls.id);
         } catch (e) {
             console.error('[ClassCreate] تعذّر ربط الكشف:', e);
-            global.TeacherApp.toast('تعذّر ربط الكشفين — الفصل أُضيف بكشفٍ خاصّ به.',
+            global.TeacherApp.toast('تعذّر ربط الكشفين — اكتب الأسماء أو أعد المحاولة.',
                                     'error', 6000);
-            return false;
+            return 'none';
         }
         global.TeacherApp.toast('رُبط الكشفان — ' + countOf(best.n) + '.',
                                 'success', 3000);
-        return true;
+        return 'linked';
     }
 
     global.ClassCreate = {

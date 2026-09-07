@@ -1446,11 +1446,16 @@
            (`offerSharedRoster` تصمت من نفسها إن كان الكشفُ ممتلئاً، أو
             لا شريكَ له، أو الشريكُ فارغ، أو قال «لا» من قبل.) */
         try {
-            if (await global.ClassCreate.offerSharedRoster(cls)) {
+            const ans = await global.ClassCreate.offerSharedRoster(cls);
+            /* رُبط: الأسماءُ وصلت، فتُعاد الشاشةُ ولا تُفتح شاشةُ الكتابة. */
+            if (ans === 'linked') {
                 const panel = document.querySelector('#tab-panel');
                 if (panel) await renderStudents(panel, cls);
                 return;
             }
+            /* أغلق بلا اختيار: يعود إلى سجلّ المتابعة كما كان — لا تُفتح
+               شاشةُ الكتابة فوقه، ولا يُحسب رفضاً فيُسأل ثانيةً. */
+            if (ans === 'dismissed') return;
         } catch (err) { console.error('[class.js] roster offer:', err); }
 
         let file = null;                 /* الملفُّ المختار — إن اختار */

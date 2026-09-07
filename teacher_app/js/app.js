@@ -231,14 +231,28 @@
                     + (o.danger ? 'btn-danger' : 'btn-primary') + '">'
                     + esc(o.ok || 'تأكيد') + '</button>'
                     /* زرُّ الرفض يُسمَّى حين يكون الرفضُ اختياراً لا تراجعاً:
-                       «لا، كشفٌ جديد» جوابٌ، و«إلغاء» انسحاب. */
-                    + '<button type="button" class="btn btn-ghost" data-modal-close>'
-                    + esc(o.cancel || 'إلغاء') + '</button>'
+                       «لا» جوابٌ، و«إلغاء» انسحاب. */
+                    + '<button type="button" class="btn btn-ghost" data-cancel '
+                    + 'data-modal-close>' + esc(o.cancel || 'إلغاء') + '</button>'
                     + '</div>';
 
                 body.querySelector('[data-ok]').addEventListener('click', () => {
                     finish(true);
                     global.Modal.close();
+                });
+
+                /* ══ الإغلاقُ ليس جواباً — حين يطلب السائلُ التفريق ══
+                   `Modal.close` واحدةٌ لثلاثة أبواب: الزرّ، والإكس،
+                   والخلفيّة، وEscape. فمن ضغط «لا» ومن أغلق ليتحقّق من
+                   شيءٍ ثمّ يعود **يردّان الجوابَ نفسَه**.
+                   وذلك صوابٌ في التأكيد (إغلاقُ «احذف؟» = لا تحذف)، وخطأٌ
+                   في سؤالٍ جوابُه اختيارٌ يُحفظ: من أغلق لم يختر بعد.
+                   فبـ`closeIsUndecided` يردّ الإغلاقُ `null` لا `false`،
+                   ولا يُحسب رفضاً. ويلزم لذلك أن يُمسك زرُّ الرفض بنفسه —
+                   وإلّا سقط في باب الإغلاق ولم يُميَّز عنه.
+                   (بلاغُه، ٧ سبتمبر ٢٠٢٦.) */
+                body.querySelector('[data-cancel]')?.addEventListener('click', () => {
+                    finish(false);
                 });
 
                 /* بلا تركيزٍ تلقائيّ: لوحةُ المفاتيح لا شأنَ لها هنا،
@@ -247,7 +261,7 @@
                     title: o.title || 'تأكيد',
                     body: body,
                     autofocus: false,
-                    onClose: () => finish(false)
+                    onClose: () => finish(o.closeIsUndecided ? null : false)
                 });
             });
         },
