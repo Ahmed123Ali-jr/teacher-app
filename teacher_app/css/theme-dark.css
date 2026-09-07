@@ -590,3 +590,13 @@ body.theme-dark .fb-note.is-good,
 body.theme-auto.dark-active .fb-note.is-good { color: var(--success) !important; }
 body.theme-dark .fb-note.is-bad,
 body.theme-auto.dark-active .fb-note.is-bad  { color: var(--danger)  !important; }
+
+/* ══ أيقونةُ الكشف المشترك ══
+   حبرُها `--primary` — وهو في الداكن **سطحٌ** لا حبر (‎#09363F‎)، فقياسُها
+   على أرضيّة اللافتة ‎1.29:1‎: رسمٌ لا يُرى. و`--primary-light` هو الحبرُ
+   الملوَّنُ المعايَرُ للداكن، فيقيس ‎3.9:1‎ — يُقرأ ويبقى ملوَّناً.
+   (النصُّ نفسُه سليمٌ: ‎14.18:1‎، فلا يُمسّ.) */
+body.theme-dark .roster-share svg,
+body.theme-auto.dark-active .roster-share svg {
+    color: var(--primary-light);
+}

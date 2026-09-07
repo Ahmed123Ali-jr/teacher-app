@@ -3035,6 +3035,19 @@ body.drawer-open { overflow: hidden; }
 .sch-other { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
 .sch-other .input { flex: 1; min-height: 46px; }
 
+/* ══ لافتةُ الكشف المشترك ══
+   في «إدارة الفصل»: تقول إنّ كشفَ الطلاب يُقرأ من فصلين، وتسمّي الشريك.
+   نبرتُها خبرٌ لا تحذير — فاللونُ لونُ التطبيق لا الكهرمانُ ولا الأحمر. */
+.roster-share {
+    display: flex; align-items: flex-start; gap: 9px;
+    margin: 0 0 var(--space-4);
+    padding: 11px 13px; border-radius: 14px;
+    background: color-mix(in srgb, var(--primary) 8%, var(--mix-base));
+    border: 1.5px solid color-mix(in srgb, var(--primary) 22%, var(--mix-base));
+    font-size: 12.5px; line-height: 1.75; color: var(--ink-primary);
+}
+.roster-share svg { width: 17px; height: 17px; flex: none; margin-top: 3px; color: var(--primary); }
+
 /* حالة الانتظار الحالية */
 .sch-cur {
     border-radius: 16px; padding: 13px 15px; margin-bottom: 11px;

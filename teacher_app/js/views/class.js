@@ -187,7 +187,7 @@
         /* قراءة واحدة مجمّعة لكل مخزن (مفهرسة بالفصل) بلا حلقة على الطلاب.
            استعلام الحضور أُسقط مع إحصاءات البطاقة — لم يعد له مستهلك هنا. */
         const [students, books, exams, worksheets, homework] = await Promise.all([
-            global.TeacherDB.getAllByIndex('students',    'class_id', cls.id),
+            global.TeacherDB.studentsOf(cls.id),
             global.TeacherDB.getAllByIndex('books',       'class_id', cls.id),
             global.TeacherDB.getAllByIndex('exams',       'class_id', cls.id),
             global.TeacherDB.getAllByIndex('worksheets',  'class_id', cls.id),
@@ -267,7 +267,10 @@
            يُعيد رسم الصفحة، فيرى المعلّم اسمه القديم حتى ينتقل ويعود.
            و`null` مكان `tab`: لا نصل هنا إلا والفصلُ على لوحته بلا قسم. */
         container.querySelector('#btn-class-edit')?.addEventListener('click', () => {
-            openClassActions(cls, () => render(container, cls.id, null));
+            /* صارت غيرَ متزامنة (تقرأ شركاءَ الكشف قبل أن ترسم)، فيُمسَك
+               تعثّرُها هنا — وإلّا مرّ رفضٌ بلا مُمسِك. */
+            openClassActions(cls, () => render(container, cls.id, null))
+                .catch((err) => console.error('[class.js] openClassActions:', err));
         });
     }
 
@@ -406,7 +409,7 @@
                ما حُفظ فعلاً. فيُبتلع هنا وحدَه، ويُصفَّر العدّاد بعده. */
             try { await flushWrites(); } catch (e) { /* أُبلغ عند وقوعه */ }
             resetWriteFailures();
-            students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
+            students = await global.TeacherDB.studentsOf(cls.id);
             students.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
 
             // Two bulk reads by class (indexed) instead of 2×N per-student queries:
@@ -1234,12 +1237,11 @@
         await global.TeacherDB.remove('students', studentId);
     }
 
+    /* العدّةُ للكشف لا للفصل: من يشارك الكشفَ يحمل الرقمَ نفسَه، فيُكتب
+       في الجميع دفعةً — وإلّا رأى المعلّمُ «٢٨» في علوم و«٠» في اجتماعيات
+       وهم طلابٌ واحدون. */
     async function updateClassStudentCount(classId) {
-        const cls = await global.TeacherDB.get('classes', classId);
-        if (!cls) return;
-        const list = await global.TeacherDB.getAllByIndex('students', 'class_id', classId);
-        cls.student_count = list.length;
-        await global.TeacherDB.put('classes', cls);
+        await global.TeacherDB.syncRosterCounts(classId);
     }
 
     /* ==========================================================================
@@ -1606,9 +1608,15 @@
 
         /** الحفظُ الفعليّ — مشتركٌ بين المكتوب والمراجَع. */
         async function save(names, reviewed) {
+            /* ══ تُكتب في **صاحب الكشف** لا في الفصل المفتوح ══
+               مع الكشف المشترك، لو كُتب كلُّ اسمٍ في الفصل الذي أُضيف منه
+               لتفرّق الكشفُ على صفّين وتبعثر ترتيبُه (`sort_order` يُعدّ
+               داخل كلّ فصلٍ على حدة). فيسكن الكشفُ فصلاً واحداً، ويقرؤه
+               الشريكُ عبر `studentsOf`. */
+            const ownerId = await global.TeacherDB.rosterOwnerId(cls.id);
             await runPooled(names, (name) => global.TeacherDB.add('students', {
                 teacher_id: cls.teacher_id,
-                class_id:   cls.id,
+                class_id:   ownerId,
                 name,
                 notes: ''
             }));
@@ -1792,12 +1800,32 @@
     /* Opened from the classes list («تعديل» on the class card).
        onSaved is called after a successful save so the caller can repaint. */
     /** لوحة إدارة الفصل: تعديل أو حذف. */
-    function openClassActions(cls, onDone) {
+    async function openClassActions(cls, onDone) {
+        /* ══ الكشفُ المشترك يُقال، لا يُخفى ══
+           رابطٌ لا يُرى لا يُصحَّح: المعلّمُ يضيف اسماً فيظهر في فصلٍ آخر
+           ولا يفهم لماذا. فيُسمّى شريكُه هنا — في الشاشة التي يفتحها حين
+           يريد أن يفهم فصله أو يغيّره. */
+        let partners = [];
+        try {
+            const ids = await global.TeacherDB.rosterClassIds(cls.id);
+            for (const id of ids) {
+                if (id === cls.id) continue;
+                const c = await global.TeacherDB.get('classes', id);
+                if (c) partners.push(clsLabel(c));
+            }
+        } catch (e) { /* لا يمنع الشاشة */ }
+
         const body = document.createElement('div');
         body.innerHTML = `
             <p class="text-muted" style="font-size: var(--fs-sm); margin: 0 0 var(--space-4);">
-                ${escapeHtml(cls.grade)} / ${escapeHtml(cls.section)} — ${escapeHtml(cls.subject)}
+                ${escapeHtml(clsLabel(cls))}
             </p>
+            ${partners.length ? `
+                <p class="roster-share">
+                    ${Icons.svg('users')}
+                    <span>كشفُ الطلاب مشتركٌ مع ${escapeHtml(partners.join(' و'))} —
+                    أيُّ اسمٍ تضيفه أو تصحّحه يظهر فيهما معاً.</span>
+                </p>` : ''}
             <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                 <button type="button" class="btn btn-secondary btn-block" id="ca-edit">${Icons.svg('pencil')} تعديل الفصل</button>
                 <button type="button" class="btn btn-ghost btn-block" id="ca-delete"
@@ -1830,9 +1858,10 @@
         const form = document.createElement('form');
         form.innerHTML = `
             <div class="field">
-                <label class="label">الشعبة *</label>
-                <input class="input" id="e-section" type="text" required
-                       value="${escapeHtml(cls.section)}" maxlength="8">
+                <label class="label">الشعبة</label>
+                <input class="input" id="e-section" type="text"
+                       value="${escapeHtml(cls.section || '')}" maxlength="8"
+                       placeholder="اتركها فارغة إن كانت المدرسة بلا شعب">
             </div>
             <div class="field">
                 <label class="label">المادة *</label>
@@ -1863,14 +1892,65 @@
         global.Modal.open({ title: 'تعديل الفصل', body: form, autofocus: false });
     }
 
+    /** اسمُ الفصل كما يقرؤه المعلّم — للرسائل. */
+    function clsLabel(c) {
+        const g = global.ClassCreate ? global.ClassCreate.label(c.grade, c.section)
+                                     : (c.grade || '');
+        return c.subject ? g + ' — ' + c.subject : g;
+    }
+
     async function deleteClass(cls, onDone) {
-        const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
-        const note = students.length > 0
-            ? global.Words.count(students.length) + ' وجميع سجلاتهم معه.'
-            : null;
+        /* ══ الكشفُ المشترك: من يشاركه هذا الفصل؟ ══ */
+        const ids    = await global.TeacherDB.rosterClassIds(cls.id);
+        const others = ids.filter((id) => id !== cls.id);
+
+        const mine = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
+        let note;
+        if (others.length) {
+            /* شريكٌ باقٍ: الطلابُ لا يُحذفون — يبقون معه. ويُقال صراحةً،
+               وإلّا ظنّ المعلّمُ أنّه يمحو كشفَه فامتنع عن حذفٍ لا يضرّه. */
+            const partner = await global.TeacherDB.get('classes', others[0]);
+            note = 'الطلاب يبقون مع «' + (partner ? clsLabel(partner) : 'الفصل الشريك')
+                 + '». ويُحذف حضورُ هذا الفصل ودرجاتُه وحدَها.';
+        } else {
+            note = mine.length > 0
+                ? global.Words.count(mine.length) + ' وجميع سجلاتهم معه.'
+                : null;
+        }
+
         if (!(await global.TeacherApp.confirm({
             title: 'حذف الفصل؟', message: note, ok: 'حذف', danger: true
         }))) return;
+
+        /* ══ نقلُ الكشف قبل الحذف — لا بعده ══
+           `students.class_id` عليها `on delete cascade`، فحذفُ الفصل الذي
+           تسكنه صفوفُ الطلاب يمحو الكشفَ من شريكه أيضاً. فتُنقل أوّلاً،
+           وإن تعثّر النقلُ **لا يُحذف شيء**. */
+        let movedTo = null;
+        if (others.length) {
+            const newOwner = others[0];
+            try {
+                for (const st of mine) {
+                    st.class_id = newOwner;
+                    await global.TeacherDB.put('students', st);
+                }
+                for (const id of others) {
+                    const c = await global.TeacherDB.get('classes', id);
+                    if (!c) continue;
+                    /* الصاحبُ الجديد يحمل فراغاً (كشفُه كشفُه)، والبقيّةُ تشير إليه. */
+                    const next = (id === newOwner) ? null : newOwner;
+                    if ((c.roster_id || null) === next) continue;
+                    c.roster_id = next;
+                    await global.TeacherDB.put('classes', c);
+                }
+                movedTo = newOwner;
+            } catch (e) {
+                console.error('[class.js] roster handover failed:', e);
+                global.TeacherApp.toast(
+                    'تعذّر نقل الكشف إلى الفصل الشريك — لم يُحذف شيء.', 'error', 7000);
+                return;
+            }
+        }
 
         /* حذفةٌ واحدة، لا حلقةٌ على الطلاب.
            كان يمرّ على كلِّ طالبٍ فيحذف حضورَه ومشاركتَه ثمّ يحذفه، ثمّ
@@ -1886,9 +1966,14 @@
             await global.TeacherDB.remove('classes', cls.id);
         } catch (e) {
             console.error('[class.js] delete class failed:', e);
+            /* إن كان الكشفُ قد نُقل قبل التعثّر فـ«لم يُحذف شيء» كذبة:
+               الطلابُ صاروا عند الشريك والفصلُ باقٍ فارغاً. فيُقال ما وقع. */
             global.TeacherApp.toast(
-                'تعذّر حذف الفصل: ' + (e.message || 'تحقّق من الاتصال') + ' — لم يُحذف شيء.',
+                'تعذّر حذف الفصل: ' + (e.message || 'تحقّق من الاتصال')
+                + (movedTo ? ' — والطلاب انتقلوا إلى الفصل الشريك، فأعد المحاولة.'
+                           : ' — لم يُحذف شيء.'),
                 'error', 7000);
+            if (movedTo) { if (onDone) onDone(); }
             return;
         }
         global.TeacherApp.toast('تم حذف الفصل.', 'info');

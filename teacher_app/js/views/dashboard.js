@@ -758,7 +758,10 @@
         }
 
         function paint() {
-            const ready = pick.grade !== null && pick.section;
+            /* `null` = لم يختر بعدُ، و`''` = **اختار «بلا شعبة»**.
+               والفرقُ بينهما هو الميزة كلُّها: حقلٌ تُرك فارغاً سهواً يجعل
+               فصلين مختلفين يبدوان واحداً، واختيارٌ صريحٌ لا يفعل. */
+            const ready = pick.grade !== null && pick.section !== null;
             body.innerHTML = `
                 <div class="sch-lbl">المرحلة</div>
                 <div class="sch-chips">
@@ -784,6 +787,8 @@
                     `).join('')}
                     <button type="button" class="sch-sec wide ${other.sec ? 'on' : ''}" data-sec-other
                             ${pick.grade === null ? 'disabled' : ''}>✎ أخرى</button>
+                    <button type="button" class="sch-sec wide ${!other.sec && pick.section === '' ? 'on' : ''}"
+                            data-sec-none ${pick.grade === null ? 'disabled' : ''}>بلا شعبة</button>
                 </div>
                 ${other.sec ? `
                     <div class="sch-other">
@@ -793,7 +798,10 @@
 
                 <div id="subj-wrap" style="margin-top:15px; ${ready ? '' : 'opacity:.45; pointer-events:none;'}">
                     <div class="sch-hint" id="subj-lock"
-                         style="margin:0 0 9px; ${ready ? 'display:none' : ''}">اختر الصف والشعبة أولاً</div>
+                         style="margin:0 0 9px; ${ready ? 'display:none' : ''}">${
+                        pick.grade === null ? 'اختر الصف والشعبة أولاً'
+                                            : (other.sec ? 'اكتب اسم الشعبة' : 'اختر الشعبة')
+                    }</div>
                     ${subjectPickHtml()}
                 </div>
             `;
@@ -830,11 +838,14 @@
             if (t.closest('[data-sec-other]')) {
                 other.sec = true; pick.section = null; return paint();
             }
+            if (t.closest('[data-sec-none]')) {
+                other.sec = false; pick.section = ''; return paint();
+            }
             const sec = t.closest('[data-sec]');
             if (sec) { other.sec = false; pick.section = sec.dataset.sec; return paint(); }
 
             if (!t.closest('[data-subj-save]') || saving) return;
-            if (pick.grade === null || !pick.section) return;
+            if (pick.grade === null || pick.section === null) return;
 
             const subject = String(pick.subject || '').trim();
             if (!subject) {
@@ -868,6 +879,14 @@
                في السطر السابق، فيراه المعلّم بعد أن يتنقّل ولا يراه في
                مكانه: صفحةُ الفصول لا تُعاد، وخانةُ الجدول لا تأخذ فصلها. */
             if (other.subj) rememberSubject(subject).catch(() => {});
+
+            /* ══ نفس الفصل بمادّةٍ ثانية؟ ══
+               يُسأل هنا لا في مكانٍ آخر: المعلّمُ ما زال في سياق الإضافة،
+               فالسؤالُ مفهوم. ويُنتظر جوابُه قبل الانتقال — وإلّا فُتحت
+               النافذةُ فوق شاشةٍ انتقل إليها ولا يدري لِمَ.
+               ولا يوقف شيئاً إن تعثّر: الفصلُ حُفظ فعلاً. */
+            try { await global.ClassCreate.offerSharedRoster(created); }
+            catch (err) { console.error('[dashboard] roster offer:', err); }
 
             /* من ناداها يقرّر أين يرجع. وبلا ردّ نداء: تُفتح قائمة الفصول
                ليرى المعلّم فصله مضافاً — لا يبقى في الرئيسية يتساءل.

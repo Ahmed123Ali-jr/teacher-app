@@ -98,13 +98,16 @@
 
         // Per-class aggregates
         const perClass = [];
-        let totalStudents = 0;
+        /* ══ المجموعُ بمعرّفاتٍ لا بجمعِ الأطوال ══
+           مع الكشف المشترك يظهر الطالبُ في فصلين (علوم واجتماعيات)، وجمعُ
+           `length` يعدّه مرّتين فيرتفع «إجمالي الطلاب» كذباً. */
+        const seenStudents = new Set();
         let totalAttendance = { present: 0, absent: 0, late: 0, excused: 0 };
         let totalExams = 0, totalWorksheets = 0, totalHomework = 0;
 
         for (const cls of classes) {
-            const students = await global.TeacherDB.getAllByIndex('students', 'class_id', cls.id);
-            totalStudents += students.length;
+            const students = await global.TeacherDB.studentsOf(cls.id);
+            students.forEach((s) => seenStudents.add(s.id));
 
             // Attendance summary
             const att = { present: 0, absent: 0, late: 0, excused: 0 };
@@ -196,7 +199,7 @@
             teacher,
             totals: {
                 classes: classes.length,
-                students: totalStudents,
+                students: seenStudents.size,
                 exams: totalExams,
                 worksheets: totalWorksheets,
                 homework: totalHomework,

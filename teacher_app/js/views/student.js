@@ -263,12 +263,9 @@
         await global.TeacherDB.remove('students', studentId);
     }
 
+    /* العدّةُ للكشف لا للفصل: من يشارك الكشفَ يحمل الرقمَ نفسَه. */
     async function updateClassCount(classId) {
-        const cls = await global.TeacherDB.get('classes', classId);
-        if (!cls) return;
-        const list = await global.TeacherDB.getAllByIndex('students', 'class_id', classId);
-        cls.student_count = list.length;
-        await global.TeacherDB.put('classes', cls);
+        await global.TeacherDB.syncRosterCounts(classId);
     }
 
     global.StudentView = { render };

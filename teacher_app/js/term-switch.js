@@ -67,6 +67,21 @@
         const byId = {};
         all.forEach((c) => { byId[c.id] = c; });
 
+        /* ══ الكشفُ المشترك ينتقل مشتركاً ══
+           فصلان يقرآن الكشفَ نفسَه في الفصل الأوّل يجب أن يقرآه نفسَه في
+           الثاني. ولو نُسخ `roster_id` كما هو لأشار إلى فصلٍ في الفصل
+           الدراسيّ الماضي — رقمٌ لا يُقرأ هنا، فينفصل الشريكان ويعود
+           الإدخالُ مرّتين.
+           فتُبنى المجموعةُ من المنقول وحدَه: **أوّلُ ما يُنشأ منها هو
+           الصاحبُ** (`roster_id = null`، أي كشفُه كشفُه)، والباقي يشير
+           إليه. والطلابُ يُنسخون **مرّةً واحدةً للمجموعة**.
+
+           و`studentsOf` تُسأل لا `getAllByIndex`: الطلابُ يسكنون فصلاً
+           واحداً من المجموعة، فلو نُقل الشريكُ وحدَه وسُئل عن صفوفه
+           لجاء فارغاً — ووصل المعلّمُ إلى فصلٍ جديدٍ بلا أسماء. */
+        const rid = (c) => (c.roster_id || c.id);
+        const group = new Map();   /* كشفٌ قديم → { owner: مُعرَّفٌ جديد, n } */
+
         let nClasses = 0, nStudents = 0;
 
         for (const id of classIds) {
@@ -82,10 +97,24 @@
             fresh.term = toTerm;
             fresh.student_count = 0;
 
+            const key  = rid(src);
+            const seen = group.get(key);
+            /* الصاحبُ يُترك فارغاً؛ ومن بعده يشير إليه. */
+            fresh.roster_id = seen ? seen.owner : null;
+
             const newId = await db.add('classes', fresh);
             nClasses += 1;
 
-            const students = await db.getAllByIndex('students', 'class_id', id);
+            if (seen) {
+                /* شريكٌ: الكشفُ منسوخٌ سلفاً، فيرث العددَ ولا يُعيد النسخ. */
+                if (seen.n) {
+                    const cls = await db.get('classes', newId);
+                    if (cls) { cls.student_count = seen.n; await db.put('classes', cls); }
+                }
+                continue;
+            }
+
+            const students = await db.studentsOf(id);
             let moved = 0;
             for (const s of students) {
                 try {
@@ -104,6 +133,7 @@
                 }
             }
             nStudents += moved;
+            group.set(key, { owner: newId, n: moved });
 
             if (moved !== fresh.student_count) {
                 const cls = await db.get('classes', newId);

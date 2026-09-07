@@ -124,12 +124,15 @@
 
     async function computeQuickStats(teacher) {
         const classes = await global.TeacherDB.getAllByIndex('classes', 'teacher_id', teacher.id);
-        let students = 0, exams = 0, worksheets = 0, homework = 0;
+        /* الطلابُ بمعرّفاتٍ لا بجمعِ الأطوال: الكشفُ المشترك يُظهر الطالبَ
+           في فصلين، وجمعُ الأطوال يعدّه مرّتين. */
+        const seenStudents = new Set();
+        let exams = 0, worksheets = 0, homework = 0;
         let storageBytes = 0;
 
         for (const c of classes) {
-            const s = await global.TeacherDB.getAllByIndex('students', 'class_id', c.id);
-            students += s.length;
+            const s = await global.TeacherDB.studentsOf(c.id);
+            s.forEach((x) => seenStudents.add(x.id));
             const e = await global.TeacherDB.getAllByIndex('exams', 'class_id', c.id);
             exams += e.length;
             const w = await global.TeacherDB.getAllByIndex('worksheets', 'class_id', c.id);
@@ -149,7 +152,7 @@
         const strategies = await global.TeacherDB.getAllByIndex('strategies', 'teacher_id', teacher.id);
         const initiatives= await global.TeacherDB.getAllByIndex('initiatives','teacher_id', teacher.id);
 
-        return { classes: classes.length, students, exams, worksheets, homework,
+        return { classes: classes.length, students: seenStudents.size, exams, worksheets, homework,
                  strategies: strategies.length, initiatives: initiatives.length, storageBytes };
     }
 

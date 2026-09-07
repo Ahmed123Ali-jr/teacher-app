@@ -230,7 +230,10 @@
                     + '<button type="button" data-ok class="btn '
                     + (o.danger ? 'btn-danger' : 'btn-primary') + '">'
                     + esc(o.ok || 'تأكيد') + '</button>'
-                    + '<button type="button" class="btn btn-ghost" data-modal-close>إلغاء</button>'
+                    /* زرُّ الرفض يُسمَّى حين يكون الرفضُ اختياراً لا تراجعاً:
+                       «لا، كشفٌ جديد» جوابٌ، و«إلغاء» انسحاب. */
+                    + '<button type="button" class="btn btn-ghost" data-modal-close>'
+                    + esc(o.cancel || 'إلغاء') + '</button>'
                     + '</div>';
 
                 body.querySelector('[data-ok]').addEventListener('click', () => {

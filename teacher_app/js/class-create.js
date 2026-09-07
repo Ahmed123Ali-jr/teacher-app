@@ -200,10 +200,111 @@
                  color: DEFAULT_COLOR, student_count: 0 };
     }
 
+    /* ------------------------------------------------------------------
+       الكشفُ المشترك — فصلٌ واحدٌ بمادّتين
+
+       المعلّمُ يدرّس «الأول المتوسط / أ» علوماً واجتماعيات، فيُدخل الكشفَ
+       نفسَه مرّتين ويُصحّح كلَّ اسمٍ مرّتين. والحلُّ أن يقرآ الكشفَ نفسَه
+       (`roster_id`)، ولكن **لا يُطبَّق صامتاً**: يُعرض ويُؤكَّد، ويسمّي
+       العددَ — فالعددُ هو الذي يكشف المطابقةَ الخاطئة قبل أن تقع.
+       ------------------------------------------------------------------ */
+
+    /** كشفُ الفصل: فراغُه يعني «كشفي كشفي». (نظيرُ `TeacherDB.rosterOf`.) */
+    const rosterIdOf = (c) => (c && (c.roster_id || c.id)) || null;
+
+    /**
+     * الفصلُ الذي يُرجَّح أن يشارك `created` كشفَه.
+     *
+     * الشرطُ: **المرحلةُ والصفُّ والشعبةُ تتطابق والمادّةُ تختلف**. والشعبةُ
+     * جزءٌ من المفتاح — «٦/أ علوم» لا يطابق «٦/ب اجتماعيات»؛ ولكن
+     * «٦ بلا شعبة» يطابق «٦ بلا شعبة» فكلاهما فراغٌ مقصود.
+     *
+     * ولا يُقترح فصلٌ فارغ: كشفٌ لا أسماءَ فيه لا يُشارَك، والسؤالُ عنه
+     * إزعاجٌ بلا مقابل. فالعدُّ من مسؤوليّة المنادي.
+     *
+     * @param {object[]} classes  فصولُ المعلّم في هذا الفصل الدراسيّ
+     * @param {object}   created  الفصلُ المُنشأ حديثاً
+     * @returns {object[]} المرشّحون — أوّلُهم أولاهم
+     */
+    function rosterCandidates(classes, created) {
+        if (!created) return [];
+        const g = fold(created.grade), sec = fold(created.section),
+              j = foldSubject(created.subject),
+              rid = rosterIdOf(created);
+        return (classes || []).filter((c) =>
+            c && c.id !== created.id
+            && fold(c.grade) === g && fold(c.section) === sec
+            && foldSubject(c.subject) !== j
+            /* ومن يشاركه الكشفَ أصلاً ليس مرشّحاً — هو هو. */
+            && rosterIdOf(c) !== rid);
+    }
+
+    const AR = (n) => String(n).replace(/[0-9]/g, (d) => AR_DIGITS[+d]);
+
+    /**
+     * يسأل المعلّمَ إن كان الفصلُ الجديد يشارك كشفَ فصلٍ قائم، ويربطُهما
+     * إن قال نعم. يُنادى **بعد** الإنشاء، ولا يوقف شيئاً إن تعثّر.
+     *
+     * @param {object} created — الصفُّ الراجعُ من `create`
+     * @returns {Promise<boolean>} هل رُبط؟
+     */
+    async function offerSharedRoster(created) {
+        const db = global.TeacherDB;
+        if (!db || !created || !created.id) return false;
+
+        let classes = [];
+        try { classes = await db.getAll('classes'); } catch (e) { return false; }
+        classes = classes.filter((c) => c.teacher_id === created.teacher_id);
+
+        const cands = rosterCandidates(classes, created);
+        if (!cands.length) return false;
+
+        /* العددُ يُقرأ من الكشف لا من `student_count` — العدّادُ قد يتخلّف،
+           والرقمُ المعروضُ هو الذي يُبنى عليه القرار فلا يُؤخذ من مذكّرة. */
+        let best = null;
+        for (const c of cands) {
+            let n = 0;
+            try { n = (await db.studentsOf(c.id)).length; } catch (e) { continue; }
+            if (n > 0 && (!best || n > best.n)) best = { cls: c, n };
+        }
+        if (!best) return false;   /* كلُّهم فارغون: لا كشفَ يُشارَك */
+
+        const name = label(best.cls.grade, best.cls.section)
+                   + (best.cls.subject ? ' — ' + best.cls.subject : '');
+        const ok = await global.TeacherApp.confirm({
+            title:   'نفس الطلاب؟',
+            message: 'عندك «' + name + '» فيه ' + AR(best.n) + ' من الطلاب. '
+                   + 'إن كانوا هم أنفسهم، اربط الكشفين: أيُّ اسمٍ تضيفه أو '
+                   + 'تصحّحه في أحدهما يظهر في الآخر. والحضورُ والدرجاتُ '
+                   + 'تبقى منفصلةً لكلّ مادّة.',
+            ok:     'نعم، الكشف نفسه',
+            cancel: 'لا، كشف جديد'
+        });
+        if (!ok) return false;
+
+        try {
+            const row = await db.get('classes', created.id);
+            if (!row) return false;
+            row.roster_id = rosterIdOf(best.cls);
+            await db.put('classes', row);
+            created.roster_id = row.roster_id;
+            await db.syncRosterCounts(created.id);
+        } catch (e) {
+            console.error('[ClassCreate] تعذّر ربط الكشف:', e);
+            global.TeacherApp.toast('تعذّر ربط الكشفين — الفصل أُضيف بكشفٍ خاصّ به.',
+                                    'error', 6000);
+            return false;
+        }
+        global.TeacherApp.toast('رُبط الكشفان — ' + AR(best.n) + ' من الطلاب.',
+                                'success', 3000);
+        return true;
+    }
+
     global.ClassCreate = {
         GRADES, STAGE_LABELS, SECTIONS, DEFAULT_COLOR,
         fold, foldSubject, stageOf, ordinalIndex, parseGrade, gradeAt,
         splitLabel, parseSection, normalizeSubject, findExisting, create, label,
-        enGrade, enSection
+        enGrade, enSection,
+        rosterCandidates, offerSharedRoster
     };
 })(window);

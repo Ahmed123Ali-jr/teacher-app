@@ -991,6 +991,81 @@
         return rows;
     }
 
+    /* ══════════════════════════════════════════════════════════════════════
+       الكشفُ المشترك — فصلان لنفس الشعبة بمادّتين يقرآن الطلابَ أنفسَهم
+       ══════════════════════════════════════════════════════════════════════
+       «المادّة» جزءٌ من هويّة الفصل، فـ«٦/أ علوم» و«٦/أ اجتماعيات» صفّان
+       مختلفان. وعمودُ `roster_id` يجعلهما يقرآن كشفاً واحداً **بلا نقل صفِّ
+       طالبٍ واحدٍ من مكانه** — يتغيّر سؤالُ القراءة لا البيانات.
+
+       و`NULL` تعني «كشفٌ خاصٌّ بالفصل»، أي `roster = id`. فكلُّ فصلٍ قائمٍ
+       يبقى كما هو بلا هجرة.
+
+       ⚠️ **وصفوفُ الطلاب تسكن فصلاً واحداً**: الفصلَ الذي معرّفُه هو رقمُ
+       الكشف (`rosterOwnerId`). فالإضافةُ من أيّ شريكٍ تكتب هناك — وإلّا
+       تفرّق الكشفُ على صفّين وتبعثر ترتيبُه.
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /** رقمُ كشف الفصل — والفراغُ يعني كشفَه الخاصّ. */
+    function rosterOf(cls) { return (cls && (cls.roster_id || cls.id)) || null; }
+
+    /** معرّفاتُ الفصول التي تشارك كشفَ هذا الفصل، وفيها هو. */
+    async function rosterClassIds(classId) {
+        const cls = await get('classes', classId);
+        if (!cls) return [classId];
+        const rid = rosterOf(cls);
+        let all = [];
+        try { all = await getAll('classes'); } catch (e) { return [classId]; }
+        const ids = all.filter((c) => rosterOf(c) === rid).map((c) => c.id);
+        return ids.length ? ids : [classId];
+    }
+
+    /** الفصلُ الذي تسكنه صفوفُ الطلاب — إليه تُكتب الإضافات. */
+    async function rosterOwnerId(classId) {
+        const ids = await rosterClassIds(classId);
+        const cls = await get('classes', classId);
+        const rid = rosterOf(cls);
+        /* الصاحبُ قد يكون محذوفاً، فيُسأل عن وجوده لا يُفترض. */
+        return ids.indexOf(rid) >= 0 ? rid : classId;
+    }
+
+    /** طلابُ الفصل — ومعهم طلابُ من يشاركه الكشف، بلا تكرار. */
+    async function studentsOf(classId) {
+        const ids = await rosterClassIds(classId);
+        if (ids.length === 1) return getAllByIndex('students', 'class_id', ids[0]);
+        const seen = new Set();
+        const out = [];
+        for (const id of ids) {
+            const rows = await getAllByIndex('students', 'class_id', id);
+            for (const r of rows) {
+                if (!r || seen.has(r.id)) continue;
+                seen.add(r.id);
+                out.push(r);
+            }
+        }
+        /* الترتيبُ يُعاد هنا: الصفوفُ جاءت من مخزنين، وترتيبُ كلٍّ داخليّ. */
+        out.sort((a, b) =>
+            (a.sort_order == null ? 1e9 : a.sort_order) -
+            (b.sort_order == null ? 1e9 : b.sort_order) ||
+            String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+        return out;
+    }
+
+    /** يحدّث `student_count` في الفصل **وفي كلّ من يشاركه الكشف**.
+       كان كلُّ شاشةٍ تحسبه لفصلها وحدَه؛ ومع الكشف المشترك يصير الرقمُ
+       واحداً للجميع، فيُكتب مرّةً في الجميع لا يُترك متفرّقاً. */
+    async function syncRosterCounts(classId) {
+        const ids = await rosterClassIds(classId);
+        const n = (await studentsOf(classId)).length;
+        for (const id of ids) {
+            const cls = await get('classes', id);
+            if (!cls || cls.student_count === n) continue;
+            cls.student_count = n;
+            try { await putGuarded('classes', cls); } catch (e) { /* لا يوقف الشاشة */ }
+        }
+        return n;
+    }
+
     async function getAllByIndex(storeName, indexName, value) {
         if (!TABLE[storeName]) throw new Error('Unknown store: ' + storeName);
         await awaitStore(storeName);
@@ -1557,6 +1632,7 @@
         open,
         add: addGuarded, put: putGuarded, putLocal,
         get, getAll, getAllByIndex, remove: removeGuarded, clear, count,
+        rosterOf, rosterClassIds, rosterOwnerId, studentsOf, syncRosterCounts,
         bulkPut: bulkPutGuarded, bulkRemove: bulkRemoveGuarded,
         destroy, exportAll, importAll,
         Settings,
