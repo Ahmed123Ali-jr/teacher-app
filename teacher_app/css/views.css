@@ -994,6 +994,45 @@ body.drawer-open { overflow: hidden; }
 .hf-num { font-weight: var(--fw-bold); font-size: 17px; }
 .hf-lbl { font-size: 10px; opacity: .8; margin-top: 1px; }
 
+/* ══ سطرُ الطمأنينة — الشكل «أ» (٧ سبتمبر ٢٠٢٦) ══
+   داخل البطاقة تحت الأرقام التي يصفها، وبأرضيّة الخانات نفسِها فلا يبدو
+   غريباً عنها.
+
+   ⚠️ والبطاقةُ **بتروليّةٌ مصمتةٌ وحبرُها أبيض** — فلا يُكتب هنا
+   `--success` ولا `--warning`: الأخضرُ ‎#10B981‎ عليها ‎2.4:1‎ والكهرمانيُّ
+   أسوأ. فالحالتان تُميَّزان بفاتحَيهما (‎#8FF3D2‎ و‎#FFD98A‎) وبثقل
+   الأرضيّة، لا باللون الأصليّ. */
+.reg-saved {
+    margin-top: 7px;
+    background: rgba(255, 255, 255, .13);
+    border-radius: 11px;
+    padding: 9px 12px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: var(--fw-medium); color: #fff;
+    line-height: 1.5;
+}
+.reg-saved .dt {
+    width: 7px; height: 7px; border-radius: 50%; flex: none;
+    background: rgba(255, 255, 255, .6);
+}
+.reg-saved .tk { font-size: 13px; font-weight: var(--fw-bold); flex: none; }
+.reg-saved .num { font-weight: var(--fw-bold); }
+
+.reg-saved.done { background: rgba(255, 255, 255, .19); }
+.reg-saved.done .tk { color: #8FF3D2; }
+
+.reg-saved.off { background: rgba(255, 214, 130, .17); }
+.reg-saved.off .tk { color: #FFD98A; }
+
+/* والنبضةُ تُطفأ لمن طلب سكونَ الحركة. */
+@media (prefers-reduced-motion: no-preference) {
+    .reg-saved .dt { animation: saved-pulse 2s ease-in-out infinite; }
+}
+@keyframes saved-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: .35; }
+}
+
 .hub-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

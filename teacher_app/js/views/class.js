@@ -8,6 +8,20 @@
 
     const STAGE_LABELS = { primary: 'ابتدائي', intermediate: 'متوسط', secondary: 'ثانوي' };
 
+    /* ══ حالُ الصندوق الصادر — لسطر الطمأنينة ══
+       مستمعٌ **واحدٌ للوحدة كلِّها** لا واحدٌ لكلّ رسمة: `renderStudents`
+       تُنادى عشراتِ المرّات (تبديلُ يوم، وبحثٌ، وتصفيةٌ، وعودةٌ من نافذة)،
+       فربطُ مستمعٍ فيها يتركهم يتراكمون على نافذةٍ لا تُنظَّف.
+       و`_paintSaved` تشير إلى رسّام الشاشة القائمة، فتُحدَّث هي وحدَها. */
+    let _outboxPending = 0;
+    let _paintSaved = null;
+    try {
+        global.addEventListener('teacherdb:outbox', (e) => {
+            _outboxPending = (e.detail && e.detail.pending) || 0;
+            if (_paintSaved) { try { _paintSaved(); } catch (err) { /* شاشةٌ رحلت */ } }
+        });
+    } catch (e) { /* بيئةٌ بلا نافذة */ }
+
     const TABS = [
         { key: 'students',   label: null, icon: 'users' },   // النص يُحسب عند الرسم
         { key: 'books',      label: 'الكتب',        icon: 'book' },
@@ -505,6 +519,7 @@
                     <button class="hf-stat hf-tap ${activeFilter === 'absent' ? 'active' : ''}" data-att-filter="absent"><div class="hf-num num" data-hf="absent">${stats.absent}</div><div class="hf-lbl">غائب</div></button>
                     <div class="hf-stat"><div class="hf-num num" data-hf="pct">${attPct !== null ? attPct + '٪' : '—'}</div><div class="hf-lbl">الحضور</div></div>
                 </div>
+                ${students.length > 0 ? '<div class="reg-saved" id="reg-saved" hidden></div>' : ''}
             </div>
 
             ${students.length > 0 ? daysSheetHtml(date, markedDates) : ''}
@@ -630,6 +645,52 @@
         }
         paintMarkBar();
 
+        /* ══ سطرُ الطمأنينة — الشكل «أ» بقراره (٧ سبتمبر ٢٠٢٦) ══
+           الحفظُ فوريٌّ من قبلُ ولا يتغيّر؛ الناقصُ أن **يراه** محفوظاً.
+           فيُقال له في البطاقة نفسِها، تحت الأرقام التي يصفها.
+
+           ولا يظهر قبل أوّل ضغطة: سطرٌ يطمئن على لا شيءٍ ليس طمأنينةً بل
+           زحمة. ويظهر مع أوّل طالبٍ يُحضَّر — وهي اللحظةُ التي يبدأ فيها
+           السؤالُ «هل حُفظ؟».
+
+           وحالُ «بلا إنترنت» تُقرأ من **الصندوق الصادر** لا من
+           `navigator.onLine`: الأخيرُ يقول إنّ هناك شبكةً، لا إنّ الكتابةَ
+           وصلت — وشبكةُ المدرسة تكون قائمةً ولا تنفذ. */
+        function paintSavedLine() {
+            const el = panel.querySelector('#reg-saved');
+            if (!el) return;
+            const marked = attendanceToday.filter(Boolean).length;
+            if (students.length === 0 || marked === 0) { el.hidden = true; return; }
+            el.hidden = false;
+
+            let cls, tick, tx;
+            if (_outboxPending > 0) {
+                cls = 'off';  tick = '✓';
+                tx = 'محفوظ على جهازك — يُرسل حين تعود الشبكة';
+            } else if (marked === students.length) {
+                cls = 'done'; tick = '✓';
+                /* «اليوم» لا تُقال لسجلٍّ سابق. */
+                tx = isToday ? 'تحضير اليوم مكتمل ومحفوظ' : 'التحضير مكتمل ومحفوظ';
+            } else {
+                cls = '';     tick = '';
+                tx = '<span class="num">' + marked + '</span> من '
+                   + '<span class="num">' + students.length + '</span> — يُحفظ تلقائيًّا';
+            }
+            el.className = 'reg-saved' + (cls ? ' ' + cls : '');
+            el.innerHTML = (tick ? '<span class="tk">' + tick + '</span>'
+                                 : '<span class="dt"></span>') + '<span>' + tx + '</span>';
+        }
+        paintSavedLine();
+        /* يُعاد رسمُه حين يتبدّل الصندوقُ الصادر — والشاشةُ قائمةٌ حينها. */
+        _paintSaved = paintSavedLine;
+        /* والحدثُ لا يقع إلا عند تبدّلٍ، فقد يفتح الشاشةَ وفي الصندوق
+           معلَّقٌ من جلسةٍ سابقة — فيُسأل مرّةً عند الفتح. */
+        global.TeacherDB.Outbox?.pending().then((n) => {
+            if (n === _outboxPending) return;
+            _outboxPending = n;
+            paintSavedLine();
+        }).catch(() => {});
+
         // "تحضير الكل": يحضّر غير المحضَّرين فقط (لا يغيّر الغائب/المتأخر).
         // وعند اكتمال تحضير الجميع يصبح «إلغاء تحضير الكل» ويمسح تحضير اليوم.
         panel.querySelector('#btn-mark-all')?.addEventListener('click', async () => {
@@ -708,6 +769,7 @@
             set('[data-hf="absent"]',  String(st.absent));
             set('[data-hf="pct"]', pct !== null ? pct + '٪' : '—');
             paintMarkBar();
+            paintSavedLine();
         }
         function applyRowFilters() {
             const q = (panel.querySelector('#student-search')?.value || '').trim();
