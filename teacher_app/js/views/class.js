@@ -588,8 +588,11 @@
         dateInput?.addEventListener('change', () => goToDate(dateInput.value));
 
 
-        panel.querySelector('#btn-add-students')?.addEventListener('click', () => openAddStudentsModal(cls));
-        panel.querySelector('[data-empty-add]')?.addEventListener('click', () => openAddStudentsModal(cls));
+        /* صارت غيرَ متزامنة (تسأل عن الكشف المشترك أوّلاً)، فيُمسَك تعثّرُها. */
+        const openAdd = () => openAddStudentsModal(cls)
+            .catch((err) => console.error('[class.js] openAddStudentsModal:', err));
+        panel.querySelector('#btn-add-students')?.addEventListener('click', openAdd);
+        panel.querySelector('[data-empty-add]')?.addEventListener('click', openAdd);
         panel.querySelector('#btn-manage-columns')?.addEventListener('click', () => openColumnManager(cls, panel));
         panel.querySelector('#chip-add-column')?.addEventListener('click', () => openAddColumnModal(cls, panel));
 
@@ -1435,7 +1438,21 @@
        فصارتا حاضرتين معاً: المربّعُ مفتوحٌ وشرحُه داخلَه، وتحته صفُّ رفعٍ
        بمواد بطاقات التطبيق نفسِها (صفوفُ الفصول و«إنجاز» واستيرادُ الجدول)
        — فيدخل الشكلُ الجديد بلا أن يُشعر أنه غريب. (البديل أ، ١٨ أغسطس.) */
-    function openAddStudentsModal(cls) {
+    async function openAddStudentsModal(cls) {
+        /* ══ قبل أن يكتب: هل الأسماءُ عنده أصلاً؟ ══
+           هذه لحظةُ السؤال لا لحظةُ إنشاء الفصل — هنا يهمّ بكتابة كشفٍ
+           كتبه من قبل، فيُقال له قبل أن يبدأ. وإن قال «نعم» وصلت
+           الأسماءُ ولا حاجةَ لشاشة الإضافة أصلاً.
+           (`offerSharedRoster` تصمت من نفسها إن كان الكشفُ ممتلئاً، أو
+            لا شريكَ له، أو الشريكُ فارغ، أو قال «لا» من قبل.) */
+        try {
+            if (await global.ClassCreate.offerSharedRoster(cls)) {
+                const panel = document.querySelector('#tab-panel');
+                if (panel) await renderStudents(panel, cls);
+                return;
+            }
+        } catch (err) { console.error('[class.js] roster offer:', err); }
+
         let file = null;                 /* الملفُّ المختار — إن اختار */
         /* المكتوبُ بيده يُحفظ هنا لا في الوسم: الشاشةُ تُعاد رسمَها مراتٍ
            (اختيارُ ملفّ، ورجوعٌ من المراجعة، وإخفاقُ قراءة)، وكلُّ إعادةٍ

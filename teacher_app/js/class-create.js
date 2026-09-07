@@ -241,22 +241,56 @@
 
     const AR = (n) => String(n).replace(/[0-9]/g, (d) => AR_DIGITS[+d]);
 
+    /* ولا يُعاد السؤالُ على من قال «لا» ──
+       الموضعُ صار لحظةَ الإضافة، وهي تتكرّر. فلو سُئل في كلِّ مرّةٍ لصار
+       السؤالُ مضايقةً، ولضغط «نعم» ليسكته — وهو أسوأُ ما يقع لسؤالٍ
+       جوابُه يغيّر بيانات. فتُحفظ «لا» ولا تُعاد. */
+    const DECLINED = 'roster_declined';
+
+    async function declinedIds(db) {
+        try {
+            const v = await db.Settings.get(DECLINED);
+            return Array.isArray(v) ? v : [];
+        } catch (e) { return []; }
+    }
+
+    async function rememberDecline(db, classId) {
+        try {
+            const list = await declinedIds(db);
+            if (list.indexOf(classId) >= 0) return;
+            await db.Settings.set(DECLINED, list.concat(classId));
+        } catch (e) { /* السؤالُ يُعاد، ولا شيءَ يُكسر */ }
+    }
+
     /**
-     * يسأل المعلّمَ إن كان الفصلُ الجديد يشارك كشفَ فصلٍ قائم، ويربطُهما
-     * إن قال نعم. يُنادى **بعد** الإنشاء، ولا يوقف شيئاً إن تعثّر.
+     * يسأل المعلّمَ إن كان هذا الفصل يشارك كشفَ فصلٍ قائم، ويربطُهما إن
+     * قال نعم.
      *
-     * @param {object} created — الصفُّ الراجعُ من `create`
-     * @returns {Promise<boolean>} هل رُبط؟
+     * ── ومتى يُنادى: **حين يهمّ بإضافة الطلاب**، لا حين يُنشئ الفصل ──
+     * كان يُسأل عند الإنشاء، فيأتيه السؤالُ وهو لم يفكّر في الأسماء بعد.
+     * وموضعُه الصحيحُ لحظةَ الحاجة: يفتح الفصلَ الثاني ويضغط «إضافة
+     * طالب» — فيُقال له إنّ الأسماءَ عنده أصلاً قبل أن يكتبها ثانيةً.
+     * (طلبُه، ٧ سبتمبر ٢٠٢٦.)
+     *
+     * @param {object} cls — صفُّ الفصل المفتوح
+     * @returns {Promise<boolean>} هل رُبط؟ (فإن رُبط فلا حاجةَ لشاشة الإضافة)
      */
-    async function offerSharedRoster(created) {
+    async function offerSharedRoster(cls) {
         const db = global.TeacherDB;
-        if (!db || !created || !created.id) return false;
+        if (!db || !cls || !cls.id) return false;
+
+        /* كشفُه فيه أسماءُ فعلاً: لا يُقترح دمجٌ على كشفٍ قائم — الربطُ
+           يجمع الكشفين ولا يفصلهما، فيُعرض على الفارغ وحدَه. */
+        try { if ((await db.studentsOf(cls.id)).length) return false; }
+        catch (e) { return false; }
+
+        if ((await declinedIds(db)).indexOf(cls.id) >= 0) return false;
 
         let classes = [];
         try { classes = await db.getAll('classes'); } catch (e) { return false; }
-        classes = classes.filter((c) => c.teacher_id === created.teacher_id);
+        classes = classes.filter((c) => c.teacher_id === cls.teacher_id);
 
-        const cands = rosterCandidates(classes, created);
+        const cands = rosterCandidates(classes, cls);
         if (!cands.length) return false;
 
         /* العددُ يُقرأ من الكشف لا من `student_count` — العدّادُ قد يتخلّف،
@@ -274,21 +308,21 @@
         const ok = await global.TeacherApp.confirm({
             title:   'نفس الطلاب؟',
             message: 'عندك «' + name + '» فيه ' + AR(best.n) + ' من الطلاب. '
-                   + 'إن كانوا هم أنفسهم، اربط الكشفين: أيُّ اسمٍ تضيفه أو '
-                   + 'تصحّحه في أحدهما يظهر في الآخر. والحضورُ والدرجاتُ '
-                   + 'تبقى منفصلةً لكلّ مادّة.',
+                   + 'إن كانوا هم أنفسهم فلا تكتبهم مرّةً ثانية — اربط '
+                   + 'الكشفين: أيُّ اسمٍ تضيفه أو تصحّحه في أحدهما يظهر في '
+                   + 'الآخر. والحضورُ والدرجاتُ تبقى منفصلةً لكلّ مادّة.',
             ok:     'نعم، الكشف نفسه',
-            cancel: 'لا، كشف جديد'
+            cancel: 'لا، أكتبهم بنفسي'
         });
-        if (!ok) return false;
+        if (!ok) { await rememberDecline(db, cls.id); return false; }
 
         try {
-            const row = await db.get('classes', created.id);
+            const row = await db.get('classes', cls.id);
             if (!row) return false;
             row.roster_id = rosterIdOf(best.cls);
             await db.put('classes', row);
-            created.roster_id = row.roster_id;
-            await db.syncRosterCounts(created.id);
+            cls.roster_id = row.roster_id;
+            await db.syncRosterCounts(cls.id);
         } catch (e) {
             console.error('[ClassCreate] تعذّر ربط الكشف:', e);
             global.TeacherApp.toast('تعذّر ربط الكشفين — الفصل أُضيف بكشفٍ خاصّ به.',
