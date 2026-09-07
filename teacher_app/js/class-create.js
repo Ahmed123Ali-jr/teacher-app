@@ -239,7 +239,9 @@
             && rosterIdOf(c) !== rid);
     }
 
-    const AR = (n) => String(n).replace(/[0-9]/g, (d) => AR_DIGITS[+d]);
+    /* `Words.count` لا عدٌّ خام: فيها تمييزُ العربيّة («طالبان» · «٣ طلاب»
+       · «٢٨ طالباً») وتصريفُ «طالبة» حين تكون مدرستُه بنات. */
+    const countOf = (n) => (global.Words ? global.Words.count(n) : String(n) + ' طالباً');
 
     /* ولا يُعاد السؤالُ على من قال «لا» ──
        الموضعُ صار لحظةَ الإضافة، وهي تتكرّر. فلو سُئل في كلِّ مرّةٍ لصار
@@ -305,14 +307,16 @@
 
         const name = label(best.cls.grade, best.cls.section)
                    + (best.cls.subject ? ' — ' + best.cls.subject : '');
+        /* ══ سؤالٌ بلا شرح — بقراره (٧ سبتمبر) ══
+           كان الشرحُ ثلاثةَ أسطر: ما معنى الربط، وأنّ الحضورَ يبقى
+           منفصلاً. وهو صحيحٌ ولكنّه يُقرأ في غير وقته — المعلّمُ واقفٌ
+           يريد أن يكتب أسماءَه، لا أن يدرس ميزة.
+           والعددُ يبقى: **هو وحدَه ما يكشف المطابقةَ الخاطئة**. */
         const ok = await global.TeacherApp.confirm({
             title:   'نفس الطلاب؟',
-            message: 'عندك «' + name + '» فيه ' + AR(best.n) + ' من الطلاب. '
-                   + 'إن كانوا هم أنفسهم فلا تكتبهم مرّةً ثانية — اربط '
-                   + 'الكشفين: أيُّ اسمٍ تضيفه أو تصحّحه في أحدهما يظهر في '
-                   + 'الآخر. والحضورُ والدرجاتُ تبقى منفصلةً لكلّ مادّة.',
-            ok:     'نعم، الكشف نفسه',
-            cancel: 'لا، أكتبهم بنفسي'
+            message: 'عندك «' + name + '» فيه ' + countOf(best.n) + '.',
+            ok:     'نعم',
+            cancel: 'لا'
         });
         if (!ok) { await rememberDecline(db, cls.id); return false; }
 
@@ -329,7 +333,7 @@
                                     'error', 6000);
             return false;
         }
-        global.TeacherApp.toast('رُبط الكشفان — ' + AR(best.n) + ' من الطلاب.',
+        global.TeacherApp.toast('رُبط الكشفان — ' + countOf(best.n) + '.',
                                 'success', 3000);
         return true;
     }
