@@ -65,7 +65,13 @@
             '  <h1 id="wg-title">فصول</h1>',
             '  <p class="wg-sub">هذه النسخةُ مغلقةٌ مؤقّتاً. أدخل رمزَ الدخول للمتابعة.</p>',
             '  <form class="wg-form" autocomplete="off">',
-            '    <input class="wg-input" id="wg-code" type="text" inputmode="text"',
+            /* ⚠️ `inputmode="numeric"` مقصود: الرمزُ أرقامٌ بقراره (٩ سبتمبر)،
+               فتُفتح لوحةُ الأرقام على الجوّال بدل الحروف.
+               **وإن صار الرمزُ حروفاً يوماً فتُبدَّل إلى `text`** — وإلّا لم
+               يستطع معلّمٌ على الجوّال كتابتَه.
+               و`type="text"` لا `number`: الأخيرُ يبتلع الأصفارَ البادئة
+               ويُظهر سهمَي زيادةٍ ونقصان لا معنى لهما في رمز. */
+            '    <input class="wg-input" id="wg-code" type="text" inputmode="numeric"',
             '           autocapitalize="off" autocorrect="off" spellcheck="false"',
             '           placeholder="رمز الدخول" aria-label="رمز الدخول">',
             '    <button class="wg-btn" type="submit">دخول</button>',
