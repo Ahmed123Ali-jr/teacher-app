@@ -347,6 +347,11 @@
          النسخة المغلَّفة. الاتصال بالخادم يظلّ يحتاج شبكة بالطبع. -->
     <script src="vendor/supabase.js?v=1"></script>
     <script src="js/supabase-client.js?v=S3"></script>
+    <!-- بابُ رمز الدخول — للموقع وحدَه، ويُتخطّى في التطبيق المغلَّف.
+         موضعُه هنا مقصود: بعد `SB` مباشرةً (يحتاجه للتحقّق) وقبل بقيّة
+         التطبيق، فلا يرى الزائرُ شيئاً قبل الباب.
+         ⚠️ يُطفأ بـ`GATE_ON = false` قبل الرفع إلى آبل. -->
+    <script src="js/web-gate.js?v=1"></script>
     <!-- رسومُ التطبيق الخطّيّة — تسبق كلَّ شاشةٍ تستعملها. -->
     <script src="js/icons.js?v=3"></script>
     <script src="js/database.js?v=S36"></script>
