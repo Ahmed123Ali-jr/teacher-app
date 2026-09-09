@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص العزل بين حسابين</title>
+<!--
+    isolation.html — البند ‎١٫٥‎ في خطّة الاختبار: **هل يرى معلّمٌ صفَّ آخر؟**
+
+    وهو أخطرُ بندٍ في الخطّة كلِّها: تسريبُ بياناتٍ بين معلّمين ليس عطباً
+    في شاشة — هو أسماءُ طلابٍ ودرجاتُهم وأرقامُ أولياء أمورهم عند غريب.
+
+    ── لماذا عميلان لا جلسةٌ تُبدَّل ──
+    تبديلُ الجلسة (`signOut` ثمّ دخولٌ ثانٍ) يترك الأوّلَ بلا مفتاح، فلا
+    يُنظَّف ما زرعه. فيُبنى **عميلان مستقلّان** لكلٍّ جلستُه في الذاكرة
+    (`persistSession: false`) — فيعملان معاً، ويبقى مفتاحُ «أ» حيّاً حتى
+    يُمحى زرعُه في النهاية.
+
+    ── وما يُفحص ثلاثةٌ لا واحد ──
+      ١) **قراءةٌ عمياء**: «ب» يطلب كلَّ صفوف الجدول. أيعود فيها صفٌّ ليس له؟
+      ٢) **قراءةٌ مُوجَّهة**: «ب» يطلب صفَّ «أ» بمعرّفه. أيصله؟
+      ٣) **كتابة**: «ب» يحاول تعديلَ صفِّ «أ» وحذفَه. أينجح؟
+    والثالثةُ تُغفَل كثيراً: سياسةُ `select` قد تكون محكمةً و`update` مفتوحة.
+
+    ⚠️ **والصمتُ ليس نجاحاً.** `update` تردّ ‎0 rows‎ حين يمنعها RLS، وتردّ
+    ‎0 rows‎ أيضاً حين لا تجد الصفَّ — فلا يُقرأ الردُّ وحدَه. فبعد كلّ
+    محاولةِ كتابةٍ **يُعاد قراءةُ الصفّ بمفتاح «أ»** ويُقارَن بالأصل.
+
+    وهي أداةُ تطويرٍ: مُدرَجةٌ في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 20px 14px 60px;
+    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    direction: rtl; background: #F6F5F1; color: #22282B;
+    font-variant-numeric: tabular-nums; line-height: 1.7;
+}
+@media (prefers-color-scheme: dark) { body { background: #0D1117; color: #E8ECF3; } }
+.wrap { max-width: 760px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p.lead { margin: 0 0 16px; font-size: 13px; color: #6B7278; line-height: 1.8; }
+@media (prefers-color-scheme: dark) { p.lead { color: #98A2B3; } }
+button {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 11px 20px; border: 0; border-radius: 11px;
+    background: #0A3F4A; color: #fff; cursor: pointer;
+}
+button[disabled] { opacity: .5; cursor: default; }
+#bar { margin: 14px 0 10px; font-size: 14px; font-weight: 600; min-height: 22px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+th, td { padding: 7px 8px; text-align: start; border-bottom: 1px solid #E2E1DC; }
+@media (prefers-color-scheme: dark) { th, td { border-color: #2C3545; } }
+th { font-size: 11px; color: #6B7278; font-weight: 600; }
+td.n { text-align: center; }
+tr.bad td { background: rgba(180, 35, 24, .10); color: #B42318; font-weight: 600; }
+@media (prefers-color-scheme: dark) { tr.bad td { color: #F87171; } }
+.ok { color: #0F7A55; } .no { color: #B42318; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .ok { color: #34D399; } .no { color: #F87171; } }
+code { font-family: ui-monospace, monospace; font-size: 11.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>فحص العزل بين حسابين</h1>
+<p class="lead">
+    يُنشئ حسابين حقيقيّين، يزرع بحسابِ «أ» صفّاً في كلّ جدول، ثمّ يحاول
+    بحسابِ «ب» أن <b>يقرأه ويعدّله ويحذفه</b>. وأيُّ نجاحٍ لـ«ب» عطبٌ فادح.
+    ويُمحى الزرعُ في النهاية.
+</p>
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table>
+    <thead><tr>
+        <th>الجدول</th><th>زُرع</th>
+        <th>قراءةٌ عمياء</th><th>قراءةٌ بالمعرّف</th><th>تعديل</th><th>حذف</th>
+    </tr></thead>
+    <tbody id="out"></tbody>
+</table>
+</div>
+
+<script src="vendor/supabase.js?v=1"></script>
+<script>
+(function () {
+'use strict';
+
+var URL_ = 'https://rbsfpsmolxldmwcclhlc.supabase.co';
+var KEY  = 'sb_publishable_z5RQ0LotgRBWRSUXjTz38w_GOyBOhUX';
+
+var bar = document.getElementById('bar');
+var out = document.getElementById('out');
+
+/** عميلٌ مستقلٌّ بجلسةٍ في الذاكرة — لا يمسّ تخزينَ المتصفّح ولا يزاحم غيرَه. */
+function mkClient(tag) {
+    return window.supabase.createClient(URL_, KEY, {
+        auth: {
+            persistSession: false, autoRefreshToken: false,
+            detectSessionInUrl: false, storageKey: 'iso-' + tag
+        }
+    });
+}
+
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+/* ══ الجداولُ ومفاتيحُها ══
+   `pk` مصفوفةُ أعمدةِ الهويّة — ليست `id` دائماً: `app_settings` مفتاحُها
+   مركَّبٌ (teacher_id + key) و`portfolio` مفتاحُها `teacher_id` وحدَه.
+   وأوّلُ بناءٍ لهذه الأداة افترض `id` في الجميع، **فسقط زرعُهما صامتاً**
+   ومرّتا بقراءةٍ عمياءَ على جدولٍ فارغٍ لا تُثبت شيئاً.
+   `upd` عمودٌ نصّيٌّ يُحاوَل تعديلُه. و`mk(ctx)` تبني الصفّ. */
+function plan(tid) {
+    var D = new Date().toISOString().slice(0, 10);
+    return [
+        { t:'classes', pk:['id'], upd:'subject',
+          mk:function(c){ return { teacher_id:tid, stage:'intermediate', grade:'الصف الأول المتوسط',
+                                   section:'ع', subject:'فحص العزل', color:'#ECEAE3', student_count:0 }; } },
+        { t:'students', pk:['id'], upd:'name', needs:'cls',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, name:'طالب العزل', notes:'' }; } },
+        { t:'attendance', pk:['id'], upd:'note', needs:'stu',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, student_id:c.stu, date:D, status:'present', note:'ع' }; } },
+        { t:'participation', pk:['id'], upd:'note', needs:'stu',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, student_id:c.stu, date:D, count:1, note:'ع' }; } },
+        { t:'schedule', pk:['id'], needs:'cls',
+          mk:function(c){ return { teacher_id:tid, day:0, period:1, class_id:c.cls }; } },
+        { t:'exams', pk:['id'], upd:'title', needs:'cls',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, title:'اختبار العزل' }; } },
+        { t:'worksheets', pk:['id'], upd:'title', needs:'cls',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, title:'ورقة العزل' }; } },
+        { t:'assignments', pk:['id'], upd:'title', needs:'cls',
+          mk:function(c){ return { teacher_id:tid, class_id:c.cls, title:'واجب العزل' }; } },
+        { t:'books', pk:['id'], upd:'title',
+          mk:function(){ return { teacher_id:tid, title:'كتاب العزل' }; } },
+        { t:'strategies', pk:['id'], upd:'title',
+          mk:function(){ return { teacher_id:tid, title:'استراتيجية العزل' }; } },
+        { t:'initiatives', pk:['id'], upd:'title',
+          mk:function(){ return { teacher_id:tid, title:'مبادرة العزل' }; } },
+        { t:'strategy_logs', pk:['id'], upd:'note',
+          mk:function(){ return { teacher_id:tid, strategy_key:'iso', date:D, note:'ع' }; } },
+        { t:'initiative_logs', pk:['id'], upd:'note',
+          mk:function(){ return { teacher_id:tid, initiative_key:'iso', date:D, note:'ع' }; } },
+        { t:'reminders', pk:['id'], upd:'title',
+          mk:function(){ return { teacher_id:tid, title:'تذكير العزل', done:false }; } },
+        { t:'ai_usage', pk:['id'], upd:'kind',
+          mk:function(){ return { teacher_id:tid, kind:'iso' }; } },
+        { t:'app_settings', pk:['teacher_id','key'],
+          mk:function(){ return { teacher_id:tid, key:'iso_probe', value:'"x"' }; } },
+        { t:'portfolio', pk:['teacher_id'],
+          mk:function(){ return { teacher_id:tid, data:{ iso:true } }; } },
+        /* صفُّ «أ» نفسُه — موجودٌ سلفاً، فلا يُزرع ولا يُحذف. */
+        { t:'teachers', pk:['id'], existing:function(){ return { id: tid }; } }
+    ];
+}
+
+var MARK = { ok:'<span class="ok">✅ مُنع</span>', bad:'<span class="no">❌ نفذ</span>', na:'—' };
+
+/** يبني مُصفّياً على مفتاحِ الصفّ أيّاً كان. */
+function keyed(q, pk, key) {
+    for (var i = 0; i < pk.length; i++) q = q.eq(pk[i], key[pk[i]]);
+    return q;
+}
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = '';
+    bar.textContent = '⏳ يُنشئ حسابين…';
+
+    var A = mkClient('a'), B = mkClient('b');
+    var seeded = [];
+    var leaks = 0, checks = 0, weak = 0;
+
+    try {
+        var ra = await A.auth.signInAnonymously();
+        if (ra.error) throw ra.error;
+        var rb = await B.auth.signInAnonymously();
+        if (rb.error) throw rb.error;
+        var aid = ra.data.user.id, bid = rb.data.user.id;
+        if (aid === bid) throw new Error('الحسابان واحد — الفحص باطل.');
+
+        bar.textContent = '⏳ يزرع بحساب «أ»…';
+        var rows = plan(aid);
+        var ctx = { cls:null, stu:null };
+
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            if (r.existing) { r.key = r.existing(); continue; }
+            if (r.needs === 'cls' && !ctx.cls) { r.seedErr = 'لا فصل'; continue; }
+            if (r.needs === 'stu' && !ctx.stu) { r.seedErr = 'لا طالب'; continue; }
+            var ins = await A.from(r.t).insert(r.mk(ctx)).select(r.pk.join(',')).single();
+            if (ins.error) { r.seedErr = (ins.error.message || '').slice(0, 60); continue; }
+            r.key = ins.data;
+            seeded.push(r);
+            if (r.t === 'classes')  ctx.cls = ins.data.id;
+            if (r.t === 'students') ctx.stu = ins.data.id;
+        }
+
+        for (var j = 0; j < rows.length; j++) {
+            var row = rows[j];
+            bar.textContent = '⏳ ' + (j + 1) + ' من ' + rows.length + ' — ' + row.t;
+
+            /* ١) قراءةٌ عمياء */
+            var blind, blindBad = false;
+            var q = await B.from(row.t).select('*').limit(300);
+            if (q.error) {
+                blind = '<span class="ok">✅ ' + (q.error.code || 'مُنع') + '</span>';
+            } else {
+                var alien = (q.data || []).filter(function (x) {
+                    var owner = (row.t === 'teachers') ? x.id : x.teacher_id;
+                    return owner && owner !== bid;
+                });
+                blindBad = alien.length > 0;
+                blind = blindBad ? '<span class="no">❌ ' + alien.length + ' لغيره</span>'
+                                 : '<span class="ok">✅ صفر</span>';
+            }
+            checks++; if (blindBad) leaks++;
+
+            var byId = MARK.na, upd = MARK.na, del = MARK.na, anyBad = blindBad;
+
+            if (row.key) {
+                /* ٢) قراءةٌ بالمفتاح */
+                var q2 = await keyed(B.from(row.t).select(row.pk[0]), row.pk, row.key);
+                var got = !q2.error && (q2.data || []).length > 0;
+                byId = got ? MARK.bad : MARK.ok;
+                checks++; if (got) { leaks++; anyBad = true; }
+
+                /* ٣) تعديل — ثمّ يُقرأ بمفتاح «أ»، فالردُّ وحدَه لا يكفي */
+                if (row.upd) {
+                    var bef = await keyed(A.from(row.t).select(row.upd), row.pk, row.key).single();
+                    var patch = {}; patch[row.upd] = 'اخترقه ب';
+                    await keyed(B.from(row.t).update(patch), row.pk, row.key);
+                    var aft = await keyed(A.from(row.t).select(row.upd), row.pk, row.key).single();
+                    var changed = !bef.error && !aft.error && bef.data[row.upd] !== aft.data[row.upd];
+                    upd = changed ? MARK.bad : MARK.ok;
+                    checks++; if (changed) { leaks++; anyBad = true; }
+                }
+
+                /* ٤) حذف — ولا يُجرَّب على صفّ المعلّم نفسِه */
+                if (!row.existing) {
+                    await keyed(B.from(row.t).delete(), row.pk, row.key);
+                    var still = await keyed(A.from(row.t).select(row.pk[0]), row.pk, row.key);
+                    var gone = !still.error && (still.data || []).length === 0;
+                    del = gone ? MARK.bad : MARK.ok;
+                    checks++; if (gone) { leaks++; anyBad = true; }
+                }
+            } else {
+                weak++;
+            }
+
+            var tr = document.createElement('tr');
+            if (anyBad) tr.className = 'bad';
+            tr.innerHTML = '<td><code>' + row.t + '</code></td>'
+                + '<td class="n">' + (row.key ? '✓' : '<span title="' + (row.seedErr || '') + '" class="no">✗</span>') + '</td>'
+                + '<td class="n">' + blind + '</td><td class="n">' + byId + '</td>'
+                + '<td class="n">' + upd + '</td><td class="n">' + del + '</td>';
+            out.appendChild(tr);
+        }
+
+        bar.textContent = '⏳ ينظّف…';
+        for (var k = seeded.length - 1; k >= 0; k--) {
+            await keyed(A.from(seeded[k].t).delete(), seeded[k].pk, seeded[k].key);
+        }
+
+        var tail = weak ? '  ⚠️ و' + weak + ' جدولاً لم يُزرع فيه — فحصُه ضعيف.' : '';
+        bar.innerHTML = leaks === 0
+            ? '<span class="ok">✅ لا تسريب — ' + checks + ' محاولةً من «ب» رُدَّت كلُّها.</span>' + tail
+            : '<span class="no">‼️ ' + leaks + ' تسريباً من ' + checks + ' محاولة.</span>' + tail;
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ تعذّر الفحص: ' + e.message + '</span>';
+        console.error(e);
+        try {
+            for (var m = seeded.length - 1; m >= 0; m--) {
+                await keyed(A.from(seeded[m].t).delete(), seeded[m].pk, seeded[m].key);
+            }
+        } catch (e2) { /* التنظيفُ لا يُفشل التقرير */ }
+    } finally {
+        try { await A.auth.signOut(); } catch (e) {}
+        try { await B.auth.signOut(); } catch (e) {}
+        btn.disabled = false;
+    }
+}
+
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
