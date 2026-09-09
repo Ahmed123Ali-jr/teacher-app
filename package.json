@@ -4,7 +4,7 @@
   "description": "فصول — تطبيق المعلّم",
   "scripts": {
     "cap:sync": "npx cap sync ios && tools/strip-dev-pages.sh ios/App/App/public",
-    "check": "node teacher_app/tools/check-version.mjs && node teacher_app/tools/check-fixed-surfaces.mjs && node teacher_app/tools/check-active-states.mjs"
+    "check": "node teacher_app/tools/check-version.mjs && node teacher_app/tools/check-fixed-surfaces.mjs && node teacher_app/tools/check-active-states.mjs && node teacher_app/tools/check-assets.mjs"
   },
   "repository": {
     "type": "git",

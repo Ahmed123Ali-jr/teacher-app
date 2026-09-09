@@ -37,6 +37,7 @@ jobs:
           node teacher_app/tools/check-version.mjs
           node teacher_app/tools/check-fixed-surfaces.mjs
           node teacher_app/tools/check-active-states.mjs
+          node teacher_app/tools/check-assets.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
