@@ -171,6 +171,7 @@
 
     /** آخرُ خطّةٍ حُسبت — تقرؤها شاشةُ الإعدادات لتقول للمعلّم كم جُدول. */
     let lastPlan = null;
+    let lastToday = null;
 
     function reschedule() {
         clearTimeout(_resTimer);
@@ -186,7 +187,8 @@
         let teacher = null;
         try { teacher = await global.Auth.currentTeacher(); } catch (e) { teacher = null; }
         if (!teacher || !prefs.enabled) {
-            lastPlan = { items: [], total: 0, kept: 0, dropped: 0 };
+            lastPlan  = { items: [], total: 0, kept: 0, dropped: 0 };
+            lastToday = { items: [], total: 0, kept: 0, dropped: 0 };
             if (global.Notify) await global.Notify.cancelAll();
             return lastPlan;
         }
@@ -194,6 +196,7 @@
         try { periods = await global.PeriodTimes.get(); } catch (e) { return null; }
 
         const byDay = {};
+        const waitToday = new Set();
         try {
             const rows = await global.TeacherDB.getAllByIndex('schedule', 'teacher_id', teacher.id);
             /* ولا انتظارَ في الخطّة الأسبوعيّة — لا الدائمَ ولا انتظارَ اليوم.
@@ -208,15 +211,41 @@
                 if (!byDay[r.day]) byDay[r.day] = new Set();
                 byDay[r.day].add(r.period);
             });
+
+            /* وحصصُ الانتظار المُسنَدةُ اليوم — لخطّةِ اليوم لا للأسبوع.
+               والشرطان كما في الحلقة الحيّة حرفاً بحرف: انتظارُ اليوم
+               أضافه بيده فهو يعلم أنّه سيقفه، والدائمُ لا يرنّ حتى يختار
+               الفصل. وكلاهما بتاريخه فلا يُحسب صفُّ الأمس. */
+            const today  = todayKey();
+            const dayIdx = new Date().getDay();
+            /* ولا جرسَ في الجمعة والسبت — كما تفعل الحلقةُ الحيّة
+               (`dayIdx > 4` في `tick`) وكما تقتصر الخطّةُ الأسبوعيّةُ على
+               `STUDY_DAYS`. والجدولُ لا يعرض إلّا الأحدَ إلى الخميس، فالصفُّ
+               لا يقع أصلاً — لكنّ القاعدةَ تُكتب حيث تُقرأ، لا تُترك
+               لمصادفةٍ في بياناتٍ قد تتغيّر. */
+            if (dayIdx <= 4) rows.filter((r) => r.day === dayIdx && !r.class_id && (
+                    (r.wait_kind === 'today' && r.wait_date === today)
+                    || (r.wait_kind === 'perm' && r.sub_class && r.sub_date === today)))
+                .forEach((r) => waitToday.add(r.period));
         } catch (e) { /* الجرسُ وحدَه خيرٌ من لا شيء */ }
 
         lastPlan = weeklyPlan({ prefs, periods, byDay });
+        lastToday = oneOffPlan({ prefs, periods, mine: waitToday });
+
         if (global.Notify && global.Notify.available()) {
             const perm = await global.Notify.permission();
-            if (perm === 'granted') await global.Notify.replaceWeekly(lastPlan.items);
+            /* ══ الترتيبُ شرط ══
+               `replaceAll` تكنس المعلَّقَ كلَّه ثمّ تجدول الاثنين معاً.
+               ولو جُدولا في نداءين لكنس الثاني الأوّل — فالكنسُ لا يفرّق. */
+            if (perm === 'granted') {
+                await global.Notify.replaceAll(lastPlan.items, lastToday.items);
+            }
         }
         return lastPlan;
     }
+
+    /** خطّةُ اليوم كما حُسبت آخرَ مرّة — للعرض والقياس. */
+    function todaySummary() { return lastToday; }
 
     /** الخطّةُ كما حُسبت آخرَ مرّة — للعرض لا للجدولة. */
     function planSummary() { return lastPlan; }
@@ -329,8 +358,23 @@
     /* أيّامُ الدراسة: الأحدُ ٠ في جافاسكربت، و١ في تقويم آبل. */
     const STUDY_DAYS = [0, 1, 2, 3, 4];
 
-    /** الميزانيّة: دون سقف النظام بأربع خاناتٍ احتياطاً لما قد يُجدول لاحقاً. */
+    /** الميزانيّة: دون سقف النظام بأربع خاناتٍ — وهي التي تأخذها خطّةُ اليوم. */
     const BUDGET = 60;
+
+    /* ══ خطّةُ اليوم: حصصُ الانتظار المُسنَدة ══
+       الخطّةُ الأسبوعيّةُ تستثني الانتظارَ **بقراره** (٤ سبتمبر ٢٠٢٦):
+       «خلّ حصّة الانتظار الدائمة بدون جرس لين المعلّم يختار الفصل اللي
+       بينتظر عنده». والاختيارُ يقع في يومه ويُمحى في آخره — فلا تعرفه
+       خطّةٌ تُبنى للأسبوع سلفاً، ولو جُدولت لرنّت كلَّ أسبوعٍ على حصّةٍ
+       بلا فصل.
+       فالحلُّ إشعارٌ **مفردٌ بتاريخه** (`at:` لا `on:`) يُجدَّل ساعةَ
+       يُسنِد الفصلَ، ويزول برنّته أو بإلغاء الإسناد.
+       وكان يرنّ **والتطبيقُ مفتوحٌ فقط** — الحلقةُ الحيّةُ تعرفه (`tick`)
+       والنظامُ لا يعرفه. فمن أغلق التطبيقَ لم يسمع شيئاً.
+
+       والأربعُ خاناتٍ هي فرقُ ‎٦٠‎ عن سقف آبل ‎٦٤‎ — حُجزت لهذا. */
+    const ONEOFF_BASE   = 900000;   /* مدىً لا يتقاطع مع الأسبوعيّ (١٠٠٠٠–٥٩٩٩٩) */
+    const ONEOFF_BUDGET = 4;
 
     /**
      * الخطّةُ الأسبوعيّةُ للإشعارات النظاميّة — طلبٌ متكرّرٌ لكلّ (يومٍ ووقت).
@@ -383,6 +427,50 @@
         const kept = rows.slice(0, BUDGET);
         return { items: kept, total: rows.length, kept: kept.length,
                  dropped: Math.max(0, rows.length - BUDGET) };
+    }
+
+    /**
+     * خطّةُ اليوم وحدَه: لحظاتُ حصص الانتظار التي أُسنِد إليها فصل.
+     *
+     * **وما مضى لا يُجدول.** `at:` بوقتٍ فات يُطلقه iOS في الحال أو يُسقطه،
+     * وكلاهما خطأ: المعلّمُ يُسنِد الفصلَ الحادية عشرة، فلو جُدولت حصّةُ
+     * الثامنة رنّت في يده الآن بلا معنى.
+     *
+     * @param {object} ctx `prefs` و`periods` و`mine` (حصصُ الانتظار المُسنَدة) و`now`
+     */
+    function oneOffPlan(ctx) {
+        const pf  = ctx.prefs || prefs;
+        const now = ctx.now || new Date();
+        const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+        const byTime = new Map();
+        for (const m of momentsFor({ prefs: pf, periods: ctx.periods, mine: ctx.mine })) {
+            if (m.sec < 0 || m.sec <= nowSec) continue;
+            const t = hhmm(m.sec);
+            if (!byTime.has(t)) byTime.set(t, []);
+            byTime.get(t).push(m);
+        }
+
+        const rows = [];
+        for (const [t, list] of byTime) {
+            const [hour, minute] = t.split(':').map(Number);
+            const at = new Date(now);
+            at.setHours(hour, minute, 0, 0);
+            const hasPre = list.some((x) => x.kind === 'pre');
+            rows.push({
+                /* معرّفٌ محسوبٌ من الوقت داخل مداه — يُلغى ويُعاد بلا سجلّ. */
+                id: ONEOFF_BASE + hour * 100 + minute,
+                at: at,
+                title: textFor(list, pf.preMinutes),
+                body: t,
+                sound: hasPre ? 'alert.wav' : 'bell.wav',
+                rank: hasPre ? 0 : (list.some((x) => x.kind === 'start') ? 1 : 2)
+            });
+        }
+        rows.sort((a, b) => (a.rank - b.rank) || (a.at - b.at));
+        const kept = rows.slice(0, ONEOFF_BUDGET);
+        return { items: kept, total: rows.length, kept: kept.length,
+                 dropped: Math.max(0, rows.length - ONEOFF_BUDGET) };
     }
 
     /* ══════════════════════════════════════════════════════════════════
@@ -505,7 +593,8 @@
         start, getPrefs, savePrefs, loadPrefs,
         playBell, playAlert, requestNotifications,
         /* مكشوفتان للاختبار وللجدولة النظاميّة — نقيّتان بلا أثرٍ جانبيّ. */
-        momentsFor, weeklyPlan, textFor, reschedule, rescheduleNow, planSummary,
-        BUDGET, DEFAULTS
+        momentsFor, weeklyPlan, oneOffPlan, textFor,
+        reschedule, rescheduleNow, planSummary, todaySummary,
+        BUDGET, ONEOFF_BUDGET, DEFAULTS
     };
 })(window);

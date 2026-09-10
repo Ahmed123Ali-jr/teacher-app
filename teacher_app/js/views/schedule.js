@@ -1290,6 +1290,15 @@
                 if (!row.id && existing && existing.id) row.id = existing.id;
                 if (row.id) await global.TeacherDB.put('schedule', row);
                 else row.id = await global.TeacherDB.add('schedule', row);
+
+                /* ══ والمنبّهُ يُعاد جدولتُه ══
+                   خطّتُه مبنيّةٌ على هذا الجدول: من أضاف فصلاً أو حذفه بقي
+                   إشعارُ النظام على القديم **حتّى يُعاد تشغيل التطبيق** —
+                   فيرنّ لحصّةٍ حُذفت ويصمت عن حصّةٍ أُضيفت. وأُصلح هذا يومَ
+                   بُدّلت أوقاتُ الحصص (`writeNow` أدناه) ولم يُصلح هنا.
+                   وبها أيضاً تُجدَّل حصّةُ الانتظار حين يُسنِد إليها فصلاً:
+                   إشعارُها مفردٌ ليومه، ولا يُبنى إلّا من هنا. */
+                if (global.Bell && global.Bell.reschedule) global.Bell.reschedule();
             }, () => render(container));
             return true;
         }

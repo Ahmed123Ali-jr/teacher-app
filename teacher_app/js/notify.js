@@ -76,11 +76,44 @@
      * @returns {Promise<number>} عددُ ما جُدول
      */
     async function replaceWeekly(items) {
+        return replaceAll(items, []);
+    }
+
+    /**
+     * يستبدل الجدولةَ كلَّها: الأسبوعيّةَ **وخطّةَ اليوم** معاً.
+     *
+     * ── ولماذا في نداءٍ واحدٍ لا نداءين ──
+     * الكنسُ (`cancelAll`) لا يفرّق بين خطّةٍ وخطّة. فلو جُدولت الأسبوعيّةُ
+     * ثمّ اليوميّةُ في نداءين، كنس الثاني الأوّلَ وضاع الأسبوع. وكنسٌ
+     * انتقائيٌّ بالمعرّفات يحتاج `getPending`، وهي تصمت حين تتعثّر فتترك
+     * القديمَ معلّقاً — والصمتُ هنا أسوأُ من الكنس الشامل.
+     *
+     * @param {Array} weekly  مخرجُ `Bell.weeklyPlan().items`  — بـ`on:` متكرّرة
+     * @param {Array} oneOff  مخرجُ `Bell.oneOffPlan().items`  — بـ`at:` مرّةً واحدة
+     * @returns {Promise<number>} عددُ ما جُدول
+     */
+    async function replaceAll(weekly, oneOff) {
         const p = plugin();
         if (!p) return 0;
         await cancelAll();
-        if (!items || !items.length) return 0;
-        const notifications = items.map((it) => ({
+        const w = (weekly || []).map((it) => build(it, {
+            on: { weekday: it.weekday, hour: it.hour, minute: it.minute },
+            allowWhileIdle: true
+        }));
+        /* `at:` بلا `repeats` — موعدٌ واحدٌ بتاريخه ثمّ يزول. ولو كُتب
+           `repeats: true` لصار فاصلاً يُحسب من لحظة الجدولة، فينزلق. */
+        const o = (oneOff || []).map((it) => build(it, {
+            at: it.at, allowWhileIdle: true
+        }));
+        const notifications = w.concat(o);
+        if (!notifications.length) return 0;
+        await p.schedule({ notifications });
+        return notifications.length;
+    }
+
+    /** الحقولُ المشتركةُ لكلّ إشعار — الفرقُ في `schedule` وحدَه. */
+    function build(it, schedule) {
+        return {
             id: it.id,
             title: it.title,
             body: it.body,
@@ -105,11 +138,8 @@
 
                و`allowWhileIdle` لأندرويد (وضعُ السبات) — لا أثرَ لها على
                iOS، وتُترك لئلّا يُنسى حين يأتي دورُه. */
-            schedule: { on: { weekday: it.weekday, hour: it.hour, minute: it.minute },
-                        allowWhileIdle: true }
-        }));
-        await p.schedule({ notifications });
-        return notifications.length;
+            schedule: schedule
+        };
     }
 
     async function cancelAll() {
@@ -133,5 +163,6 @@
         } catch (e) { return 0; }
     }
 
-    global.Notify = { available, permission, request, replaceWeekly, cancelAll, pendingCount };
+    global.Notify = { available, permission, request,
+                      replaceWeekly, replaceAll, cancelAll, pendingCount };
 })(window);
