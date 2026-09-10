@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص الطباعة وPDF</title>
+<!--
+    printing.html — البوّابة ‎٤‎ب: **يُولَّد ويُقرأ**.
+
+    ── لماذا «يُقرأ» شرطٌ لا زيادة ──
+    التوليدُ ينجح والملفُّ أبيض. مخرجُ التطبيق **صورٌ لا نصّ** (لا مكتبة
+    جافاسكربت تُخرج عربياً قابلاً للبحث)، فصفحةٌ رُسمت من كتلةٍ قيست
+    ارتفاعُها صفراً تخرج بيضاءَ تماماً — و`renderPdf` لا ترمي، و`blob`
+    يأتي بحجمٍ معقول، والزرُّ يقول «تم». فالفحصُ الذي يقف عند «وُلد ملفّ»
+    يمرّ على ورقةٍ فارغةٍ ويصفّق لها.
+
+    ولذلك يُفتح كلُّ ملفٍّ هنا بـ`pdf.js` **ويُرسم كلُّ صفحةٍ على لوحة
+    ويُعدّ حبرُها بالبكسل**. والحدُّ مُعلَنٌ قبل القياس لا بعده:
+    **صفحةٌ حبرُها دون ‎٠٫٥٪‎ بيضاء**. (ورقةٌ فيها ترويسةٌ وحدَها تتجاوز
+    هذا بأضعاف — الحدُّ منخفضٌ عمداً كي لا يُتّهم سليم.)
+
+    ── ومن الأزرار لا من الوحدات ──
+    استدعاءُ `PrintStudents.savePdf(opts)` بكائنٍ أكتبه بيدي يفحص الوحدة
+    ولا يفحص التطبيق: `buildPrintOptions` هي التي تقرأ اختيارَ المعلّم
+    وتجمع الحضورَ وتبني الكائن — وفيها يقع العطب. فكلُّ ملفٍّ هنا يخرج من
+    ضغطةِ زرٍّ حقيقيّة.
+
+    ── وما يُزرع من طبقة البيانات، ولماذا ──
+    الحضورُ والتقييمُ عبر ‎١٤‎ يوماً يُكتبان بـ`TeacherDB` مباشرةً: كتابتُهما
+    من الأزرار مقيسةٌ في البوّابة ‎٣‎ (`datacycle.html`)، وإعادتُها هنا
+    ‎٤٢‎ ضغطةً لا تزيد هذا الفحصَ صدقاً. **المقيسُ هنا الطباعةُ وحدَها.**
+
+    ── وفخُّ الصفحة الغائبة — وقع وأُصلح ──
+    رسمُ pdf.js يتقدّم عبر `requestAnimationFrame`، والمتصفّحُ لا يُطلقه في
+    صفحةٍ غائبة. فوقفت القراءةُ في أوّل تشغيلٍ **بلا خطأٍ ولا سطر**، والأداةُ
+    تبدو تعمل. والعلاج: `intent: 'print'` — بها تُطفئ pdf.js rAF بنفسِها،
+    وهي النيّةُ الصادقةُ أصلاً (المقيسُ ما يخرج للورق).
+    **والدرسُ أعمّ: كلُّ وعدٍ خارجيٍّ هنا مُسابَقٌ بمهلةٍ تُسمّي مكانَها** —
+    فالوعدُ الذي لا يستقرّ أسوأُ من الخطأ.
+
+    أداةُ تطويرٍ: في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 20px 14px 60px; direction: rtl;
+    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    background: #F6F5F1; color: #22282B; line-height: 1.7;
+    font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { body { background:#0D1117; color:#E8ECF3; } }
+.wrap { max-width: 900px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p.lead { margin: 0 0 14px; font-size: 13px; color:#6B7278; line-height:1.8; }
+@media (prefers-color-scheme: dark){ p.lead{color:#98A2B3} }
+button#go {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 11px 20px; border: 0; border-radius: 11px;
+    background: #0A3F4A; color: #fff; cursor: pointer;
+}
+button#go[disabled] { opacity: .5; cursor: default; }
+#bar { margin: 14px 0 10px; font-size: 14px; font-weight: 600; min-height: 22px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { padding: 7px 9px; text-align: start; border-bottom: 1px solid #E2E1DC; vertical-align: top; }
+@media (prefers-color-scheme: dark){ th,td{border-color:#2C3545} }
+th { font-size: 11px; color:#6B7278; font-weight: 600; }
+tr.bad td { background: rgba(180,35,24,.10); }
+tr.head td { background: rgba(10,63,74,.07); font-weight: 700; font-size: 12px; }
+@media (prefers-color-scheme: dark){ tr.head td{background:rgba(120,190,210,.10)} }
+.ok { color:#0F7A55; font-weight:600 } .no { color:#B42318; font-weight:700 }
+@media (prefers-color-scheme: dark){ .ok{color:#34D399} .no{color:#F87171} }
+.hint { color:#6B7278; font-size:11.5px }
+@media (prefers-color-scheme: dark){ .hint{color:#98A2B3} }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+iframe { position: fixed; left: -3000px; top: 0; width: 430px; height: 900px; border: 0; }
+.thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px }
+.thumbs figure { margin:0; width:96px; font-size:9.5px; color:#6B7278; text-align:center }
+.thumbs img { width:96px; border:1px solid #C9C6BC; border-radius:3px; display:block; background:#fff }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>فحص الطباعة وPDF — البوّابة ‎٤‎ب</h1>
+    <p class="lead">
+        ثمانيةُ ملفّات من ثمانِ ضغطاتِ أزرارٍ حقيقيّة: خمسةُ أنماطٍ لسجلّ
+        المتابعة، ونمطان لملفّ الإنجاز، وتقرير. ثمّ <b>يُفتح كلُّ ملفٍّ
+        بـpdf.js ويُعدّ حبرُ كلِّ صفحةٍ بالبكسل</b> — فصفحةٌ بيضاء عطبٌ لا
+        نجاح. ويُنشأ حسابُ زائرٍ منفصلٌ ويُمحى في النهاية.
+    </p>
+    <button id="go">▶ ابدأ الفحص</button>
+    <div id="bar"></div>
+    <table>
+        <thead><tr><th style="width:30%">الملفّ</th><th style="width:12%">وُلد</th>
+        <th style="width:12%">قُرئ</th><th>القياس</th></tr></thead>
+        <tbody id="out"></tbody>
+    </table>
+    <div class="thumbs" id="thumbs"></div>
+</div>
+<iframe id="stage"></iframe>
+
+<script>
+(function () {
+'use strict';
+
+/* ══ ما هي «الصفحةُ البيضاء» — والتعريفُ صُحِّح بعد أوّل قياس ══
+   الحدُّ الأوّلُ كان «حبرٌ دون ‎٠٫٥‎٪ = بيضاء»، فاتُّهمت صفحةٌ في ملفّ
+   الإنجاز حبرُها ‎٠٫٠٨‎٪. ولمّا سُئلت الأداةُ **ماذا عليها** قالت:
+   «لا توجد شهادات.» — سطرٌ مقصودٌ في النمط الذي يطلبه المعلّم صراحةً
+   («الملف كامل: كلّ الأقسام العشرة حتى الفارغ منها»). فليست بيضاء.
+
+   **والحدُّ لم يُخفَّض ليمرّ ملفّ — بل صار يقيس ما يدّعيه:**
+     • حبرٌ **صفر** ⇒ بياضٌ تامّ ⇒ عطبٌ دائماً، مهما كان عليها من نصّ.
+       (وهذا هو العطبُ المخيف: كتلةٌ قيست صفراً فسقطت من الرسم، والملفُّ
+        يخرج بحجمٍ معقولٍ لا يشكو.)
+     • حبرٌ دون ‎٠٫٥‎٪ **ومعه نصٌّ في الصفحة** ⇒ سطرٌ مقصود، يُبان ولا يُعدّ عطباً.
+     • حبرٌ دون ‎٠٫٥‎٪ **بلا نصّ** ⇒ عطب.
+   والقياسُ من بكسلاتٍ خام لا من صورةٍ مضغوطة، فـ«صفر» صفرٌ حقيقيّ. */
+var BLANK_MAX = 0.005;
+
+/* مفتاحُ الحقن — يُشغَّل بـ‎printing.html?inject=blank‎ ولا أثرَ له بدونه. */
+var INJECT = new URLSearchParams(location.search).get('inject') || '';
+
+var bar    = document.getElementById('bar');
+var out    = document.getElementById('out');
+var thumbs = document.getElementById('thumbs');
+var stage  = document.getElementById('stage');
+var fails = 0, docs = 0;
+
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+/* أثرٌ في وحدة التحكّم: الجدولُ يُقرأ بالعين، وهذا يُقرأ آلياً — وبه
+   عُرف موضعُ التوقّف حين تُشغَّل الصفحةُ في لسانٍ خلفيّ. */
+var trace = function (m) { try { console.info('[printing] ' + m); } catch (e) {} };
+var ar   = function (n) { return String(n).replace(/[0-9]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[+d]; }); };
+
+async function until(fn, ms, every) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < (ms || 12000)) {
+        try { var v = await fn(); if (v) return v; } catch (e) { /* بعدُ */ }
+        await wait(every || 200);
+    }
+    return null;
+}
+/* ══ مهلةٌ فوق كلِّ وعدٍ خارجيّ ══
+   الوعدُ الذي لا يستقرّ أسوأُ من الخطأ: لا رسالةَ ولا صفَّ ولا نهاية —
+   والأداةُ تبدو «تعمل» وهي ميّتة. فكلُّ نداءٍ إلى التطبيق يُسابَق بمهلةٍ
+   تُسمّي مكانَها. */
+function withTimeout(promise, ms, what) {
+    return Promise.race([
+        promise,
+        new Promise(function (_, rej) {
+            setTimeout(function () { rej(new Error('تجاوزَ المهلةَ: ' + what)); }, ms);
+        })
+    ]);
+}
+async function need(fn, what, ms) {
+    var el = await until(fn, ms);
+    if (!el) throw new Error('لم يظهر: ' + what);
+    return el;
+}
+/* تنقّلٌ يصمد أمام ارتداد المُوجِّه إلى ‎#/dashboard‎ بعد الإقلاع. */
+async function goto(win, hash, ready, what, ms) {
+    var t0 = Date.now();
+    ms = ms || 25000;
+    while (Date.now() - t0 < ms) {
+        if (win.location.hash !== hash) win.location.hash = hash;
+        var el = await until(ready, 1200, 150);
+        if (el) return el;
+    }
+    throw new Error('لم يظهر: ' + what);
+}
+
+function head(text) {
+    var tr = document.createElement('tr');
+    tr.className = 'head';
+    tr.innerHTML = '<td colspan="4">' + text + '</td>';
+    out.appendChild(tr);
+}
+function row(name, born, read, note, bad) {
+    if (bad) fails++;
+    var tr = document.createElement('tr');
+    if (bad) tr.className = 'bad';
+    tr.innerHTML = '<td>' + name + '</td><td>' + born + '</td><td>' + read + '</td>'
+                 + '<td class="hint">' + note + '</td>';
+    out.appendChild(tr);
+}
+var YES = '<span class="ok">✅</span>', NO = '<span class="no">❌</span>';
+
+/* ══ القراءة: كلُّ صفحةٍ تُرسم ويُعدّ حبرُها ══
+   المقاسُ يُؤخذ من الصفحة نفسِها (`viewport`) فيُعرف الاتجاه — والسجلُّ
+   أفقيٌّ بحكم `applyLandscape`، وملفُّ الإنجاز عموديّ. */
+async function readPdf(win, blob, label) {
+    var pdfjs = await win.PdfCore.ensurePdfJs();
+    var buf   = await blob.arrayBuffer();
+    var doc   = await withTimeout(
+        pdfjs.getDocument(win.PdfCore.docOptions({ data: buf })).promise,
+        30000, 'فتحُ الملفّ');
+    var pages = [], minInk = 1, blanks = [], empty = [];
+    var W = 0, H = 0;
+    for (var i = 1; i <= doc.numPages; i++) {
+        var page = await doc.getPage(i);
+        var v1   = page.getViewport({ scale: 1 });
+        if (i === 1) { W = Math.round(v1.width); H = Math.round(v1.height); }
+        var scale = 520 / v1.width;
+        var vp = page.getViewport({ scale: scale });
+        var cv = win.document.createElement('canvas');
+        cv.width  = Math.ceil(vp.width);
+        cv.height = Math.ceil(vp.height);
+        var cx = cv.getContext('2d', { willReadFrequently: true });
+        cx.fillStyle = '#fff';
+        cx.fillRect(0, 0, cv.width, cv.height);
+        /* ══ ‎`intent: 'print'`‎ ليس زينةً — بل هو ما يجعل هذا يعمل ══
+           رسمُ pdf.js يتقدّم عبر `requestAnimationFrame`، والمتصفّحُ
+           **لا يُطلقه إطلاقاً** في صفحةٍ غائبة. فتقف القراءةُ إلى الأبد
+           بلا خطأ: الملفُّ التُقط، والسطرُ لم يُكتب، والأداةُ تبدو تعمل
+           وهي ميّتة. (وقع فعلاً في أوّل تشغيلٍ — والأثرُ في وحدة التحكّم
+           هو ما دلّ عليه: «التقط … ‎144702‎ بايت» ثمّ صمت.)
+           وpdf.js تُطفئ rAF حين تكون النيّةُ طباعةً:
+           `useRequestAnimationFrame: !isPrint` — في الملفّ المُضمَّن نفسِه.
+           **والنيّةُ صادقةٌ لا حيلة:** المقيسُ هنا ما يخرج للورق. */
+        await withTimeout(
+            page.render({ canvasContext: cx, viewport: vp, intent: 'print' }).promise,
+            45000, 'رسمُ الصفحة ' + i + ' من «' + label + '»');
+        var d = cx.getImageData(0, 0, cv.width, cv.height).data;
+        var ink = 0;
+        for (var p = 0; p < d.length; p += 4) {
+            if (d[p] < 245 || d[p + 1] < 245 || d[p + 2] < 245) ink++;
+        }
+        var ratio = ink / (cv.width * cv.height);
+        pages.push(ratio);
+        if (ratio < minInk) minInk = ratio;
+        if (ratio < BLANK_MAX) blanks.push(i);
+        if (ratio === 0) empty.push(i);
+        /* ══ الصورةُ لا الرقمَ وحدَه ══
+           تُعرض أوّلُ صفحةٍ من كلِّ ملفّ، **وكلُّ صفحةٍ اتُّهمت بالبياض**.
+           لأنّ «‎٠٫٠٨‎٪» رقمٌ لا يُحكم به: قد يكون بياضاً حقيقيّاً، وقد
+           يكون سطراً واحداً مقصوداً («لا توجد شهادات»). والفرقُ بينهما
+           لا يُرى إلّا بالنظر — وقد كاد يُبلَّغ سليمٌ عطباً. */
+        if (i === 1 || ratio < BLANK_MAX) {
+            var fig = document.createElement('figure');
+            var im = new Image();
+            im.src = cv.toDataURL('image/jpeg', 0.72);
+            fig.appendChild(im);
+            var cap = document.createElement('figcaption');
+            cap.textContent = (ratio < BLANK_MAX ? '⚠ ص' + ar(i) + ' — ' : '')
+                            + label + (ratio < BLANK_MAX ? '' : ' (ص١)');
+            fig.appendChild(cap);
+            thumbs.appendChild(fig);
+        }
+    }
+    try { await doc.destroy(); } catch (e) {}
+    return { n: doc.numPages, pages: pages, minInk: minInk, blanks: blanks,
+             empty: empty, W: W, H: H };
+}
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = ''; thumbs.innerHTML = ''; fails = 0; docs = 0;
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    var win = null, tid = null, clsId = null, V = null, D = null, q = null;
+    var captured = null, printCalls = 0, lastDelivered = null, pageTexts = null;
+
+    /* ينتظر الملفَّ الذي التقطه الاعتراض، ثمّ يقرؤه ويسجّل صفَّه. */
+    async function expect(label, expectLandscape, ms) {
+        docs++;
+        trace('expect ← ' + label);
+        var blob = await until(function () { return captured; }, ms || 120000, 250);
+        captured = null;
+        if (!blob) {
+            row(label, NO, '—', 'لم يصل ملفٌّ إلى التسليم خلال المهلة', true);
+            return null;
+        }
+        trace('التقط ' + label + ' — ' + blob.size + ' بايت');
+        var kb = Math.round(blob.size / 1024);
+        var r;
+        try {
+            r = await readPdf(win, blob, label);
+        } catch (e) {
+            row(label, YES, NO, '‎' + ar(kb) + '‎ ك.ب — <b>وتعذّرت قراءتُه</b>: ' + e.message, true);
+            return null;
+        }
+        var landscape = r.W > r.H;
+        var badOrient = (expectLandscape !== null) && (landscape !== expectLandscape);
+        /* الصفحةُ القليلةُ الحبر تُبرَّأ **بنصٍّ عليها**، لا بالظنّ. وحين
+           لا يُعرف نصُّها (سجلُّ المتابعة لا يمرّ بـ`renderPdf`) تبقى تهمةً. */
+        var suspect = r.blanks.filter(function (n) {
+            return r.empty.indexOf(n) >= 0 || !(pageTexts && pageTexts[n - 1]);
+        });
+        var bad = r.n === 0 || suspect.length > 0 || badOrient;
+        var note = '‎' + ar(r.n) + '‎ صفحة · ‎' + ar(kb) + '‎ ك.ب · '
+                 + (landscape ? 'أفقيّة' : 'عموديّة') + ' ‎' + ar(r.W) + '×' + ar(r.H) + '‎'
+                 + ' · أقلُّ حبرٍ في صفحة <b>‎' + ar((r.minInk * 100).toFixed(2)) + '‎٪</b>';
+        /* المتّهمُ يُسمّى وحدَه والمُبرَّأ وحدَه — وخلطُهما في سطرٍ واحد
+           يجعل السليمَ يبدو متّهماً، وهو نصفُ الخطأ الذي نتحرّز منه. */
+        var say = function (list) {
+            return list.map(function (n) {
+                var t = pageTexts && pageTexts[n - 1];
+                return 'ص' + ar(n) + ' « ' + (t || '<b>لا نصَّ يُعرف</b>') + ' »';
+            }).join(' · ');
+        };
+        var cleared = r.blanks.filter(function (n) { return suspect.indexOf(n) < 0; });
+        if (suspect.length) note += '<br><b>صفحاتٌ متّهمة: ' + say(suspect) + '</b>';
+        if (cleared.length) note += '<br>وقليلةُ الحبر بُرّئت بنصِّها: ' + say(cleared);
+        if (badOrient) note += ' — <b>الاتجاهُ خطأ</b>';
+        /* عمودُ «قُرئ» يتبع الحكمَ لا مجرّدَ قلّةِ الحبر — وإلّا وُسم
+           السليمُ بعلامةِ السقوط والسطرُ يقول إنّه بُرّئ. */
+        row(label, YES, bad ? NO : YES, note, bad);
+        return r;
+    }
+
+    try {
+        /* ١) التطبيقُ في إطار، وحسابُ زائرٍ منفصل */
+        stage.src = 'index.html?printing=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000)) {
+            throw new Error('لم يُحمَّل التطبيق.');
+        }
+        await win.SB.auth.signOut().catch(function () {});
+        await win.Auth.guestLogin({ allowNew: true });
+        var S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        var me = await win.Auth.currentTeacher();
+        tid = me.id;
+        me.name = 'فحص الطباعة'; me.school_name = 'مدرسة الفحص';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+
+        /* إقلاعٌ ثانٍ: الحسابُ بُدّل والتطبيقُ يعمل، فتبقى الشاشةُ ممسكةً
+           بالمعلّم القديم فتردُّ الحمايةُ كتابتَها بحقّ. (قِيس في البوّابة ٣.) */
+        stage.src = 'index.html?printing2=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000)) {
+            throw new Error('لم يُحمَّل التطبيق بعد تبديل الحساب.');
+        }
+        if (!await until(async function () {
+            var t = await win.Auth.currentTeacher();
+            return (t && t.id === tid) ? t : null;
+        }, 15000)) throw new Error('الإقلاعُ الثاني لم يلتقط الحسابَ الجديد.');
+
+        V = win.SB;
+        D = win.document;
+        q = function (sel) { return D.querySelector(sel); };
+
+        /* ٢) فصلٌ وطلابٌ — من أزرار الواجهة */
+        bar.textContent = '⏳ ينشئ فصلاً وطلاباً…';
+        (await goto(win, '#/classes',
+            function () { return q('#btn-add-class') || q('[data-add-class]'); },
+            'زرّ «إضافة فصل»')).click();
+        await until(function () { return q('[data-sec]'); });
+        q('[data-grade="0"]').click();  await wait(150);
+        q('[data-sec]').click();        await wait(150);
+        (await need(function () { return q('[data-subj-save]'); }, 'زرّ حفظ المادّة')).click();
+
+        var made = await until(async function () {
+            var r = await V.from('classes').select('id').eq('teacher_id', tid);
+            return (r.data && r.data.length) ? r.data[0] : null;
+        }, 15000);
+        if (!made) throw new Error('لم يُنشأ فصل.');
+        clsId = made.id;
+
+        /* ⚠️ زرّان لا واحد: زرُّ الشريط لا يظهر إلّا ومعك طلاب. */
+        (await goto(win, '#/class/' + clsId + '/students',
+            function () { return q('[data-empty-add]') || q('#btn-add-students'); },
+            'زرّ إضافة الطلاب')).click();
+        var ta = await need(function () { return q('#paste-names'); }, 'حقل الأسماء');
+        ta.value = 'عبدالله محمد الشهري\nفهد سعيد القحطاني\nيوسف عبدالعزيز الغامدي\n'
+                 + 'سلطان ناصر العسيري\nتركي خالد الزهراني';
+        ta.dispatchEvent(new win.Event('input', { bubbles: true }));
+        await wait(200);
+        (await need(function () { return q('[data-submit]'); }, 'زرّ حفظ الأسماء')).click();
+        var stu = await until(async function () {
+            var r = await V.from('students').select('id,name').eq('class_id', clsId);
+            return (r.data && r.data.length >= 5) ? r.data : null;
+        }, 25000);
+        if (!stu) throw new Error('لم تصل الأسماء.');
+
+        /* ٣) زرعُ حضورٍ وتقييمٍ عبر ‎١٤‎ يوماً — من الطبقة، بإعلان */
+        bar.textContent = '⏳ يزرع حضوراً وتقييماً لأربعةَ عشرَ يوماً…';
+        trace('يزرع الحضور');
+        var cls = await win.TeacherDB.get('classes', clsId);
+        var cols = (cls && cls.eval_columns) || [];
+        var STATUS = ['present', 'present', 'absent', 'late', 'excused'];
+        var days = [];
+        for (var k = 13; k >= 0; k--) {
+            var d = new Date(); d.setDate(d.getDate() - k);
+            days.push(d.toISOString().slice(0, 10));
+        }
+        for (var di = 0; di < days.length; di++) {
+            for (var si = 0; si < stu.length; si++) {
+                await win.TeacherDB.add('attendance', {
+                    teacher_id: tid, class_id: clsId, student_id: stu[si].id,
+                    date: days[di], status: STATUS[(di + si) % STATUS.length]
+                });
+                if (cols.length) {
+                    var vals = {};
+                    for (var ci = 0; ci < cols.length; ci++) {
+                        vals[cols[ci].id] = ((di + si + ci) % (cols[ci].max || 5)) + 1;
+                    }
+                    await win.TeacherDB.add('participation', {
+                        teacher_id: tid, class_id: clsId, student_id: stu[si].id,
+                        date: days[di], values: vals
+                    });
+                }
+            }
+        }
+
+        /* ٤) الاعتراضُ على التسليم — ولا تنزيلَ ولا ورقةَ مشاركة */
+        trace('الزرعُ تمّ — يعترض التسليم');
+        /* ══ ونصُّ كلِّ صفحةٍ يُلتقط قبل أن تصير صورة ══
+           «صفحةٌ حبرُها ‎٠٫٠٨‎٪» تهمةٌ لا حكم: قد تكون بياضاً، وقد تكون
+           سطراً واحداً مقصوداً. والصورةُ وحدَها لا تُقرأ آلياً — فيُلتقط
+           النصُّ من عناصر الصفحات في المسرح، **قبل** أن يرسمها html2canvas.
+           فيقول التقريرُ ما على الصفحة لا «فيها قليلُ حبر». */
+        var realRender = win.PdfCore.renderPdf;
+        win.PdfCore.renderPdf = function (pages, o) {
+            try {
+                pageTexts = pages.map(function (el) {
+                    return String(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+                });
+            } catch (e) { pageTexts = null; }
+            /* ══ ‎?inject=blank‎ — العطبُ المصطنع ══
+               حارسٌ لم يُجرَّب على عطبٍ ليس حارساً. وقد رُخِّص هنا للصفحة
+               القليلةِ الحبر أن تمرّ إن كان عليها نصّ — فيلزم إثباتُ أنّ
+               الصفحةَ التي **تُرسم بيضاء ونصُّها قائم** ما تزال تسقط.
+               والحقنُ يُخفي حبرَ صفحةٍ ويُبقي نصَّها، فهو محاكاةُ العطب
+               الحقيقيّ بعينه: كتلةٌ قيست صفراً فلم تُرسم. */
+            if (INJECT === 'blank' && pages.length > 3) {
+                try { pages[2].style.visibility = 'hidden'; } catch (e) {}
+            }
+            return realRender.call(win.PdfCore, pages, o);
+        };
+        var realDeliver = win.PdfCore.deliverPdf;
+        win.PdfCore.deliverPdf = async function (blob, name) {
+            captured = blob; lastDelivered = { blob: blob, name: name };
+            return 'shared';
+        };
+        /* و`window.print` يُراقَب: مسارُ print-students الاحتياطيُّ يناديه
+           حين يفشل التصدير — فنجاحٌ يمرّ عبره ليس نجاحاً. */
+        win.print = function () { printCalls++; };
+
+        /* ══ سجلّ المتابعة — خمسةُ أنماط ══ */
+        head('سجلّ المتابعة — <span class="hint">من زرّ «طباعة» في السجلّ، أفقيّة</span>');
+
+        async function register(kind, scope, label) {
+            bar.textContent = '⏳ ' + label + '…';
+            trace('register ' + kind + '/' + scope);
+            (await goto(win, '#/class/' + clsId + '/students',
+                function () { var b = q('#btn-print-students'); return (b && !b.disabled) ? b : null; },
+                'زرّ «طباعة» في السجلّ')).click();
+            var opt = await need(function () { return q('#modal-body .popt[data-k="' + kind + '"] .popt-hd'); },
+                                 'خيار «' + kind + '» في نافذة الطباعة');
+            opt.click(); await wait(150);
+            if (scope) {
+                var seg = await need(function () {
+                    return q('#modal-body .popt[data-k="' + kind + '"] .pseg[data-scope="' + scope + '"]');
+                }, 'نطاق «' + scope + '»');
+                seg.click(); await wait(150);
+            }
+            trace('يضغط «حفظ وطباعة»');
+            (await need(function () { return q('#modal-body button[type="submit"]'); },
+                        'زرّ «حفظ وطباعة»')).click();
+            return expect(label, true);
+        }
+
+        await register('blank',      'all',   'سجلّ مُفرّغ — كلّ الخانات');
+        await register('attendance', 'today', 'الحضور والغياب — اليوم');
+        await register('full',       'today', 'بكامل الخانات — اليوم');
+        await register('attendance', 'range', 'الحضور والغياب — ‎١٤‎ يوماً');
+        await register('full',       'range', 'بكامل الخانات — ‎١٤‎ يوماً');
+
+        /* ══ ملفّ الإنجاز — نمطان ══ */
+        head('ملفّ الإنجاز — <span class="hint">من زرّ «طباعة ملف الإنجاز»، عموديّة</span>');
+        bar.textContent = '⏳ يزرع محتوى ملفّ الإنجاز…';
+        await win.TeacherDB.put('portfolio', {
+            teacher_id: tid,
+            personal: { qualification: 'بكالوريوس علوم', experience: '٨ سنوات',
+                        phone: '', email: '' },
+            mission: 'تمكينُ الطالب من أدواتِ التفكير العلميّ، وربطُ المعرفة بحياته.',
+            vision:  'صفٌّ يسأل قبل أن يُجيب، ويُجرِّب قبل أن يُصدِّق.',
+            certificates: [], schedules: [],
+            extras: [{ id: 'x1', title: 'شكرٌ من إدارة المدرسة', note: 'على تفعيل معمل العلوم' }],
+            custom_sections: [{ id: 'c1', title: 'مشاركاتٌ مجتمعيّة',
+                                body: 'يومُ المهنة · معرضُ العلوم · أسبوعُ الشجرة' }]
+        });
+        for (var g = 0; g < 3; g++) {
+            await win.TeacherDB.add('strategy_logs', {
+                teacher_id: tid, class_id: clsId,
+                strategy_key: ['cooperative', 'think_pair_share', 'brainstorm'][g],
+                date: days[g * 4], note: 'طُبِّقت في درس ' + ar(g + 1) + ' وتحسّن التفاعل.',
+                evidence: [], updated_at: new Date().toISOString()
+            });
+        }
+        await win.TeacherDB.add('initiative_logs', {
+            teacher_id: tid, initiative_key: 'class-library', custom_name: null,
+            date: days[2], note: 'ركنُ قراءةٍ في الصفّ بأربعين كتاباً.',
+            beneficiaries: 30, evidence: [], updated_at: new Date().toISOString()
+        });
+
+        async function portfolio(kind, label) {
+            bar.textContent = '⏳ ' + label + '… (قد يطول — كلُّ صفحةٍ تُرسم صورةً)';
+            (await goto(win, '#/portfolio',
+                function () { return q('#btn-print-portfolio'); },
+                'زرّ «طباعة ملف الإنجاز»')).click();
+            trace('portfolio ' + kind);
+            var opt = await need(function () { return q('#modal-body .popt[data-k="' + kind + '"] .popt-hd'); },
+                                 'خيار «' + kind + '»');
+            opt.click(); await wait(150);
+            /* ══ ضغطتان لا واحدة ══
+               الأولى تبني والثانية تُسلّم — قاعدةٌ في المعمار: سفاري يرفض
+               `navigator.share` إن انتهت إيماءةُ المستخدم أثناء البناء.
+               فتُضغط الأولى، ويُنتظر تحوُّلُ الزرِّ إلى «مشاركة أو حفظ»،
+               ثمّ تُضغط الثانية — وعندها وحدَها يصل الملفُّ إلى التسليم. */
+            var go = await need(function () { return q('#modal-body #pf-go'); }, 'زرّ «جهّز الملف»');
+            go.click();
+            var ready = await until(function () {
+                var b = q('#modal-body #pf-go');
+                return (b && !b.disabled && /مشاركة/.test(b.textContent)) ? b : null;
+            }, 240000, 400);
+            if (!ready) {
+                docs++;
+                row(label, NO, '—', 'الزرُّ لم يتحوّل إلى «مشاركة أو حفظ» — البناءُ لم يكتمل', true);
+                try { q('#modal-body [data-modal-close]').click(); } catch (e) {}
+                return null;
+            }
+            ready.click();
+            return expect(label, false, 60000);
+        }
+
+        await portfolio('all',    'ملفّ الإنجاز — كامل');
+        await portfolio('filled', 'ملفّ الإنجاز — المعبّأة فقط');
+
+        /* ══ التقرير ══ */
+        head('التقارير — <span class="hint">من زرّ «تصدير التقرير PDF»</span>');
+        bar.textContent = '⏳ يصدّر التقرير…';
+        (await goto(win, '#/reports',
+            function () { return q('#btn-print-reports'); },
+            'زرّ «تصدير التقرير PDF»')).click();
+        await expect('تقريرُ الأداء', false);
+
+        /* ══ ما لا يُرى في الملفّات ══ */
+        head('السلسلةُ نفسُها');
+        docs++;
+        row('لم يُنادَ <code>window.print()</code>', printCalls === 0 ? YES : NO,
+            '—',
+            printCalls === 0
+                ? 'صفرُ نداء — فلا ملفَّ خرج من المسار الاحتياطيّ (وهو خامدٌ على iOS)'
+                : '<b>' + ar(printCalls) + ' نداءً</b> — أي أنّ تصديراً فشل وسقط للاحتياطيّ',
+            printCalls !== 0);
+
+        docs++;
+        var named = lastDelivered && /\.pdf$|[؀-ۿ_]/.test(lastDelivered.name || '');
+        row('اسمُ الملفّ وصفيّ', named ? YES : NO, '—',
+            lastDelivered ? '<code>' + (lastDelivered.name || '—') + '</code>' : 'لا اسم', !named);
+
+        win.PdfCore.deliverPdf = realDeliver;
+        win.PdfCore.renderPdf   = realRender;
+
+        bar.innerHTML = fails === 0
+            ? '<span class="ok">✅ ' + ar(docs) + ' من ' + ar(docs)
+              + ' — كلُّ ملفٍّ وُلد وقُرئ، ولا صفحةَ بيضاء.</span>'
+            : '<span class="no">‼️ ' + ar(fails) + ' من ' + ar(docs) + ' سقطت.</span>';
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
+        console.error(e);
+    } finally {
+        try {
+            if (tid && V) {
+                for (const t of ['attendance', 'participation', 'schedule', 'students',
+                                 'exams', 'worksheets', 'assignments', 'classes',
+                                 'strategy_logs', 'initiative_logs', 'portfolio',
+                                 'app_settings', 'reminders']) {
+                    await V.from(t).delete().eq('teacher_id', tid);
+                }
+            }
+        } catch (e2) { console.warn('تنظيف:', e2); }
+        try { if (win) await win.SB.auth.signOut(); } catch (e4) {}
+        stage.src = 'about:blank';
+        document.getElementById('go').disabled = false;
+    }
+}
+
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
