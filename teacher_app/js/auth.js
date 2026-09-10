@@ -443,6 +443,9 @@
      * عنده مئةٌ وعشرون شاهداً كانت تبقى صورُ طلابه في الخادم إلى الأبد.
      * (ق٫٣)
      *
+     * **ولم يكفِ الترقيمُ وحدَه:** كان يُحذف أثناءه فتُزاح القائمةُ تحته،
+     * فتبقى العشرون الأخيرةُ (قِيس ١٠ سبتمبر ٢٠٢٦). فصار يجمع ثمّ يحذف.
+     *
      * @param {string} uid معرّفُ المعلّم — مجلّدُه في كلّ مخزن.
      */
     /* مخازنُ ملفات المعلّم — والقائمةُ نفسُها في دالّتَي الحافّة
@@ -472,24 +475,41 @@
                    والمجلّدُ يأتي مدخلاً بـ`id = null` لا ملفاً — وتمريرُه إلى
                    `remove` لا يحذفه ولا ما تحته. فمن رفع في `uid/sub/x.jpg`
                    بقيت ملفاتُه بعد زوال حسابه بلا سبيلٍ لأحدٍ إليها. */
+                /* ══ تُجمع القائمةُ كلُّها أوّلاً، ثمّ تُحذف ══
+                   وكان المسحُ متداخلاً مع الترقيم: تُقرأ صفحةٌ فتُحذف، ثمّ
+                   تُطلب الصفحةُ التالية بإزاحة ‎١٠٠‎ — **والحذفُ قد أزاح
+                   القائمةَ تحتها**، فالمئةُ الأولى ذهبت وصار الباقي في
+                   أوّلها، والإزاحةُ تقفز فوقه فتردّ فراغاً فتقف الحلقة.
+                   قِيس (١٠ سبتمبر ٢٠٢٦): **‎١٢٠‎ شاهداً ← بقي ‎٢٠‎.**
+
+                   وأخطرُ أثرِه ليس حذفَ الحساب — دالّةُ الحافّة تجمع ثمّ
+                   تحذف فتسلم — بل **«مسح جميع البيانات»**: يمرّ من هنا
+                   وحدَه، فمن مسح بياناته بقيت عشرون صورةَ طالبٍ في حسابه.
+                   وهو ق٫٣ نفسُه عائداً من بابٍ آخر: الإصلاحُ الأوّل أضاف
+                   الترقيمَ ولم ينتبه أنّ الحذفَ يُزيح.
+
+                   والجمعُ آمنٌ هنا: لا شيءَ يُحذف أثناءه فلا تُزاح القائمة —
+                   وهو شكلُ `purgeFolder` في دالّتَي الحافّة حرفاً بحرف. */
                 const walk = async (prefix, depth = 0) => {
                     if (depth > 8) return;
+                    const entries = [];
                     for (let guard = 0; guard < 200; guard++) {
-                        const { data: entries, error } = await sb.storage.from(bucket)
+                        const { data, error } = await sb.storage.from(bucket)
                             .list(prefix, { limit: PAGE, offset: guard * PAGE });
                         if (error) throw error;
-                        if (!entries || !entries.length) break;
-                        const files = entries.filter((e) => e.id !== null)
-                                             .map((e) => prefix + '/' + e.name);
-                        if (files.length) {
-                            const { error: rmErr } = await sb.storage.from(bucket).remove(files);
-                            if (rmErr) throw rmErr;
-                        }
-                        for (const e of entries.filter((e) => e.id === null)) {
-                            await walk(prefix + '/' + e.name, depth + 1);
-                        }
-                        /* دفعةٌ أقصرُ من الصفحة تعني أنّ المجلد فرغ. */
-                        if (entries.length < PAGE) break;
+                        if (!data || !data.length) break;
+                        entries.push(...data);
+                        if (data.length < PAGE) break;
+                    }
+                    const files = entries.filter((e) => e.id !== null)
+                                         .map((e) => prefix + '/' + e.name);
+                    for (let i = 0; i < files.length; i += PAGE) {
+                        const { error: rmErr } = await sb.storage.from(bucket)
+                            .remove(files.slice(i, i + PAGE));
+                        if (rmErr) throw rmErr;
+                    }
+                    for (const e of entries.filter((e) => e.id === null)) {
+                        await walk(prefix + '/' + e.name, depth + 1);
                     }
                 };
                 await walk(uid);

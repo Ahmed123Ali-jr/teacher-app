@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص حذف الحساب</title>
+<!--
+    deletion.html — البوّابة ‎٨‎، شرطُ آبل ‎5.1.1(v)‎: **يترك صفراً.**
+
+    ── لماذا لا يكفي «ظهرت رسالةُ تمّ» ──
+    الحذفُ مسارٌ ذو شعبتين: دالّةُ حافّةٍ بمفتاح الخدمة، فإن تعثّرت فمسحٌ
+    من العميل ثمّ `delete_own_account`. وكلتاهما قد **تنجح جزئيّاً**: صفوفُ
+    القاعدة تُمحى وملفاتُ التخزين تبقى — **وفيها صورُ طلاب**. والواجهةُ
+    تقول «تم حذف حسابك» في الحالتين.
+
+    ── وحدُّ ما تدّعيه ──
+    «صفرٌ في التخزين» هنا = **لا صفَّ يصل إليه أحد**. وقِيس أنّ حذفَ
+    المستخدم يُسقط صفوفَ `storage.objects` بالتتالي وحدَه، فلا تُفرّق هذه
+    الأداةُ بين ملفٍّ مُسح وبايتاتٍ يتيمة. **فلا يُحذف `purgeStorage` ولا
+    دالّةُ الحافّة اتّكالاً على هذا القياس** — هما اللذان يمحوان البايتات.
+
+    ── والفخُّ المقيسُ سلفاً (ق٫٣) ──
+    حدُّ `list()` الافتراضيُّ **مئةُ ملف**. فمعلّمٌ عنده ‎١٢٠‎ شاهداً كانت
+    تبقى عشرون صورةً على الخادم إلى الأبد. **ولذلك يُزرع هنا ‎١٢٠‎ لا ‎١٠‎** —
+    عددٌ دون المئة يمرّ على العطب ولا يراه.
+
+    ── وكيف يُتحقّق بعد زوال الحساب ──
+    قراءةٌ بحسابٍ آخر لا تُثبت شيئاً: تردّها الحمايةُ فتُرى «صفراً» وهي
+    ممتلئة — وهو فخُّ «القراءة العمياء» بعينه (البوّابة ‎٢‎).
+    فيُحتفظ بـ**رمز الجلسة نفسِه**: الرمزُ موقَّعٌ ويبقى صالحاً بعد زوال
+    صفِّ المستخدم، و`auth.uid()` فيه هو المعلّمُ المحذوف — فتُقرأ صفوفُه
+    وملفاتُه **بعينه هو**. فإن بقي شيءٌ ظهر.
+    وإن رُدَّ الرمزُ نفسُه (‎401‎) قيل ذلك ولم يُدَّعَ نجاح.
+
+    أداةُ تطويرٍ: في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 20px 14px 60px; direction: rtl;
+    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    background: #F6F5F1; color: #22282B; line-height: 1.7;
+    font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { body { background:#0D1117; color:#E8ECF3; } }
+.wrap { max-width: 860px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p.lead { margin: 0 0 14px; font-size: 13px; color:#6B7278; line-height:1.8; }
+@media (prefers-color-scheme: dark){ p.lead{color:#98A2B3} }
+button#go {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 11px 20px; border: 0; border-radius: 11px;
+    background: #0A3F4A; color: #fff; cursor: pointer;
+}
+button#go[disabled] { opacity: .5; cursor: default; }
+#bar { margin: 14px 0 10px; font-size: 14px; font-weight: 600; min-height: 22px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { padding: 7px 9px; text-align: start; border-bottom: 1px solid #E2E1DC; vertical-align: top; }
+@media (prefers-color-scheme: dark){ th,td{border-color:#2C3545} }
+th { font-size: 11px; color:#6B7278; font-weight: 600; }
+tr.bad td { background: rgba(180,35,24,.10); }
+tr.head td { background: rgba(10,63,74,.07); font-weight: 700; font-size: 12px; }
+@media (prefers-color-scheme: dark){ tr.head td{background:rgba(120,190,210,.10)} }
+.ok { color:#0F7A55; font-weight:600 } .no { color:#B42318; font-weight:700 }
+@media (prefers-color-scheme: dark){ .ok{color:#34D399} .no{color:#F87171} }
+.hint { color:#6B7278; font-size:11.5px }
+@media (prefers-color-scheme: dark){ .hint{color:#98A2B3} }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+iframe { position: fixed; left: -3000px; top: 0; width: 430px; height: 900px; border: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>فحص حذف الحساب — البوّابة ‎٨‎ · آبل ‎5.1.1(v)‎</h1>
+    <p class="lead">
+        يُنشئ حساباً منفصلاً، ويملؤه صفوفاً في كلّ جدول <b>و‎١٢٠‎ شاهداً في
+        التخزين</b> (فوق حدّ الصفحة عمداً)، ثمّ يضغط <b>زرَّ «حذف حسابي
+        نهائياً» الحقيقيّ</b> بإقراره ونافذتَي تأكيده. ثمّ يقرأ ما بقي
+        <b>برمز الجلسة نفسِه</b> — لا بحسابٍ آخر تردّه الحمايةُ فيبدو صفراً.
+    </p>
+    <button id="go">▶ ابدأ الفحص</button>
+    <div id="bar"></div>
+    <table>
+        <thead><tr><th style="width:30%">ما يُقاس</th><th style="width:14%">قبل</th>
+        <th style="width:14%">بعد</th><th>البيان</th></tr></thead>
+        <tbody id="out"></tbody>
+    </table>
+</div>
+<iframe id="stage"></iframe>
+
+<script src="vendor/supabase.js"></script>
+<script>
+(function () {
+'use strict';
+
+var URL_ = 'https://rbsfpsmolxldmwcclhlc.supabase.co';
+var KEY  = 'sb_publishable_z5RQ0LotgRBWRSUXjTz38w_GOyBOhUX';
+
+/* عددُ الشواهد — **فوق المئة عمداً**: حدُّ `list()` مئة، ودونها يمرّ
+   عطبُ ق٫٣ بلا أن يُرى. */
+var EVIDENCE = 120;
+
+/* ══ ‎?inject=nodelete‎ — العطبُ المصطنع ══
+   حارسٌ لم يُجرَّب على عطبٍ ليس حارساً. فيُسقَط **مسارا الحذف كلاهما**
+   (دالّةُ الحافّة و`delete_own_account`) مع إبقاء الواجهة كما هي — فيجب
+   أن تسقط الأداةُ وتقول: بقيت الصفوفُ والملفّاتُ والحساب.
+
+   ── ولماذا لا يُحقن «ملفّاتٌ تبقى» ──
+   جُرّب أوّلاً حقنُ «مسحٌ للصفوف بلا مسحٍ للملفّات» فلم يقع: قِيس مباشرةً
+   أنّ **حذفَ المستخدم يُسقط صفوفَ `storage.objects` بالتتالي** — ثلاثةُ
+   ملفّاتٍ رُفعت، ونودي `delete_own_account` **بلا أيّ مسحِ تخزين**، فصار
+   السردُ صفراً. فالعطبُ المُراد حقنُه لا وجودَ له في هذه القاعدة.
+
+   ⚠️ **وهذا يحدّ ما تدّعيه هذه الأداة:** «صفرٌ في التخزين» هنا تعني
+   **لا صفَّ يصل إليه أحد**، ولا تُفرّق بين ملفٍّ مُسح فعلاً وبايتاتٍ
+   بقيت يتيمةً بلا صفٍّ يدلّ عليها. ولهذا **يبقى `purgeStorage` ودالّةُ
+   الحافّة ضرورةً لا زينة**: هما اللذان يمحوان البايتات. */
+var INJECT = new URLSearchParams(location.search).get('inject') || '';
+
+var bar = document.getElementById('bar');
+var out = document.getElementById('out');
+var stage = document.getElementById('stage');
+var fails = 0, checks = 0;
+
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+var ar = function (n) { return String(n).replace(/[0-9]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[+d]; }); };
+var trace = function (m) { try { console.info('[deletion] ' + m); } catch (e) {} };
+
+async function until(fn, ms, every) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < (ms || 12000)) {
+        try { var v = await fn(); if (v) return v; } catch (e) { /* بعدُ */ }
+        await wait(every || 200);
+    }
+    return null;
+}
+async function need(fn, what, ms) {
+    var el = await until(fn, ms);
+    if (!el) throw new Error('لم يظهر: ' + what);
+    return el;
+}
+/** يفتح قسماً في الإعدادات باسمه — الأقسامُ صفحاتٌ داخليّةٌ بلا معرّف. */
+async function openSetting(win, D, label, ready, what) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < 25000) {
+        var el = await until(ready, 400, 150);
+        if (el) return el;
+        if (win.location.hash !== '#/settings') { win.location.hash = '#/settings'; await wait(800); }
+        var rows = [].slice.call(D.querySelectorAll('#view-settings button.set-row'));
+        var hit = rows.filter(function (r) { return r.textContent.indexOf(label) >= 0; })[0];
+        if (hit) { hit.click(); await wait(900); }
+        else { win.location.hash = '#/settings'; await wait(800); }
+    }
+    throw new Error('لم يظهر: ' + what);
+}
+
+/* ══ الإشارةُ الصادقةُ على «انتهى»: إعادةُ تحميل الإطار ══
+   كلا الزرَّين ينتهي بـ`location.reload()`. وانتظارُ «صار العدُّ صفراً»
+   يكذب: الحلقةُ تمسح ثمانيةَ عشرَ مخزناً واحداً بعد واحد، فيصير `students`
+   صفراً **والمسحُ في أوّله** — ومسحُ التخزين آخرُ ما يقع. وأوّلُ قياسٍ هنا
+   قال «بقيت ‎١٢٠‎ صورة» وكاد يُبلَّغ عطبٌ خطيرٌ لا وجودَ له.
+   فيُرصد التحميلُ **قبل** الضغط، ويُنتظر بعده. */
+function reloadWatcher(el) {
+    var done = false;
+    var p = new Promise(function (resolve) {
+        el.addEventListener('load', function once() {
+            el.removeEventListener('load', once);
+            done = true; resolve(true);
+        });
+    });
+    return { promise: p, fired: function () { return done; } };
+}
+
+function head(t) {
+    var tr = document.createElement('tr');
+    tr.className = 'head';
+    tr.innerHTML = '<td colspan="4">' + t + '</td>';
+    out.appendChild(tr);
+}
+function row(what, before, after, note, bad) {
+    checks++;
+    if (bad) fails++;
+    var tr = document.createElement('tr');
+    if (bad) tr.className = 'bad';
+    tr.innerHTML = '<td>' + what + '</td><td>' + before + '</td><td>' + after + '</td>'
+                 + '<td class="hint">' + note + '</td>';
+    out.appendChild(tr);
+}
+var YES = '<span class="ok">✅</span>', NO = '<span class="no">❌</span>';
+
+/* أصغرُ صورةٍ صالحة — ‎PNG‎ شفّافةٌ ‎1×1‎. الشاهدُ هنا يُقاس عدداً لا حجماً. */
+var PIXEL = Uint8Array.from(atob(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+), function (c) { return c.charCodeAt(0); });
+
+var TABLES = ['teachers', 'classes', 'students', 'attendance', 'participation',
+              'assignments', 'exams', 'worksheets', 'books', 'strategies',
+              'strategy_logs', 'initiative_logs', 'initiatives', 'schedule',
+              'reminders', 'portfolio', 'app_settings', 'ai_usage'];
+var BUCKETS = ['evidence', 'portfolio'];
+
+/** يعدّ صفوفَ المعلّم في كلّ جدول — بالعميل المُعطى. */
+async function countRows(client, tid) {
+    var total = 0, per = {};
+    for (var i = 0; i < TABLES.length; i++) {
+        var t = TABLES[i];
+        var col = (t === 'teachers') ? 'id' : 'teacher_id';
+        var r = await client.from(t).select(col, { count: 'exact', head: true }).eq(col, tid);
+        /* ‎401/403‎ ليست صفراً — تُميَّز عن الفراغ ولا تُحسب نجاحاً. */
+        if (r.error) { per[t] = 'خطأ'; continue; }
+        per[t] = r.count || 0;
+        total += (r.count || 0);
+    }
+    return { total: total, per: per };
+}
+
+/** يعدّ ملفاتِ المعلّم في مخزنٍ — بالترقيم، فحدُّ الصفحة مئة. */
+async function countFiles(client, bucket, uid) {
+    var n = 0, err = null;
+    async function walk(prefix, depth) {
+        if (depth > 6) return;
+        for (var g = 0; g < 200; g++) {
+            var r = await client.storage.from(bucket).list(prefix, { limit: 100, offset: g * 100 });
+            if (r.error) { err = r.error.message; return; }
+            var entries = r.data || [];
+            if (!entries.length) return;
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].id === null) await walk(prefix + '/' + entries[i].name, depth + 1);
+                else n++;
+            }
+            if (entries.length < 100) return;
+        }
+    }
+    await walk(uid, 0);
+    return { n: n, err: err };
+}
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = ''; fails = 0; checks = 0;
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    var win = null, tid = null, token = null, ghost = null;
+    var before = null, beforeFiles = {};
+
+    try {
+        /* ١) حسابٌ منفصل */
+        stage.src = 'index.html?deletion=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000))
+            throw new Error('لم يُحمَّل التطبيق.');
+        await win.SB.auth.signOut().catch(function () {});
+        await win.Auth.guestLogin({ allowNew: true });
+        var S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        var me = await win.Auth.currentTeacher();
+        tid = me.id;
+        me.name = 'فحص الحذف'; me.school_name = 'مدرسة الفحص';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+
+        /* إقلاعٌ ثانٍ — الحسابُ بُدّل والتطبيقُ يعمل. */
+        stage.src = 'index.html?deletion2=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000))
+            throw new Error('لم يُحمَّل التطبيق بعد التبديل.');
+        if (!await until(async function () {
+            var t = await win.Auth.currentTeacher();
+            return (t && t.id === tid) ? t : null;
+        }, 15000)) throw new Error('الإقلاعُ الثاني لم يلتقط الحسابَ.');
+
+        var D = win.document;
+        var q = function (sel) { return D.querySelector(sel); };
+
+        /* ٢) الزرعُ: صفوفٌ في كلّ جدولٍ يمكن الكتابةُ فيه */
+        bar.textContent = '⏳ يزرع صفوفاً في كلّ جدول…';
+        var cls = await win.TeacherDB.add('classes', {
+            teacher_id: tid, grade: 'أول متوسط', section: '١', subject: 'العلوم',
+            stage: 'intermediate'
+        });
+        var clsId = cls && cls.id ? cls.id : cls;
+        var stuIds = [];
+        for (var i = 0; i < 4; i++) {
+            var st = await win.TeacherDB.add('students',
+                { teacher_id: tid, class_id: clsId, name: 'طالب الحذف ' + ar(i + 1), notes: '' });
+            stuIds.push(st && st.id ? st.id : st);
+        }
+        var today = new Date().toISOString().slice(0, 10);
+        for (var j = 0; j < stuIds.length; j++) {
+            await win.TeacherDB.add('attendance',
+                { teacher_id: tid, class_id: clsId, student_id: stuIds[j], date: today, status: 'present' });
+            await win.TeacherDB.add('participation',
+                { teacher_id: tid, class_id: clsId, student_id: stuIds[j], date: today, values: { x: 3 } });
+        }
+        await win.TeacherDB.add('exams',
+            { teacher_id: tid, class_id: clsId, title: 'اختبارُ الحذف', questions: [], settings: {} });
+        await win.TeacherDB.add('worksheets',
+            { teacher_id: tid, class_id: clsId, title: 'ورقةُ الحذف', questions: [], settings: {} });
+        await win.TeacherDB.add('assignments',
+            { teacher_id: tid, class_id: clsId, title: 'واجبُ الحذف', due_date: today });
+        await win.TeacherDB.add('schedule',
+            { teacher_id: tid, class_id: clsId, day: 0, period: 1 });
+        await win.TeacherDB.add('strategy_logs',
+            { teacher_id: tid, class_id: clsId, strategy_key: 'cooperative', date: today,
+              note: 'شاهدٌ للحذف', evidence: [], updated_at: new Date().toISOString() });
+        await win.TeacherDB.add('initiative_logs',
+            { teacher_id: tid, initiative_key: 'class-library', custom_name: null, date: today,
+              note: 'مبادرةٌ للحذف', beneficiaries: 10, evidence: [],
+              updated_at: new Date().toISOString() });
+        await win.TeacherDB.put('portfolio',
+            { teacher_id: tid, personal: { qualification: 'بكالوريوس' }, mission: 'رسالة',
+              vision: 'رؤية', certificates: [], schedules: [], extras: [], custom_sections: [] });
+
+        /* ٣) و‎١٢٠‎ شاهداً في التخزين — فوق حدّ الصفحة، **وفي مجلّدٍ فرعيٍّ
+              أيضاً**: `list` تُرجع مستوىً واحداً، والمجلّدُ يأتي مدخلاً لا
+              ملفاً، فمن رفع في `uid/sub/x.jpg` بقيت ملفاتُه. */
+        bar.textContent = '⏳ يرفع ‎١٢٠‎ شاهداً إلى التخزين…';
+        var stamp = Date.now();
+        /* ══ خطأُ الرفع لا يرمي ══
+           `supabase-js` تردّ `{ error }` ولا ترفض الوعد، فـ`Promise.all`
+           يمضي على فشلٍ صامت. وأوّلُ بناءٍ لهذه الأداة وقع فيه: زُرعت
+           ‎١١٠‎ لا ‎١٢٠‎ **وقيل «رُفعت»** — وهو عينُ العطب الذي أسقط زرعَ
+           فاحص العزل (البوّابة ‎٢‎). فيُجمع كلُّ خطأٍ ويُسمّى. */
+        var upErr = [];
+        var push = function (p) {
+            return p.then(function (r) { if (r && r.error) upErr.push(r.error.message); });
+        };
+        var jobs = [];
+        for (var k = 0; k < EVIDENCE; k++) {
+            /* وعشرةٌ في مجلّدٍ فرعيّ: `list` تُرجع مستوىً واحداً، والمجلّدُ
+               مدخلٌ لا ملفّ — فمن رفع في `uid/sub/x.png` بقيت ملفاتُه. */
+            var path = (k < EVIDENCE - 10)
+                ? tid + '/del-' + stamp + '-' + k + '.png'
+                : tid + '/deep/del-' + stamp + '-' + k + '.png';
+            jobs.push(push(win.SB.storage.from('evidence')
+                .upload(path, new Blob([PIXEL], { type: 'image/png' }), { contentType: 'image/png' })));
+            if (jobs.length >= 12) { await Promise.all(jobs); jobs = []; }
+        }
+        if (jobs.length) await Promise.all(jobs);
+        await push(win.SB.storage.from('portfolio').upload(
+            tid + '/pf-' + stamp + '.png',
+            new Blob([PIXEL], { type: 'image/png' }), { contentType: 'image/png' }));
+        if (upErr.length) trace('أخطاءُ رفع: ' + upErr.length + ' — ' + upErr[0]);
+        window.__upErr = upErr;
+
+        /* ٤) رمزُ الجلسة يُحفظ **قبل** الحذف — به وحدَه يُقرأ ما بقي. */
+        var sess = await win.SB.auth.getSession();
+        token = sess && sess.data && sess.data.session && sess.data.session.access_token;
+        if (!token) throw new Error('لا رمزَ جلسة.');
+        /* ══ العميلُ الشاهدُ يُبنى في هذه الصفحة لا في الإطار ══
+           التطبيقُ **يُعيد تحميلَ نفسِه** بعد الحذف. وعميلٌ بُني في عالم
+           الإطار يستعمل `fetch` ذلك العالم — فإذا زال العالمُ لم يستقرّ
+           نداؤه أبداً: لا خطأَ ولا نتيجة، والأداةُ تنتظر إلى الأبد.
+           (وقع في أوّل تشغيل: وقفت عند «ينتظر اكتمال الحذف».)
+           فيُبنى هنا، ويعيش بعد الإطار. */
+        ghost = window.supabase.createClient(URL_, KEY, {
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+            global: { headers: { Authorization: 'Bearer ' + token } }
+        });
+
+        bar.textContent = '⏳ يعدّ ما زُرع…';
+        before = await countRows(ghost, tid);
+        for (var b = 0; b < BUCKETS.length; b++) {
+            beforeFiles[BUCKETS[b]] = await countFiles(ghost, BUCKETS[b], tid);
+        }
+        trace('قبل: صفوف ' + before.total + ' · شواهد ' + beforeFiles.evidence.n);
+
+        head('الزرعُ قبل الحذف — <span class="hint">يُقرأ برمز الحساب نفسِه</span>');
+        row('صفوفٌ في القاعدة', ar(before.total), '—',
+            before.total > 20 ? 'موزَّعةٌ على الجداول التي تقبل الكتابة'
+                              : '<b>الزرعُ ضعيف</b> — الفحصُ لا يُثبت شيئاً',
+            before.total <= 20);
+        row('شواهدُ في <code>evidence</code>', ar(beforeFiles.evidence.n), '—',
+            beforeFiles.evidence.n >= EVIDENCE
+                ? '<b>فوق حدّ الصفحة (‎١٠٠‎) عمداً</b> — ومنها ‎١٠‎ في مجلّدٍ فرعيّ'
+                : '<b>لم تصل ' + ar(EVIDENCE) + '</b>' + (upErr.length
+                    ? ' — ‎' + ar(upErr.length) + '‎ رفعةً فشلت: ' + upErr[0]
+                    : ' — بلا خطأِ رفعٍ، فالنقصُ في العدّ لا في الزرع'),
+            beforeFiles.evidence.n < EVIDENCE);
+        if (before.total <= 20 || beforeFiles.evidence.n < EVIDENCE)
+            throw new Error('الزرعُ لم يكتمل — لا يُحكم على حذفٍ لم يجد ما يحذف.');
+
+        /* ══ المرحلةُ الأولى: «مسح جميع البيانات» ══
+           الحسابُ **يبقى** هنا، فلا تتالي يُخفي ما بقي في التخزين —
+           وهذه هي الشاشةُ التي ظهر فيها العطبُ حقيقةً: من مسح بياناته
+           قبل أن يُسلّم جهازَه بقيت صورُ طلابه في حسابه. */
+        bar.textContent = '⏳ يضغط «مسح جميع البيانات»…';
+        await openSetting(win, D, 'حذف البيانات أو الحساب',
+            function () { return q('#btn-wipe'); }, 'قسمُ الخطر');
+        (await need(function () { return q('#btn-wipe'); }, 'زرُّ المسح')).click();
+        (await need(function () { return q('#modal-body [data-ok]'); }, 'تأكيدُ المسح الأوّل')).click();
+        await wait(400);
+        var wipeWatch = reloadWatcher(stage);
+        (await need(function () { return q('#modal-body [data-ok]'); }, 'تأكيدُ المسح الثاني')).click();
+
+        var wiped = await until(function () { return wipeWatch.fired() ? true : null; }, 120000, 500);
+        if (!wiped) trace('لم يُعِد التطبيقُ تحميلَ نفسِه بعد المسح — قد يكون المسحُ تعثّر');
+        await wait(1500);   /* ما بعد التحميل: القراءةُ بعد استقرار الخادم */
+        var wipeFiles = await countFiles(ghost, 'evidence', tid);
+        var wipeRows  = await countRows(ghost, tid);
+        var whoWipe   = await fetch(URL_ + '/auth/v1/user',
+                            { headers: { apikey: KEY, Authorization: 'Bearer ' + token } });
+        trace('بعد المسح: صفوف ' + wipeRows.total + ' · شواهد ' + wipeFiles.n);
+
+        head('مسحُ البيانات — <span class="hint">الحسابُ يبقى، فلا تتالي يُخفي شيئاً</span>');
+        row('شواهدُ بعد «مسح جميع البيانات»', ar(beforeFiles.evidence.n),
+            wipeFiles.n === 0 ? '<b class="ok">صفر</b>' : '<b class="no">' + ar(wipeFiles.n) + '</b>',
+            wipeFiles.n === 0
+                ? '<b>ولا صورةَ طالبٍ بقيت</b> — وهذا هو المسارُ الذي كان يترك ‎٢٠‎'
+                : '<b>بقيت ' + ar(wipeFiles.n) + ' صورةً في حسابٍ حيّ</b> — والمعلّمُ طلب مسحَ كلّ شيء',
+            wipeFiles.n !== 0);
+        /* ══ صفُّ `teachers` يبقى **بحقّ** ══
+           «مسح البيانات» يُبقي الحساب، وملفُّ المعلّم جزءٌ من الحساب لا من
+           بياناته — و`currentTeacher()` تُعيده من الجلسة بعد المسح. فبقاؤه
+           وحدَه ليس عطباً؛ وبقاءُ غيرِه عطب. */
+        var wipeLeft = Object.keys(wipeRows.per).filter(function (t) {
+            return typeof wipeRows.per[t] === 'number' && wipeRows.per[t] > 0;
+        });
+        var onlyTeacher = wipeLeft.length === 0
+            || (wipeLeft.length === 1 && wipeLeft[0] === 'teachers' && wipeRows.per.teachers === 1);
+        row('صفوفٌ بعد المسح', ar(before.total),
+            onlyTeacher ? '<b class="ok">' + (wipeLeft.length ? 'ملفُّ المعلّم وحدَه' : 'صفر') + '</b>'
+                        : '<b class="no">' + ar(wipeRows.total) + '</b>',
+            onlyTeacher
+                ? (wipeLeft.length
+                    ? '<b>لا بيانات</b> — وصفُّ <code>teachers</code> جزءٌ من الحساب الباقي لا من بياناته'
+                    : 'كلُّ الجداول فارغة')
+                : '<b>بقي: ' + wipeLeft.map(function (t) { return t + ' ' + ar(wipeRows.per[t]); }).join(' · ') + '</b>',
+            !onlyTeacher);
+        row('والحسابُ باقٍ', '—', whoWipe.status === 200 ? YES : NO,
+            whoWipe.status === 200
+                ? 'المسحُ لا يحذف الحساب — والفصلُ بينهما مقصود'
+                : '<b>زال الحسابُ مع المسح</b> — وهو غيرُ ما وُعد به',
+            whoWipe.status !== 200);
+
+        /* ٣ب) إقلاعٌ بعد إعادة التحميل، ثمّ زرعٌ ثانٍ للمرحلة الثانية */
+        bar.textContent = '⏳ يعيد الزرعَ لمرحلة الحذف…';
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth && win.SB; }, 25000))
+            throw new Error('لم يعد التطبيقُ بعد المسح.');
+        D = win.document;
+        q = function (sel) { return D.querySelector(sel); };
+        var me2 = await until(async function () {
+            var t = await win.Auth.currentTeacher();
+            return (t && t.id === tid) ? t : null;
+        }, 20000);
+        if (!me2) throw new Error('الحسابُ لم يعد بعد المسح.');
+        /* ⚠️ المسحُ يمحو `app_settings` ومنها `onboarded` — فالمُوجِّهُ
+           يسوق التطبيقَ إلى `#/setup` ولا تُفتح الإعداداتُ بعدها. قِيس:
+           وقفت المرحلةُ الثانيةُ عند «يضغط حذف حسابي» والشاشةُ على التهيئة.
+           وهو سلوكٌ صحيحٌ في التطبيق — من مسح كلَّ شيءٍ يبدأ من أوّله. */
+        var S2 = win.TeacherDB.Settings;
+        await S2.set('onboarded', true);
+        await S2.set('education_dept', 'إدارة تعليم عسير');
+        await S2.set('school_gender', 'boys');
+        await S2.set('academic_term', 1);
+        me2.name = 'فحص الحذف'; me2.school_name = 'مدرسة الفحص';
+        me2.subjects = ['العلوم']; me2.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me2);
+        var cls2 = await win.TeacherDB.add('classes', {
+            teacher_id: tid, grade: 'أول متوسط', section: '٢', subject: 'العلوم',
+            stage: 'intermediate'
+        });
+        clsId = cls2 && cls2.id ? cls2.id : cls2;
+        stuIds = [];
+        for (var s2 = 0; s2 < 4; s2++) {
+            var st2 = await win.TeacherDB.add('students',
+                { teacher_id: tid, class_id: clsId, name: 'طالب الحذف ' + ar(s2 + 1), notes: '' });
+            stuIds.push(st2 && st2.id ? st2.id : st2);
+        }
+        var jobs2 = [], upErr2 = [];
+        var stamp2 = Date.now();
+        for (var k2 = 0; k2 < EVIDENCE; k2++) {
+            jobs2.push(win.SB.storage.from('evidence').upload(
+                tid + '/del2-' + stamp2 + '-' + k2 + '.png',
+                new Blob([PIXEL], { type: 'image/png' }), { contentType: 'image/png' }
+            ).then(function (r) { if (r && r.error) upErr2.push(r.error.message); }));
+            if (jobs2.length >= 12) { await Promise.all(jobs2); jobs2 = []; }
+        }
+        if (jobs2.length) await Promise.all(jobs2);
+        var reseed = await countFiles(ghost, 'evidence', tid);
+        var reRows = await countRows(ghost, tid);
+        row('زرعٌ ثانٍ قبل الحذف', '—', ar(reseed.n) + ' شاهداً · ' + ar(reRows.total) + ' صفّاً',
+            reseed.n >= EVIDENCE ? 'الحسابُ نفسُه، ومحتوىً جديدٌ كاملاً'
+                                 : '<b>الزرعُ الثاني ناقص</b>' + (upErr2.length ? ' — ' + upErr2[0] : ''),
+            reseed.n < EVIDENCE);
+        if (reseed.n < EVIDENCE) throw new Error('الزرعُ الثاني لم يكتمل.');
+        beforeFiles.evidence = reseed;
+        before = reRows;
+
+        if (INJECT === 'nodelete') {
+            var realFetch = win.fetch;
+            win.fetch = function (u, o) {
+                if (String(u).indexOf('/functions/v1/delete-account') >= 0) {
+                    return Promise.reject(new Error('حقنٌ: دالّةُ الحافّة مُسقَطة'));
+                }
+                return realFetch.call(win, u, o);
+            };
+            var realRpc = win.SB.rpc.bind(win.SB);
+            win.SB.rpc = function (name, args) {
+                if (name === 'delete_own_account') {
+                    return Promise.resolve({ data: null, error: null });   /* تقول «تمّ» ولا تفعل */
+                }
+                return realRpc(name, args);
+            };
+            /* ⚠️ ولا يُعطَّل `Auth.purgeStorage` بتبديل الخاصّيّة:
+               `deleteAccount` تناديها **بالمرجع الداخليّ** في وحدتها لا
+               عبر الكائن المُصدَّر. جُرّب فلم يقع أثرُه. */
+            trace('حُقن العطب: لا حذفَ إطلاقاً، والواجهةُ تقول «تمّ»');
+        }
+
+        /* ٥) الحذفُ من زرّه — بإقراره ونافذتَي تأكيده */
+        bar.textContent = '⏳ يضغط «حذف حسابي نهائياً» من الإعدادات…';
+        await openSetting(win, D, 'حذف البيانات أو الحساب',
+            function () { return q('#btn-delete-account'); }, 'قسمُ الحذف');
+        var ack = await need(function () { return q('#del-ack'); }, 'مربّعُ الإقرار');
+        ack.checked = true;
+        ack.dispatchEvent(new win.Event('change', { bubbles: true }));
+        var del = await need(function () {
+            var b = q('#btn-delete-account');
+            return (b && !b.disabled) ? b : null;
+        }, 'زرُّ الحذف بعد الإقرار');
+        row('الزرُّ مقفولٌ حتى الإقرار', '—', YES,
+            'لا يُترك الحذفُ خلف ضغطةٍ عابرة — قِيس: الزرُّ فُتح بعد التأشير', false);
+        del.click();
+        (await need(function () { return q('#modal-body [data-ok]'); }, 'التأكيدُ الأوّل')).click();
+        await wait(400);
+        var delWatch = reloadWatcher(stage);
+        (await need(function () { return q('#modal-body [data-ok]'); }, 'التأكيدُ الثاني')).click();
+
+        /* ٦) يُنتظر زوالُ الحساب — لا مهلةٌ ثابتة */
+        bar.textContent = '⏳ ينتظر اكتمالَ الحذف على الخادم…';
+        var gone = await until(function () { return delWatch.fired() ? true : null; }, 120000, 500);
+        if (!gone) trace('لم يُعِد التطبيقُ تحميلَ نفسِه بعد الحذف — قد يكون الحذفُ تعثّر');
+        await wait(1500);
+        trace('اكتمل الحذف: ' + !!gone);
+
+        /* ٧) القياسُ بعد — بالرمز نفسِه */
+        bar.textContent = '⏳ يقرأ ما بقي…';
+        var after = await countRows(ghost, tid);
+        var afterFiles = {};
+        for (var c = 0; c < BUCKETS.length; c++) {
+            afterFiles[BUCKETS[c]] = await countFiles(ghost, BUCKETS[c], tid);
+        }
+
+        head('وبعد الحذف — <span class="hint">والقراءةُ بالرمز نفسِه، لا بحسابٍ آخر</span>');
+
+        var errs = Object.keys(after.per).filter(function (t) { return after.per[t] === 'خطأ'; });
+        row('الرمزُ ما يزال يُقرأ به', '—', errs.length < TABLES.length ? YES : NO,
+            errs.length === 0
+                ? 'كلُّ الجداول ردّت عدداً — فالصفرُ صفرٌ حقيقيٌّ لا منعُ حماية'
+                : (errs.length < TABLES.length
+                    ? '<b>' + ar(errs.length) + ' جدولاً ردّ خطأً</b>: ' + errs.join('، ')
+                      + ' — وما عداها مقروء'
+                    : '<b>رُدَّ الرمزُ كلُّه</b> — فلا يُدَّعى نجاحٌ ولا فشل، القياسُ لم يقع'),
+            errs.length === TABLES.length);
+
+        var leftRows = after.total;
+        var remaining = Object.keys(after.per)
+            .filter(function (t) { return typeof after.per[t] === 'number' && after.per[t] > 0; })
+            .map(function (t) { return t + ' ' + ar(after.per[t]); });
+        row('صفوفُ القاعدة', ar(before.total), leftRows === 0 ? '<b class="ok">صفر</b>' : '<b class="no">' + ar(leftRows) + '</b>',
+            leftRows === 0
+                ? 'كلُّ الجداول الثمانيةَ عشرَ فارغةٌ من صفوفه'
+                : '<b>بقي: ' + remaining.join(' · ') + '</b>',
+            leftRows !== 0);
+
+        for (var e = 0; e < BUCKETS.length; e++) {
+            var bk = BUCKETS[e];
+            var was = beforeFiles[bk], now = afterFiles[bk];
+            row('ملفّاتُ <code>' + bk + '</code>', ar(was.n),
+                now.err ? '<span class="no">خطأ</span>'
+                        : (now.n === 0 ? '<b class="ok">صفر</b>' : '<b class="no">' + ar(now.n) + '</b>'),
+                now.err ? 'تعذّرت القراءة: ' + now.err
+                        : (now.n === 0
+                            ? (bk === 'evidence'
+                                ? '<b>ولا شاهدَ واحد</b> — ومنها ما كان فوق حدّ الصفحة وفي مجلّدٍ فرعيّ.'
+                                  + ' <b>وحدُّ الدعوى:</b> لا صفَّ يصل إليه أحد — والبايتاتُ يمحوها'
+                                  + ' <code>purgeStorage</code> ودالّةُ الحافّة، لا التتالي'
+                                : 'المخزنُ فارغٌ من ملفّاته')
+                            : '<b>بقيت ' + ar(now.n) + ' — وفيها صورُ طلاب</b>'),
+                !!now.err || now.n !== 0);
+        }
+
+        /* ٨) والحسابُ نفسُه: أيقبل الخادمُ رمزَه؟ */
+        var who = await fetch(URL_ + '/auth/v1/user', {
+            headers: { apikey: KEY, Authorization: 'Bearer ' + token }
+        });
+        row('حسابُ المصادقة', '—', who.status !== 200 ? YES : NO,
+            who.status !== 200
+                ? 'الخادمُ يردّ <code>' + who.status + '</code> على رمزه — فالحسابُ زال'
+                : '<b>ما يزال الحسابُ قائماً</b> — حُذفت البياناتُ ولم يُحذف',
+            who.status === 200);
+
+        /* ٩) والجهازُ نفسُه لا يحتفظ */
+        var localLeft = -1;
+        try {
+            var cached = await win.TeacherDB.getAllByIndex('students', 'class_id', clsId)
+                            .catch(function () { return []; });
+            localLeft = (cached || []).length;
+        } catch (x) { localLeft = -1; }
+        row('مخبأُ الجهاز', ar(4), localLeft === 0 ? '<b class="ok">صفر</b>'
+                                                  : (localLeft < 0 ? '—' : '<b class="no">' + ar(localLeft) + '</b>'),
+            localLeft === 0 ? 'المخبأُ المحلّيُّ مُسح مع الحساب'
+                            : (localLeft < 0 ? 'تعذّرت القراءة — التطبيقُ أُعيد تحميلُه بعد الحذف'
+                                             : '<b>بقيت أسماءُ طلابٍ على الجهاز</b>'),
+            localLeft > 0);
+
+        bar.innerHTML = fails === 0
+            ? '<span class="ok">✅ ' + ar(checks) + ' من ' + ar(checks)
+              + ' — الحذفُ يترك صفراً في القاعدة والتخزين معاً.</span>'
+            : '<span class="no">‼️ ' + ar(fails) + ' من ' + ar(checks) + ' سقطت.</span>';
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
+        console.error(e);
+    } finally {
+        /* تنظيفٌ احتياطيّ: إن تعثّر الحذفُ لا تُترك الفوضى. */
+        try {
+            if (tid && ghost) {
+                for (var t = 0; t < TABLES.length; t++) {
+                    var col = (TABLES[t] === 'teachers') ? 'id' : 'teacher_id';
+                    await ghost.from(TABLES[t]).delete().eq(col, tid);
+                }
+                for (var bb = 0; bb < BUCKETS.length; bb++) {
+                    var left = await countFiles(ghost, BUCKETS[bb], tid);
+                    if (left.n > 0) {
+                        var lr = await ghost.storage.from(BUCKETS[bb]).list(tid, { limit: 100 });
+                        var names = (lr.data || []).filter(function (x) { return x.id !== null; })
+                                        .map(function (x) { return tid + '/' + x.name; });
+                        if (names.length) await ghost.storage.from(BUCKETS[bb]).remove(names);
+                    }
+                }
+            }
+        } catch (e2) { console.warn('تنظيف:', e2); }
+        try { if (win && win.SB) await win.SB.auth.signOut(); } catch (e3) {}
+        stage.src = 'about:blank';
+        document.getElementById('go').disabled = false;
+    }
+}
+
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
