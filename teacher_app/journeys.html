@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص الرحلات</title>
+<!--
+    journeys.html — البوّابة ‎٤‎: الرحلاتُ كما يعيشها المعلّم.
+
+    ── الرحلةُ الأهمّ: المعلّمُ الجديد من الصفر ──
+    لا يبدأ من فصلٍ جاهز. يبدأ من **شاشة التهيئة**: اسمُه، ومادّتُه،
+    ومدرستُه، وإدارتُه، وفصلُه الدراسيّ. ثمّ فصلُه الأوّل، ثمّ أسماؤه، ثمّ
+    أوّلُ تحضير. وكلُّ خطوةٍ من زرِّها.
+
+    وهذه الرحلةُ **لا تُفحص بغير قيادةِ الأزرار**: التهيئةُ حاجزٌ إلزاميّ
+    يوجّه إليه المُوجِّهُ كلَّ من لم يُكملها، فمن قفزها بكتابةٍ في القاعدة
+    لم يفحصها.
+
+    ── والعائد، والحالاتُ الفارغة ──
+    العائدُ يُعيد الإقلاعَ فيجد ما تركه. والفارغةُ: كلُّ شاشةٍ رئيسيّةٍ
+    تُفتح بلا بياناتٍ ولا خطأَ في وحدة التحكّم — وهو ما تكشفه شاشةٌ تفترض
+    وجودَ صفٍّ فتنهار على `undefined`.
+
+    أداةُ تطويرٍ: في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+    margin:0; padding:20px 14px 60px; direction:rtl;
+    font-family:'IBM Plex Sans Arabic',system-ui,-apple-system,sans-serif;
+    background:#F6F5F1; color:#22282B; line-height:1.7; font-variant-numeric:tabular-nums;
+}
+@media (prefers-color-scheme: dark){ body{background:#0D1117;color:#E8ECF3} }
+.wrap{max-width:840px;margin:0 auto}
+h1{font-size:20px;margin:0 0 6px}
+p.lead{margin:0 0 14px;font-size:13px;color:#6B7278;line-height:1.8}
+@media (prefers-color-scheme: dark){ p.lead{color:#98A2B3} }
+button#go{font-family:inherit;font-size:14px;font-weight:600;padding:11px 20px;
+  border:0;border-radius:11px;background:#0A3F4A;color:#fff;cursor:pointer}
+button#go[disabled]{opacity:.5;cursor:default}
+#bar{margin:14px 0 10px;font-size:14px;font-weight:600;min-height:22px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 9px;text-align:start;border-bottom:1px solid #E2E1DC;vertical-align:top}
+@media (prefers-color-scheme: dark){ th,td{border-color:#2C3545} }
+th{font-size:11px;color:#6B7278;font-weight:600}
+tr.bad td{background:rgba(180,35,24,.10)}
+tr.head td{background:rgba(10,63,74,.07);font-weight:700}
+@media (prefers-color-scheme: dark){ tr.head td{background:rgba(255,255,255,.05)} }
+.ok{color:#0F7A55;font-weight:600} .no{color:#B42318;font-weight:700}
+@media (prefers-color-scheme: dark){ .ok{color:#34D399} .no{color:#F87171} }
+.hint{color:#6B7278;font-size:11.5px}
+@media (prefers-color-scheme: dark){ .hint{color:#98A2B3} }
+iframe{position:fixed;left:-3000px;top:0;width:430px;height:900px;border:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>فحص الرحلات</h1>
+<p class="lead">
+    <b>المعلّمُ الجديد من الصفر</b> — من شاشة التهيئة إلى أوّل تحضير، كلُّ
+    خطوةٍ من زرِّها. ثمّ العائد، والحالاتُ الفارغة، والممتلئة.
+    بحسابٍ منفصلٍ يُمحى في النهاية.
+</p>
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table>
+    <thead><tr><th style="width:32%">الخطوة</th><th style="width:11%">النتيجة</th>
+        <th>ما قِيس</th></tr></thead>
+    <tbody id="out"></tbody>
+</table>
+</div>
+<iframe id="stage"></iframe>
+
+<script src="vendor/supabase.js?v=1"></script>
+<script>
+(function () {
+'use strict';
+
+var bar = document.getElementById('bar');
+var out = document.getElementById('out');
+var stage = document.getElementById('stage');
+var fails = 0, steps = 0;
+
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+async function until(fn, ms, every) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < (ms || 12000)) {
+        try { var v = await fn(); if (v) return v; } catch (e) {}
+        await wait(every || 200);
+    }
+    return null;
+}
+async function need(fn, what, ms) {
+    var el = await until(fn, ms);
+    if (!el) throw new Error('لم يظهر: ' + what);
+    return el;
+}
+/** المُوجِّهُ يرتدّ بعد الإقلاع — فيُعاد الضبطُ حتى يظهر المطلوب. */
+async function goto(win, hash, ready, what, ms) {
+    var t0 = Date.now(); ms = ms || 25000;
+    while (Date.now() - t0 < ms) {
+        if (win.location.hash !== hash) win.location.hash = hash;
+        var el = await until(ready, 1200, 150);
+        if (el) return el;
+    }
+    throw new Error('لم يظهر: ' + what);
+}
+
+function head(t) {
+    var tr = document.createElement('tr');
+    tr.className = 'head';
+    tr.innerHTML = '<td colspan="3">' + t + '</td>';
+    out.appendChild(tr);
+}
+function row(step, ok, note) {
+    steps++; if (!ok) fails++;
+    var tr = document.createElement('tr');
+    if (!ok) tr.className = 'bad';
+    tr.innerHTML = '<td>' + step + '</td>'
+        + '<td>' + (ok ? '<span class="ok">✅</span>' : '<span class="no">❌</span>') + '</td>'
+        + '<td class="hint">' + (note || '') + '</td>';
+    out.appendChild(tr);
+}
+
+/** يُقلع التطبيقَ من جديدٍ ويردُّ مقابضَه. */
+async function boot(tag) {
+    stage.src = 'index.html?j=' + tag + Date.now();
+    await new Promise(function (r) { stage.onload = r; });
+    var w = stage.contentWindow;
+    if (!await until(function () { return w.TeacherDB && w.Auth && w.SB; }, 25000)) {
+        throw new Error('لم يُحمَّل التطبيق.');
+    }
+    return { w: w, D: w.document, q: function (s) { return w.document.querySelector(s); } };
+}
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = ''; fails = 0; steps = 0;
+    var tid = null, SBref = null;
+
+    try {
+        /* ══════════ الرحلةُ الأولى: المعلّمُ الجديد من الصفر ══════════ */
+        head('١ · المعلّمُ الجديد — من التهيئة إلى أوّل تحضير');
+        bar.textContent = '⏳ حسابٌ جديدٌ بلا تهيئة…';
+        var A = await boot('a');
+        await A.w.SB.auth.signOut().catch(function () {});
+        await A.w.Auth.guestLogin({ allowNew: true });
+        var me0 = await A.w.Auth.currentTeacher();
+        tid = me0.id; SBref = A.w.SB;
+
+        /* إقلاعٌ ثانٍ: الحسابُ بُدّل والتطبيقُ يعمل، فتبقى الشاشةُ بمعلّمٍ قديم. */
+        A = await boot('a2');
+        SBref = A.w.SB;
+
+        /* المُوجِّهُ يجب أن يسوقه إلى التهيئة وحدَها */
+        var atSetup = await until(function () {
+            return A.w.location.hash.indexOf('/setup') >= 0 && A.q('#su-name');
+        }, 25000);
+        row('المُوجِّهُ يسوق الجديدَ إلى التهيئة', !!atSetup,
+            atSetup ? 'المسار <code>#/setup</code> وحقلُ الاسم ظاهر'
+                    : 'لم يُساق إلى التهيئة — <b>يمكن تخطّيها</b>');
+
+        if (atSetup) {
+            /* الخطوةُ الأولى: الاسمُ والمادّة */
+            var nm = A.q('#su-name');
+            nm.value = 'معلّمُ الرحلة';
+            nm.dispatchEvent(new A.w.Event('input', { bubbles: true }));
+            /* ⚠️ المادّةُ **منسدلةٌ لا رقاقات**: `select[data-subp-select]`.
+               وأوّلُ بناءٍ بحث عن `button`/`.chip` فلم يجد، فبقي الشرطُ
+               غيرَ مستوفًى ولم تنتقل الخطوة. والاختيارُ يُبلَّغ بـ`change`
+               لا بنقرة. */
+            var sel = await need(function () {
+                return A.q('#su-subs select[data-subp-select], #su-subs select');
+            }, 'منسدلة المادّة', 10000);
+            sel.value = 'العلوم';
+            sel.dispatchEvent(new A.w.Event('change', { bubbles: true }));
+            await wait(400);
+            A.q('#su-next').click();
+
+            var step2 = await until(function () { return A.q('#su-school'); }, 10000);
+            row('الخطوةُ الأولى تمرّ بالاسم والمادّة', !!step2,
+                step2 ? 'ظهر حقلُ المدرسة' : 'لم تنتقل — <b>شرطٌ لم يُستوفَ</b>');
+
+            if (step2) {
+                var sch = A.q('#su-school');
+                sch.value = 'مدرسةُ الرحلة';
+                sch.dispatchEvent(new A.w.Event('input', { bubbles: true }));
+                var g = A.q('#su-gender [data-gender]');  if (g) g.click();
+                var t = A.q('#su-term [data-term]');      if (t) t.click();
+                await wait(200);
+
+                /* ⚠️ **إدارةُ التعليم شرطٌ إلزاميّ** — `finish` تردّ بلا
+                   `dept`. وهي منتقٍ منفصلٌ يُفتح بزرّه، وأوّلُ بناءٍ تخطّاه
+                   فبقيت الشاشةُ مكانَها بلا سببٍ ظاهر. */
+                A.q('#su-dept-btn').click();
+                var dept = await need(function () { return A.q('[data-dept]'); },
+                                      'قائمة إدارات التعليم', 10000);
+                dept.click();
+                await wait(500);
+                row('اختيارُ إدارة التعليم من منتقيها',
+                    !!(A.q('#su-dept-v') && A.q('#su-dept-v').textContent.trim()),
+                    A.q('#su-dept-v') ? A.q('#su-dept-v').textContent.trim() : '—');
+
+                A.q('#su-go').click();
+
+                var done = await until(function () {
+                    return A.w.location.hash.indexOf('/setup') < 0
+                        && !A.w.document.getElementById('view-dashboard').hidden;
+                }, 20000);
+                row('«ابدأ» يُنهي التهيئةَ ويفتح الرئيسيّة', !!done,
+                    done ? 'المسار غادر <code>#/setup</code> والرئيسيّةُ ظاهرة'
+                         : 'بقي في التهيئة بعد الضغط');
+            }
+        }
+
+        /* الفصلُ الأوّل من زرّه */
+        bar.textContent = '⏳ الفصلُ الأوّل…';
+        (await goto(A.w, '#/classes',
+            function () { return A.q('#btn-add-class') || A.q('[data-add-class]'); },
+            'زرّ «إضافة فصل»')).click();
+        await need(function () { return A.q('[data-sec]'); }, 'لوحة الإضافة');
+        A.q('[data-grade="0"]').click(); await wait(200);
+        A.q('[data-sec]').click();       await wait(200);
+        (await need(function () { return A.q('[data-subj-save]'); }, 'زرّ الحفظ')).click();
+
+        var cls = await until(async function () {
+            var r = await SBref.from('classes').select('id').eq('teacher_id', tid);
+            return (r.data && r.data.length) ? r.data[0].id : null;
+        }, 20000);
+        row('فصلُه الأوّل', !!cls, cls ? 'صفٌّ في <code>classes</code>' : 'لم يُنشأ');
+        if (!cls) throw new Error('توقّف: لا فصل.');
+
+        /* الأسماءُ ثمّ أوّلُ تحضير */
+        bar.textContent = '⏳ أسماؤه وأوّلُ تحضير…';
+        (await goto(A.w, '#/class/' + cls + '/students',
+            function () { return A.q('[data-empty-add]') || A.q('#btn-add-students'); },
+            'زرّ إضافة الطلاب')).click();
+        var ta = await need(function () { return A.q('#paste-names'); }, 'حقل الأسماء');
+        ta.value = 'أوّلُ الرحلة\nثاني الرحلة';
+        ta.dispatchEvent(new A.w.Event('input', { bubbles: true }));
+        await wait(200);
+        (await need(function () { return A.q('[data-submit]'); }, 'زرّ الحفظ')).click();
+
+        var got = await until(async function () {
+            var r = await SBref.from('students').select('id').eq('class_id', cls);
+            return (r.data && r.data.length >= 2) ? r.data : null;
+        }, 20000);
+        row('أسماؤه', !!got, got ? got.length + ' اسماً في القاعدة' : 'لم تصل');
+
+        (await goto(A.w, '#/class/' + cls + '/students',
+            function () { return A.q('[data-att-btn][data-status="present"]'); },
+            'زرّ «حاضر»')).click();
+        var att = await until(async function () {
+            var r = await SBref.from('attendance').select('id').eq('class_id', cls);
+            return (r.data && r.data.length) ? true : null;
+        }, 15000);
+        row('أوّلُ تحضير', !!att, att ? 'صفٌّ في <code>attendance</code>' : 'الضغطُ لم يكتب');
+
+        /* ══════════ ٢ · العائد ══════════ */
+        head('٢ · المعلّمُ العائد');
+        bar.textContent = '⏳ يعود…';
+        var B = await boot('b');
+        var back = await until(async function () {
+            var t = await B.w.Auth.currentTeacher();
+            return (t && t.id === tid) ? t : null;
+        }, 20000);
+        row('الجلسةُ تعود بلا دخولٍ جديد', !!back,
+            back ? 'المعلّمُ نفسُه: ' + String(tid).slice(0, 8) : 'ضاعت الجلسة');
+        if (back) {
+            row('واسمُه ومدرستُه محفوظان',
+                !!(back.name && back.school_name),
+                (back.name || '—') + ' · ' + (back.school_name || '—'));
+            var seen = await until(function () {
+                return B.q('#view-dashboard') && !B.q('#view-dashboard').hidden;
+            }, 15000);
+            row('ويفتح على الرئيسيّة لا التهيئة', !!seen,
+                seen ? 'الرئيسيّةُ ظاهرةٌ مباشرةً' : 'أُعيد إلى التهيئة');
+        }
+
+        /* ══════════ ٣ · الحالاتُ الفارغة ══════════ */
+        head('٣ · الشاشاتُ الرئيسيّةُ تُفتح بلا انهيار');
+        var errs = [];
+        var origErr = B.w.console.error;
+        B.w.console.error = function () {
+            errs.push(Array.prototype.map.call(arguments, String).join(' ').slice(0, 80));
+            return origErr.apply(this, arguments);
+        };
+        var SCREENS = [
+            ['#/dashboard', '#view-dashboard', 'الرئيسيّة'],
+            ['#/classes', '#view-classes', 'الفصول'],
+            ['#/schedule', '#view-schedule', 'الجدول'],
+            ['#/shortcuts', '#view-shortcuts', 'إنجاز'],
+            ['#/reports', '#view-reports', 'التقارير'],
+            ['#/reminders', '#view-reminders', 'التذكيرات'],
+            ['#/settings', '#view-settings', 'الإعدادات']
+        ];
+        for (var i = 0; i < SCREENS.length; i++) {
+            var hash = SCREENS[i][0], sel = SCREENS[i][1], name = SCREENS[i][2];
+            bar.textContent = '⏳ ' + name + '…';
+            errs.length = 0;
+            var okScreen = null;
+            try {
+                okScreen = await goto(B.w, hash, (function (s) {
+                    return function () {
+                        var el = B.D.querySelector(s);
+                        return (el && !el.hidden && el.textContent.trim().length) ? el : null;
+                    };
+                })(sel), name, 18000);
+            } catch (e) { okScreen = null; }
+            row(name, !!okScreen && errs.length === 0,
+                !okScreen ? '<b>لم تُرسم</b>'
+                          : (errs.length ? '<b>' + errs.length + ' خطأً:</b> ' + errs[0]
+                                         : 'رُسمت بلا خطأ'));
+        }
+        B.w.console.error = origErr;
+
+        bar.innerHTML = fails === 0
+            ? '<span class="ok">✅ الرحلاتُ سليمة — ' + steps + ' خطوةً.</span>'
+            : '<span class="no">‼️ ' + fails + ' من ' + steps + ' سقطت.</span>';
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
+        console.error(e);
+    } finally {
+        try {
+            if (tid && SBref) {
+                for (const t of ['attendance','participation','schedule','students',
+                                 'exams','worksheets','assignments','classes',
+                                 'app_settings','reminders']) {
+                    await SBref.from(t).delete().eq('teacher_id', tid);
+                }
+                await SBref.auth.signOut();
+            }
+        } catch (e2) { console.warn('تنظيف:', e2); }
+        stage.src = 'about:blank';
+        document.getElementById('go').disabled = false;
+    }
+}
+
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
