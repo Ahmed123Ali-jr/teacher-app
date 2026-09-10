@@ -121,6 +121,27 @@ async function goto(win, hash, ready, what, ms) {
     throw new Error('لم يظهر: ' + what);
 }
 
+/** ══ يفتح قسماً في الإعدادات باسمه ══
+   ⚠️ صفحةُ الإعدادات **قائمةُ أقسامٍ تُفتح**، لا شاشةٌ واحدةٌ فيها كلُّ
+   شيء. و«الفصل الدراسي» و«النسخ الاحتياطي» صفحتان داخليّتان، وصفوفُها
+   `button.set-row` بلا معرّفٍ ولا `href` — فتُفتح بنصّها. */
+async function openSetting(win, D, label, ready, what) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < 25000) {
+        if (win.location.hash !== '#/settings' && !(await until(ready, 300, 150))) {
+            win.location.hash = '#/settings';
+            await wait(700);
+        }
+        var el = await until(ready, 400, 150);
+        if (el) return el;
+        var rows = [].slice.call(D.querySelectorAll('#view-settings button.set-row'));
+        var hit = rows.filter(function (r) { return r.textContent.indexOf(label) >= 0; })[0];
+        if (hit) { hit.click(); await wait(900); }
+        else { win.location.hash = '#/settings'; await wait(800); }
+    }
+    throw new Error('لم يظهر: ' + what);
+}
+
 /** ينتظر عنصراً ويُسمّيه إن غاب — بدل انهيارٍ على `null.click()`. */
 async function need(fn, what, ms) {
     var el = await until(fn, ms);
@@ -147,7 +168,7 @@ async function run() {
     out.innerHTML = ''; fails = 0; steps = 0;
     bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
 
-    var win = null, tid = null, clsId = null, V = null;
+    var win = null, tid = null, clsId = null, V = null, D = null, q = null;
 
     try {
         /* ١) التطبيقُ في إطار، وحسابُ زائرٍ منفصل */
@@ -192,8 +213,8 @@ async function run() {
            في `TeacherDB` وحدَه. فكلُّ نداءٍ هنا رحلةُ شبكة. */
         V = win.SB;
 
-        var D = win.document;
-        var q = function (sel) { return D.querySelector(sel); };
+        D = win.document;
+        q = function (sel) { return D.querySelector(sel); };
 
         /* ══ ٢) إنشاءُ فصلٍ من لوحة الإضافة ══ */
         bar.textContent = '⏳ ينشئ فصلاً من أزرار الواجهة…';
@@ -311,8 +332,131 @@ async function run() {
                                   + 'الشاشةُ ستعرض طلابَ فصلٍ ميّت',
             cached.length !== 0);
 
+        /* ══════════════════════════════════════════════════════════
+           ٧) تبديلُ الفصل الدراسيّ — من زرّ «انقل وانتقل»
+
+           والمنقولُ **نسخةٌ جديدةٌ في الفصل الثاني**، والأصلُ يبقى في
+           الأوّل. فيُتحقَّق من الاثنين: أنّ الجديدَ وُلد بالأسماء، وأنّ
+           القديمَ لم يُمسّ.
+           ══════════════════════════════════════════════════════════ */
+        bar.textContent = '⏳ يبني فصلاً للتبديل…';
+        var c2 = await win.ClassCreate.create({ teacher_id: tid, stage: 'intermediate',
+            grade: 'الصف الثاني المتوسط', section: 'ن', subject: 'العلوم' });
+        for (const nm of ['نقلٌ أوّل', 'نقلٌ ثانٍ']) {
+            await win.TeacherDB.add('students', { teacher_id: tid, class_id: c2.id, name: nm, notes: '' });
+        }
+
+        bar.textContent = '⏳ ينقل إلى الفصل الثاني من زرّه…';
+        (await openSetting(win, D, 'الفصل الدراسي',
+            function () { return q('[data-term-plain]') || q('[data-term-warn]'); },
+            'زرّ الانتقال داخل قسم «الفصل الدراسي»')).click();
+        (await need(function () { return q('[data-term-go]'); }, 'زرّ «متابعة»')).click();
+        /* ⚠️ «انقل وانتقل» **يُعيد تحميلَ التطبيق** — الانتقالُ يهاجر بياناتٍ
+           فيُعاد الإقلاعُ عمداً. فيموت `win` و`V` معه، وأيُّ سؤالٍ بعده يعلَق.
+           فيُنتظر الإقلاعُ ويُعاد التقاطُ المقابض. */
+        var reloaded = new Promise(function (r) { stage.onload = r; });
+        (await need(function () { return q('[data-term-carry]'); }, 'زرّ «انقل وانتقل»')).click();
+        await Promise.race([reloaded, wait(15000)]);
+        await wait(600);
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.SB; }, 20000)) {
+            throw new Error('لم يُقلع التطبيقُ بعد النقل.');
+        }
+        V = win.SB;
+        D = win.document;
+        q = function (sel) { return D.querySelector(sel); };
+
+        var carried = await until(async function () {
+            var r = await V.from('classes').select('id,term,section').eq('teacher_id', tid);
+            var t2 = (r.data || []).filter(function (x) { return Number(x.term) === 2; });
+            return t2.length ? t2 : null;
+        }, 25000);
+        row('نقلٌ إلى الفصل الثاني', carried ? YES : NO, carried ? YES : NO,
+            carried ? carried.length + ' فصلاً وُلد في الفصل الثاني'
+                    : 'لم يُنشأ فصلٌ في الفصل الثاني بعد ضغط «انقل وانتقل»', !carried);
+
+        if (carried) {
+            var newIds = carried.map(function (x) { return x.id; });
+            var rs = await V.from('students').select('id').in('class_id', newIds);
+            var moved = (rs.data || []).length;
+            row('والأسماءُ معه', '—', moved >= 2 ? YES : NO,
+                moved + ' اسماً في الفصول الجديدة', moved < 2);
+
+            var old = await V.from('students').select('id').eq('class_id', c2.id);
+            var kept = (old.data || []).length;
+            row('والأصلُ لم يُمسّ', '—', kept === 2 ? YES : NO,
+                kept === 2 ? 'اسمان باقيان في فصل الفصل الأوّل'
+                           : '<b>' + kept + '</b> بدل ‎٢‎ — النقلُ أتلف الأصل', kept !== 2);
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           ٨) النسخُ الاحتياطيُّ ذهاباً وإياباً — وهنا كان ق٫٤
+
+           العطبُ الذي كان: `importAll` يمسح كلَّ مخزنٍ **قبل** الإدراج، ثمّ
+           ترفض الحمايةُ الصفوفَ لأنّ `teacher_id` فيها لغيره — فيقول
+           «تمّ الاستيراد ✅» وقد ذهب كلُّ شيء. **فقدٌ كاملٌ برسالة نجاح.**
+           فيُجرَّب هنا أخطرُ حالاته: نسخةُ حسابٍ تُستورَد في حسابٍ آخر.
+           ══════════════════════════════════════════════════════════ */
+        bar.textContent = '⏳ يُصدّر نسخةً…';
+        var dump = await win.TeacherDB.exportAll();
+        var dumpClasses = (dump.data.classes || []).length;
+        var dumpStudents = (dump.data.students || []).length;
+        row('تصديرُ نسخةٍ احتياطيّة', YES, '—',
+            dumpClasses + ' فصلاً و' + dumpStudents + ' اسماً في الملفّ',
+            !(dumpClasses && dumpStudents));
+
+        /* ⚠️ زرعُ «أ» يُمحى **قبل** تبديل الحساب: بعده يضيع مفتاحُه فلا
+           يُنظَّف. والعزلُ بين الحسابين ليس شغلَ هذه الأداة — `isolation.html`
+           تُثبته بـ‎٦٧‎ محاولة. */
+        bar.textContent = '⏳ ينظّف حسابَ «أ» قبل التبديل…';
+        for (const t of ['attendance','participation','schedule','students',
+                         'exams','worksheets','assignments','classes','app_settings','reminders']) {
+            await V.from(t).delete().eq('teacher_id', tid);
+        }
+        tid = null;   /* نُظِّف — فلا يُعاد في `finally` */
+
+        /* حسابٌ ثانٍ يستورد نسخةَ الأوّل */
+        bar.textContent = '⏳ يستورد النسخةَ في حسابٍ آخر…';
+        stage.src = 'index.html?dcB=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        var winB = stage.contentWindow;
+        await until(function () { return winB.TeacherDB && winB.Auth; }, 20000);
+        await winB.SB.auth.signOut().catch(function () {});
+        await winB.Auth.guestLogin({ allowNew: true });
+        var meB = await winB.Auth.currentTeacher();
+        var bid = meB.id;
+
+        var impErr = null;
+        try { await winB.TeacherDB.importAll(dump); }
+        catch (e) { impErr = e.message; }
+
+        var bRows = (await winB.SB.from('students').select('id,teacher_id').eq('teacher_id', bid)).data || [];
+        var bAlien = bRows.filter(function (x) { return x.teacher_id !== bid; }).length;
+        row('استيرادٌ في حسابٍ آخر', impErr ? NO : YES, bRows.length ? YES : NO,
+            impErr ? 'رمى: ' + impErr
+                   : bRows.length + ' اسماً وصل الحسابَ الثاني بمعرّفه هو'
+                     + (bAlien ? ' — و<b>' + bAlien + '</b> بمعرّفٍ غريب' : ''),
+            !!impErr || !bRows.length || bAlien > 0);
+
+        /* ولا صفَّ يحمل معرّفَ «أ» — وهو جوهرُ ق٫٤: المعرّفاتُ تُستبدل
+           بمعرّف الحساب المستورِد، وإلّا رفضتها الحمايةُ بعد المسح. */
+        var allB = (await winB.SB.from('students').select('id,teacher_id')).data || [];
+        var stray = allB.filter(function (x) { return x.teacher_id !== bid; }).length;
+        row('ولا معرّفَ غريبٌ بقي', '—', stray === 0 ? YES : NO,
+            stray === 0 ? 'كلُّ اسمٍ مستورَدٍ يحمل معرّفَ الحساب الجديد'
+                        : '<b>' + stray + ' صفّاً بمعرّفٍ قديم</b>', stray !== 0);
+
+        /* تنظيفُ حساب «ب» قبل الخروج */
+        try {
+            for (const t of ['attendance','participation','schedule','students',
+                             'exams','worksheets','assignments','classes','app_settings','reminders']) {
+                await winB.SB.from(t).delete().eq('teacher_id', bid);
+            }
+        } catch (e) { /* لا يوقف التقرير */ }
+        try { await winB.SB.auth.signOut(); } catch (e) {}
+
         bar.innerHTML = fails === 0
-            ? '<span class="ok">✅ الدورةُ كاملةٌ سليمة — ' + steps + ' خطوةً، كلُّها متحقَّقٌ منها في القاعدة.</span>'
+            ? '<span class="ok">✅ الدورةُ كاملةٌ سليمة — ' + steps + ' خطوةً، كلُّها متحقَّقٌ منها في الخادم.</span>'
             : '<span class="no">‼️ ' + fails + ' من ' + steps + ' خطوةً سقطت.</span>';
     } catch (e) {
         bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
