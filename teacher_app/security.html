@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص الأمن</title>
+<!--
+    security.html — البوّابة ‎٥‎.
+
+    ── ١) حقنُ الشيفرة عبر النصّ ──
+    المعلّمُ يكتب أسماءَ طلابه بيده، ويلصقها من ملفّ، ويستخرجها من صورة.
+    فأيُّ نصٍّ قد يحمل وسماً. والسؤال: **أيُنفَّذ أم يُعرض حرفاً؟**
+
+    ولا يكفي أن نبحث عن النصّ في الشاشة: الحمولةُ قد تُنفَّذ **ثمّ تختفي**.
+    فتُزرع حمولاتٌ **تكتب علامةً في النافذة** (`window.__XSS`)، ثمّ تُجاس
+    الشاشاتُ ويُسأل: هل تغيّرت العلامة؟ وهل وُلد عنصرٌ من الحمولة؟
+    فالعلامةُ تمسك التنفيذَ ولو لم يبقَ له أثر.
+
+    ── ٢) القراءةُ بلا حساب ──
+    عميلٌ بلا جلسةٍ إطلاقاً يطلب كلَّ جدول. وأيُّ صفٍّ يعود تسريبٌ للعالم
+    كلِّه — لا لمعلّمٍ آخر فحسب. (والعزلُ بين حسابين في `isolation.html`.)
+
+    ── ٣) المكتباتُ المُضمَّنة ──
+    خمسٌ تُشحن من المستودع لا من شبكةٍ خارجيّة. تُسمّى ونسخُها تُقرأ،
+    فمن حدّثها يعرف ما بدّل.
+
+    أداةُ تطويرٍ: في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body{margin:0;padding:20px 14px 60px;direction:rtl;
+  font-family:'IBM Plex Sans Arabic',system-ui,-apple-system,sans-serif;
+  background:#F6F5F1;color:#22282B;line-height:1.7;font-variant-numeric:tabular-nums}
+@media (prefers-color-scheme:dark){body{background:#0D1117;color:#E8ECF3}}
+.wrap{max-width:840px;margin:0 auto}
+h1{font-size:20px;margin:0 0 6px}
+p.lead{margin:0 0 14px;font-size:13px;color:#6B7278;line-height:1.8}
+@media (prefers-color-scheme:dark){p.lead{color:#98A2B3}}
+button#go{font-family:inherit;font-size:14px;font-weight:600;padding:11px 20px;
+  border:0;border-radius:11px;background:#0A3F4A;color:#fff;cursor:pointer}
+button#go[disabled]{opacity:.5;cursor:default}
+#bar{margin:14px 0 10px;font-size:14px;font-weight:600;min-height:22px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 9px;text-align:start;border-bottom:1px solid #E2E1DC;vertical-align:top}
+@media (prefers-color-scheme:dark){th,td{border-color:#2C3545}}
+th{font-size:11px;color:#6B7278;font-weight:600}
+tr.bad td{background:rgba(180,35,24,.10)}
+tr.head td{background:rgba(10,63,74,.07);font-weight:700}
+@media (prefers-color-scheme:dark){tr.head td{background:rgba(255,255,255,.05)}}
+.ok{color:#0F7A55;font-weight:600}.no{color:#B42318;font-weight:700}
+@media (prefers-color-scheme:dark){.ok{color:#34D399}.no{color:#F87171}}
+.hint{color:#6B7278;font-size:11.5px}
+@media (prefers-color-scheme:dark){.hint{color:#98A2B3}}
+code{font-family:ui-monospace,monospace;font-size:11px}
+iframe{position:fixed;left:-3000px;top:0;width:430px;height:900px;border:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>فحص الأمن</h1>
+<p class="lead">
+    يزرع <b>حمولاتِ حقنٍ حقيقيّة</b> في أسماء الطلاب وملاحظاتهم وعناوين
+    الاختبارات، ثمّ يجوس الشاشاتِ ويسأل: <b>أنُفِّذ شيء؟</b> ثمّ يطلب
+    القاعدةَ <b>بلا حسابٍ إطلاقاً</b>. بحسابٍ منفصلٍ يُمحى.
+</p>
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table>
+    <thead><tr><th style="width:34%">الفحص</th><th style="width:11%">النتيجة</th>
+        <th>ما قِيس</th></tr></thead>
+    <tbody id="out"></tbody>
+</table>
+</div>
+<iframe id="stage"></iframe>
+
+<script src="vendor/supabase.js?v=1"></script>
+<script>
+(function () {
+'use strict';
+
+var URL_ = 'https://rbsfpsmolxldmwcclhlc.supabase.co';
+var KEY  = 'sb_publishable_z5RQ0LotgRBWRSUXjTz38w_GOyBOhUX';
+
+var bar = document.getElementById('bar');
+var out = document.getElementById('out');
+var stage = document.getElementById('stage');
+var fails = 0, steps = 0;
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+async function until(fn, ms, every) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < (ms || 12000)) {
+        try { var v = await fn(); if (v) return v; } catch (e) {}
+        await wait(every || 200);
+    }
+    return null;
+}
+async function goto(win, hash, ready, what, ms) {
+    var t0 = Date.now(); ms = ms || 22000;
+    while (Date.now() - t0 < ms) {
+        if (win.location.hash !== hash) win.location.hash = hash;
+        var el = await until(ready, 1100, 150);
+        if (el) return el;
+    }
+    return null;
+}
+function head(t) {
+    var tr = document.createElement('tr'); tr.className = 'head';
+    tr.innerHTML = '<td colspan="3">' + t + '</td>'; out.appendChild(tr);
+}
+function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (m) {
+        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[m];
+    });
+}
+function row(step, ok, note) {
+    steps++; if (!ok) fails++;
+    var tr = document.createElement('tr');
+    if (!ok) tr.className = 'bad';
+    tr.innerHTML = '<td>' + step + '</td>'
+        + '<td>' + (ok ? '<span class="ok">✅</span>' : '<span class="no">❌</span>') + '</td>'
+        + '<td class="hint">' + (note || '') + '</td>';
+    out.appendChild(tr);
+}
+
+/* حمولاتٌ **تكتب علامةً** لا تكتفي بالظهور — فالتنفيذُ يُمسك ولو لم يبقَ أثر. */
+var PAY = [
+    '<script>window.__XSS=1<\/script>',
+    '<img src=x onerror="window.__XSS=1">',
+    '"><img src=x onerror="window.__XSS=1">',
+    '<svg onload="window.__XSS=1">',
+    "'><script>window.__XSS=1<\/script>"
+];
+
+async function boot(tag) {
+    stage.src = 'index.html?sec=' + tag + Date.now();
+    await new Promise(function (r) { stage.onload = r; });
+    var w = stage.contentWindow;
+    if (!await until(function () { return w.TeacherDB && w.Auth && w.SB; }, 25000)) {
+        throw new Error('لم يُحمَّل التطبيق.');
+    }
+    return { w: w, D: w.document, q: function (s) { return w.document.querySelector(s); } };
+}
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = ''; fails = 0; steps = 0;
+    var tid = null, SBref = null;
+
+    try {
+        /* ════════ ١ · حقنُ الشيفرة ════════ */
+        head('١ · حقنُ الشيفرة عبر نصٍّ يكتبه المعلّم');
+        bar.textContent = '⏳ يزرع الحمولات…';
+        var A = await boot('a');
+        await A.w.SB.auth.signOut().catch(function () {});
+        await A.w.Auth.guestLogin({ allowNew: true });
+        var S = A.w.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        var me = await A.w.Auth.currentTeacher();
+        tid = me.id;
+        me.name = PAY[1]; me.school_name = PAY[3];
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await A.w.TeacherDB.put('teachers', me);
+
+        var cls = await A.w.ClassCreate.create({ teacher_id: tid, stage: 'intermediate',
+            grade: 'الصف الأول المتوسط', section: 'ح', subject: PAY[0] });
+        for (var i = 0; i < PAY.length; i++) {
+            await A.w.TeacherDB.add('students',
+                { teacher_id: tid, class_id: cls.id, name: PAY[i], notes: PAY[(i + 1) % PAY.length] });
+        }
+        await A.w.TeacherDB.add('exams', { teacher_id: tid, class_id: cls.id, title: PAY[2] });
+        await A.w.TeacherDB.add('reminders', { teacher_id: tid, title: PAY[3], done: false });
+        SBref = A.w.SB;
+
+        /* إقلاعٌ نظيفٌ ثمّ جولةٌ على الشاشات */
+        var B = await boot('b');
+        SBref = B.w.SB;
+        B.w.__XSS = 0;
+
+        /* ⚠️ **خطُّ أساسٍ يُقاس قبل الجولة.** الصفحةُ فيها أصلاً
+           `<link ... onload="this.media='all'">` — حيلةُ تحميل الخطّ في
+           `index.html`. وأوّلُ بناءٍ عدّها «عنصراً وُلد من الحمولة»
+           **فأبلغ عن ثغرةٍ في ثماني شاشاتٍ ولا ثغرة**. فيُعدّ الموجودُ
+           سلفاً ويُطرح — وإلّا كان الحارسُ يصيح على نفسه. */
+        var BASE = B.D.querySelectorAll('[onerror],[onload]').length;
+        row('خطُّ الأساس قبل الحمولات', true,
+            BASE + ' عنصراً بمعالجٍ في الصفحة أصلاً (حيلةُ تحميل الخطّ) — يُطرح');
+
+        var SCREENS = [
+            ['#/dashboard', '#view-dashboard', 'الرئيسيّة'],
+            ['#/classes', '#view-classes', 'الفصول'],
+            ['#/class/' + cls.id, '#view-class', 'لوحةُ الفصل'],
+            ['#/class/' + cls.id + '/students', '#tab-panel', 'سجلُّ المتابعة'],
+            ['#/class/' + cls.id + '/exams', '#view-class', 'الاختبارات'],
+            ['#/reports', '#view-reports', 'التقارير'],
+            ['#/reminders', '#view-reminders', 'التذكيرات'],
+            ['#/settings', '#view-settings', 'الإعدادات']
+        ];
+        for (var s = 0; s < SCREENS.length; s++) {
+            var hash = SCREENS[s][0], sel = SCREENS[s][1], name = SCREENS[s][2];
+            bar.textContent = '⏳ ' + name + '…';
+            var seen = await goto(B.w, hash, (function (x) {
+                return function () {
+                    var el = B.D.querySelector(x);
+                    return (el && !el.hidden && el.textContent.trim().length) ? el : null;
+                };
+            })(sel), name, 18000);
+            await wait(500);
+
+            var fired = B.w.__XSS === 1;
+            /* وعنصرٌ وُلد من الحمولة: `onerror`/`onload` مكتوبان في السمة */
+            var born = Math.max(0, B.D.querySelectorAll('[onerror],[onload]').length - BASE)
+                     + B.D.querySelectorAll('#view-class script, #view-classes script,'
+                       + '#view-dashboard script, #view-reports script,'
+                       + '#view-reminders script, #view-settings script').length;
+            row(name, !!seen && !fired && born === 0,
+                !seen ? '<b>لم تُرسم</b>'
+                : fired ? '<b>‼️ نُفِّذت الحمولة</b> — <code>window.__XSS = 1</code>'
+                : born ? '<b>‼️ وُلد ' + born + ' عنصراً من الحمولة</b>'
+                : 'رُسمت · لا تنفيذ · لا عنصرَ وُلد');
+            B.w.__XSS = 0;
+        }
+
+        /* وتظهر الحمولةُ حرفاً — لا مُفسَّرةً ولا محذوفة */
+        await goto(B.w, '#/class/' + cls.id + '/students',
+            function () { return B.q('#tab-panel'); }, 'السجلّ', 15000);
+        await wait(600);
+        var txt = (B.q('#tab-panel') || {}).textContent || '';
+        var literal = txt.indexOf('<img') >= 0 || txt.indexOf('<script') >= 0;
+        row('والحمولةُ تُعرض حرفاً كما كُتبت', literal,
+            literal ? 'الاسمُ يظهر نصّاً: <code>' + esc(PAY[1]).slice(0, 46) + '…</code>'
+                    : 'لم تظهر — <b>حُذفت بصمت؟</b> فالمعلّمُ يفقد ما كتب');
+
+        /* ════════ ٢ · القراءةُ بلا حساب ════════ */
+        head('٢ · القراءةُ بلا حسابٍ إطلاقاً');
+        bar.textContent = '⏳ عميلٌ بلا جلسة…';
+        var anon = window.supabase.createClient(URL_, KEY, {
+            auth: { persistSession: false, autoRefreshToken: false,
+                    detectSessionInUrl: false, storageKey: 'sec-anon' }
+        });
+        var TABLES = ['teachers','classes','students','attendance','participation',
+                      'assignments','exams','worksheets','books','strategies',
+                      'initiatives','schedule','reminders','portfolio','app_settings',
+                      'ai_usage','strategy_logs','initiative_logs','feedback',
+                      'web_access_codes'];
+        var leaked = [];
+        for (var t = 0; t < TABLES.length; t++) {
+            var r = await anon.from(TABLES[t]).select('*').limit(5);
+            if (!r.error && (r.data || []).length) leaked.push(TABLES[t] + ' (' + r.data.length + ')');
+        }
+        row('عشرون جدولاً بلا جلسة', leaked.length === 0,
+            leaked.length === 0
+                ? 'صفرُ صفٍّ يعود لمن لا حسابَ له'
+                : '<b>‼️ تسرّب: ' + leaked.join(' · ') + '</b>');
+
+        /* والكتابةُ بلا حساب */
+        var w1 = await anon.from('classes').insert(
+            { teacher_id: tid, grade: 'اختراق', subject: 'اختراق' });
+        row('والكتابةُ بلا جلسة', !!w1.error,
+            w1.error ? 'مُنعت: <code>' + (w1.error.code || '') + '</code>'
+                     : '<b>‼️ نفذت كتابةٌ بلا حساب</b>');
+
+        /* ════════ ٣ · المكتباتُ المُضمَّنة ════════ */
+        head('٣ · المكتباتُ المُضمَّنة — من المستودع لا من شبكةٍ خارجيّة');
+        var extern = [].slice.call(B.D.querySelectorAll('script[src], link[rel="stylesheet"]'))
+            .map(function (e) { return e.getAttribute('src') || e.getAttribute('href'); })
+            .filter(function (u) { return u && /^(https?:)?\/\//.test(u); });
+        row('لا أصلَ يُجلب من شبكةٍ خارجيّة', extern.length === 0,
+            extern.length === 0 ? 'كلُّ سكربتٍ وتنسيقٍ من المستودع'
+                                : '<b>' + extern.length + ':</b> ' + esc(extern.join(' · ')).slice(0, 120));
+
+        var vend = [].slice.call(B.D.querySelectorAll('script[src^="vendor/"]'))
+            .map(function (e) { return e.getAttribute('src'); });
+        row('والمكتباتُ المُضمَّنة مسمّاةٌ وموسومة', vend.length > 0,
+            vend.length ? esc(vend.join(' · ')) : 'لم تُوجد');
+
+        bar.innerHTML = fails === 0
+            ? '<span class="ok">✅ لا ثغرة — ' + steps + ' فحصاً.</span>'
+            : '<span class="no">‼️ ' + fails + ' من ' + steps + ' سقط.</span>';
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
+        console.error(e);
+    } finally {
+        try {
+            if (tid && SBref) {
+                for (const t of ['attendance','participation','schedule','students',
+                                 'exams','worksheets','assignments','classes',
+                                 'app_settings','reminders']) {
+                    await SBref.from(t).delete().eq('teacher_id', tid);
+                }
+                await SBref.auth.signOut();
+            }
+        } catch (e2) { console.warn('تنظيف:', e2); }
+        stage.src = 'about:blank';
+        document.getElementById('go').disabled = false;
+    }
+}
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
