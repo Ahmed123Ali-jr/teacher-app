@@ -37,6 +37,18 @@
 
     const KEY = 'fusool_web_gate_ok';
 
+    /* ══ وأدواتُ الفحص تمرّ بلا باب ══
+       أربعُ أدواتٍ تُحمّل التطبيقَ في إطارٍ من الأصل نفسِه (فحصُ الدخان،
+       والتباين، ودورة البيانات…). والبابُ يغطّيها فيُخفي ما تفحصه ويقفل
+       التمرير. والإطارُ من أصلٍ آخر لا يبلغ `parent.location.origin`
+       (يرمي)، فالشرطُ يُميّز أداتَنا من موقعٍ غريبٍ يضع الصفحةَ في إطاره. */
+    function inOwnFrame() {
+        try {
+            return global.parent !== global
+                   && global.parent.location.origin === global.location.origin;
+        } catch (e) { return false; }   /* أصلٌ غريب — البابُ يبقى */
+    }
+
     /* التطبيقُ المغلَّف يمرّ بلا باب. */
     function isNative() {
         const c = global.Capacitor;
@@ -165,7 +177,7 @@
        الزائرُ شيئاً. و`DOMContentLoaded` لأنّ `document.body` قد لا يكون
        جاهزاً حين يُحمَّل السكربت. */
     function start() {
-        if (!GATE_ON || isNative() || passed()) return;
+        if (!GATE_ON || isNative() || inOwnFrame() || passed()) return;
         if (document.body) open();
         else document.addEventListener('DOMContentLoaded', open, { once: true });
     }

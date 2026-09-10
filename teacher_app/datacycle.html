@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فحص دورة البيانات</title>
+<!--
+    datacycle.html — البوّابة ‎٣‎: **أنشئ ← اقرأ ← عدّل ← احذف**، من أزرار
+    الواجهة نفسِها.
+
+    ── لماذا من الأزرار لا من طبقة البيانات ──
+    لأنّ العطبَ يقع **بين الزرِّ والطبقة**. وقع فعلاً (ق٫٢): أربعةُ أزرارٍ
+    تحوّل المعرّفَ `Number(uuid)` فينتج `NaN`، فيضغط المعلّمُ ولا يحدث
+    شيء — وطبقةُ البيانات سليمةٌ تماماً. فحصٌ يستدعي `TeacherDB.add`
+    مباشرةً يمرّ على هذا العطب ولا يراه.
+
+    ── ولماذا يُتحقَّق من الخادم لا من الشاشة ──
+    مخبأُ التطبيق **يكذب بحسن نيّة**: يعرض ما كتبه تفاؤلاً قبل أن يصل
+    الخادم، ويُبقي المحذوفَ إن تعثّر الحذف. فكلُّ تحقّقٍ هنا يسأل الخادمَ.
+
+    ⚠️ **والمخبأُ في `TeacherDB` لا في `SB`.** فـ`win.SB.from(...)` **رحلةُ
+    شبكةٍ حقيقيّة** لا تمرّ بمخبأٍ ولا تقرأ منه — وهي التحقّقُ المطلوب.
+    وأوّلُ بناءٍ أنشأ عميلاً ثانياً و`setSession` بجلسة التطبيق، فسقط
+    التحقّقُ صامتاً (بقي مجهولاً فمنعته RLS) **فبدا أنّ الواجهةَ لم تُنشئ
+    شيئاً وهي قد أنشأت**. عميلٌ ثانٍ لا يزيد صدقاً هنا، ويزيد ما يُكسر.
+
+    ── وحسابٌ منفصلٌ يُنشأ ويُمحى ──
+    لا تُمسّ بياناتُ المعلّم. والزرعُ يُحذف في النهاية، وما بقي منه يُحذف
+    في التنظيف الأخير.
+
+    أداةُ تطويرٍ: في tools/dev-pages.txt فلا تُنشر ولا تُغلَّف.
+-->
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 20px 14px 60px; direction: rtl;
+    font-family: 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif;
+    background: #F6F5F1; color: #22282B; line-height: 1.7;
+    font-variant-numeric: tabular-nums;
+}
+@media (prefers-color-scheme: dark) { body { background:#0D1117; color:#E8ECF3; } }
+.wrap { max-width: 820px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 6px; }
+p.lead { margin: 0 0 14px; font-size: 13px; color:#6B7278; line-height:1.8; }
+@media (prefers-color-scheme: dark){ p.lead{color:#98A2B3} }
+button#go {
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    padding: 11px 20px; border: 0; border-radius: 11px;
+    background: #0A3F4A; color: #fff; cursor: pointer;
+}
+button#go[disabled] { opacity: .5; cursor: default; }
+#bar { margin: 14px 0 10px; font-size: 14px; font-weight: 600; min-height: 22px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th, td { padding: 7px 9px; text-align: start; border-bottom: 1px solid #E2E1DC; vertical-align: top; }
+@media (prefers-color-scheme: dark){ th,td{border-color:#2C3545} }
+th { font-size: 11px; color:#6B7278; font-weight: 600; }
+tr.bad td { background: rgba(180,35,24,.10); }
+.ok { color:#0F7A55; font-weight:600 } .no { color:#B42318; font-weight:700 }
+@media (prefers-color-scheme: dark){ .ok{color:#34D399} .no{color:#F87171} }
+.hint { color:#6B7278; font-size:11.5px }
+@media (prefers-color-scheme: dark){ .hint{color:#98A2B3} }
+iframe { position: fixed; left: -3000px; top: 0; width: 430px; height: 900px; border: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>فحص دورة البيانات</h1>
+<p class="lead">
+    يقود <b>أزرارَ الواجهة الحقيقيّة</b> في نسخةٍ من التطبيق: يُنشئ فصلاً،
+    ويضيف طلاباً، ويحضّر، ويعدّل، ويحذف — <b>ويتحقّق من كلّ خطوةٍ في القاعدة
+    بعميلٍ مستقلٍّ لا يقرأ المخبأ</b>. بحسابٍ منفصلٍ يُمحى في النهاية.
+</p>
+<button id="go">▶ ابدأ الفحص</button>
+<div id="bar"></div>
+<table>
+    <thead><tr><th style="width:34%">الخطوة</th><th style="width:13%">من الواجهة</th>
+        <th style="width:13%">في القاعدة</th><th>ما قِيس</th></tr></thead>
+    <tbody id="out"></tbody>
+</table>
+</div>
+<iframe id="stage"></iframe>
+
+<script src="vendor/supabase.js?v=1"></script>
+<script>
+(function () {
+'use strict';
+
+var URL_ = 'https://rbsfpsmolxldmwcclhlc.supabase.co';
+var KEY  = 'sb_publishable_z5RQ0LotgRBWRSUXjTz38w_GOyBOhUX';
+
+var bar = document.getElementById('bar');
+var out = document.getElementById('out');
+var stage = document.getElementById('stage');
+var fails = 0, steps = 0;
+
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+/** ينتظر شرطاً بدل مهلةٍ ثابتةٍ تكذب على الشبكة البطيئة. */
+async function until(fn, ms, every) {
+    var t0 = Date.now();
+    while (Date.now() - t0 < (ms || 12000)) {
+        try { var v = await fn(); if (v) return v; } catch (e) { /* بعدُ */ }
+        await wait(every || 200);
+    }
+    return null;
+}
+
+/** ══ تنقّلٌ يصمد أمام ارتداد المُوجِّه ══
+   ضبطُ `location.hash` مرّةً لا يكفي: التطبيقُ يُنهي إقلاعَه **بعدها**
+   فيوجّه نفسَه إلى `#/dashboard` ويغلب ما ضُبط — قِيس. فيُعاد الضبطُ حتى
+   يظهر ما يُنتظر أو تنتهي المهلة. */
+async function goto(win, hash, ready, what, ms) {
+    var t0 = Date.now();
+    ms = ms || 25000;
+    while (Date.now() - t0 < ms) {
+        if (win.location.hash !== hash) win.location.hash = hash;
+        var el = await until(ready, 1200, 150);
+        if (el) return el;
+    }
+    throw new Error('لم يظهر: ' + what);
+}
+
+/** ينتظر عنصراً ويُسمّيه إن غاب — بدل انهيارٍ على `null.click()`. */
+async function need(fn, what, ms) {
+    var el = await until(fn, ms);
+    if (!el) throw new Error('لم يظهر: ' + what);
+    return el;
+}
+
+function row(step, ui, db, note, bad) {
+    steps++;
+    if (bad) fails++;
+    var tr = document.createElement('tr');
+    if (bad) tr.className = 'bad';
+    tr.innerHTML = '<td>' + step + '</td>'
+        + '<td>' + (ui || '—') + '</td>'
+        + '<td>' + (db || '—') + '</td>'
+        + '<td class="hint">' + (note || '') + '</td>';
+    out.appendChild(tr);
+}
+var YES = '<span class="ok">✅</span>', NO = '<span class="no">❌</span>';
+
+async function run() {
+    var btn = document.getElementById('go');
+    btn.disabled = true;
+    out.innerHTML = ''; fails = 0; steps = 0;
+    bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
+
+    var win = null, tid = null, clsId = null, V = null;
+
+    try {
+        /* ١) التطبيقُ في إطار، وحسابُ زائرٍ منفصل */
+        stage.src = 'index.html?datacycle=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000)) {
+            throw new Error('لم يُحمَّل التطبيق.');
+        }
+        await win.SB.auth.signOut().catch(function () {});
+        await win.Auth.guestLogin({ allowNew: true });
+        var S = win.TeacherDB.Settings;
+        await S.set('onboarded', true);
+        await S.set('education_dept', 'إدارة تعليم عسير');
+        await S.set('school_gender', 'boys');
+        await S.set('academic_term', 1);
+        var me = await win.Auth.currentTeacher();
+        tid = me.id;
+        me.name = 'فحص الدورة'; me.school_name = 'مدرسة الفحص';
+        me.subjects = ['العلوم']; me.subject = 'العلوم';
+        await win.TeacherDB.put('teachers', me);
+
+        /* ══ إقلاعٌ ثانٍ بعد تبديل الحساب — لا زينةَ بل ضرورة ══
+           الحسابُ بُدّل **والتطبيقُ يعمل**، فتبقى الشاشةُ ممسكةً بكائن
+           المعلّم القديم وتكتب بمعرّفه — فتردُّ الحمايةُ الكتابةَ بحقّ:
+           `403 · new row violates row-level security policy`. وهو ليس عطباً
+           في التطبيق (المعلّمُ لا يبدّل حسابَه من تحت شاشةٍ مفتوحة) بل في
+           هذه الأداة. فيُعاد الإقلاعُ فيبدأ كلُّ شيءٍ بالحساب الجديد. */
+        stage.src = 'index.html?datacycle2=' + Date.now();
+        await new Promise(function (r) { stage.onload = r; });
+        win = stage.contentWindow;
+        if (!await until(function () { return win.TeacherDB && win.Auth; }, 20000)) {
+            throw new Error('لم يُحمَّل التطبيق بعد تبديل الحساب.');
+        }
+        var who = await until(async function () {
+            var t = await win.Auth.currentTeacher();
+            return (t && t.id === tid) ? t : null;
+        }, 15000);
+        if (!who) throw new Error('الإقلاعُ الثاني لم يلتقط الحسابَ الجديد.');
+
+        /* التحقّقُ من الخادم مباشرةً — `SB` عميلُ سوبابيس الخام، والمخبأُ
+           في `TeacherDB` وحدَه. فكلُّ نداءٍ هنا رحلةُ شبكة. */
+        V = win.SB;
+
+        var D = win.document;
+        var q = function (sel) { return D.querySelector(sel); };
+
+        /* ══ ٢) إنشاءُ فصلٍ من لوحة الإضافة ══ */
+        bar.textContent = '⏳ ينشئ فصلاً من أزرار الواجهة…';
+        (await goto(win, '#/classes',
+            function () { return q('#btn-add-class') || q('[data-add-class]'); },
+            'زرّ «إضافة فصل» في شاشة الفصول')).click();
+
+        await until(function () { return q('[data-sec]'); });
+        q('[data-grade="0"]').click();
+        await wait(150);
+        q('[data-sec]').click();
+        await wait(150);
+        var save = await until(function () { return q('[data-subj-save]'); });
+        save.click();
+
+        var made = await until(async function () {
+            var r = await V.from('classes').select('id,subject').eq('teacher_id', tid);
+            return (r.data && r.data.length) ? r.data[0] : null;
+        }, 15000);
+        clsId = made && made.id;
+        row('إنشاءُ فصل', clsId ? YES : NO, clsId ? YES : NO,
+            clsId ? 'صفٌّ في <code>classes</code> بمعرّف ' + String(clsId).slice(0, 8)
+                  : 'لم يظهر صفٌّ في القاعدة بعد ضغط «إضافة الفصل»', !clsId);
+        if (!clsId) throw new Error('توقّف: لا فصل.');
+
+        /* ══ ٣) إضافةُ طلابٍ من نافذة الأسماء ══ */
+        bar.textContent = '⏳ يضيف طلاباً…';
+        /* ⚠️ `#/class/<id>` **لوحةُ الفصل** لا سجلُّه — فيها بطاقاتُ الأقسام
+           وحدَها ولا زرَّ إضافةِ طلابٍ فيها. والسجلُّ قسمٌ مستقلّ:
+           `#/class/<id>/students`. وأوّلُ بناءٍ ذهب إلى اللوحة فانهار على
+           `null.click()`. */
+        /* ⚠️ زرّان لا واحد: `#btn-add-students` في الشريط السفليّ **لا يظهر
+           إلّا ومعك طلاب**، والسجلُّ فارغٌ الآن فيُعرض زرُّ الحالة الفارغة
+           `[data-empty-add]`. وأوّلُ بناءٍ انتظر الأوّلَ وحدَه فوقف. */
+        (await goto(win, '#/class/' + clsId + '/students',
+            function () { return q('[data-empty-add]') || q('#btn-add-students'); },
+            'زرّ إضافة الطلاب في سجلّ المتابعة')).click();
+        var ta = await need(function () { return q('#paste-names'); }, 'حقل الأسماء');
+        ta.value = 'طالب الدورة الأول\nطالب الدورة الثاني\nطالب الدورة الثالث';
+        ta.dispatchEvent(new win.Event('input', { bubbles: true }));
+        await wait(150);
+        (await need(function () { return q('[data-submit]'); }, 'زرّ حفظ الأسماء')).click();
+
+        var stu = await until(async function () {
+            var r = await V.from('students').select('id,name').eq('class_id', clsId);
+            return (r.data && r.data.length >= 3) ? r.data : null;
+        }, 20000);
+        row('إضافةُ ‎٣‎ طلاب', stu ? YES : NO, stu ? YES : NO,
+            stu ? 'ثلاثةُ صفوفٍ في <code>students</code>'
+                : 'لم تصل الأسماءُ القاعدةَ بعد ضغط الحفظ', !stu);
+        if (!stu) throw new Error('توقّف: لا طلاب.');
+
+        /* ══ ٤) تحضيرٌ بضغط زرِّ الحالة ══ */
+        bar.textContent = '⏳ يحضّر…';
+        (await goto(win, '#/class/' + clsId + '/students',
+            function () { return q('[data-att-btn][data-status="present"]'); },
+            'زرّ «حاضر» في بطاقة الطالب')).click();
+        var att = await until(async function () {
+            var r = await V.from('attendance').select('id,status').eq('class_id', clsId);
+            return (r.data && r.data.length) ? r.data[0] : null;
+        }, 15000);
+        row('تحضيرُ طالبٍ (حاضر)', att ? YES : NO, att ? YES : NO,
+            att ? 'صفٌّ في <code>attendance</code> حالتُه <code>' + att.status + '</code>'
+                : 'الضغطُ لم يكتب صفّاً — وهو عطبُ «زرٍّ ميّت»', !att);
+
+        /* ══ ٥) تعديلٌ: اسمُ الطالب من حقله ══ */
+        bar.textContent = '⏳ يعدّل اسمَ طالب…';
+        var before = stu[0];
+        var upd = await V.from('students').update({ name: 'اسمٌ مُعدَّل' }).eq('id', before.id);
+        var seen = await until(async function () {
+            var r = await V.from('students').select('name').eq('id', before.id).single();
+            return (r.data && r.data.name === 'اسمٌ مُعدَّل') ? true : null;
+        }, 8000);
+        row('تعديلُ اسم طالب', '<span class="hint">طبقةٌ</span>', seen ? YES : NO,
+            seen ? 'الاسمُ تغيّر في القاعدة' : 'لم يتغيّر', !seen);
+
+        /* ══ ٦) الحذفُ المتسلسل — أخطرُ خطوةٍ هنا ══
+           حذفُ الفصل يجب أن يمحو طلابَه وحضورَه وجدولَه. وق٫٦ كان هنا:
+           الخادمُ يتتالى والمخبأُ لا. */
+        bar.textContent = '⏳ يحذف الفصلَ من زرّه…';
+        (await goto(win, '#/class/' + clsId,
+            function () { return q('#btn-class-edit'); },
+            'زرّ «تعديل» في لوحة الفصل')).click();
+        (await need(function () { return q('#ca-delete'); }, 'زرّ «حذف الفصل»')).click();
+        (await need(function () { return q('#modal-body [data-ok]'); },
+                    'زرّ تأكيد الحذف')).click();
+
+        var gone = await until(async function () {
+            var r = await V.from('classes').select('id').eq('id', clsId);
+            return (r.data && r.data.length === 0) ? true : null;
+        }, 20000);
+        row('حذفُ الفصل', gone ? YES : NO, gone ? YES : NO,
+            gone ? 'الصفُّ زال من <code>classes</code>' : 'الفصلُ باقٍ بعد تأكيد الحذف', !gone);
+
+        /* والتتالي: يُسأل عن الأبناء بالعميل المستقلّ */
+        var kids = {};
+        for (const t of ['students', 'attendance', 'schedule']) {
+            var r = await V.from(t).select('id').eq('class_id', clsId);
+            kids[t] = (r.data || []).length;
+        }
+        var orphan = kids.students + kids.attendance + kids.schedule;
+        row('التتالي بعد الحذف', '—', orphan === 0 ? YES : NO,
+            orphan === 0
+                ? 'صفرُ يتيمٍ في students وattendance وschedule'
+                : '<b>' + orphan + ' صفّاً يتيماً</b> — students ' + kids.students
+                  + ' · attendance ' + kids.attendance + ' · schedule ' + kids.schedule,
+            orphan !== 0);
+
+        /* والمخبأُ المحلّيُّ يجب أن يتتالى معه — وهذا ما سقط في ق٫٦ */
+        var cached = await win.TeacherDB.getAllByIndex('students', 'class_id', clsId)
+                        .catch(function () { return []; });
+        row('والمخبأُ المحلّيّ', cached.length === 0 ? YES : NO, '—',
+            cached.length === 0 ? 'صفرُ صفٍّ في مخبأ الجهاز'
+                                : '<b>' + cached.length + ' صفّاً باقياً في المخبأ</b> — '
+                                  + 'الشاشةُ ستعرض طلابَ فصلٍ ميّت',
+            cached.length !== 0);
+
+        bar.innerHTML = fails === 0
+            ? '<span class="ok">✅ الدورةُ كاملةٌ سليمة — ' + steps + ' خطوةً، كلُّها متحقَّقٌ منها في القاعدة.</span>'
+            : '<span class="no">‼️ ' + fails + ' من ' + steps + ' خطوةً سقطت.</span>';
+    } catch (e) {
+        bar.innerHTML = '<span class="no">❌ ' + e.message + '</span>';
+        console.error(e);
+    } finally {
+        /* تنظيفٌ شامل: ما بقي من زرعِ هذا الحساب يُمحى — قبل الخروج. */
+        try {
+            if (tid && V) {
+                for (const t of ['attendance', 'participation', 'schedule', 'students',
+                                 'exams', 'worksheets', 'assignments', 'classes',
+                                 'app_settings', 'reminders']) {
+                    await V.from(t).delete().eq('teacher_id', tid);
+                }
+            }
+        } catch (e2) { console.warn('تنظيف:', e2); }
+        try { if (win) await win.SB.auth.signOut(); } catch (e4) {}
+        stage.src = 'about:blank';
+        document.getElementById('go').disabled = false;
+    }
+}
+
+document.getElementById('go').addEventListener('click', run);
+})();
+</script>
+</body>
+</html>
