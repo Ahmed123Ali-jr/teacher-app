@@ -52,6 +52,12 @@ while IFS= read -r line || [ -n "$line" ]; do
     fi
 done < "$LIST"
 
+# ── ومجلّدٌ فرغ يُزال ──
+# `tools/` يبقى مجلّداً فارغاً بعد حذف حرّاسه، فيراه من يفتش الحزمةَ
+# فيظنّ أنّ التنظيف لم يتمّ. والفارغُ لا يحمل شيئاً — لكنّ الشكَّ يكلّف
+# وقتاً، والتقريرُ يجب أن يكون قاطعاً.
+find "$OUT" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+
 echo ""
 echo "   حُذف $removed · غيرُ موجودٍ $missing · فشل $failed"
 echo "   بقي من صفحات HTML في $OUT:"
