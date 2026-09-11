@@ -65,18 +65,30 @@
        ثمّ خرج وعاد يجده مفتوحاً، وهو ما يتوقّعه. */
     const state = { openSection: null };
 
+    /* ══ الحقولُ تُحرس واحداً واحداً، لا عند غياب الصفّ وحدَه ══
+       كانت الافتراضيّاتُ تُستعمل حين **لا صفَّ أصلاً**؛ فإن وُجد صفٌّ
+       ناقصٌ مرّ كما هو. وعمودُ القاعدة `data jsonb not null
+       **default '{}'::jsonb**`، و`portfolioIn` تدمج `row.data || {}` —
+       فصفٌّ بـ`data` فارغٍ يُخرج كائناً فيه `teacher_id` و`updated_at`
+       لا غير. ثمّ يقرأ الرسمُ `certificates.length` فيرمي، **فلا يُرسم
+       شيءٌ إطلاقاً: صفحةٌ بيضاء لا حالةٌ فارغة**.
+       (بلاغُ المعلّم ١١ سبتمبر ٢٠٢٦ من جهازه، وأُعيد إنتاجُه بصفٍّ واحد.)
+
+       وكان `custom_sections` وحدَه محروساً — وهو شاهدُ أنّ العطبَ وقع من
+       قبلُ فعولج حقلٌ وتُركت إخوتُه. فالحراسةُ الآن تمرّ على الأربعة.
+       ⚠️ **ويُحرس كلُّ حقلٍ يُضاف هنا مستقبلاً** — الشاشةُ تحفظ ما قرأت،
+       فصفٌّ ناقصٌ يُحفظ ناقصاً ولا يشفى بإعادة الفتح. */
+    const PORTFOLIO_LISTS = ['certificates', 'schedules', 'extras', 'custom_sections'];
+
     async function loadPortfolio(teacherId) {
         const row = await global.TeacherDB.get('portfolio', teacherId);
-        const p = row || {
-            teacher_id: teacherId,
-            personal: {},
-            mission: '',
-            vision: '',
-            certificates: [],
-            schedules: [],
-            extras: []
-        };
-        if (!Array.isArray(p.custom_sections)) p.custom_sections = [];
+        const p = row || { teacher_id: teacherId };
+        if (!p.personal || typeof p.personal !== 'object') p.personal = {};
+        if (typeof p.mission !== 'string') p.mission = '';
+        if (typeof p.vision  !== 'string') p.vision  = '';
+        for (const k of PORTFOLIO_LISTS) {
+            if (!Array.isArray(p[k])) p[k] = [];
+        }
         return p;
     }
 

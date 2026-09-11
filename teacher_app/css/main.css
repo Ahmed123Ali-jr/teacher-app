@@ -293,7 +293,16 @@ small { font-size: var(--fs-sm); }
 
 /* Header */
 .app-header {
-    height: var(--header-height);
+    /* ══ ومكانُ الجزيرة يُحجز هنا ══
+       الترويسةُ لاصقةٌ عند ‎٠‎، والمحتوى يمتدّ تحت الجزيرة بحكم
+       `viewport-fit=cover` — فعنوانُ الصفحة (الرئيسية · الفصول · الجدول)
+       متوسّطٌ في ‎٦٤‎ بكسلاً أي عند ‎≈٣٢‎، وهو داخلَ الـ‎٥٩‎ كلَّها.
+       بلاغُ المعلّم ١١ سبتمبر ٢٠٢٦.
+       والحشوُ داخلَ الارتفاع لا زيادةٌ عليه: `box-sizing: border-box`
+       عامٌّ، و`.header-inner { height: 100% }` تقيس صندوقَ المحتوى —
+       فيبقى للعنوان ارتفاعُه كما كان. */
+    height: calc(var(--header-height) + var(--safe-top));
+    padding-top: var(--safe-top);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
@@ -441,6 +450,22 @@ body {
     min-height: calc(100dvh - var(--bottom-nav-height) - var(--bottom-nav-gap)
                      - var(--safe-bottom));
 }
+
+/* ══ وشاشةٌ بلا هيكلٍ لا يُحجز فيها مكانُ الهيكل ══
+   الدخولُ والتهيئةُ واستعادةُ كلمة المرور مساراتٌ بـ`chrome: false`،
+   فيُخفي المُوجِّهُ الترويسةَ والشريطَ السفليّ. وكان الحجزُ يبقى:
+   ‎٢١‎+‎٢١‎ حشوَ `.app-main` لترويسةٍ `hidden`، و‎٧١‎ في `body` لشريطٍ
+   `display:none`. فصارت صفحةُ الدخول **‎٩٨٧‎ بكسلاً في شاشةٍ ‎٨٧٤‎**
+   فتتحرّك تحت الإصبع بلا شيءٍ تُظهره. (قِيس ١١ سبتمبر ٢٠٢٦ على ‎402×874‎،
+   وبلاغُ المعلّم: «صفحة تسجيل الدخول تتحرك فوق وتحت».)
+
+   والمِفصلُ `#app-header[hidden]` نفسُه الذي يضبطه المُوجِّه — فلا حالةٌ
+   ثانيةٌ تُضبط ويُنسى ضبطُها. */
+body:has(#app-header[hidden]) {
+    padding-bottom: var(--safe-bottom);
+}
+body:has(#app-header[hidden]) .app-container { min-height: 100dvh; }
+body:has(#app-header[hidden]) .app-main      { padding-block: 0; }
 
 /* Very small phones (≤ 480px): cap the two largest steps to φ² (26 = 16×φ) */
 @media (max-width: 480px) {
