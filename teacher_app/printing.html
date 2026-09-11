@@ -118,6 +118,12 @@ iframe { position: fixed; left: -3000px; top: 0; width: 430px; height: 900px; bo
    والقياسُ من بكسلاتٍ خام لا من صورةٍ مضغوطة، فـ«صفر» صفرٌ حقيقيّ. */
 var BLANK_MAX = 0.005;
 
+/* نصٌّ طويلٌ عمداً: سؤالٌ من سطرٍ واحدٍ لا يقترب من حافّة الصفحة أبداً،
+   فلا يُثبت شيئاً عن القطع. */
+var LONG_Q = 'اشرح بالتفصيل كيف تنتقل الماءُ والأملاحُ الذائبةُ من جذور '
+           + 'النبات إلى أوراقه، مبيّناً دورَ كلٍّ من الخشب واللحاء، وما '
+           + 'الذي يحدث لو انسدّت أوعيةُ الخشب في ساقٍ نامية؟';
+
 /* مفتاحُ الحقن — يُشغَّل بـ‎printing.html?inject=blank‎ ولا أثرَ له بدونه. */
 var INJECT = new URLSearchParams(location.search).get('inject') || '';
 
@@ -260,7 +266,8 @@ async function run() {
     bar.textContent = '⏳ يُجهّز حساباً منفصلاً…';
 
     var win = null, tid = null, clsId = null, V = null, D = null, q = null;
-    var captured = null, printCalls = 0, lastDelivered = null, pageTexts = null;
+    var captured = null, printCalls = 0, lastDelivered = null,
+        pageTexts = null, pageStruct = null;
 
     /* ينتظر الملفَّ الذي التقطه الاعتراض، ثمّ يقرؤه ويسجّل صفَّه. */
     async function expect(label, expectLandscape, ms) {
@@ -420,11 +427,10 @@ async function run() {
            فيقول التقريرُ ما على الصفحة لا «فيها قليلُ حبر». */
         var realRender = win.PdfCore.renderPdf;
         win.PdfCore.renderPdf = function (pages, o) {
-            try {
-                pageTexts = pages.map(function (el) {
-                    return String(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 90);
-                });
-            } catch (e) { pageTexts = null; }
+            /* ⚠️ الحقنُ **قبل** القياس، لا بعده.
+               أوّلُ بناءٍ حقن بعده، فقاست الأداةُ صفحاتٍ سليمةً ثمّ أفسدتها —
+               فقالت «‎٣٠‎ من ‎٣٠‎ ✅» والملفُّ ناقصٌ سؤالاً (وحجمُه شهد: ‎٨٩٥‎
+               ك.ب صارت ‎٨٠٤‎). وحارسٌ يُختبر بعد أن يقيس لا يُختبر أصلاً. */
             /* ══ ‎?inject=blank‎ — العطبُ المصطنع ══
                حارسٌ لم يُجرَّب على عطبٍ ليس حارساً. وقد رُخِّص هنا للصفحة
                القليلةِ الحبر أن تمرّ إن كان عليها نصّ — فيلزم إثباتُ أنّ
@@ -434,6 +440,57 @@ async function run() {
             if (INJECT === 'blank' && pages.length > 3) {
                 try { pages[2].style.visibility = 'hidden'; } catch (e) {}
             }
+            /* ══ ‎?inject=cut‎ — سؤالٌ يضيع وصفحةٌ تفيض ══
+               يُسقط سؤالاً من آخر صفحة، ويُطيل جدولاً حتى يتجاوز صندوقه.
+               فإن مرّت الأداةُ فليست تقيس شيئاً. */
+            if (INJECT === 'cut' && pages.length > 1) {
+                try {
+                    var lastPg = pages[pages.length - 1];
+                    var victim = lastPg.querySelector('.ex-q')
+                              || lastPg.querySelector('tr > td.m');
+                    if (victim) (victim.closest('tr') || victim).remove();
+                    var tbl = pages[0].querySelector('.ex-tbl');
+                    if (tbl) tbl.style.height = '2000px';
+                } catch (e) {}
+            }
+            try {
+                pageTexts = pages.map(function (el) {
+                    return String(el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+                });
+                /* ══ ولماذا تُقاس البنيةُ هنا لا في الملفّ ══
+                   المخرجُ صورٌ، فسؤالٌ قُصّ بين صفحتين لا يُعرف من البكسل:
+                   الحبرُ موجودٌ في الحالتين. والحقيقةُ في الصفحات **قبل أن
+                   تصير صوراً** — وهذه هي اللحظة. */
+                pageStruct = pages.map(function (el) {
+                    /* ══ عدُّ الأسئلة، لا عدُّ الصفوف ══
+                       أوّلُ قياسٍ عدّ كلَّ `tr` فقال «‎٧١‎ من ‎٣٠‎» ومضى ✅ —
+                       ورقمٌ لا يعني ما يقوله أسوأُ من لا رقم.
+                       والسببُ في الوسم: **سؤالُ الاختيار صفّان** (نصٌّ ثمّ
+                       خيارات، عمداً كي لا يفترقا)، **وسؤالُ المطابقة فيه
+                       `td.m` مرّتين** (رقمُه وحرفُ العمود ب).
+                       فالوحدةُ الصادقة: صفٌّ **أوّلُ خلاياه** `td.m` —
+                       واحدةٌ لكلّ سؤالٍ في الجداول الثلاثة؛ و`.ex-q`
+                       للمقاليّ والفراغ. */
+                    var qs = el.querySelectorAll('.ex-q').length;
+                    var rows = [].slice.call(el.querySelectorAll('tr'))
+                        .filter(function (tr) {
+                            var c = tr.firstElementChild;
+                            return c && c.tagName === 'TD' && c.classList.contains('m');
+                        }).length;
+                    var kids = [].slice.call(el.children)
+                        .filter(function (c) { return c.offsetHeight > 0; });
+                    var last = kids[kids.length - 1];
+                    return {
+                        q: qs + rows,
+                        /* فيضٌ: المحتوى أطولُ من صندوق الصفحة. و`overflow:hidden`
+                           في الصفحة الحيّة يبتلعه بلا خطأ، فيمضي إلى الورق. */
+                        over: Math.max(0, el.scrollHeight - el.clientHeight),
+                        /* عنوانُ قسمٍ آخرَ الصفحة = عنوانٌ يتيمٌ بلا سؤالٍ تحته. */
+                        orphan: !!(last && last.classList && last.classList.contains('ex-sec')),
+                        cont: !!el.querySelector('.ex-cont')
+                    };
+                });
+            } catch (e) { pageTexts = null; pageStruct = null; }
             return realRender.call(win.PdfCore, pages, o);
         };
         var realDeliver = win.PdfCore.deliverPdf;
@@ -535,6 +592,75 @@ async function run() {
 
         await portfolio('all',    'ملفّ الإنجاز — كامل');
         await portfolio('filled', 'ملفّ الإنجاز — المعبّأة فقط');
+
+        /* ══ الاختبارُ وورقةُ العمل — البندان ‎٤٫٣‎ و‎٤٫٤‎ ══ */
+        head('الاختبارُ وورقةُ العمل — <span class="hint">خمسةُ أنواع أسئلة · '
+           + 'ولا سؤالَ مقطوعٌ بين صفحتين</span>');
+        bar.textContent = '⏳ يزرع اختباراً بخمسة أنواع…';
+
+        /* خمسةُ أنواعٍ في ورقةٍ واحدة، وعددٌ يتجاوز الصفحةَ الواحدة عمداً:
+           سؤالٌ لا يُقصّ في ورقةٍ من صفحةٍ واحدةٍ دعوى لا قياس. */
+        /* الأنواعُ الخمسةُ التي يعرفها المولّد — وما سواها يسقط إلى
+           «مقاليّ» بلا خطأ، فتظنّ أنّك جرّبت خمسةً وأنت في أربعة. */
+        var QTYPES = ['mcq', 'tf', 'match', 'fill', 'essay'];
+        var qs = [];
+        for (var qi = 0; qi < 30; qi++) {
+            var ty = QTYPES[qi % QTYPES.length];
+            var base = { id: 'q' + qi, type: ty, points: 2,
+                         text: 'السؤال ' + ar(qi + 1) + ' — ' + LONG_Q };
+            if (ty === 'mcq') { base.options = ['الخشب', 'اللحاء', 'الوَرقة', 'الزهرة']; base.answer = 'الخشب'; }
+            else if (ty === 'tf')    { base.options = []; base.answer = 'صح'; }
+            else if (ty === 'match') { base.options = []; base.answer = 'ينقل الماء والأملاح'; }
+            else { base.options = []; base.answer = ''; }
+            qs.push(base);
+        }
+        var examRow = await win.TeacherDB.add('exams', {
+            teacher_id: tid, class_id: clsId, title: 'اختبارُ الفحص',
+            questions: qs,
+            settings: { include_school: true, include_teacher: true, include_date: true,
+                        include_name: true, include_grade: true, include_instructions: true,
+                        /* بلا نموذج إجابة: صفحاتُه تُضاف إلى العدّ فلا يبقى
+                           «مرسومٌ = مُدخَل» قابلاً للمقارنة. والنموذجُ خارجَ
+                           معيار البند ‎٤٫٣‎ («ترويسةٌ وتذييلٌ ولا سؤالَ مقطوع»). */
+                        include_answers: false }
+        });
+        await win.TeacherDB.add('worksheets', {
+            teacher_id: tid, class_id: clsId, title: 'ورقةُ عملٍ للفحص',
+            questions: qs.slice(0, 18),
+            settings: { include_school: true, include_teacher: true, include_name: true }
+        });
+
+        async function sheet(hash, sel, label, expectQ) {
+            bar.textContent = '⏳ ' + label + '…';
+            (await goto(win, hash, function () { return q(sel); }, 'زرّ الطباعة في ' + label)).click();
+            var r = await expect(label, false, 180000);
+            if (!r) return;
+            /* ══ والبنيةُ تُحاكَم على حدة ══
+               «وُلد وقُرئ» لا يقول شيئاً عن سؤالٍ ضاع أو قُصّ. */
+            docs++;
+            if (!pageStruct) {
+                row('بنيةُ ' + label, '—', NO, 'لم تُلتقط الصفحاتُ قبل الرسم', true);
+                return;
+            }
+            var drawn  = pageStruct.reduce(function (a, x) { return a + x.q; }, 0);
+            var over   = pageStruct.filter(function (x) { return x.over > 1; });
+            var orph   = pageStruct.filter(function (x) { return x.orphan; });
+            var bad = (drawn !== expectQ) || over.length > 0 || orph.length > 0;
+            var note = 'أسئلةٌ مرسومة <b>' + ar(drawn) + '</b> من ' + ar(expectQ)
+                     + ' · صفحاتٌ ' + ar(pageStruct.length)
+                     + ' · و«تابع» في ' + ar(pageStruct.filter(function (x) { return x.cont; }).length);
+            if (drawn < expectQ) note += ' — <b>ضاع ' + ar(expectQ - drawn) + ' سؤالاً</b>';
+            if (drawn > expectQ) note += ' — <b>زيادةٌ غيرُ مفسَّرة</b>';
+            if (over.length) note += ' — <b>' + ar(over.length) + ' صفحةً تفيض عن صندوقها</b>';
+            if (orph.length) note += ' — <b>عنوانُ قسمٍ يتيمٌ في ذيل صفحة</b>';
+            if (!bad) note += ' — <b>ولا سؤالَ مقطوع</b>';
+            row('بنيةُ ' + label, '—', bad ? NO : YES, note, bad);
+        }
+
+        await sheet('#/class/' + clsId + '/exams', '[data-exam-print]',
+                    'ورقةُ الاختبار', qs.length);
+        await sheet('#/class/' + clsId + '/worksheets', '[data-ws-print]',
+                    'ورقةُ العمل', 18);
 
         /* ══ التقرير ══ */
         head('التقارير — <span class="hint">من زرّ «تصدير التقرير PDF»</span>');
