@@ -270,7 +270,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-4);
+    /* ══ والحوافُّ تُحجز هنا، مرّةً واحدةً لكلّ مربّع ══
+       `viewport-fit=cover` تمدّ المحتوى تحت الجزيرة، والمربّعُ متوسّطٌ
+       بحدٍّ أعلى — فالطويلُ منه يصعد حتى الحافّة. وعلى الجوّال الحدُّ
+       `100vh` (لا ‎٩٠‎)، فرأسُ المربّع — عنوانُه وزرُّ إغلاقه — يقع كلُّه
+       داخل الـ‎٥٩‎. (قِيس ١٣ سبتمبر ٢٠٢٦، من عائلة بلاغاته ١١ سبتمبر.)
+       والحجزُ في الجذر لا في كلّ مربّع: المربّعاتُ كثيرةٌ والجذرُ واحد. */
+    padding: calc(var(--space-4) + var(--safe-top)) var(--space-4)
+             calc(var(--space-4) + var(--safe-bottom));
 }
 .modal-root[hidden] { display: none !important; }
 
@@ -290,7 +297,9 @@
     position: relative;
     width: 100%;
     max-width: 520px;
-    max-height: 90vh;
+    /* `100%` تُحسب من صندوق محتوى الجذر — وقد خُصمت منه الحوافُّ سلفاً.
+       فالحدُّ لا يتجاوز المتاحَ مهما كان الطراز، بلا حسابٍ يُكتب بيد. */
+    max-height: min(90vh, 100%);
     overflow: auto;
     background: var(--surface);
     border-radius: var(--modal-r);
