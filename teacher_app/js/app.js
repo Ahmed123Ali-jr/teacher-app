@@ -223,9 +223,15 @@
                     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
                 const body = document.createElement('div');
+                /* وبلا رسالةٍ تُسحب الأزرارُ إلى الأعلى: حشوةُ جسم النافذة
+                   ‎٢٤‎ وهامشُ التذييل ‎٢٤‎، فيبقى بينهما شريطٌ أبيضُ فارغٌ
+                   بين خطَّين — يقرؤه المعلّمُ عطباً لا تصميماً. وأربعةَ عشرَ
+                   نداءً من تسعةٍ وعشرين لا تمرّر رسالةً، ومنها «حذف الفصل؟»
+                   لفصلٍ بلا طلاب. (رُئي على الجهاز ١٣ سبتمبر ٢٠٢٦.) */
+                const mTop = o.message ? 'var(--space-6)' : 'calc(var(--space-6) * -1)';
                 body.innerHTML =
                     (o.message ? '<p class="cfm-msg">' + esc(o.message) + '</p>' : '')
-                    + '<div class="modal-footer" style="margin: var(--space-6) '
+                    + '<div class="modal-footer" style="margin: ' + mTop + ' '
                     + 'calc(var(--space-6) * -1) calc(var(--space-6) * -1);">'
                     + '<button type="button" data-ok class="btn '
                     + (o.danger ? 'btn-danger' : 'btn-primary') + '">'

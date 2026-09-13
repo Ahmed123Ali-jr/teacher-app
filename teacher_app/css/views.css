@@ -455,7 +455,10 @@ body.drawer-open { overflow: hidden; }
    Auth view (login / register)
    ========================================================================== */
 .view-auth {
+    /* والمؤشّرُ يُخصم: `body` يحجز له حشواً، فـ‎100dvh‎ هنا تُضيفه ثانيةً.
+       و‎100vh‎ احتياطٌ لمن لا يعرف ‎dvh‎. */
     min-height: 100vh;
+    min-height: calc(100dvh - var(--safe-bottom));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2779,10 +2782,23 @@ body.drawer-open { overflow: hidden; }
     flex-direction: column;
     /* والفجوةُ تُخصم معها: الشريطُ صار عائماً فأخذ من الشاشة أكثر ممّا
        حُسب هنا، ولولاها لقُصّت آخرُ حصّةٍ بصمت. */
-    max-height: calc(100dvh - 170px - var(--bottom-nav-gap));
+    /* و‎١٧٠‎ قِيست في متصفّحٍ بلا حوافَّ آمنة. وفي الغلاف تطول الترويسةُ
+       بمقدار الجزيرة ويرتفع الشريطُ بمقدار المؤشّر — فيفيض الجدولُ
+       ‎٩٣‎ بكسلاً ويدفع التقويمَ تحت الطيّة. (بلاغُه ١٣ سبتمبر ٢٠٢٦:
+       «الجدول ممطوط لتحت ولازم أسحب الشاشة فوق عشان أشوف التقويم».)
+       والرمزان صفرٌ في الويب — فنسخةُ المتصفّح لا تتغيّر. */
+    max-height: calc(100dvh - 170px - var(--bottom-nav-gap)
+                     - var(--safe-top) - var(--safe-bottom));
     padding-bottom: 0;
     overflow: hidden;
 }
+
+/* ══ وشريطُ «أضف فصولاً أولاً» يأخذ نصيبَه من الصفوف لا من الشاشة ══
+   يظهر للمعلّم الجديد وحدَه (`ctx.classes.length === 0`)، ويزيد الصفحةَ
+   ‎٥٨‎ نقطةً — قِيست على ‎402×874‎ لا قُدِّرت — فيعود التمريرُ في أوّل
+   شاشةٍ يفتحها في حياته. وبخصمِه تقصر الصفوفُ بقدره وتبقى الصفحةُ ثابتة. */
+.sched-v2 { --sched-hint-h: 0px; }
+.sched-v2:has(> .callout-warn) { --sched-hint-h: 58px; }
 
 .sched-head {
     display: flex;
@@ -2974,7 +2990,12 @@ body.drawer-open { overflow: hidden; }
    `theme-white.css` — فإن أُعيدت زاد المطلوبُ نحو ‎26px‎ ولزم رفعُ الرقم. */
 .sched-cell {
     background: var(--surface);
-    height: clamp(44px, calc((100dvh - 376px - var(--bottom-nav-gap)) / var(--rows, 7)), 78px);
+    /* و‎--safe-top/-bottom‎ تُخصمان للسبب نفسِه في `.sched-v2` أعلاه.
+       و`--sched-hint-h` شريطُ «أضف فصولاً أولاً»: لا يراه إلّا معلّمٌ بلا
+       فصول — وهو أوّلُ ما يفتح الجدولَ في حياته. */
+    height: clamp(44px, calc((100dvh - 376px - var(--bottom-nav-gap)
+                   - var(--safe-top) - var(--safe-bottom)
+                   - var(--sched-hint-h, 0px)) / var(--rows, 7)), 78px);
     cursor: pointer;
     overflow: hidden;
 }

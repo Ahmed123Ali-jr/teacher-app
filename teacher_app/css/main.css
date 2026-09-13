@@ -464,7 +464,14 @@ body {
 body:has(#app-header[hidden]) {
     padding-bottom: var(--safe-bottom);
 }
-body:has(#app-header[hidden]) .app-container { min-height: 100dvh; }
+/* والخصمُ هنا كما هو في الحالة العامّة فوق: الحشوُ في `body` يبعد
+   المؤشّرَ، و`min-height` تخصمه — وبلا الثانية تصير الصفحةُ أطولَ من
+   الشاشة بمقدار المؤشّر بالضبط. (قِيس ١٣ سبتمبر ٢٠٢٦: ‎٣٤٫٠‎ نقطةَ
+   تمريرٍ حقيقيٍّ على ‎402×874‎ — لا ارتدادةً مطّاطيّة.) */
+body:has(#app-header[hidden]) .app-container {
+    min-height: 100vh;
+    min-height: calc(100dvh - var(--safe-bottom));
+}
 body:has(#app-header[hidden]) .app-main      { padding-block: 0; }
 
 /* Very small phones (≤ 480px): cap the two largest steps to φ² (26 = 16×φ) */
