@@ -1338,7 +1338,7 @@ body.drawer-open { overflow: hidden; }
     #tab-panel.is-empty-tab {
         display: flex;
         flex-direction: column;
-        min-height: calc(100dvh - 175px);
+        min-height: calc(100dvh - 175px - var(--safe-top) - var(--safe-bottom));
         padding-bottom: 28px;
     }
 }
@@ -1441,7 +1441,7 @@ body.drawer-open { overflow: hidden; }
    العمود `flex: 0 0 auto` صراحةً لئلّا ينكمشوا حين يفيض. */
 @media (max-width: 767px) {
     #tab-panel:has(> .ws-addbar) {
-        min-height: calc(100dvh - 175px);
+        min-height: calc(100dvh - 175px - var(--safe-top) - var(--safe-bottom));
         display: flex; flex-direction: column;
         padding-bottom: calc(var(--safe-bottom) + 28px);
     }
@@ -1985,7 +1985,8 @@ body.drawer-open { overflow: hidden; }
            ترويسةٌ + حشوُ الجسم الأعلى + شريطٌ + فرجتُه + الآمنُ السفليّ +
            مسافةٌ + ‎12‎px حشوِ الشريط العائم السفليّ. وهي الصيغةُ نفسُها في
            `#tab-panel.is-empty-students` أدناه — الثلاثةُ على خطٍّ واحد. */
-        min-height: calc(100dvh - var(--header-height) - var(--space-5)
+        min-height: calc(100dvh - var(--header-height) - var(--safe-top)
+                         - var(--space-5)
                          - var(--bottom-nav-height) - var(--bottom-nav-gap)
                          - var(--safe-bottom) - var(--space-4) - 12px);
     }
@@ -2011,7 +2012,8 @@ body.drawer-open { overflow: hidden; }
         display: flex;
         flex-direction: column;
         padding-bottom: 0;
-        min-height: calc(100dvh - var(--header-height) - var(--space-5)
+        min-height: calc(100dvh - var(--header-height) - var(--safe-top)
+                         - var(--space-5)
                          - var(--bottom-nav-height) - var(--bottom-nav-gap)
                          - var(--safe-bottom) - var(--space-4) - 12px);
     }
@@ -4472,7 +4474,7 @@ body.drawer-open { overflow: hidden; }
    العمود المرن كان يضغط بطاقاتِ الأسئلة حين يفيض. */
 #tab-panel.has-qe-dock { padding-bottom: calc(var(--safe-bottom) + 28px); }
 @media (max-width: 767px) {
-    #tab-panel.has-qe-dock { min-height: calc(100dvh - 175px); }
+    #tab-panel.has-qe-dock { min-height: calc(100dvh - 175px - var(--safe-top) - var(--safe-bottom)); }
     #tab-panel.has-qe-dock,
     #tab-panel.has-qe-dock > .wizard,
     #tab-panel.has-qe-dock #wiz-body { display: flex; flex-direction: column; }
@@ -5397,7 +5399,8 @@ body.br-open { overflow: hidden; }          /* لا تمرير خلف القار
    الشريط والزرّ، مهما كان طولُ الجهاز. و`dvh` لا `vh`: شريطُ المتصفّح على
    الجوال يتمدّد وينكمش، و`vh` لا يراه فتنزل العبارةُ تحت الطيّة. */
 .empty-classes {
-    min-height: calc(100dvh - var(--header-height) - var(--bottom-nav-height)
+    min-height: calc(100dvh - var(--header-height) - var(--safe-top)
+                     - var(--bottom-nav-height)
                      - var(--bottom-nav-gap) - var(--safe-bottom)
                      - var(--space-5) - 91px);
     display: flex;
