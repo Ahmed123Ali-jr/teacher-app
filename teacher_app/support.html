@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>الدعم الفني — فصول</title>
+<meta name="description" content="دعم فصول: بريد التواصل وساعات الرد، وأجوبة الأسئلة المتكرّرة — الدخول وكلمة المرور والبيانات وحذف الحساب.">
+<style>
+  :root{
+    --bg:#F4F1EA; --surface:#fff; --ink:#16233A; --head:#0F2C5C; --muted:#857F70;
+    --line:#E2DED0; --line-soft:#EDEAE0; --gold:#B8963F; --gold-fill:#C9A961; --warn:#B07013;
+    --shadow:0 1px 2px rgba(16,35,58,.05), 0 6px 16px rgba(16,35,58,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0C1626; --surface:#14243D; --ink:#DFDCD1; --head:#F1EEE5; --muted:#928E7E;
+      --line:#263954; --line-soft:#1D2E48; --gold:#D8BC73; --gold-fill:#C9A961; --warn:#E0A54A;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.28);
+    }
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg); color:var(--ink); direction:rtl; text-align:right;
+    font-family:"SF Arabic",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Naskh Arabic","Geeza Pro",Tahoma,sans-serif;
+    font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:44rem; margin:0 auto; padding:clamp(1.5rem,5vw,3rem) clamp(1rem,4vw,2rem) 4rem; }
+
+  .kicker{ font-size:.8125rem; font-weight:700; letter-spacing:.06em; color:var(--gold); margin:0 0 .375rem; }
+  h1{ margin:0 0 .35rem; font-size:clamp(1.6rem,6vw,2.1rem); font-weight:800; line-height:1.3;
+      color:var(--head); text-wrap:balance; }
+  .stamp{ margin:0 0 2rem; font-size:.875rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+  .lead{
+    padding:1.05rem 1.2rem; margin-bottom:2.25rem;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); font-size:.95rem; line-height:1.9;
+  }
+  .lead strong{ color:var(--head); }
+
+  h2{
+    margin:2.5rem 0 .25rem; padding-bottom:.5rem;
+    font-size:1.125rem; font-weight:800; color:var(--head);
+    border-bottom:2px solid var(--gold);
+  }
+  h3{ margin:1.5rem 0 .35rem; font-size:.95rem; font-weight:800; color:var(--head); }
+  p{ margin:.75rem 0; }
+  ul{ margin:.6rem 0; padding-inline-start:0; padding-inline-end:1.35rem; }
+  li{ margin:.3rem 0; }
+
+  .tbl-wrap{ overflow-x:auto; margin:1rem 0; }
+  table{ width:100%; border-collapse:collapse; font-size:.875rem; min-width:22rem; }
+  th,td{ text-align:right; padding:.65rem .8rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th{ background:var(--line-soft); font-weight:800; color:var(--head); white-space:nowrap; }
+  tbody th{ font-weight:700; color:var(--head); white-space:nowrap; }
+
+  .note{
+    margin:1.25rem 0; padding:.85rem 1rem; border-radius:12px;
+    background:color-mix(in srgb, var(--gold-fill) 12%, var(--surface));
+    border:1px solid color-mix(in srgb, var(--gold-fill) 38%, var(--surface));
+    font-size:.875rem; line-height:1.85;
+  }
+  .note b{ color:var(--warn); }
+
+  a{ color:var(--gold); text-decoration:underline; text-underline-offset:.2em; }
+  a:hover{ color:var(--head); }
+
+  /* ══ بطاقةُ البريد ══
+     العنوانُ هو سببُ وجود الصفحة كلِّها: من فتحها فتحها ليجده، ومن لا
+     يجده في أوّل شاشةٍ يغلقها. فهو وحدَه في بطاقةٍ قبل أيّ سؤال. */
+  .card{
+    margin:0 0 2rem; padding:1.15rem 1.25rem;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow);
+  }
+  .card-label{ margin:0 0 .3rem; font-size:.8125rem; font-weight:700; color:var(--muted); }
+  .mail{
+    display:inline-block; margin:0 0 .6rem;
+    font-size:clamp(1.05rem,4.2vw,1.3rem); font-weight:800;
+    color:var(--head); text-decoration:none; direction:ltr; unicode-bidi:embed;
+    border-bottom:2px solid var(--gold);
+  }
+  .mail:hover{ color:var(--gold); }
+  .hours{ margin:0; font-size:.875rem; color:var(--muted); }
+
+  .foot{
+    margin-top:3rem; padding-top:1.25rem; border-top:1px solid var(--line);
+    font-size:.8125rem; color:var(--muted); line-height:1.9;
+  }
+
+  /* شريطُ الرجوع الثابت — يُرى ولو نزل المعلّم إلى آخر الصفحة. */
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    background:color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter:saturate(180%) blur(8px);
+    -webkit-backdrop-filter:saturate(180%) blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:.6rem clamp(1rem,4vw,2rem);
+    padding-top:max(.6rem, env(safe-area-inset-top));
+  }
+  .back{
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:none; border:0; padding:.45rem .2rem;
+    font-family:inherit; font-size:.95rem; font-weight:700;
+    color:var(--head); cursor:pointer;
+  }
+  .back span{ font-size:1.05rem; line-height:1; }
+  .back:active{ opacity:.6; }
+</style>
+</head><body>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     صفحةُ الدعم — ولماذا وُجدت
+     ══════════════════════════════════════════════════════════════════
+     رابطُ الدعم المسجَّلُ عند آبل كان يشير إلى «شروط الاستخدام»، وفيها:
+     «تواصل معنا من داخل التطبيق». وهذا بابٌ مغلقٌ على **من لا يملك
+     التطبيق بعد** — والمراجعُ أوّلُ هؤلاء، والبندُ ١٫٥ يشترط عنواناً
+     يُوصِل. (١٦ سبتمبر ٢٠٢٦، قبل الرفع.)
+
+     ومصدرُ البريد وساعاتِ الردّ واحدٌ: `settings.js` — فإن تغيّر هناك
+     تغيّر هنا. ولا يُكتب عنوانٌ ثانٍ ولا ساعاتٌ أخرى.
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="topbar">
+  <button type="button" class="back" id="btn-back">
+    <span aria-hidden="true">→</span> رجوع
+  </button>
+</div>
+<div class="sheet">
+
+  <p class="kicker">فصول</p>
+  <h1>الدعم الفني</h1>
+  <p class="stamp">آخر تحديث: ١٦ سبتمبر ٢٠٢٦</p>
+
+  <div class="card">
+    <p class="card-label">راسلنا على البريد</p>
+    <a class="mail" href="mailto:fusool96@gmail.com">fusool96@gmail.com</a>
+    <p class="hours">ساعات الدعم: الأحد — الخميس · ٩ ص — ٥ م (بتوقيت السعودية).
+       ونجيب عن كل رسالة خلال يومي عمل على الأكثر.</p>
+  </div>
+
+  <div class="lead">
+    <strong>فصول</strong> تطبيق سعودي يجمع عمل المعلم اليومي في مكان واحد: سجل
+    متابعة الطلاب، والجدول الأسبوعي، والاختبارات وأوراق العمل، وملف الإنجاز
+    المهني. وفي هذه الصفحة أجوبة ما يُسأل عنه أكثر — فإن لم تجد جوابك،
+    فالبريد أعلاه يصلنا مباشرة.
+  </div>
+
+  <h2>الدخول والحساب</h2>
+
+  <h3>كيف أبدأ؟</h3>
+  <p>
+    من شاشة الدخول: أنشئ حساباً ببريدك وكلمة مرور، أو اضغط
+    <strong>«الدخول كزائر»</strong> لتجربة التطبيق في الحال بلا تسجيل. وحساب
+    الزائر يمكن ربطه ببريدك لاحقاً من «الإعدادات ← اربط حسابك»، فتنتقل بياناتك
+    معك.
+  </p>
+
+  <h3>نسيت كلمة المرور</h3>
+  <p>
+    في شاشة الدخول اضغط <strong>«نسيت كلمة المرور أو البريد؟»</strong>، واكتب
+    بريدك — يصلك رابط لتعيين كلمة مرور جديدة. وإن لم تجد الرسالة خلال دقائق
+    فانظر في «المهملات» أو «العروض»، فبعض مزوّدي البريد يضعونها هناك.
+  </p>
+
+  <h3>هل أحتاج إنترنت؟</h3>
+  <p>
+    لا في أثناء الحصة: التحضير والدرجات والملاحظات تعمل بلا شبكة، وما كتبته
+    يُرسل وحده حين تعود الشبكة. ويلزم الاتصال لأول تسجيل دخول ولمزامنة أجهزتك.
+  </p>
+
+  <h2>البيانات والخصوصية</h2>
+
+  <h3>أين تُحفظ بياناتي؟</h3>
+  <p>
+    على خوادم آمنة باسم حسابك أنت وحدك، ونسخة على جهازك لتعمل بلا إنترنت. ولا
+    يراها معلم آخر، ولا تُباع، ولا تُشارَك لأغراض إعلانية. والتفصيل في
+    <a href="privacy.html">سياسة الخصوصية</a>.
+  </p>
+
+  <h3>هل فصول نظام رسمي؟</h3>
+  <p>
+    لا. فصول <strong>أداة خاصة بالمعلم</strong>، وليست تابعة لوزارة التعليم ولا
+    بديلاً عن أنظمتها. وما تُدخله هنا لا يصل إلى أي جهة رسمية.
+  </p>
+
+  <h3>كيف أحذف حسابي وبياناتي؟</h3>
+  <p>
+    من التطبيق: <strong>«الإعدادات ← حذف البيانات أو الحساب»</strong>. وهناك
+    خياران منفصلان — «مسح البيانات» يبقي حسابك لتبدأ من جديد، و«حذف الحساب»
+    يمحو كل شيء من الخوادم ولا رجعة فيه. وإن تعذّر عليك الوصول إلى التطبيق
+    فراسلنا على البريد أعلاه من العنوان المسجَّل في حسابك.
+  </p>
+
+  <h2>مشكلات شائعة</h2>
+
+  <h3>لم يصلني إشعار الحصة</h3>
+  <p>
+    تأكد من تفعيل المنبّه من «الإعدادات ← منبّه الحصص»، ومن أن إشعارات «فصول»
+    مسموحة في إعدادات الجهاز. والمنبّه يعتمد على جدولك الأسبوعي — فإن لم يكن
+    الجدول مكتملاً فلا مواعيد تُجدول.
+  </p>
+
+  <h3>الطباعة أو ملف PDF</h3>
+  <p>
+    التقارير والاختبارات وسجل المتابعة تُصدَّر ملفات PDF جاهزة للطباعة من زر
+    التصدير في كل شاشة. وإن خرج الملف فارغاً أو مقطوعاً، أرسل لنا اسم الشاشة
+    ونوع جهازك — نحتاجهما لنعيد الحالة نفسها.
+  </p>
+
+  <h3>ما الذي يساعدنا على حل مشكلتك أسرع؟</h3>
+  <ul>
+    <li>نوع الجهاز وإصدار النظام (مثال: آيفون ١٥ — iOS 18).</li>
+    <li>اسم الشاشة التي ظهرت فيها المشكلة.</li>
+    <li>صورة للشاشة إن أمكن.</li>
+    <li>ماذا كنت تفعل قبلها مباشرة.</li>
+  </ul>
+
+  <p class="foot">
+    اقرأ أيضاً <a href="privacy.html">سياسة الخصوصية</a> و<a href="terms.html">شروط الاستخدام</a>.
+  </p>
+
+</div>
+
+<script>
+/* الرجوعُ أوّلاً، فإن لم يكن ثَمّ تاريخٌ فإلى التطبيق.
+   و`history.length` يبدأ بواحدٍ في تبويبٍ جديد. */
+document.getElementById('btn-back').addEventListener('click', function () {
+  if (window.history.length > 1) { window.history.back(); return; }
+  window.location.href = 'index.html';
+});
+</script>
+</body>
+</html>
