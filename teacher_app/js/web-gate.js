@@ -33,7 +33,7 @@
     'use strict';
 
     /* ⚠️ المفتاح. `false` = لا باب. */
-    const GATE_ON = true;
+    const GATE_ON = false;
 
     const KEY = 'fusool_web_gate_ok';
 
